@@ -1,0 +1,686 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Transient;
+import javax.persistence.Version;
+
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.logging.Log;
+
+import com.avnet.emasia.webquote.constants.QuoteSourceEnum;
+
+
+/**
+ * The persistent class for the QUOTE database table.
+ * 
+ */
+@Entity
+@Table(name="QUOTE")
+public class Quote implements Serializable {
+	private static final long serialVersionUID = 1L;
+	static Logger logger = Logger.getLogger(Quote.class.getName());
+	
+	@Id
+	@SequenceGenerator(name="QUOTE_ID_GENERATOR", sequenceName="WQ_SEQ",allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="QUOTE_ID_GENERATOR")
+	@Column(name="ID", unique=true, nullable=false)
+	private long id;
+	
+	@Column(name="FORM_NUMBER")
+	private String formNumber;
+	
+	@Column(name="COPY_TO_CS")
+	private String copyToCS;
+
+	@Column(length=10)
+	private String stage;	
+	
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="CREATED_ON", nullable=false)
+	private Date createdOn;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="LAST_UPDATED_ON")
+	private Date lastUpdatedOn;
+
+	@Column(length=255)
+	private String remarks;
+	
+	@Column(name="REMARKS_TO_CUSTOMER", length=1024)
+	private String remarksToCustomer;
+
+
+	@ManyToOne()
+	@JoinColumn(name="SALES_USER_ID")	
+	private User sales;
+
+	@ManyToOne()
+	@JoinColumn(name="TEAM_ID")	
+	private Team team;
+
+	@Version
+	@Column(name="VERSION")
+	private int version;
+
+	@Column(name="YOUR_REFERENCE", length=255)
+	private String yourReference;
+
+	//uni-directional many-to-one association to User
+	@Column(name = "CREATED_BY", length = 10)
+	private String createdBy;
+
+	//uni-directional many-to-one association to User
+	@Column(name = "LAST_UPDATED_BY", length = 10)
+	private String lastUpdatedBy;
+
+	//uni-directional many-to-one association to BizUnit
+	@ManyToOne
+	@JoinColumn(name="BIZ_UNIT", nullable=false)
+	private BizUnit bizUnit;
+
+
+	//bi-directional many-to-one association to QuoteItem
+	@OneToMany(mappedBy="quote", cascade=CascadeType.ALL, orphanRemoval=true)
+	private List<QuoteItem> quoteItems;
+	
+	//bi-directional many-to-one association to Attachment
+	@OneToMany(mappedBy="quote", cascade=CascadeType.ALL)
+	private List<Attachment> attachments;
+	
+	@ManyToOne
+	@JoinColumn(name="SOLD_TO_CUSTOMER_NUMBER")
+	private Customer soldToCustomer;
+	
+	@Column(name="END_CUSTOMER_NAME")
+	private String endCustomerName;
+	
+	@Column(name="SHIP_TO_CUSTOMER_NAME")
+	private String shipToCustomerName;
+	
+	@Column(name="LOA_FLAG", length=1)
+	private Boolean loaFlag;
+	
+	@Column(name="DESIGN_LOCATION", length=255)
+	private String designLocation;
+	
+	@Column(name="PROJECT_NAME", length=255)
+	private String projectName;
+
+	@Column(name="BMT_CHECKED_FLAG", length=1)
+	private Boolean bmtCheckedFlag;
+	
+	@Column(name="ENQUIRY_SEGMENT", length=50)
+	private String enquirySegment;	
+	
+	@Column(name="PP_SCHEDULE")
+	private String ppSchedule;	
+	
+	@Column(name="MP_SCHEDULE")
+	private String mpSchedule;
+
+	@Column(name="APPLICATION", length=255)
+	private String application;
+	
+	//uni-directional many-to-one association to Customer
+	@ManyToOne
+	@JoinColumn(name="SHIP_TO_CUSTOMER_NUMBER")
+	private Customer shipToCustomer;	
+	
+	//uni-directional many-to-one association to Customer
+	@ManyToOne
+	@JoinColumn(name="END_CUSTOMER_NUMBER")
+	private Customer endCustomer;		
+
+	@Column(name="CUSTOMER_TYPE")
+	private String customerType;
+	
+	@Column(name="FORM_ATTACHMENT_FLAG", length=1)
+	private Boolean formAttachmentFlag;	
+	
+	//Added by Tonmy on 12 Sep 2013 . for issue 978
+	@Transient
+	private boolean isContinueSubmit; 
+	
+	@Column(name="MIGRATION_BATCH_NUMBER")
+	private String migrationBatchNumber;	
+	
+	@Transient
+	public Date submissionDate;
+
+	@Column(name = "LAST_UPDATED_NAME", length = 40)
+	private String lastUpdatedName;
+	
+	@Column(name = "CREATED_NAME", length = 40)
+	private String createdName;
+	
+	@Column(name = "SALES_USER_NAME", length = 40)
+	private String salesUserName;
+	
+	@Column(name = "COPY_TO_CS_NAME", length = 600)
+	private String copyToCsName;
+	
+	@Column(name = "DESIGN_IN_CAT", length = 20)
+	private String designInCat;
+	
+	@Column(name = "QUOTE_TYPE", length = 20)
+	private String quoteType;
+	
+	//INC0018065, INC0018819
+	@Column(name="SOLD_TO_CUSTOMER_NAME")
+	private String soldToCustomerName;
+	
+	@Column(name="SOLD_TO_CUSTOMER_NAME_CHINESE")
+	private String soldToCustomerNameChinese;
+	
+	@Column(name = "DESIGN_REGION")
+	private String designRegion;
+	
+	@Column(name = "QUOTE_SOURCE")
+	private String quoteSource = QuoteSourceEnum.INTERNAL.toString();
+	
+	@Column(name = "DP_REFERENCE_ID")
+	private String dpReferenceId;
+	//for Resubmit Invalid RFQ damon@20160801
+	@Transient
+	private String reSubmitType; 
+	
+	public Quote() {
+	}
+	
+	public String getReSubmitType() {
+		return reSubmitType;
+	}
+
+	public void setReSubmitType(String reSubmitType) {
+		this.reSubmitType = reSubmitType;
+	}
+
+	public void addItem(QuoteItem item){
+		if(quoteItems == null){
+			quoteItems = new ArrayList<QuoteItem>();
+		}
+		// do not remove this ,
+		// refresh the quoteItems
+		quoteItems.size();
+		quoteItems.add(item);
+		//logger.warning("addItem");
+	}
+
+	public String getFormNumber() {
+		return this.formNumber;
+	}
+
+	public void setFormNumber(String formNumber) {
+		this.formNumber = formNumber;
+	}
+
+
+
+	public Date getCreatedOn() {
+		return this.createdOn;
+	}
+
+	public void setCreatedOn(Date createdOn) {
+		this.createdOn = createdOn;
+	}
+
+	public Date getLastUpdatedOn() {
+		return this.lastUpdatedOn;
+	}
+
+	public void setLastUpdatedOn(Date lastUpdatedOn) {
+		this.lastUpdatedOn = lastUpdatedOn;
+	}
+
+	public String getRemarks() {
+		return this.remarks;
+	}
+
+	public void setRemarks(String remarks) {
+		this.remarks = remarks;
+	}
+
+	public Team getTeam() {
+		return this.team;
+	}
+
+	public void setTeam(Team team) {
+		this.team = team;
+	}
+
+	public int getVersion() {
+		return this.version;
+	}
+
+	public void setVersion(int version) {
+		this.version = version;
+	}
+
+	public String getYourReference() {
+		return this.yourReference;
+	}
+
+	public void setYourReference(String yourReference) {
+		this.yourReference = yourReference;
+	}
+
+	public String getLastUpdatedBy() {
+		return lastUpdatedBy;
+	}
+
+	public void setLastUpdatedBy(String lastUpdatedBy) {
+		this.lastUpdatedBy = lastUpdatedBy;
+	}
+
+	public BizUnit getBizUnit() {
+		return this.bizUnit;
+	}
+
+	public void setBizUnit(BizUnit bizUnit) {
+		this.bizUnit = bizUnit;
+	}
+
+	public List<QuoteItem> getQuoteItems() {
+		return this.quoteItems;
+	}
+
+	public void setQuoteItems(List<QuoteItem> quoteItems) {
+		this.quoteItems = quoteItems;
+	}
+
+	public String getCopyToCS() {
+		return copyToCS;
+	}
+
+	public void setCopyToCS(String copyToCS) {
+		this.copyToCS = copyToCS;
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getRemarksToCustomer() {
+		return remarksToCustomer;
+	}
+
+	public void setRemarksToCustomer(String remarksToCustomer) {
+		this.remarksToCustomer = remarksToCustomer;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((bizUnit == null) ? 0 : bizUnit.hashCode());
+		result = prime * result
+				+ ((quoteItems == null) ? 0 : quoteItems.hashCode());
+		result = prime
+				* result
+				+ ((remarksToCustomer == null) ? 0 : remarksToCustomer
+						.hashCode());
+		result = prime * result + ((sales == null) ? 0 : sales.hashCode());
+		return result;
+	}
+
+
+
+	
+
+	
+	public List<Attachment> getAttachments() {
+		return attachments;
+	}
+
+	public void setAttachments(List<Attachment> attachments) {
+		this.attachments = attachments;
+	}
+
+	public Customer getSoldToCustomer() {
+		return soldToCustomer;
+	}
+
+	public void setSoldToCustomer(Customer soldToCustomer) {
+		this.soldToCustomer = soldToCustomer;
+	}
+
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		if(null !=sales)
+		sb.append("[sales: ").append(sales.toString()).append("]");
+		if(null != soldToCustomer)
+		sb.append("[soldToCustomer: ").append(soldToCustomer.toString()).append("]");
+		if(null != quoteItems)
+		{
+		    sb.append("[ quoteItem size : ").append(quoteItems.size()).append("]");
+		    if(quoteItems.size()>0)
+		    for(QuoteItem item: quoteItems)
+		    {
+		    	sb.append(item.toString());
+		    }
+		}
+		sb.append("remarksToCutomer=").append(remarksToCustomer);
+		return sb.toString();
+	}
+
+	public String getStage() {
+		return stage;
+	}
+
+	public void setStage(String stage) {
+		this.stage = stage;
+	}   
+
+
+
+	public String getEndCustomerName() {
+		return endCustomerName;
+	}
+
+	public void setEndCustomerName(String endCustomerName) {
+		this.endCustomerName = endCustomerName;
+	}
+
+	public String getShipToCustomerName() {
+		return shipToCustomerName;
+	}
+
+	public void setShipToCustomerName(String shipToCustomerName) {
+		this.shipToCustomerName = shipToCustomerName;
+	}
+
+
+	public Boolean getLoaFlag() {
+		return loaFlag;
+	}
+
+	public void setLoaFlag(Boolean loaFlag) {
+		this.loaFlag = loaFlag;
+	}
+
+	public String getDesignLocation() {
+		return designLocation;
+	}
+
+	public void setDesignLocation(String designLocation) {
+		this.designLocation = designLocation;
+	}
+
+	public String getProjectName() {
+		return projectName;
+	}
+
+	public void setProjectName(String projectName) {
+		this.projectName = projectName;
+	}
+
+	public Boolean getBmtCheckedFlag() {
+		return bmtCheckedFlag;
+	}
+
+	public void setBmtCheckedFlag(Boolean bmtCheckedFlag) {
+		this.bmtCheckedFlag = bmtCheckedFlag;
+	}
+
+	public String getEnquirySegment() {
+		return enquirySegment;
+	}
+
+	public void setEnquirySegment(String enquirySegment) {
+		this.enquirySegment = enquirySegment;
+	}
+
+	public String getPpSchedule() {
+		return ppSchedule;
+	}
+
+	public void setPpSchedule(String ppSchedule) {
+		this.ppSchedule = ppSchedule;
+	}
+
+	public String getMpSchedule() {
+		return mpSchedule;
+	}
+
+	public void setMpSchedule(String mpSchedule) {
+		this.mpSchedule = mpSchedule;
+	}
+
+	public String getApplication() {
+		return application;
+	}
+
+	public void setApplication(String application) {
+		this.application = application;
+	}
+
+	public Customer getShipToCustomer() {
+		return shipToCustomer;
+	}
+
+	public void setShipToCustomer(Customer shipToCustomer) {
+		this.shipToCustomer = shipToCustomer;
+	}
+
+	public Customer getEndCustomer() {
+		return endCustomer;
+	}
+
+	public void setEndCustomer(Customer endCustomer) {
+		this.endCustomer = endCustomer;
+	}
+
+	public String getCustomerType() {
+		return customerType;
+	}
+
+	public void setCustomerType(String customerType) {
+		this.customerType = customerType;
+	}
+	
+	
+	public boolean isAttachmentAvailable()
+	{
+		if(attachments!=null && attachments.size()>0)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public Boolean getFormAttachmentFlag() {
+		return formAttachmentFlag;
+	}
+
+	public void setFormAttachmentFlag(Boolean formAttachmentFlag) {
+		this.formAttachmentFlag = formAttachmentFlag;
+	}
+
+	public boolean isContinueSubmit() {
+		return isContinueSubmit;
+	}
+
+	@Transient
+	public void setContinueSubmit(boolean isContinueSubmit) {
+		this.isContinueSubmit = isContinueSubmit;
+	}
+
+	public String getMigrationBatchNumber() {
+		return migrationBatchNumber;
+	}
+
+	public void setMigrationBatchNumber(String migrationBatchNumber) {
+		this.migrationBatchNumber = migrationBatchNumber;
+	}
+
+	public Date getSubmissionDate() {
+		return submissionDate;
+	}
+	@Transient
+	public void setSubmissionDate(Date submissionDate) {
+		this.submissionDate = submissionDate;
+	}
+
+	public String getLastUpdatedName() {
+		return lastUpdatedName;
+	}
+
+	public void setLastUpdatedName(String lastUpdatedName) {
+		this.lastUpdatedName = lastUpdatedName;
+	}
+
+	public String getCreatedName() {
+		return createdName;
+	}
+
+	public void setCreatedName(String createdName) {
+		this.createdName = createdName;
+	}
+
+	public String getSalesUserName() {
+		return salesUserName;
+	}
+
+	public void setSalesUserName(String salesUserName)
+	{
+		this.salesUserName = salesUserName;
+	}
+
+	public String getCopyToCsName()
+	{
+		return copyToCsName;
+	}
+
+	public void setCopyToCsName(String copyToCsName) {
+		this.copyToCsName = copyToCsName;
+	}
+
+	public User getSales() {
+		return sales;
+	}
+
+	public void setSales(User sales) {
+		this.sales = sales;
+	}
+
+	public String getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public String getDesignInCat() {
+		return this.designInCat;
+	}
+
+	public void setDesignInCat(String designInCat) {
+		this.designInCat = designInCat;
+	}
+
+	public String getQuoteType() {
+		return this.quoteType;
+	}
+
+	public void setQuoteType(String quoteType) {
+		this.quoteType = quoteType;
+	}
+	
+	//INC0018065, INC0018819
+	public String getSoldToCustomerName() {
+		return soldToCustomerName;
+	}
+
+	public void setSoldToCustomerName(String soldToCustomerName)
+	{
+		this.soldToCustomerName = soldToCustomerName;
+	}
+
+	public String getSoldToCustomerNameChinese()
+	{
+		return soldToCustomerNameChinese;
+	}
+
+	public void setSoldToCustomerNameChinese(String soldToCustomerNameChinese)
+	{
+		this.soldToCustomerNameChinese = soldToCustomerNameChinese;
+	}
+
+	public String getDesignRegion() {
+		return designRegion;
+	}
+	public void setDesignRegion(String designRegion) {
+		this.designRegion = designRegion;
+	}
+
+	public String getQuoteSource() {
+		return quoteSource;
+	}
+
+	public void setQuoteSource(String quoteSource) {
+		this.quoteSource = quoteSource;
+	}
+
+	public String getDpReferenceId() {
+		return dpReferenceId;
+	}
+
+	public void setDpReferenceId(String dpReferenceId) {
+		this.dpReferenceId = dpReferenceId;
+	}
+
+	public static Quote newInstance(Quote quote) {
+		logger.info("Copy quote " + quote.getId() );
+		
+		Quote newQuote =  new Quote();
+		
+		try {
+			BeanUtils.copyProperties(newQuote, quote);
+		} catch (Exception e) {
+			logger.log(Level.SEVERE,"Exception occured when copying Quote " + quote.getId() + e.getMessage(),e);
+		}
+		newQuote.setId(0);
+		newQuote.setVersion(0);
+		newQuote.setFormNumber(null);
+		newQuote.setFormAttachmentFlag(false);
+		newQuote.setQuoteItems(new ArrayList<QuoteItem>());
+		newQuote.setAttachments(new ArrayList<Attachment>());
+		
+		return newQuote;
+		
+	}
+}

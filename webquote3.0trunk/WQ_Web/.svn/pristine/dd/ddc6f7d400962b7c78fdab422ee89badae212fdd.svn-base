@@ -1,0 +1,203 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	
+	<ui:define name="css">
+	 	<style type="text/css">
+            .errorRow {
+                background-color: #6CE26C !important;
+                color: red !important;
+            }
+            
+            .companyHeaderGrid tr, .companyHeaderGrid td {
+    border-style: hidden !important;
+}
+        </style> 
+	</ui:define>
+	
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	<h2><h:outputText value="#{dbResource['wq.label.exRateUpload']}"/></h2>
+	
+	<h:form id="form" enctype="multipart/form-data">
+		<p:messages id="msgId" escape="false" closable="true" autoUpdate="true"/>
+		<p:growl  id="growl" for="growl_1" sticky="#{growlPropertyMB.sticky}" showSummary="#{growlPropertyMB.showSummary}" showDetail="true" globalOnly="true" escape="#{growlPropertyMB.escape}"    />
+		<p:wizard widgetVar="wiz" flowListener="#{exchangeRateMB.onFlowProcess}" style="width:100%" showNavBar='true' 
+			   nextLabel="#{dbResource['wq.button.next']}" backLabel="#{dbResource['wq.button.back']}">
+			<p:tab id="upload" title="1. #{dbResource['wq.label.exRateUpload']}">
+				<p:panel header="#{dbResource['wq.button.upload']}" style="font-size:12pt">					
+					<p:panelGrid styleClass="companyHeaderGrid">
+					<p:row>
+						 
+						<p:column style="text-align: right">
+						<h:outputText value="#{dbResource['wq.label.region']}" />
+						</p:column>
+						<p:column>
+						<h:selectOneMenu value="#{exchangeRateMB.selectedBizUnit}">
+						<f:selectItems value="#{exchangeRateMB.bizUnits}"/>
+						</h:selectOneMenu>
+						</p:column>
+						<p:column>
+						<p:fileUpload label="#{dbResource['wq.button.chooseFile']}" value="#{exchangeRateMB.uploadFile}" allowTypes="/(\.|\/)(xls|xlsx|XLS|XLSX)$/" mode="simple" skinSimple="true" />	
+	        			</p:column>
+	        			<p:column>
+						<p:commandButton value="#{dbResource['wq.button.upload']}" icon="ui-icon-circle-check" update=":form:uploadFileName" actionListener="#{exchangeRateMB.upload}" ajax="false"/>
+						</p:column>
+						<p:column style="text-align: right">
+						<p:commandLink value="#{dbResource['wq.button.downloadExchRate']}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false" >
+							<p:fileDownload value="#{exchangeRateMB.download()}" />
+					    </p:commandLink>
+						</p:column>
+						</p:row>
+						
+					</p:panelGrid>
+					
+					<br/>
+					<p:spacer width="10" height="4"/> 
+					<h:outputText id="uploadFileName" value="#{exchangeRateMB.uploadFileName}"/>
+				</p:panel>										
+			
+			</p:tab>
+			
+			<p:tab id="validation" title="2. #{dbResource['wq.label.checkUpload']}">
+					<p:dataTable var="item"
+						value="#{exchangeRateMB.exchangeRateVos}"
+						rowKey="#{rowIndex+1}" 
+						rowIndexVar="rowIndex"
+						id="datatable_exchangeRate" 
+						resizableColumns="true" 
+						scrollable="true"  
+						paginator="true" 
+						rows="20" 
+						rowStyleClass="#{item.error ? 'errorRow' : null}"  
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+						
+						<p:column headerText="#{dbResource['wq.label.no']}" id="rowNumber" width="60">
+		        			#{rowIndex+1}
+	        			</p:column>
+	        			
+						<p:column headerText="#{dbResource['wq.label.currencyFrom']}" width="100">
+		        			#{item.currencyFrom}
+	        			</p:column>
+	        			
+	        			<p:column headerText="#{dbResource['wq.label.currencyTo']}" width="100">
+		        			#{item.currencyTo}
+	        			</p:column>
+	        			
+	        			<p:column headerText="#{dbResource['wq.label.exRateFrom']}" width="150">
+		        			#{item.exchangeRateFrom}
+	        			</p:column>
+	        			
+	        			<p:column headerText="#{dbResource['wq.label.exRateTo']}" width="150">
+		        			#{item.exchangeRateTo}
+	        			</p:column>
+	        			
+	        			<p:column headerText="#{dbResource['wq.label.vat']}" width="150">
+		        			#{item.vat}
+	        			</p:column>
+	        			
+						<p:column headerText="#{dbResource['wq.label.handling']}" width="150">
+							#{item.handling}
+	        			</p:column>
+	        			
+	        			<p:column headerText="#{dbResource['wq.label.SoldToCode']}" width="150">
+		        			#{item.soldToCode}
+	        			</p:column>		
+	        			
+					</p:dataTable>
+					
+			</p:tab>
+			
+			<p:tab id="confirm" title="3. #{dbResource['wq.label.confirmUpload']}">
+				<p:panel header="#{dbResource['wq.header.confirm']}">
+					 <p:panelGrid  columns="2" style="margin:0px 0px 0px 450px">
+						<h:outputText value="#{dbResource['wq.label.action']}" />
+			            <h:outputText value="#{dbResource['wq.header.records']}"/>
+			            
+			            <h:outputText value="#{dbResource['wq.button.add']} :"/>
+			            <h:outputText value="#{exchangeRateMB.results[0]}"/>
+			            
+			            <h:outputText value="#{dbResource['wq.label.update']}:"/>
+			            <h:outputText value="#{exchangeRateMB.results[1]}"/>
+
+			            <h:outputText value="#{dbResource['wq.label.delete']}:"/>
+			            <h:outputText value="#{exchangeRateMB.results[2]}"/>
+			            
+
+					</p:panelGrid>
+					<p:spacer width="500" height="30"/>
+					<p:commandButton value="#{dbResource['wq.label.backHome']}" action="#{exchangeRateMB.backToHome()}" ajax="false"/>
+				</p:panel>
+			</p:tab>
+			
+			
+		</p:wizard>
+		
+		
+        	<!--  <div style="float:left;">	
+	        	<p:commandButton id="backButton" styleClass="ui-wizard ui-wizard-navbar ui-wizard-nav-back" icon="ui-icon-arrowthick-1-w"
+	        	 value="#{dbResource['wq.button.back']}" onclick="start();PF('wiz').back();"  oncomplete="stop();" global="false" onerror="stopWithError();"  style="display:none;" />
+        	</div>
+        	<div style="float:right;">	
+	        	<p:commandButton id="nextButton" styleClass="ui-wizard ui-wizard-navbar ui-wizard-nav-next"  icon="ui-icon-arrowthick-1-e"
+	        	 value="#{dbResource['wq.button.next']}" onclick="start();PF('wiz').next();"  oncomplete="stop();"  global="false" onerror="stopWithError();"   />
+        	</div>		-->
+	</h:form>
+<script type="text/javascript"> 
+function nextButtonChange(tabId)
+{
+	
+	var nextBut = document.getElementById("form:nextButton");
+	var backBut = document.getElementById("form:backButton");
+	if(tabId==0)
+	{
+	   backBut.style.display='';	
+	   nextBut.style.display='';	
+	}
+	
+	if(tabId==1)
+	{
+		backBut.style.display='';	
+		nextBut.style.display='none';	
+	}
+
+}
+
+function backButtonChange(tabId)
+{
+
+	var nextBut = document.getElementById("form:nextButton");
+	var backBut = document.getElementById("form:backButton");
+	
+	if(tabId==1)
+	{
+		backBut.style.display='none';	
+		nextBut.style.display='';	
+	}
+    if(tabId==2)
+	{
+		backBut.style.display='';	
+		nextBut.style.display='';	
+	}
+}
+
+window.onload =function dosomeThing()
+{
+	var nextBut = document.getElementById("form:nextButton");
+	var backBut = document.getElementById("form:backButton");
+	var tabId = PF('wiz').getStepIndex(PF('wiz').currentStep);
+	if(tabId==2)
+	{
+		backBut.style.display='';	
+		nextBut.style.display='none';	
+	}
+}
+</script> 	
+		
+	</ui:define>
+</ui:composition>

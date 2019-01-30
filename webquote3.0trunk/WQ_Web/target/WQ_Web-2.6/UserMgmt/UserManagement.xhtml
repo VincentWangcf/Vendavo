@@ -1,0 +1,138 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="content">
+	
+	<!-- <p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	 -->
+	<h:form id="form1">
+		
+	<p:accordionPanel  >
+		<p:tab title="#{dbResource['wq.header.userManagementSearchCriteria']}">
+		
+			<h:panelGrid cellpadding="0" style="width:100%;" columns="10">
+				
+				<h:outputText value="#{dbResource['wq.label.EmpID']}:"  escape="false" />
+				<p:inputText value="#{userMB.criteria.employeeId}" />
+				
+				<h:outputText value="#{dbResource['wq.label.empName']}:"/>
+				<p:inputText value="#{userMB.criteria.employeeName}" /> 
+				
+				<h:outputText value="#{dbResource['wq.label.region']}"  />
+				<p:selectCheckboxMenu  widgetVar="regionSelectCheckboxMenuWidget" id="regionSelectCheckboxMenu" filter="true" filterText="Filter" filterMatchMode="startsWith" label="#{userMB.selectedRegion}" value="#{userMB.criteria.bizUnits}" style="width:180px">
+					<f:selectItems value="#{userMB.bizUnitsMap}" />  
+					<p:ajax update="regionSelectCheckboxMenu" listener="#{userMB.selectRegionCheckbox}" oncomplete="PF('regionSelectCheckboxMenuWidget').show()"/>
+				</p:selectCheckboxMenu>				
+				
+				
+				
+				<h:outputText value="#{dbResource['wq.label.role']}"  />
+				<p:selectCheckboxMenu widgetVar="roleSelectCheckboxMenuWidget" id="roleSelectCheckboxMenu" label="#{userMB.selectedRole}" filter="true" filterText="Filter" filterMatchMode="contains" value="#{userMB.criteria.roles}" style="width:180px">
+					<f:selectItems value="#{userMB.rolesMap}" />  
+					<p:ajax update="roleSelectCheckboxMenu" listener="#{userMB.selectRoleCheckbox}" oncomplete="PF('roleSelectCheckboxMenuWidget').show()"/>
+					<p:ajax update="roleSelectCheckboxMenu" listener="#{userMB.selectAllRoleCheckbox}" oncomplete="PF('roleSelectCheckboxMenuWidget').show()" partialSubmit="false" event="toggleSelect"  />
+				</p:selectCheckboxMenu>						
+				
+			</h:panelGrid>
+
+			<h:panelGrid columns="2" cellpadding="0" >
+				
+				<p:commandButton value="#{dbResource['wq.button.search']}"  icon="ui-icon-search" actionListener="#{userMB.search}" update=":form1:dataTable" />
+				<p:commandButton value="#{dbResource['wq.label.reset']}" icon="ui-icon-triangle-1-w" actionListener="#{userMB.initialize}" update="@form"/>
+				
+			</h:panelGrid>
+			
+		</p:tab>
+
+		</p:accordionPanel>
+		
+		<p:panel header="#{dbResource['wq.header.userManagement']}">
+		
+		<p:messages id="messages" escape="false" closable="true"/>
+				
+				<p:dataTable value="#{userMB.users}" 				
+					var="user" 
+					filteredValue="#{userMB.filterUsers}"
+					paginator="true" 
+					rows="10"
+    				rowsPerPageTemplate="10,20,50"
+					paginatorPosition="bottom" 
+					id="dataTable"
+					emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+				
+					<p:column headerText="#{dbResource['wq.label.EmpID']}" filterBy="#{user.employeeId}" filterMatchMode="contains" sortBy="#{user.employeeId}">
+						<h:outputText value="#{user.employeeId}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.empName']}" filterBy="#{user.name}" filterMatchMode="contains" sortBy="#{user.name}">
+						<h:outputText value="#{user.name}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.email']}"  filterBy="#{user.emailAddress}" filterMatchMode="contains"  sortBy="#{user.emailAddress}">
+						<h:outputText value="#{user.emailAddress}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.phone']}"  filterBy="#{user.phoneNumber}" filterMatchMode="contains"  sortBy="#{user.phoneNumber}">
+						<h:outputText value="#{user.phoneNumber}" />
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.supervisor']}"  filterBy="#{user.reportTo.employeeId}" filterMatchMode="contains"  sortBy="#{user.reportTo.employeeId}">
+						<h:outputText value="#{user.reportTo.employeeId}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.role']}"  filterBy="#{user.roleString}" filterMatchMode="contains"  sortBy="#{user.roleString}">
+						<h:outputText value="#{user.roleString}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.team']}"  filterBy="#{user.team.name}" filterMatchMode="contains"  sortBy="#{user.team.name}">
+						<h:outputText value="#{user.team.name}" />
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.active']}" filterBy="#{user.active? 'Yes':'No'}" filterMatchMode="contains"  sortBy="#{user.active? 'Yes':'No'}">
+						<h:outputText value="#{user.active? 'Yes':'No'}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.viewDetail']}" style="text-align: center" exportable="false" >
+						<p:commandButton icon="ui-icon-search" title="#{dbResource['wq.label.viewDetail']}"  update="@form" oncomplete="PF('userProfileDialog').show()" >
+							<f:setPropertyActionListener value="#{user}" target="#{userMB.user}" />
+						</p:commandButton>
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.button.modify']}" style="text-align: center" exportable="false">
+						<p:commandButton value="#{dbResource['wq.button.modify']}" ajax="false" title="#{dbResource['wq.button.modify']}" action="#{userDetailsMB.modifyUser}">
+							<f:param name="id" value="#{user.employeeId}"/>
+						</p:commandButton>
+					</p:column>
+					
+					<f:facet name="footer">
+						<p:commandButton value="#{dbResource['wq.button.xlsDownload']}" ajax="false" action="#{userDetailsMB.addNewUser}" >
+							<p:dataExporter type="xls" target="dataTable" fileName="UserList" postProcessor="#{userMB.postProcessXLS}"/>
+						</p:commandButton>
+						<p:commandButton value="#{dbResource['wq.button.addUser']}" ajax="false" action="#{userDetailsMB.addNewUser}" icon="ui-icon-document"/>					
+					</f:facet>					
+					
+				</p:dataTable>
+			
+		</p:panel>
+
+		<p:dialog header="#{dbResource['wq.label.userDetail']}" widgetVar="userProfileDialog" id="userProfileDialog" resizable="false"
+   				width="100%" height="500" closable="false">
+				<ui:include src="UserProfile.xhtml" />
+			<f:facet name="footer">
+				<p:commandButton value="#{dbResource['wq.button.ok']}" oncomplete="PF('userProfileDialog').hide()" actionListener="#{userMB.setDefaultUser}"/>					
+			</f:facet>					
+
+		</p:dialog>  
+			
+			
+		</h:form>
+
+	</ui:define>
+</ui:composition>
+
+
+

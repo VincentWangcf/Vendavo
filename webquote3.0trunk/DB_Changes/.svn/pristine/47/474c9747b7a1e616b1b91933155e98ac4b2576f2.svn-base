@@ -1,0 +1,5 @@
+/**andy hu 2015-1-12 11:23 comment ********************************************************************************************/
+1: UpdateFINISH_QUOTE_PROTECT_BEFORETrigger.sql
+the change reason:
+      The quoted margin still can not be automatically calculated based on the new cost.
+       the root cause: :new.RESALE_MARGIN := :old.RESALE_MARGIN;

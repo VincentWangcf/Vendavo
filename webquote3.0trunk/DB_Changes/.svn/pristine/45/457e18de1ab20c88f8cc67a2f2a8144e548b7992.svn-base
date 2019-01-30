@@ -1,0 +1,46 @@
+
+Insert into role (ID,CREATED_ON,LAST_UPDATED_ON,VERSION,NAME,CREATED_BY,LAST_UDPATED_BY,ACTIVE,DESCRIPTION) 
+values ((select max(id)+ 1 from role),sysdate,sysdate,4,'ROLE_CENTRAL_PRICING',11111111119,11111111119,1,'Central Pricing Team');
+
+Insert into  app_function(ID,name) values ((select max(id)+ 1 from app_function),'QuoteBuilder');
+
+update app_function set name = 'CatalogPage' where name = 'WebPromo';
+update app_function set name = 'CatalogMaintain' where name = 'WebPromoMaintain';
+commit;
+
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'QuoteBuilder'), (select id from role where name ='ROLE_CENTRAL_PRICING' ));
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'CatalogMaintain'), (select id from role where name ='ROLE_CENTRAL_PRICING' ));
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'CatalogPage'), (select id from role where name ='ROLE_CENTRAL_PRICING' ));
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'Working Platform'), (select id from role where name ='ROLE_CENTRAL_PRICING' ));
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'My Quote Search - QC'), (select id from role where name ='ROLE_CENTRAL_PRICING' ));
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'Index Page'), (select id from role where name ='ROLE_CENTRAL_PRICING' ));
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'My Profile'), (select id from role where name ='ROLE_CENTRAL_PRICING' ));
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'Pricer Material Upload'), (select id from role where name ='ROLE_CENTRAL_PRICING' ));
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'Pricer Enquiry'), (select id from role where name ='ROLE_CENTRAL_PRICING' ));
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'Part Master Enquiry'), (select id from role where name ='ROLE_CENTRAL_PRICING' ));
+
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'AnnouAndPromoView'), (select id from role where name ='ROLE_CENTRAL_PRICING' ));
+
+commit;

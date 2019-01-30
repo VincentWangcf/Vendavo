@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.0" 
+	xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+
+		<persistence-unit name="Server_Source"  transaction-type="JTA"> 
+			<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+  			<!--WebQuoteRefactorTEST 914678 WebQuoteJPTEST WebQuoteDS java:jboss/datasources/WebQuoteDS java:jboss/datasources/WebQuoteDS  java:jboss/datasources/WebQuoteDS2DEV -->
+			<jta-data-source>java:jboss/datasources/WebQuoteDS</jta-data-source>
+			<!-- <jta-data-source>java:jboss/datasources/WebQuoteDS</jta-data-source> -->
+			<class>com.avnet.emasia.webquote.entity.Action</class>
+			<class>com.avnet.emasia.webquote.entity.Announcement</class>
+			<class>com.avnet.emasia.webquote.entity.AppFunction</class>
+			<class>com.avnet.emasia.webquote.entity.AppProperty</class>
+			<class>com.avnet.emasia.webquote.entity.Attachment</class>
+			<class>com.avnet.emasia.webquote.entity.AuditQuoteItem</class>
+			<class>com.avnet.emasia.webquote.entity.AuditTrail</class>
+			<class>com.avnet.emasia.webquote.entity.AuditTrailRecord</class>
+			<class>com.avnet.emasia.webquote.entity.AutoTransferPm</class>
+			<class>com.avnet.emasia.webquote.entity.BizUnit</class>
+			<class>com.avnet.emasia.webquote.entity.ContractPricer</class>
+			<class>com.avnet.emasia.webquote.entity.Pricer</class>
+			<class>com.avnet.emasia.webquote.entity.CostIndicator</class>
+			<class>com.avnet.emasia.webquote.entity.CostIndicatorRule</class>			
+			<class>com.avnet.emasia.webquote.entity.Customer</class>
+			<class>com.avnet.emasia.webquote.entity.CustomerAddress</class>
+			<class>com.avnet.emasia.webquote.entity.CustomerPartner</class>
+			<class>com.avnet.emasia.webquote.entity.CustomerSale</class>
+			<class>com.avnet.emasia.webquote.entity.Country</class>
+			<class>com.avnet.emasia.webquote.entity.City</class>
+			<class>com.avnet.emasia.webquote.entity.DataAccess</class>
+			<class>com.avnet.emasia.webquote.entity.DataSyncError</class>
+			<class>com.avnet.emasia.webquote.entity.DrNedaHeader</class>
+			<class>com.avnet.emasia.webquote.entity.DrNedaItem</class>						
+			<class>com.avnet.emasia.webquote.entity.DrProjectCustomer</class>
+			<class>com.avnet.emasia.webquote.entity.DrProjectHeader</class>
+			
+			<class>com.avnet.emasia.webquote.entity.FreeStock</class>
+			<class>com.avnet.emasia.webquote.entity.Group</class>
+			<class>com.avnet.emasia.webquote.entity.LoadingJobTrack</class>
+			<class>com.avnet.emasia.webquote.entity.Manufacturer</class>
+			<class>com.avnet.emasia.webquote.entity.ManufacturerMapping</class>
+			<class>com.avnet.emasia.webquote.entity.ReferenceMarginSetting</class>
+			<class>com.avnet.emasia.webquote.entity.ManufacturerDetail</class>
+			<class>com.avnet.emasia.webquote.entity.Material</class>
+			<class>com.avnet.emasia.webquote.entity.MaterialRegional</class>
+			<class>com.avnet.emasia.webquote.entity.NormalPricer</class>
+			<class>com.avnet.emasia.webquote.entity.MaterialType</class>
+			<class>com.avnet.emasia.webquote.entity.Plant</class>
+			<class>com.avnet.emasia.webquote.entity.Pos</class>
+			<class>com.avnet.emasia.webquote.entity.PosSummary</class>
+			<class>com.avnet.emasia.webquote.entity.ProductCategory</class>
+			<class>com.avnet.emasia.webquote.entity.ProductGroup</class>
+			<class>com.avnet.emasia.webquote.entity.ProgramPricer</class>
+			<class>com.avnet.emasia.webquote.entity.ProgramType</class>
+			<class>com.avnet.emasia.webquote.entity.PromotionItem</class>
+			<class>com.avnet.emasia.webquote.entity.QtyBreakPricer</class>
+			<class>com.avnet.emasia.webquote.entity.QuantityBreakPrice</class>
+			<class>com.avnet.emasia.webquote.entity.QuotationEmail</class>
+			<class>com.avnet.emasia.webquote.entity.Quote</class>
+			<class>com.avnet.emasia.webquote.entity.QuoteItem</class>
+			<class>com.avnet.emasia.webquote.entity.QuoteNumber</class>
+			<class>com.avnet.emasia.webquote.entity.QuoteToSo</class>
+			<class>com.avnet.emasia.webquote.entity.QuoteToSoPending</class>
+			<class>com.avnet.emasia.webquote.entity.Resource</class>
+			<class>com.avnet.emasia.webquote.entity.Role</class>
+			<class>com.avnet.emasia.webquote.entity.SalesCostPricer</class>
+			<class>com.avnet.emasia.webquote.entity.SalesOrder</class>																					
+			<class>com.avnet.emasia.webquote.entity.SalesOrg</class>
+			<class>com.avnet.emasia.webquote.entity.ScheduleConfig</class>
+			<class>com.avnet.emasia.webquote.entity.Screen</class>
+			<class>com.avnet.emasia.webquote.entity.SimplePricer</class>
+			<class>com.avnet.emasia.webquote.entity.Strategy</class>
+			<class>com.avnet.emasia.webquote.entity.SystemCodeMaintenance</class>
+			<class>com.avnet.emasia.webquote.entity.Team</class>
+			<class>com.avnet.emasia.webquote.entity.User</class>
+			<class>com.avnet.emasia.webquote.entity.ValidationRule</class>
+			<class>com.avnet.emasia.webquote.entity.VendorReport</class>
+	        <class>com.avnet.emasia.webquote.entity.OfflineReport</class>
+	        <class>com.avnet.emasia.webquote.entity.SapMaterialDetail</class>
+	        <class>com.avnet.emasia.webquote.entity.ReportRecipient</class>
+            <class>com.avnet.emasia.webquote.entity.DrmsAgpRea</class>
+            <class>com.avnet.emasia.webquote.entity.SapMaterial</class>
+            <class>com.avnet.emasia.webquote.entity.RestrictedCustomerMapping</class>
+            <class>com.avnet.emasia.webquote.entity.BalUnconsumedQty</class>
+            <class>com.avnet.emasia.webquote.entity.PricerTypeMapping</class>
+            <class>com.avnet.emasia.webquote.entity.FiscalMapping</class>
+            <class>com.avnet.emasia.webquote.entity.ExcCurrencyDefault</class>
+            <class>com.avnet.emasia.webquote.entity.ExchangeRate</class>
+            <class>com.avnet.emasia.webquote.entity.AuditExchangeRate</class>
+            <class>com.avnet.emasia.webquote.entity.ActiveSession</class>
+            <class>com.avnet.emasia.webquote.entity.SpecialCustomer</class>
+            <class>com.avnet.emasia.webquote.entity.PricerOffline</class>
+            <class>com.avnet.emasia.webquote.entity.PricerUploadSummary</class>
+            <class>com.avnet.emasia.webquote.entity.MfrFeedbackInfo</class>
+            <class>com.avnet.emasia.webquote.entity.MfrRequestInfo</class>
+            <class>com.avnet.emasia.webquote.entity.ShipToCodeMapping</class>
+            <class>com.avnet.emasia.webquote.entity.SubregionRecipientMapping</class>
+            <class>com.avnet.emasia.webquote.entity.SubregionTeamMapping</class>
+            <class>com.avnet.emasia.webquote.entity.VendorBpmCustomer</class>
+            <class>com.avnet.emasia.webquote.entity.DcodeRrgionMapping</class>
+            <class>com.avnet.emasia.webquote.entity.PgMasterMapping</class>
+            <class>com.avnet.emasia.webquote.entity.DesignLocation</class>
+            <class>com.avnet.emasia.webquote.entity.QuoteItemDesign</class>
+            <class>com.avnet.emasia.webquote.entity.QuoteResponseTimeHistory</class>
+            <class>com.avnet.emasia.webquote.entity.TaskInfoBean</class>
+            <class>com.avnet.emasia.webquote.entity.QuoteItemHis</class>
+            <class>com.avnet.emasia.webquote.entity.QuoteItemDesignHis</class>
+            <class>com.avnet.emasia.webquote.entity.DpMessage</class>
+            <class>com.avnet.emasia.webquote.entity.DpRfq</class>
+            <class>com.avnet.emasia.webquote.entity.DpRfqItem</class>
+            <class>com.avnet.emasia.webquote.entity.SapPcnMaterial</class>
+            <class>com.avnet.emasia.webquote.entity.AppMessages</class>
+            <class>com.avnet.emasia.webquote.entity.AppLabel</class>
+            <class>com.avnet.emasia.webquote.entity.LocaleMaster</class>
+            <class>com.avnet.emasia.webquote.entity.ExcelReport</class>
+            <class>com.avnet.emasia.webquote.entity.ExcelReportColumn</class>
+            <class>com.avnet.emasia.webquote.entity.ExcelReportSeq</class>
+            <class>com.avnet.emasia.webquote.entity.SapDpaCust</class>
+            <class>com.avnet.emasia.webquote.entity.SapInterfaceBatches</class>
+            <class>com.avnet.emasia.webquote.entity.PricerDeleted</class>
+            <class>com.avnet.emasia.webquote.edi.MesgRefuse</class>
+            <class>com.avnet.emasia.webquote.edi.AMesgRefuse</class>
+            <class>com.avnet.emasia.webquote.edi.AMesgApprove</class>
+            <class>com.avnet.emasia.webquote.edi.DMesgRefuse</class>
+            <class>com.avnet.emasia.webquote.edi.DMesgApprove</class>
+            <class>com.avnet.emasia.webquote.edi.MesgLog</class>
+            <class>com.avnet.emasia.webquote.edi.ThreeAMesgOne</class>
+            
+            <class>com.avnet.emasia.webquote.entity.PageComponentItem</class>
+            <class>com.avnet.emasia.webquote.entity.LogicCalConfig</class>
+            <class>com.avnet.emasia.webquote.entity.LeafLogicCalConfig</class>
+            <class>com.avnet.emasia.webquote.entity.CompositeLogicCalConfig</class>
+            
+			<shared-cache-mode>NONE</shared-cache-mode>
+			<properties>
+				<property name="eclipselink.session.customizer" value="com.avnet.emasia.webquote.entity.util.UUIDSequence" />
+				<property name="eclipselink.target-server" value="JBoss" /> 
+				<!--
+  				 <property name="eclipselink.logging.level.sql" value="FINE" /> 
+ 				<property name="eclipselink.logging.level" value="FINE" /> 
+ 				<property name="eclipselink.logging.parameters" value="true"/>   
+               <property name = "hibernate.show_sql" value = "true" />
+  					
+   					<property name="eclipselink.target-database" value="ORACLE"/>
+      				<property name="eclipselink.jdbc.driver" value="oracle.jdbc.driver.OracleDriver"/>
+      				<property name="eclipselink.jdbc.url" value="jdbc:oracle:thin:@jupiter3.avnet.com:1521:avd44db1"/>
+      				<property name="eclipselink.jdbc.user" value="webquote"/>
+      				<property name="eclipselink.jdbc.password" value="avnet2013"/> -->
+			</properties>				
+		</persistence-unit>	
+</persistence>

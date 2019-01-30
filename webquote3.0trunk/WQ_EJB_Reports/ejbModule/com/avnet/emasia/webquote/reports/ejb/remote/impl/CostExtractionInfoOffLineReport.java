@@ -1,0 +1,199 @@
+package com.avnet.emasia.webquote.reports.ejb.remote.impl;
+
+import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.text.DateFormat;
+import com.avnet.emasia.webquote.utilities.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.ejb.Remote;
+import javax.ejb.Stateless;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+
+import com.avnet.emasia.webquote.entity.ExcelReport;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+import com.avnet.emasia.webquote.poi.ExcelGenerator;
+import com.avnet.emasia.webquote.quote.ejb.CostExtractSB;
+import com.avnet.emasia.webquote.quote.ejb.MaterialSB;
+import com.avnet.emasia.webquote.quote.vo.CostExtractSearchCriterial;
+import com.avnet.emasia.webquote.reports.constant.ReportConstant;
+import com.avnet.emasia.webquote.reports.ejb.ExcelReportSB;
+import com.avnet.emasia.webquote.reports.ejb.remote.OffLineRemote;
+import com.avnet.emasia.webquote.reports.util.ReportsUtil;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilities.bean.CostExtractionExcelAlias;
+import com.avnet.emasia.webquote.utilities.bean.ExcelAliasBean;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.vo.OfflineReportParam;
+
+@Stateless
+@Remote(OffLineRemote.class)
+public class CostExtractionInfoOffLineReport extends OffLineReport implements OffLineRemote {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private static final Logger LOG = Logger.getLogger(CostExtractionInfoOffLineReport.class.getName());
+
+	@EJB
+	ExcelReportSB excelReportSB;
+	
+	@EJB
+	private transient UserSB userSb;
+	
+	@EJB
+	private transient MaterialSB materialSB;
+		
+	@EJB
+	private transient CostExtractSB costExtractSB;
+	
+	@EJB
+	private SysConfigSB sysConfigSB;
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public void sendOffLineReport(OfflineReportParam param) throws Exception {
+		LOG.info("Call sendOffLineReport begin ,param ::" +param.toString());
+		List<CostExtractSearchCriterial> resultList = null;
+		long start = System.currentTimeMillis();
+		
+		try {
+			int pageSize = 30000;
+			User user = userSb.findByEmployeeIdLazily(param.getEmployeeId());
+			ExcelReport excelReport = excelReportSB.getExcelReportByReportName(param.getReportName());
+			CostExtractSearchCriterial criteria = (CostExtractSearchCriterial) param.getCriteriaBean();
+			String templatePath = sysConfigSB.getProperyValue(ReportConstant.TEMPLATE_PATH);
+			String reportFilePath = sysConfigSB.getProperyValue(ReportConstant.OFFLINE_REPORT_PATH);
+			String newfileName = ReportsUtil.generateOfflineReportFileName(user.getEmployeeId(), "xlsx",param.getReportName());
+			SXSSFWorkbook workbook = ExcelGenerator.generateExcelTemplate(excelReport, param.getReportName(), templatePath);
+			boolean needContinueFind = true;
+			
+			for (int i = 0; needContinueFind ; i++) {
+				resultList = costExtractSB.searchCostInformation(criteria, true, i * pageSize, pageSize);
+				needContinueFind = resultList.size()<pageSize? false:true;
+				workbook = generateExcelFileForHasAnotationBean(workbook, resultList);
+				resultList.clear();
+				resultList = null;
+			}
+			ExcelGenerator.outputExcelFile(workbook, reportFilePath + File.separator + newfileName);
+
+			sendOfflineEmail(user,newfileName);
+			
+			LOG.info("Processed time: " + (System.currentTimeMillis() - start));
+			LOG.info("Call sendOffLineReport end "+param.toString());
+			
+		} catch (Exception e) {
+
+			LOG.severe("Exception Cost Extraction Info sendOffLineReport : "+e.getMessage() + e.getStackTrace());
+			throw e;
+		}finally {
+			if(resultList != null) {
+				resultList.clear();
+				resultList = null;
+			}
+		}
+	}
+
+	public static SXSSFWorkbook generateExcelFileForHasAnotationBean(SXSSFWorkbook workbook, List resultList)
+			throws WebQuoteException {
+		SXSSFSheet sh = (SXSSFSheet) workbook.getSheetAt(0);
+		Object bean = null;
+		List<ExcelAliasBean> excelAliasTreeSet = getPricerExcelAliasAnnotation(CostExtractSearchCriterial.class);
+
+		if(resultList != null && resultList.size() > 0) {
+			for (int idx = 0; idx < resultList.size(); idx++) {
+				int lastRowIndex = sh.getLastRowNum();
+
+				bean = resultList.get(idx);
+				
+				Row row = sh.createRow(lastRowIndex+1);
+				Cell cell = null;
+				String value =null;
+				Object tempVal = null;
+				DateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+				
+				for(ExcelAliasBean excelAliasBean:excelAliasTreeSet){					
+					cell = row.createCell(excelAliasBean.getCellNum()-1);
+					cell.setCellType(Cell.CELL_TYPE_STRING);
+
+					if(cell!=null){
+						String fieldName = excelAliasBean.getFieldName();
+						Method met;
+						try {
+							met = bean.getClass().getMethod("get"+fieldName.substring(0,1).toUpperCase() + fieldName.substring(1));
+							tempVal = met.invoke(bean) ;
+
+							if(tempVal instanceof Date){
+								value = format.format(tempVal);
+							}else{
+								if(tempVal != null){
+									value = String.valueOf(tempVal);
+								}else{
+									value = "";
+								}
+							}
+							
+							cell.setCellValue(value);
+						} catch (Exception e) {
+							LOG.log(Level.SEVERE, "Exception occurred for att: "+bean+", Exception message: "+e.getMessage(), e); 
+						}
+					}	
+				}
+			}
+		}
+		
+		return workbook;
+	}
+	
+	public static List<ExcelAliasBean> getPricerExcelAliasAnnotation(Class<?> beanClass ){
+		List<ExcelAliasBean> treeSet = new ArrayList<ExcelAliasBean>();
+	
+		Field[] fields = beanClass.getDeclaredFields();
+	
+		for(Field f :fields){
+			f.setAccessible(true);
+			CostExtractionExcelAlias annontation = f.getAnnotation(CostExtractionExcelAlias.class);
+			if(annontation==null) continue;
+
+			ExcelAliasBean bean = new ExcelAliasBean();
+			bean.setAliasName( annontation.name());
+			bean.setCellNum(Integer.valueOf(annontation.cellNum()));
+			bean.setFieldName(f.getName());
+			bean.setFieldLength(Integer.valueOf(annontation.fieldLength()));
+
+			treeSet.add(bean);
+		}
+		Collections.sort(treeSet,new ExcelAliasComparator());
+		return treeSet;
+	}
+	
+	static class ExcelAliasComparator implements Comparator<ExcelAliasBean> {
+
+		public int compare(ExcelAliasBean f1, ExcelAliasBean f2) {
+
+			if (f1.getCellNum() > f2.getCellNum()) {
+				return 1;
+			} else if (f1.getCellNum() == f2.getCellNum()) {
+				return 0;
+			} else {
+				return -1;
+			}
+		}
+	}	
+
+}

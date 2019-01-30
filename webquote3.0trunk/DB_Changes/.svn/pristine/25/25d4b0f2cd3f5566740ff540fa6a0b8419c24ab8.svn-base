@@ -1,0 +1,25 @@
+/**andy hu 2014-09-12 15:48 comment ********************************************************************************************/
+1: 001restructureProgramType.sql
+the change reason:
+	When upload program pricer, there¡¯s a field called Program. Currently the design and logic about this field has some issues,
+  	change it as below: 
+  		1.	Remove BIZ_UNIT_ID column in programType table,  no need to differentiate same type in different regions. 
+		2.	The matching should be ignore case, so either COMMODITY or Commodity should mapped to ID=1 record.
+		3.	If Program in the pricer does not exist, system should automatically create the field and insert into the table, and then link it to the new uploaded pricer. 
+/*****************************************************************************************************************/
+
+/**andy hu 2014-09-15 17:13 comment ********************************************************************************************/
+2: 002PG_MASTER_MAPPING.sql
+the change reason:
+	When upload pricer, check the mfr and region mapping in the master mapping table, if not found, do not update the product group 
+	2. After the upload process, display the alert message ¡°The master of <MFR> is <REGION>.
+	 The product group 2 is not uploaded during pricer upload¡±.
+/*****************************************************************************************************************/
+
+/*****************************************************************************************************************/
+
+/**Tough Lin 2014-09-15 17:58 comment ********************************************************************************************/
+1: 003 Add UPLOAD_FILE_SIZE_LIMIT in system_code_maintenance table.sql
+the change reason:
+	To limit the max size of excel file, add one record UPLOAD_FILE_SIZE_LIMIT in system_code_maintenance table  
+/*****************************************************************************************************************/

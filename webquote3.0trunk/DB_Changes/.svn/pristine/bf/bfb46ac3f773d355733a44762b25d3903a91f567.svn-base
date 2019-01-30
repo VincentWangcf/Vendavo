@@ -1,0 +1,5 @@
+Insert into APP_MESSAGES(ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) 
+VALUES((select max(id)+1 from APP_MESSAGES),'en','wq.error.noaccesscurrency','Must input a Buy Currency that is supported by your default region.');
+
+Insert into APP_MESSAGES(ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) 
+VALUES((select max(id)+1 from APP_MESSAGES),'en','wq.error.notCurrencyType','Must input a Buy Currency that is supported by your excel.');

@@ -1,0 +1,3 @@
+1)workingplatform quote history change to order by submissiondate --add by Lenon 2016/12/16
+2)fix issue for SR about the DRMS checking in workingplatform and Response IT  --add by Lenon 2016/12/16
+3)fix issue for STM EDI --add by Lenon 2016/12/16

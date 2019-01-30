@@ -1,0 +1,97 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.logging.Logger;
+
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.OneToMany;
+
+import com.avnet.emasia.webquote.entity.LeafLogicCalConfig.ConditionType;
+
+@Entity
+@DiscriminatorValue("CONNECTOR")
+public class CompositeLogicCalConfig extends LogicCalConfig {
+	private static final Logger LOG = Logger.getLogger(CompositeLogicCalConfig.class.getName());
+	@Column(name = "LOGIC_ACTION", length = 10, nullable = false)
+	@Enumerated(EnumType.STRING)
+	private LogicConnector logicConnector;
+
+	@OneToMany(mappedBy="parent")
+	private List<LogicCalConfig> chiledConfigList;
+	
+
+	public LogicConnector getLogicConnector() {
+		return logicConnector;
+	}
+
+	public void setLogicConnector(LogicConnector logicConnector) {
+		this.logicConnector = logicConnector;
+	}
+
+	public List<LogicCalConfig> getChiledConfigList() {
+		return chiledConfigList;
+	}
+
+	public void setChiledConfigList(List<LogicCalConfig> list) {
+		this.chiledConfigList = list;
+	}
+	
+	/*@Override
+	protected Predicate<Boolean> isRegionAndRoleMatched(List<String> regions, List<String> roles) {
+		return (Boolean b) -> {
+			check the size of chiledConfigList
+			if(chiledConfigList.size() != 2) {
+				String errorMesg = MessageFormat.format("Type [ConnectorConfig] must have two child config. "
+						+ "please check the config table for config id[{0}] ", id);
+				LOG.severe(errorMesg);
+				throw new RuntimeException(errorMesg);
+			}
+			
+			boolean firstMatch = logicConnector.test(chiledConfigList.get(0).isRegionAndRoleMatched(regions, roles),
+					chiledConfigList.get(1).isRegionAndRoleMatched(regions, roles));
+			return this.logicResultReverse ? !firstMatch : firstMatch;
+		};
+	}*/
+	
+	@Override
+	protected Predicate<Boolean> isMatched(EnumMap<ConditionType, Collection<String>> mapParam){
+		return (Boolean b) -> {
+			/*check the size of chiledConfigList*/
+			if(chiledConfigList.size() != 2) {
+				String errorMesg = MessageFormat.format("Type [ConnectorConfig] must have two child config. "
+						+ "please check the config table for config id[{0}] ", id);
+				LOG.severe(errorMesg);
+				throw new RuntimeException(errorMesg);
+			}
+			boolean firstMatch = logicConnector.test(chiledConfigList.get(0).isMatched(mapParam),
+					chiledConfigList.get(1).isMatched(mapParam));
+			return this.logicResultReverse ? !firstMatch : firstMatch;
+		};
+		
+	};
+	
+	private static enum LogicConnector {
+		AND {
+			@Override
+			boolean test(Predicate<Boolean> p1, Predicate<Boolean> p2) {
+				return p1.and(p2).test(MATCH);
+			}
+		},OR {
+			@Override
+			boolean test(Predicate<Boolean> p1, Predicate<Boolean> p2) {
+				return p1.or(p2).test(MATCH);
+			}
+		};
+		private final static boolean MATCH = true;
+		abstract boolean test(Predicate<Boolean> p1, Predicate<Boolean> p2);
+	}
+}

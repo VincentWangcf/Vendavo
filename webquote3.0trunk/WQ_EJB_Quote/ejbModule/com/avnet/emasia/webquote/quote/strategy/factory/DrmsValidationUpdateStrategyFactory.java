@@ -1,0 +1,65 @@
+package com.avnet.emasia.webquote.quote.strategy.factory;
+
+import java.io.Serializable;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.quote.strategy.interfaces.DrmsValidationUpdateStrategy;
+
+/**
+ * <p>DRMS Validation Implements Bean Factory</p>
+ * @author Lenon.Yang(043044)
+ * @version 1.0
+ * @date 2016-11-30
+ *
+ */
+public final class DrmsValidationUpdateStrategyFactory implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private static final String DEFAULT_REGION = "DEFAULT";
+
+	private static class LazyInnerHelper {
+		protected static DrmsValidationUpdateStrategyFactory factory = new DrmsValidationUpdateStrategyFactory();
+	}
+	
+	private DrmsValidationUpdateStrategyFactory(){
+	}
+	
+	private static final TreeMap<String,DrmsValidationUpdateStrategy> DRMS_VALIDATION_IMPL_MAP = new TreeMap<String,DrmsValidationUpdateStrategy>();
+	
+	
+	public static DrmsValidationUpdateStrategyFactory getInstance() {
+		/*if(factory == null) {
+			factory = new DrmsValidationUpdateStrategyFactory();
+		}*/
+		return LazyInnerHelper.factory;
+	}
+	
+	public DrmsValidationUpdateStrategy getDrmsValidationUpdateStrategy(String region) {
+		return  DRMS_VALIDATION_IMPL_MAP.get(region) == null ? DRMS_VALIDATION_IMPL_MAP.get(DEFAULT_REGION)
+				: DRMS_VALIDATION_IMPL_MAP.get(region);
+	}
+	
+	public void clearImplMap() {
+		DRMS_VALIDATION_IMPL_MAP.clear();
+	}
+	
+	public void initImplMap(Map<String,String> implClass) {
+		if(implClass != null && implClass.size() > 0) {
+			for(Iterator<String> it = implClass.keySet().iterator();it.hasNext();) {
+				String key = it.next();
+				String className = implClass.get(key);
+				DrmsValidationUpdateStrategy drmsValidationUpdateStrategy = (DrmsValidationUpdateStrategy) BeanFactory
+						.getInstance().getBean(className);
+				DRMS_VALIDATION_IMPL_MAP.put(key, drmsValidationUpdateStrategy);
+			}
+		}
+	}
+}

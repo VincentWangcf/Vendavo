@@ -1,0 +1,325 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>TestNG:  Unit Test</title>
+<style type="text/css">
+table caption,table.info_table,table.result,table.passed,table.failed {margin-bottom:10px;border:1px solid #000099;border-collapse:collapse;empty-cells:show;}
+table.info_table td,table.info_table th,table.result td,table.result th,table.passed td,table.passed th,table.failed td,table.failed th {
+border:1px solid #000099;padding:.25em .5em .25em .5em
+}
+table.result th {vertical-align:bottom}
+tr.param th {padding-left:1em;padding-right:1em}
+tr.param td {padding-left:.5em;padding-right:2em}
+td.numi,th.numi,td.numi_attn {
+text-align:right
+}
+tr.total td {font-weight:bold}
+table caption {
+text-align:center;font-weight:bold;
+}
+table.passed tr.stripe td,table tr.passedodd td {background-color: #00AA00;}
+table.passed td,table tr.passedeven td {background-color: #33FF33;}
+table.passed tr.stripe td,table tr.skippedodd td {background-color: #cccccc;}
+table.passed td,table tr.skippedodd td {background-color: #dddddd;}
+table.failed tr.stripe td,table tr.failedodd td,table.result td.numi_attn {background-color: #FF3333;}
+table.failed td,table tr.failedeven td,table.result tr.stripe td.numi_attn {background-color: #DD0000;}
+tr.stripe td,tr.stripe th {background-color: #E6EBF9;}
+p.totop {font-size:85%;text-align:center;border-bottom:2px black solid}
+div.shootout {padding:2em;border:3px #4854A8 solid}
+</style>
+</head>
+<body>
+<table cellspacing="0" cellpadding="0" class="result">
+<tr><th>Test</th><th class="numi">Methods<br/>Passed</th><th class="numi">Scenarios<br/>Passed</th><th class="numi"># skipped</th><th class="numi"># failed</th><th class="numi">Total<br/>Time</th><th class="numi">Included<br/>Groups</th><th class="numi">Excluded<br/>Groups</th></tr>
+<tr><td style="text-align:left;padding-right:2em">Command line test</td><td class="numi">69</td><td class="numi">69</td><td class="numi">0</td><td class="numi_attn">12</td><td class="numi">0.3 seconds</td><td class="numi"></td><td class="numi"></td></tr>
+</table>
+<table cellspacing="0" cellpadding="0" class="passed" id="summary">
+<tr><th>Class</th><th>Method</th><th># of<br/>Scenarios</th><th>Start</th><th>Time<br/>(ms)</th></tr>
+<tr><th colspan="4">Command line test &#8212; failed</th></tr>
+<tr class="failedodd"><td rowspan="5">com.avnet.emasia.webquote.entity.MaterialTest</td><td><a href="#m1"><b>fillInPricerInfoTest</b>  </a></td><td class="numi">1</td><td>1539244055550</td><td class="numi">3</td></tr><tr class="failedodd"><td><a href="#m2"><b>fillInPricerInfoTest2</b>  </a></td><td class="numi">1</td><td>1539244055555</td><td class="numi">2</td></tr><tr class="failedodd"><td><a href="#m3"><b>fillInPricerInfoTest3</b>  </a></td><td class="numi">1</td><td>1539244055558</td><td class="numi">3</td></tr><tr class="failedodd"><td><a href="#m4"><b>fillInPricerInfoTest30</b>  </a></td><td class="numi">1</td><td>1539244055563</td><td class="numi">2</td></tr><tr class="failedodd"><td><a href="#m5"><b>fillInPricerInfoTest4</b>  </a></td><td class="numi">1</td><td>1539244055566</td><td class="numi">67</td></tr>
+<tr class="failedeven"><td rowspan="2">com.avnet.emasia.webquote.entity.QtyCalTest</td><td><a href="#m6"><b>calMoqTest1</b>  </a></td><td class="numi">1</td><td>1539244055698</td><td class="numi">0</td></tr><tr class="failedeven"><td><a href="#m7"><b>calMoqTest2</b>  </a></td><td class="numi">1</td><td>1539244055699</td><td class="numi">0</td></tr>
+<tr class="failedodd"><td rowspan="5">com.avnet.emasia.webquote.vo.RfqItemVOTest</td><td><a href="#m8"><b>matchAQConditionsTest1</b>  </a></td><td class="numi">1</td><td>1539244055710</td><td class="numi">0</td></tr><tr class="failedodd"><td><a href="#m9"><b>matchAQConditionsTest2</b>  </a></td><td class="numi">1</td><td>1539244055711</td><td class="numi">0</td></tr><tr class="failedodd"><td><a href="#m10"><b>matchAQConditionsTest5</b>  </a></td><td class="numi">1</td><td>1539244055712</td><td class="numi">0</td></tr><tr class="failedodd"><td><a href="#m11"><b>matchAQConditionsTest7</b>  </a></td><td class="numi">1</td><td>1539244055713</td><td class="numi">0</td></tr><tr class="failedodd"><td><a href="#m12"><b>matchAQConditionsTest8</b>  </a></td><td class="numi">1</td><td>1539244055714</td><td class="numi">0</td></tr>
+<tr><th colspan="4">Command line test &#8212; passed</th></tr>
+<tr class="passedodd"><td rowspan="1">com.avnet.emasia.webquote.entity.BizUnitTest</td><td><a href="#m13"><b>findMaterial</b>  </a></td><td class="numi">1</td><td>1539244055462</td><td class="numi">3</td></tr>
+<tr class="passedeven"><td rowspan="2">com.avnet.emasia.webquote.entity.CostIndicatorTest</td><td><a href="#m14"><b>applyTest1</b>  </a></td><td class="numi">1</td><td>1539244055515</td><td class="numi">12</td></tr><tr class="passedeven"><td><a href="#m15"><b>applyTest2</b>  </a></td><td class="numi">1</td><td>1539244055528</td><td class="numi">1</td></tr>
+<tr class="passedodd"><td rowspan="1">com.avnet.emasia.webquote.entity.ManufacturerDetailTest</td><td><a href="#m16"><b>fillInTest</b>  </a></td><td class="numi">1</td><td>1539244055530</td><td class="numi">2</td></tr>
+<tr class="passedeven"><td rowspan="1">com.avnet.emasia.webquote.entity.ManufacturerTest</td><td><a href="#m17"><b>getManufacturerDetailTest</b>  </a></td><td class="numi">1</td><td>1539244055533</td><td class="numi">0</td></tr>
+<tr class="passedodd"><td rowspan="5">com.avnet.emasia.webquote.entity.MaterialRegionalTest</td><td><a href="#m18"><b>fillInPricerTest</b>  </a></td><td class="numi">1</td><td>1539244055534</td><td class="numi">1</td></tr><tr class="passedodd"><td><a href="#m19"><b>getManufacturerDetailTest</b>  </a></td><td class="numi">1</td><td>1539244055537</td><td class="numi">0</td></tr><tr class="passedodd"><td><a href="#m20"><b>getManufacturerDetailTest2</b>  </a></td><td class="numi">1</td><td>1539244055538</td><td class="numi">0</td></tr><tr class="passedodd"><td><a href="#m21"><b>getMaterialRegaionalTest</b>  </a></td><td class="numi">1</td><td>1539244055540</td><td class="numi">0</td></tr><tr class="passedodd"><td><a href="#m22"><b>getMaterialRegaionalTest2</b>  </a></td><td class="numi">1</td><td>1539244055541</td><td class="numi">0</td></tr>
+<tr class="passedeven"><td rowspan="11">com.avnet.emasia.webquote.entity.MaterialTest</td><td><a href="#m23"><b>getCandidatePricersForAQTest1</b>  </a></td><td class="numi">1</td><td>1539244055637</td><td class="numi">1</td></tr><tr class="passedeven"><td><a href="#m24"><b>getCandidatePricersForAQTest10</b>  </a></td><td class="numi">1</td><td>1539244055639</td><td class="numi">1</td></tr><tr class="passedeven"><td><a href="#m25"><b>getCandidatePricersForAQTest2</b>  </a></td><td class="numi">1</td><td>1539244055641</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m26"><b>getCandidatePricersForAQTest3</b>  </a></td><td class="numi">1</td><td>1539244055645</td><td class="numi">2</td></tr><tr class="passedeven"><td><a href="#m27"><b>getCandidatePricersForAQTest4</b>  </a></td><td class="numi">1</td><td>1539244055650</td><td class="numi">4</td></tr><tr class="passedeven"><td><a href="#m28"><b>getCandidatePricersForAQTest5</b>  </a></td><td class="numi">1</td><td>1539244055657</td><td class="numi">2</td></tr><tr class="passedeven"><td><a href="#m29"><b>getCandidatePricersForAQTest6</b>  </a></td><td class="numi">1</td><td>1539244055660</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m30"><b>getCandidatePricersForAQTest7</b>  </a></td><td class="numi">1</td><td>1539244055661</td><td class="numi">7</td></tr><tr class="passedeven"><td><a href="#m31"><b>getCandidatePricersForAQTest8</b>  </a></td><td class="numi">1</td><td>1539244055668</td><td class="numi">3</td></tr><tr class="passedeven"><td><a href="#m32"><b>getCandidatePricersForAQTest9</b>  </a></td><td class="numi">1</td><td>1539244055672</td><td class="numi">2</td></tr><tr class="passedeven"><td><a href="#m33"><b>getMaterialRegaionalTest</b>  </a></td><td class="numi">1</td><td>1539244055675</td><td class="numi">0</td></tr>
+<tr class="passedodd"><td rowspan="7">com.avnet.emasia.webquote.entity.MoneyTest</td><td><a href="#m34"><b>test1</b>  </a></td><td class="numi">1</td><td>1539244055676</td><td class="numi">0</td></tr><tr class="passedodd"><td><a href="#m35"><b>test2</b>  </a></td><td class="numi">1</td><td>1539244055676</td><td class="numi">1</td></tr><tr class="passedodd"><td><a href="#m36"><b>test3</b>  </a></td><td class="numi">1</td><td>1539244055678</td><td class="numi">0</td></tr><tr class="passedodd"><td><a href="#m37"><b>test4</b>  </a></td><td class="numi">1</td><td>1539244055679</td><td class="numi">0</td></tr><tr class="passedodd"><td><a href="#m38"><b>test5</b>  </a></td><td class="numi">1</td><td>1539244055679</td><td class="numi">1</td></tr><tr class="passedodd"><td><a href="#m39"><b>test6</b>  </a></td><td class="numi">1</td><td>1539244055680</td><td class="numi">0</td></tr><tr class="passedodd"><td><a href="#m40"><b>test7</b>  </a></td><td class="numi">1</td><td>1539244055681</td><td class="numi">0</td></tr>
+<tr class="passedeven"><td rowspan="14">com.avnet.emasia.webquote.entity.PricerTest</td><td><a href="#m41"><b>calPmoqTest0</b>  </a></td><td class="numi">1</td><td>1539244055682</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m42"><b>calPmoqTest1</b>  </a></td><td class="numi">1</td><td>1539244055682</td><td class="numi">4</td></tr><tr class="passedeven"><td><a href="#m43"><b>calPmoqTest2</b>  </a></td><td class="numi">1</td><td>1539244055686</td><td class="numi">1</td></tr><tr class="passedeven"><td><a href="#m44"><b>calPmoqTest3</b>  </a></td><td class="numi">1</td><td>1539244055687</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m45"><b>calPmoqTest4</b>  </a></td><td class="numi">1</td><td>1539244055688</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m46"><b>calPriceValidityDateTest1</b>  </a></td><td class="numi">1</td><td>1539244055689</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m47"><b>calPriceValidityDateTest2</b>  </a></td><td class="numi">1</td><td>1539244055690</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m48"><b>isCustomerMatchedTest1</b>  </a></td><td class="numi">1</td><td>1539244055691</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m49"><b>isCustomerMatchedTest2</b>  </a></td><td class="numi">1</td><td>1539244055691</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m50"><b>isCustomerMatchedTest3</b>  </a></td><td class="numi">1</td><td>1539244055692</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m51"><b>isCustomerMatchedTest4</b>  </a></td><td class="numi">1</td><td>1539244055692</td><td class="numi">1</td></tr><tr class="passedeven"><td><a href="#m52"><b>isEffectivePricerTest</b>  </a></td><td class="numi">1</td><td>1539244055693</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m53"><b>isSalesCostTypeMatchedTest1</b>  </a></td><td class="numi">1</td><td>1539244055694</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m54"><b>isSalesCostTypeMatchedTest2</b>  </a></td><td class="numi">1</td><td>1539244055694</td><td class="numi">1</td></tr>
+<tr class="passedodd"><td rowspan="3">com.avnet.emasia.webquote.entity.QtyBreakPricerTest</td><td><a href="#m55"><b>calQtyBreakRangeTest</b>  </a></td><td class="numi">1</td><td>1539244055695</td><td class="numi">0</td></tr><tr class="passedodd"><td><a href="#m56"><b>calQtyBreakRangeTest2</b>  </a></td><td class="numi">1</td><td>1539244055696</td><td class="numi">0</td></tr><tr class="passedodd"><td><a href="#m57"><b>getQtyBreakPriceTest</b>  </a></td><td class="numi">1</td><td>1539244055697</td><td class="numi">0</td></tr>
+<tr class="passedeven"><td rowspan="21">com.avnet.emasia.webquote.entity.QtyCalTest</td><td><a href="#m58"><b>calMoqTest3</b>  </a></td><td class="numi">1</td><td>1539244055700</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m59"><b>calQtyIndicatorTest</b>  </a></td><td class="numi">1</td><td>1539244055700</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m60"><b>calQtyIndicatorTest2</b>  </a></td><td class="numi">1</td><td>1539244055701</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m61"><b>calQtyIndicatorTest6</b>  </a></td><td class="numi">1</td><td>1539244055701</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m62"><b>calQuotedQtyTest1</b>  </a></td><td class="numi">1</td><td>1539244055701</td><td class="numi">1</td></tr><tr class="passedeven"><td><a href="#m63"><b>calQuotedQtyTest11</b>  </a></td><td class="numi">1</td><td>1539244055703</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m64"><b>calQuotedQtyTest12</b>  </a></td><td class="numi">1</td><td>1539244055703</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m65"><b>calQuotedQtyTest2</b>  </a></td><td class="numi">1</td><td>1539244055704</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m66"><b>calQuotedQtyTest21</b>  </a></td><td class="numi">1</td><td>1539244055704</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m67"><b>calQuotedQtyTest22</b>  </a></td><td class="numi">1</td><td>1539244055704</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m68"><b>calQuotedQtyTest23</b>  </a></td><td class="numi">1</td><td>1539244055704</td><td class="numi">1</td></tr><tr class="passedeven"><td><a href="#m69"><b>calQuotedQtyTest24</b>  </a></td><td class="numi">1</td><td>1539244055705</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m70"><b>calQuotedQtyTest3</b>  </a></td><td class="numi">1</td><td>1539244055705</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m71"><b>qtyIndicatorTest3</b>  </a></td><td class="numi">1</td><td>1539244055707</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m72"><b>qtyIndicatorTest4</b>  </a></td><td class="numi">1</td><td>1539244055708</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m73"><b>roundDownTest</b>  </a></td><td class="numi">1</td><td>1539244055708</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m74"><b>roundDownTest2</b>  </a></td><td class="numi">1</td><td>1539244055708</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m75"><b>roundDownTest3</b>  </a></td><td class="numi">1</td><td>1539244055709</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m76"><b>roundUpTest</b>  </a></td><td class="numi">1</td><td>1539244055709</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m77"><b>roundUpTest2</b>  </a></td><td class="numi">1</td><td>1539244055709</td><td class="numi">0</td></tr><tr class="passedeven"><td><a href="#m78"><b>roundUpTest3</b>  </a></td><td class="numi">1</td><td>1539244055710</td><td class="numi">0</td></tr>
+<tr class="passedodd"><td rowspan="3">com.avnet.emasia.webquote.vo.RfqItemVOTest</td><td><a href="#m79"><b>matchAQConditionsTest3</b>  </a></td><td class="numi">1</td><td>1539244055711</td><td class="numi">1</td></tr><tr class="passedodd"><td><a href="#m80"><b>matchAQConditionsTest4</b>  </a></td><td class="numi">1</td><td>1539244055712</td><td class="numi">0</td></tr><tr class="passedodd"><td><a href="#m81"><b>matchAQConditionsTest6</b>  </a></td><td class="numi">1</td><td>1539244055713</td><td class="numi">0</td></tr>
+</table>
+<h1>Command line test</h1>
+<h2 id="m1">com.avnet.emasia.webquote.entity.QtyCalTest:calMoqTest1</h2>
+<div style="padding-left:3em">
+<p>expected [1500] but found [1100]</p>
+org.testng.Assert.fail(Assert.java:94)
+<br/>at org.testng.Assert.failNotEquals(Assert.java:494)
+<br/>at org.testng.Assert.assertEquals(Assert.java:123)
+<br/>at org.testng.Assert.assertEquals(Assert.java:370)
+<br/>at org.testng.Assert.assertEquals(Assert.java:380)
+<br/>at com.avnet.emasia.webquote.entity.QtyCalTest.calMoqTest1(QtyCalTest.java:69)
+<br/>35 lines not shown
+</div>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m2">com.avnet.emasia.webquote.vo.RfqItemVOTest:matchAQConditionsTest1</h2>
+<div style="padding-left:3em">
+<p>expected [true] but found [false]</p>
+org.testng.Assert.fail(Assert.java:94)
+<br/>at org.testng.Assert.failNotEquals(Assert.java:494)
+<br/>at org.testng.Assert.assertTrue(Assert.java:42)
+<br/>at org.testng.Assert.assertTrue(Assert.java:52)
+<br/>at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest1(RfqItemVOTest.java:48)
+<br/>35 lines not shown
+</div>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m3">com.avnet.emasia.webquote.entity.MaterialTest:fillInPricerInfoTest</h2>
+<div style="padding-left:3em">
+<p>Name is null</p>
+java.lang.Enum.valueOf(Enum.java:236)
+<br/>at com.avnet.emasia.webquote.entity.Currency.valueOf(Currency.java:5)
+<br/>at com.avnet.emasia.webquote.entity.Material.applyAQLogic(Material.java:517)
+<br/>at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest(MaterialTest.java:234)
+<br/>35 lines not shown
+</div>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m4">com.avnet.emasia.webquote.vo.RfqItemVOTest:matchAQConditionsTest5</h2>
+<div style="padding-left:3em">
+<p>expected [true] but found [false]</p>
+org.testng.Assert.fail(Assert.java:94)
+<br/>at org.testng.Assert.failNotEquals(Assert.java:494)
+<br/>at org.testng.Assert.assertTrue(Assert.java:42)
+<br/>at org.testng.Assert.assertTrue(Assert.java:52)
+<br/>at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest5(RfqItemVOTest.java:77)
+<br/>35 lines not shown
+</div>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m5">com.avnet.emasia.webquote.entity.MaterialTest:fillInPricerInfoTest30</h2>
+<div style="padding-left:3em">
+<p>Name is null</p>
+java.lang.Enum.valueOf(Enum.java:236)
+<br/>at com.avnet.emasia.webquote.entity.Currency.valueOf(Currency.java:5)
+<br/>at com.avnet.emasia.webquote.entity.Material.applyAQLogic(Material.java:517)
+<br/>at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest30(MaterialTest.java:288)
+<br/>35 lines not shown
+</div>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m6">com.avnet.emasia.webquote.entity.MaterialTest:fillInPricerInfoTest3</h2>
+<div style="padding-left:3em">
+<p>Name is null</p>
+java.lang.Enum.valueOf(Enum.java:236)
+<br/>at com.avnet.emasia.webquote.entity.Currency.valueOf(Currency.java:5)
+<br/>at com.avnet.emasia.webquote.entity.Material.applyAQLogic(Material.java:517)
+<br/>at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest3(MaterialTest.java:269)
+<br/>35 lines not shown
+</div>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m7">com.avnet.emasia.webquote.vo.RfqItemVOTest:matchAQConditionsTest8</h2>
+<div style="padding-left:3em">
+<p>expected [true] but found [false]</p>
+org.testng.Assert.fail(Assert.java:94)
+<br/>at org.testng.Assert.failNotEquals(Assert.java:494)
+<br/>at org.testng.Assert.assertTrue(Assert.java:42)
+<br/>at org.testng.Assert.assertTrue(Assert.java:52)
+<br/>at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest8(RfqItemVOTest.java:100)
+<br/>35 lines not shown
+</div>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m8">com.avnet.emasia.webquote.vo.RfqItemVOTest:matchAQConditionsTest2</h2>
+<div style="padding-left:3em">
+<p>expected [true] but found [false]</p>
+org.testng.Assert.fail(Assert.java:94)
+<br/>at org.testng.Assert.failNotEquals(Assert.java:494)
+<br/>at org.testng.Assert.assertTrue(Assert.java:42)
+<br/>at org.testng.Assert.assertTrue(Assert.java:52)
+<br/>at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest2(RfqItemVOTest.java:56)
+<br/>35 lines not shown
+</div>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m9">com.avnet.emasia.webquote.entity.MaterialTest:fillInPricerInfoTest2</h2>
+<div style="padding-left:3em">
+<p>Name is null</p>
+java.lang.Enum.valueOf(Enum.java:236)
+<br/>at com.avnet.emasia.webquote.entity.Currency.valueOf(Currency.java:5)
+<br/>at com.avnet.emasia.webquote.entity.Material.applyAQLogic(Material.java:517)
+<br/>at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest2(MaterialTest.java:245)
+<br/>35 lines not shown
+</div>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m10">com.avnet.emasia.webquote.vo.RfqItemVOTest:matchAQConditionsTest7</h2>
+<div style="padding-left:3em">
+<p>expected [true] but found [false]</p>
+org.testng.Assert.fail(Assert.java:94)
+<br/>at org.testng.Assert.failNotEquals(Assert.java:494)
+<br/>at org.testng.Assert.assertTrue(Assert.java:42)
+<br/>at org.testng.Assert.assertTrue(Assert.java:52)
+<br/>at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest7(RfqItemVOTest.java:91)
+<br/>35 lines not shown
+</div>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m11">com.avnet.emasia.webquote.entity.MaterialTest:fillInPricerInfoTest4</h2>
+<div style="padding-left:3em">
+<p>expected [false] but found [true]</p>
+org.testng.Assert.fail(Assert.java:94)
+<br/>at org.testng.Assert.failNotEquals(Assert.java:494)
+<br/>at org.testng.Assert.assertEquals(Assert.java:123)
+<br/>at org.testng.Assert.assertEquals(Assert.java:286)
+<br/>at org.testng.Assert.assertEquals(Assert.java:296)
+<br/>at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest4(MaterialTest.java:306)
+<br/>35 lines not shown
+</div>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m12">com.avnet.emasia.webquote.entity.QtyCalTest:calMoqTest2</h2>
+<div style="padding-left:3em">
+<p>expected [1800] but found [1100]</p>
+org.testng.Assert.fail(Assert.java:94)
+<br/>at org.testng.Assert.failNotEquals(Assert.java:494)
+<br/>at org.testng.Assert.assertEquals(Assert.java:123)
+<br/>at org.testng.Assert.assertEquals(Assert.java:370)
+<br/>at org.testng.Assert.assertEquals(Assert.java:380)
+<br/>at com.avnet.emasia.webquote.entity.QtyCalTest.calMoqTest2(QtyCalTest.java:74)
+<br/>35 lines not shown
+</div>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m13">com.avnet.emasia.webquote.entity.PricerTest:calPmoqTest3</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m14">com.avnet.emasia.webquote.entity.BizUnitTest:findMaterial</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m15">com.avnet.emasia.webquote.entity.CostIndicatorTest:applyTest1</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m16">com.avnet.emasia.webquote.entity.ManufacturerTest:getManufacturerDetailTest</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m17">com.avnet.emasia.webquote.entity.PricerTest:isSalesCostTypeMatchedTest2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m18">com.avnet.emasia.webquote.entity.MaterialRegionalTest:getManufacturerDetailTest</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m19">com.avnet.emasia.webquote.entity.MaterialTest:getMaterialRegaionalTest</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m20">com.avnet.emasia.webquote.entity.PricerTest:isSalesCostTypeMatchedTest1</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m21">com.avnet.emasia.webquote.entity.MaterialTest:getCandidatePricersForAQTest7</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m22">com.avnet.emasia.webquote.entity.MoneyTest:test5</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m23">com.avnet.emasia.webquote.entity.QtyCalTest:calQuotedQtyTest22</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m24">com.avnet.emasia.webquote.entity.QtyCalTest:calQuotedQtyTest21</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m25">com.avnet.emasia.webquote.entity.PricerTest:isCustomerMatchedTest4</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m26">com.avnet.emasia.webquote.entity.QtyCalTest:roundDownTest</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m27">com.avnet.emasia.webquote.entity.MaterialTest:getCandidatePricersForAQTest9</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m28">com.avnet.emasia.webquote.entity.MoneyTest:test4</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m29">com.avnet.emasia.webquote.entity.PricerTest:calPmoqTest2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m30">com.avnet.emasia.webquote.entity.QtyBreakPricerTest:getQtyBreakPriceTest</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m31">com.avnet.emasia.webquote.entity.PricerTest:isEffectivePricerTest</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m32">com.avnet.emasia.webquote.entity.QtyCalTest:calQuotedQtyTest2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m33">com.avnet.emasia.webquote.entity.MoneyTest:test3</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m34">com.avnet.emasia.webquote.entity.QtyCalTest:roundUpTest3</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m35">com.avnet.emasia.webquote.entity.MoneyTest:test2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m36">com.avnet.emasia.webquote.entity.MoneyTest:test1</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m37">com.avnet.emasia.webquote.entity.PricerTest:isCustomerMatchedTest3</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m38">com.avnet.emasia.webquote.entity.MaterialRegionalTest:fillInPricerTest</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m39">com.avnet.emasia.webquote.entity.MaterialTest:getCandidatePricersForAQTest6</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m40">com.avnet.emasia.webquote.entity.CostIndicatorTest:applyTest2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m41">com.avnet.emasia.webquote.entity.MaterialTest:getCandidatePricersForAQTest5</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m42">com.avnet.emasia.webquote.entity.QtyCalTest:roundDownTest2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m43">com.avnet.emasia.webquote.entity.QtyCalTest:calQuotedQtyTest1</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m44">com.avnet.emasia.webquote.vo.RfqItemVOTest:matchAQConditionsTest3</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m45">com.avnet.emasia.webquote.entity.QtyCalTest:calQuotedQtyTest23</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m46">com.avnet.emasia.webquote.entity.PricerTest:calPmoqTest1</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m47">com.avnet.emasia.webquote.entity.PricerTest:isCustomerMatchedTest2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m48">com.avnet.emasia.webquote.entity.MaterialTest:getCandidatePricersForAQTest1</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m49">com.avnet.emasia.webquote.entity.PricerTest:calPriceValidityDateTest1</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m50">com.avnet.emasia.webquote.entity.QtyCalTest:calQtyIndicatorTest6</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m51">com.avnet.emasia.webquote.entity.MaterialTest:getCandidatePricersForAQTest2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m52">com.avnet.emasia.webquote.entity.MaterialTest:getCandidatePricersForAQTest3</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m53">com.avnet.emasia.webquote.entity.QtyCalTest:calQtyIndicatorTest</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m54">com.avnet.emasia.webquote.entity.PricerTest:calPriceValidityDateTest2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m55">com.avnet.emasia.webquote.entity.QtyCalTest:calQuotedQtyTest24</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m56">com.avnet.emasia.webquote.entity.QtyBreakPricerTest:calQtyBreakRangeTest</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m57">com.avnet.emasia.webquote.entity.QtyCalTest:roundDownTest3</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m58">com.avnet.emasia.webquote.entity.MaterialRegionalTest:getManufacturerDetailTest2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m59">com.avnet.emasia.webquote.entity.QtyCalTest:calQuotedQtyTest3</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m60">com.avnet.emasia.webquote.entity.QtyCalTest:roundUpTest2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m61">com.avnet.emasia.webquote.entity.MaterialTest:getCandidatePricersForAQTest10</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m62">com.avnet.emasia.webquote.entity.QtyBreakPricerTest:calQtyBreakRangeTest2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m63">com.avnet.emasia.webquote.entity.ManufacturerDetailTest:fillInTest</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m64">com.avnet.emasia.webquote.entity.QtyCalTest:calQuotedQtyTest11</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m65">com.avnet.emasia.webquote.entity.MaterialRegionalTest:getMaterialRegaionalTest</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m66">com.avnet.emasia.webquote.entity.QtyCalTest:qtyIndicatorTest3</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m67">com.avnet.emasia.webquote.entity.PricerTest:calPmoqTest4</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m68">com.avnet.emasia.webquote.entity.MaterialTest:getCandidatePricersForAQTest8</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m69">com.avnet.emasia.webquote.entity.PricerTest:isCustomerMatchedTest1</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m70">com.avnet.emasia.webquote.vo.RfqItemVOTest:matchAQConditionsTest4</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m71">com.avnet.emasia.webquote.entity.MoneyTest:test7</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m72">com.avnet.emasia.webquote.entity.MoneyTest:test6</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m73">com.avnet.emasia.webquote.entity.QtyCalTest:calMoqTest3</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m74">com.avnet.emasia.webquote.entity.QtyCalTest:qtyIndicatorTest4</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m75">com.avnet.emasia.webquote.entity.QtyCalTest:roundUpTest</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m76">com.avnet.emasia.webquote.entity.QtyCalTest:calQtyIndicatorTest2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m77">com.avnet.emasia.webquote.entity.PricerTest:calPmoqTest0</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m78">com.avnet.emasia.webquote.vo.RfqItemVOTest:matchAQConditionsTest6</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m79">com.avnet.emasia.webquote.entity.MaterialRegionalTest:getMaterialRegaionalTest2</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m80">com.avnet.emasia.webquote.entity.QtyCalTest:calQuotedQtyTest12</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+<h2 id="m81">com.avnet.emasia.webquote.entity.MaterialTest:getCandidatePricersForAQTest4</h2>
+<p class="totop"><a href="#summary">back to summary</a></p>
+</body></html>

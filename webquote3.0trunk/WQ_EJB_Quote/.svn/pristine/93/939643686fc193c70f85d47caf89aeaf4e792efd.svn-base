@@ -1,0 +1,6 @@
+package com.avnet.emasia.webquote.columndata;
+
+public enum XssfDataType {
+	BOOL, ERROR, FORMULA, INLINESTR, SSTINDEX, NUMBER,
+
+}

@@ -1,0 +1,69 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.util.List;
+import java.util.function.Predicate;
+
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+
+@Entity
+@DiscriminatorValue("CONNECTOR")
+public class ConnectorConfig extends Config {
+	@Column(name = "LOGIC_ACTION", length = 10, nullable = false)
+	@Enumerated(EnumType.STRING)
+	private LogicConnector logicConnector;
+	
+
+	@OneToMany(mappedBy="parent")
+	private List<Config> chiledConfigList;
+	
+	
+	@Override
+	protected Predicate<Boolean> isMatch(List<String> regions, List<String> roles) {
+		return (Boolean b) -> {
+			boolean firstMatch = logicConnector.test(chiledConfigList.get(0).isMatch(regions, roles),
+					chiledConfigList.get(1).isMatch(regions, roles));
+			return this.logicResultReverse ? !firstMatch : firstMatch;
+		};
+	}
+	
+	public enum LogicConnector {
+		AND {
+			@Override
+			boolean test(Predicate<Boolean> p1, Predicate<Boolean> p2) {
+				return p1.and(p2).test(MATCH);
+			}
+		},OR {
+			@Override
+			boolean test(Predicate<Boolean> p1, Predicate<Boolean> p2) {
+				return p1.or(p2).test(MATCH);
+			}
+		};
+		private final static boolean MATCH = true;
+		abstract boolean test(Predicate<Boolean> p1, Predicate<Boolean> p2);
+	}
+
+	public LogicConnector getLogicConnector() {
+		return logicConnector;
+	}
+
+	public void setLogicConnector(LogicConnector logicConnector) {
+		this.logicConnector = logicConnector;
+	}
+
+
+
+	public List<Config> getChiledConfigList() {
+		return chiledConfigList;
+	}
+
+	public void setChiledConfigList(List<Config> list) {
+		this.chiledConfigList = list;
+	}
+}

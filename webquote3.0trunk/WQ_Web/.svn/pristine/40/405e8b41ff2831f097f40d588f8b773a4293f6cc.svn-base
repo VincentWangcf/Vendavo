@@ -1,0 +1,103 @@
+<ui:composition
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+<!-- new field start  -->
+			<p:column headerText="#{dbResource['wq.label.bmtMFRDR']}#" sortBy="#{vo.quoteItem.quoteItemDesign.drMfrNo}" filterBy="#{vo.quoteItem.quoteItemDesign.drMfrNo}" filterMatchMode="contains" styleClass="column_rfqStatus">
+			<h:outputText value="#{vo.quoteItem.quoteItemDesign.drMfrNo}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtSuggCost']}" sortBy="#{vo.quoteItem.quoteItemDesign.drCost}" filterBy="#{vo.quoteItem.quoteItemDesign.drCost}" filterMatchMode="contains" styleClass="column_rfqStatus"  rendered="#{myQuoteSearchMB.pageRoleName!='Sales'}">
+			<h:outputText value="#{vo.quoteItem.quoteItemDesign.drCost}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtSuggResale']}" sortBy="#{vo.quoteItem.quoteItemDesign.drResale}" filterBy="#{vo.quoteItem.quoteItemDesign.drResale}" filterMatchMode="contains" styleClass="column_rfqStatus">
+			<h:outputText value="#{vo.quoteItem.quoteItemDesign.drResale}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtSuggMargin']}" sortBy="" filterBy="" filterMatchMode="contains" styleClass="column_rfqStatus"  rendered="#{myQuoteSearchMB.pageRoleName!='Sales'}">
+			<h:outputText value="#{vo.quoteItem.quoteItemDesign.drMargin}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtMFRQuote']} #" sortBy="#{vo.quoteItem.quoteItemDesign.drMfrQuoteNo}" filterBy="#{vo.quoteItem.quoteItemDesign.drMfrQuoteNo}" filterMatchMode="contains" styleClass="column_rfqStatus">
+			<h:outputText value="#{vo.quoteItem.quoteItemDesign.drMfrQuoteNo}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtEffDate']}" sortBy="#{vo.quoteItem.quoteItemDesign.drEffectiveDate}" filterBy="#{vo.quoteItem.quoteItemDesign.drEffectiveDate}" filterMatchMode="contains" styleClass="column_rfqStatus">
+				<h:outputText value="#{vo.quoteItem.quoteItemDesign.drEffectiveDate}">
+						<f:convertDateTime pattern="dd/MM/yyyy" />
+				</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtExpDate']}" sortBy="#{vo.quoteItem.quoteItemDesign.drExpiryDate}" filterBy="#{vo.quoteItem.quoteItemDesign.drExpiryDate}" filterMatchMode="contains" styleClass="column_rfqStatus">
+				<h:outputText value="#{vo.quoteItem.quoteItemDesign.drExpiryDate}">
+						<f:convertDateTime pattern="dd/MM/yyyy" />
+				</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtComm']}" sortBy="#{vo.quoteItem.quoteItemDesign.drComments}" filterBy="#{vo.quoteItem.quoteItemDesign.drComments}" filterMatchMode="contains" styleClass="column_qcInternalComment">
+				<h:outputText value="#{vo.quoteItem.quoteItemDesign.drComments}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtQuoteQty']}" sortBy="#{vo.quoteItem.quoteItemDesign.drQuoteQty}" filterBy="#{vo.quoteItem.quoteItemDesign.drQuoteQty}" filterMatchMode="contains" styleClass="column_rfqStatus">
+				<h:outputText value="#{vo.quoteItem.quoteItemDesign.drQuoteQty}">
+					<f:convertNumber  pattern="#,###"  />
+				</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtSuggCost']} (#{dbResource['wq.message.nonUSD']})" sortBy="#{vo.quoteItem.quoteItemDesign.drCostAltCurrency}" filterBy="#{vo.quoteItem.quoteItemDesign.drCostAltCurrency}" filterMatchMode="contains" styleClass="column_rfqStatus"  rendered="#{myQuoteSearchMB.pageRoleName!='Sales'}">
+				<h:outputText value="#{vo.quoteItem.quoteItemDesign.drCostAltCurrency}">
+					<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5"/>
+				</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtSuggResale']}(#{dbResource['wq.message.nonUSD']})" sortBy="#{vo.quoteItem.quoteItemDesign.drResaleAltCurrency}" filterBy="#{vo.quoteItem.quoteItemDesign.drResaleAltCurrency}" filterMatchMode="contains" styleClass="column_rfqStatus">
+				<h:outputText value="#{vo.quoteItem.quoteItemDesign.drResaleAltCurrency}">
+					<f:convertNumber   pattern="#,##0.00000"  minFractionDigits="5"/>
+				</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtCurr']}" sortBy="#{vo.quoteItem.quoteItemDesign.drAltCurrency}" filterBy="#{vo.quoteItem.quoteItemDesign.drAltCurrency}" filterMatchMode="contains" styleClass="column_rfqStatus">
+				<h:outputText value="#{vo.quoteItem.quoteItemDesign.drAltCurrency}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.message.exchangeRate']}(#{dbResource['wq.message.nonUSD']})" sortBy="#{vo.quoteItem.quoteItemDesign.drExchangeRate}" filterBy="#{vo.quoteItem.quoteItemDesign.drExchangeRate}" filterMatchMode="contains" styleClass="column_rfqStatus">
+				<h:outputText value="#{vo.quoteItem.quoteItemDesign.drExchangeRate}">
+					<f:convertNumber   pattern="#,##0.00000"  minFractionDigits="5"/>
+				</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.header.lastUpdateBMT']}" sortBy="#{vo.quoteItem.lastBmtUpdateTime}" filterBy="#{vo.quoteItem.lastBmtUpdateTime}" filterMatchMode="contains" styleClass="column_salesEmployeeName" rendered="#{myQuoteSearchMB.pageRoleName=='QC'}">
+				<h:outputText value="#{vo.quoteItem.lastBmtUpdateTime}">
+					<f:convertDateTime pattern="dd/MM/yyyy HH:mm" />
+				</h:outputText>
+			</p:column>		
+			
+			<p:column headerText="#{dbResource['wq.label.last']}&lt;br/&gt;#{dbResource['wq.label.updatedBy']}" sortBy="#{vo.quoteItem.lastUpdatedName}" filterBy="#{vo.quoteItem.lastUpdatedName}" filterMatchMode="contains" styleClass="column_salesEmployeeName" rendered="#{myQuoteSearchMB.pageRoleName=='QC'}">
+				<h:outputText value="#{vo.quoteItem.lastUpdatedName}"/>
+			</p:column>	
+			<ui:remove>
+			<p:column headerText="#{dbResource['wq.label.bmtAtts']}" sortBy="" filterBy="" exportable="false" filterMatchMode="contains" styleClass="column_rfqStatus">
+				<p:commandLink update=":form:attachment_list_panel" actionListener="#{attachmentDownloadMB.listAttachmentsByType()}" oncomplete="PF('attachment_list_dialog').show()">
+	        		<h:graphicImage library="images" name="icon_magnifier.png" styleClass="iconLink" rendered="#{vo.quoteItem.bmtAttachmentFlag}"/>
+	        		<f:param name="quoteItem_id" value="#{vo.quoteItem.id}"/>
+	        		<f:param name="quote_id" value="#{vo.quoteItem.quote.id}"/>	
+	        		<f:param name="att_type" value="BMT Attachment"/>				        	
+	        	</p:commandLink> 	
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.label.qcAtt']}" sortBy="#{vo}" exportable="false" filterBy="#{vo}" filterMatchMode="contains" styleClass="column_rfqStatus">
+				<p:commandLink update=":form:attachment_list_panel" actionListener="#{attachmentDownloadMB.listAttachmentsByType()}" oncomplete="PF('attachment_list_dialog').show()">
+	        		<h:graphicImage library="images" name="icon_magnifier.png" styleClass="iconLink" rendered="#{vo.quoteItem.qcAttachmentFlag}"/>
+	        		<f:param name="quoteItem_id" value="#{vo.quoteItem.id}"/>
+	        		<f:param name="quote_id" value="#{vo.quoteItem.quote.id}"/>	
+	        		<f:param name="att_type" value="QC Attachment"/>				        	
+	        	</p:commandLink> 	
+			</p:column>
+			</ui:remove>
+			<!-- new field end  -->	
+			</ui:composition>

@@ -1,0 +1,99 @@
+-------------------------------------------------------------------------------
+Test set: TestSuite
+-------------------------------------------------------------------------------
+Tests run: 81, Failures: 12, Errors: 0, Skipped: 0, Time elapsed: 1.416 sec <<< FAILURE!
+fillInPricerInfoTest(com.avnet.emasia.webquote.entity.MaterialTest)  Time elapsed: 0.005 sec  <<< FAILURE!
+java.lang.NullPointerException: Name is null
+	at java.lang.Enum.valueOf(Enum.java:236)
+	at com.avnet.emasia.webquote.entity.Currency.valueOf(Currency.java:5)
+	at com.avnet.emasia.webquote.entity.Material.applyAQLogic(Material.java:517)
+	at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest(MaterialTest.java:234)
+
+fillInPricerInfoTest2(com.avnet.emasia.webquote.entity.MaterialTest)  Time elapsed: 0.008 sec  <<< FAILURE!
+java.lang.NullPointerException: Name is null
+	at java.lang.Enum.valueOf(Enum.java:236)
+	at com.avnet.emasia.webquote.entity.Currency.valueOf(Currency.java:5)
+	at com.avnet.emasia.webquote.entity.Material.applyAQLogic(Material.java:517)
+	at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest2(MaterialTest.java:245)
+
+fillInPricerInfoTest3(com.avnet.emasia.webquote.entity.MaterialTest)  Time elapsed: 0.001 sec  <<< FAILURE!
+java.lang.NullPointerException: Name is null
+	at java.lang.Enum.valueOf(Enum.java:236)
+	at com.avnet.emasia.webquote.entity.Currency.valueOf(Currency.java:5)
+	at com.avnet.emasia.webquote.entity.Material.applyAQLogic(Material.java:517)
+	at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest3(MaterialTest.java:269)
+
+fillInPricerInfoTest30(com.avnet.emasia.webquote.entity.MaterialTest)  Time elapsed: 0.001 sec  <<< FAILURE!
+java.lang.NullPointerException: Name is null
+	at java.lang.Enum.valueOf(Enum.java:236)
+	at com.avnet.emasia.webquote.entity.Currency.valueOf(Currency.java:5)
+	at com.avnet.emasia.webquote.entity.Material.applyAQLogic(Material.java:517)
+	at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest30(MaterialTest.java:288)
+
+fillInPricerInfoTest4(com.avnet.emasia.webquote.entity.MaterialTest)  Time elapsed: 0.072 sec  <<< FAILURE!
+java.lang.AssertionError: expected [false] but found [true]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertEquals(Assert.java:123)
+	at org.testng.Assert.assertEquals(Assert.java:286)
+	at org.testng.Assert.assertEquals(Assert.java:296)
+	at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest4(MaterialTest.java:306)
+
+calMoqTest1(com.avnet.emasia.webquote.entity.QtyCalTest)  Time elapsed: 0 sec  <<< FAILURE!
+java.lang.AssertionError: expected [1500] but found [1100]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertEquals(Assert.java:123)
+	at org.testng.Assert.assertEquals(Assert.java:370)
+	at org.testng.Assert.assertEquals(Assert.java:380)
+	at com.avnet.emasia.webquote.entity.QtyCalTest.calMoqTest1(QtyCalTest.java:69)
+
+calMoqTest2(com.avnet.emasia.webquote.entity.QtyCalTest)  Time elapsed: 0 sec  <<< FAILURE!
+java.lang.AssertionError: expected [1800] but found [1100]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertEquals(Assert.java:123)
+	at org.testng.Assert.assertEquals(Assert.java:370)
+	at org.testng.Assert.assertEquals(Assert.java:380)
+	at com.avnet.emasia.webquote.entity.QtyCalTest.calMoqTest2(QtyCalTest.java:74)
+
+matchAQConditionsTest1(com.avnet.emasia.webquote.vo.RfqItemVOTest)  Time elapsed: 0 sec  <<< FAILURE!
+java.lang.AssertionError: expected [true] but found [false]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertTrue(Assert.java:42)
+	at org.testng.Assert.assertTrue(Assert.java:52)
+	at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest1(RfqItemVOTest.java:48)
+
+matchAQConditionsTest2(com.avnet.emasia.webquote.vo.RfqItemVOTest)  Time elapsed: 0 sec  <<< FAILURE!
+java.lang.AssertionError: expected [true] but found [false]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertTrue(Assert.java:42)
+	at org.testng.Assert.assertTrue(Assert.java:52)
+	at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest2(RfqItemVOTest.java:56)
+
+matchAQConditionsTest5(com.avnet.emasia.webquote.vo.RfqItemVOTest)  Time elapsed: 0 sec  <<< FAILURE!
+java.lang.AssertionError: expected [true] but found [false]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertTrue(Assert.java:42)
+	at org.testng.Assert.assertTrue(Assert.java:52)
+	at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest5(RfqItemVOTest.java:77)
+
+matchAQConditionsTest7(com.avnet.emasia.webquote.vo.RfqItemVOTest)  Time elapsed: 0 sec  <<< FAILURE!
+java.lang.AssertionError: expected [true] but found [false]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertTrue(Assert.java:42)
+	at org.testng.Assert.assertTrue(Assert.java:52)
+	at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest7(RfqItemVOTest.java:91)
+
+matchAQConditionsTest8(com.avnet.emasia.webquote.vo.RfqItemVOTest)  Time elapsed: 0 sec  <<< FAILURE!
+java.lang.AssertionError: expected [true] but found [false]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertTrue(Assert.java:42)
+	at org.testng.Assert.assertTrue(Assert.java:52)
+	at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest8(RfqItemVOTest.java:100)
+

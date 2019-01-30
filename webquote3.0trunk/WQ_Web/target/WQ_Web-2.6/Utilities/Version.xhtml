@@ -1,0 +1,23 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<ui:define name="content">
+	<h:form  rendered="#{!menuMB.isAccessible('version page')}">
+	   <h1><h:outputText value="#{dbResource['wq.label.appVersion']}"/> </h1>
+		<h2><h:outputText value="#{dbResource['wq.message.notAutho']}"/></h2>
+	</h:form>
+	<h:form  rendered="#{menuMB.isAccessible('version page')}">
+	 <h:outputText value="#{AppVersionMB.currentVersion()}" />
+	</h:form>
+
+			   
+
+		
+	</ui:define>
+
+	
+
+</ui:composition>

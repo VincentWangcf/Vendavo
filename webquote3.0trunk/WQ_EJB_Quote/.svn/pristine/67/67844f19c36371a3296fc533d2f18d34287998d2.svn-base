@@ -1,0 +1,150 @@
+package com.avnet.emasia.webquote.stm.ejb;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.mail.MessagingException;
+import javax.mail.internet.AddressException;
+import javax.naming.NamingException;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.stm.dto.ExceptionVo;
+import com.avnet.emasia.webquote.stm.dto.InBoundVo;
+import com.avnet.emasia.webquote.stm.dto.OutBoundVo;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.utilities.schedule.HATimerService;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+
+
+@Stateless
+@LocalBean
+public class STMExceptionReportSB {
+	@PersistenceContext(unitName = "Server_Source")
+	EntityManager em;
+	
+	@EJB
+	MailUtilsSB mailUtilsSB;
+	
+	@EJB
+    SystemCodeMaintenanceSB sysCodeMaintSB;
+	
+	
+	private static final Logger LOG = Logger.getLogger(STMExceptionReportSB.class.getName());
+	
+	public void sendException(ExceptionVo exceptionVo) {
+		List<String> toList = null;
+		try {
+			if(null!=exceptionVo) {
+				MailInfoBean mib = new MailInfoBean();
+				String region = exceptionVo.getRegion();
+				String fileName = QuoteUtil.isEmpty(exceptionVo.getFileName())?"":exceptionVo.getFileName();
+				String subject = "Reminder: "+exceptionVo.getAction() + " file "+fileName+" encounter exception";
+				//add by Lenon.Yang(043044) 2016/05/23
+				String jbossNodeName = System.getProperty(HATimerService.JBOSS_NODE_NAME);
+				if(org.apache.commons.lang.StringUtils.isNotBlank(jbossNodeName)) {
+					subject += "(Jboss Node:" + jbossNodeName + ")";
+				}
+				String fromEmailAddr = sysCodeMaintSB.getEmailAddress(region);
+				String signature =sysCodeMaintSB.getEmailSignName(region);
+				String hotLine = sysCodeMaintSB.getEmailHotLine(region);
+				String emailBox = sysCodeMaintSB.getEmailSignContent(region);
+				toList = this.getReceiver(region);
+				
+				mib.setMailSubject(subject);
+				mib.setMailFrom(fromEmailAddr);
+				mib.setMailTo(toList);
+				
+				InBoundVo in = exceptionVo.getInBoundVo();
+		        OutBoundVo out = exceptionVo.getOutBoundVo();
+		        String rfqCode = "";
+		        if(null!=in) {
+		        	rfqCode = in.getRfqCode();
+		        }
+		        if(null!=out) {
+		        	rfqCode = out.getRfqCode();
+		        }
+		        
+		        User user = null!=in?in.getCurrentUser():null!=out?out.getCurrentUser():exceptionVo.getUser();
+		        String hostName = System.getProperty("jboss.node.name");
+				
+				String content = "Dear user,<br/>";
+				content += "Please note that process "+exceptionVo.getAction()+" file  encounter exception on Host "+hostName+":<br/>";
+
+		        if(null!=user) {
+		        	content += "User Information :&nbsp;&nbsp;&nbsp;&nbsp;" + user.getEmployeeId()+"<br/>";
+		        }
+		        if(!QuoteUtil.isEmpty(region)){
+		        	content += "Region : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + region+"<br/>";
+		        }
+		        content += "Action : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+ exceptionVo.getAction()+" <br/>";
+		        content += "File Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+fileName+" <br/>";
+	        	content += "RFQ Information :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + rfqCode+" <br/>";
+		        if(null==exceptionVo.getException()) {
+		        	content += "Exception Information :<br/>" +exceptionVo.getMessage()+ "<br/><br/>";
+		        }else {
+		        	Exception ex = exceptionVo.getException();
+		        	StringWriter errors = new StringWriter();
+		        	ex.printStackTrace(new PrintWriter(errors));
+		        	String msg = errors.toString();
+		        	content += "Exception Information :<br/>" +msg+ "<br/><br/>";
+		        }
+				  
+				content += "Best Regards," + "<br/>";
+				content += signature + "<br/>";
+				content += hotLine + "<br/>";
+				content += "Email Box: "+emailBox;
+				
+				mib.setMailContent(content);
+			
+				mailUtilsSB.sendHtmlMail(mib);
+			}
+		} catch (IllegalArgumentException | NamingException | MessagingException e) {
+			LOG.log(Level.SEVERE, "Send INBOUND EXCEPTION Email error: " + (null==toList?"empty receiver box":toList.toString())+e.getMessage(),e);
+		} 
+		
+	}
+	
+	private List<String> getReceiver(String region) {
+		List<String> toList = new ArrayList<String>();
+		String avtReceiver = sysCodeMaintSB.getBuzinessProperty("EXCEPTION_REPORT_AVNET_RECEIVER",region);
+		String stReceiver = sysCodeMaintSB.getBuzinessProperty("EXCEPTION_REPORT_ST_RECEIVER",region);
+		String b2bReceiver = sysCodeMaintSB.getBuzinessProperty("EXCEPTION_REPORT_B2B_RECEIVER",region);
+		
+		if(!QuoteUtil.isEmpty(avtReceiver)){
+			String[] avts = avtReceiver.split(";");
+			for(String avt:avts  ) {
+				toList.add(avt);
+				
+			}
+		}
+		
+		if(!QuoteUtil.isEmpty(stReceiver)){
+			String[] sts = stReceiver.split(";");
+			for(String st:sts  ) {
+				toList.add(st);
+			}
+		}
+		
+		if(!QuoteUtil.isEmpty(b2bReceiver)){
+			String[] b2bs = b2bReceiver.split(";");
+			for(String b2b:b2bs  ) {
+				toList.add(b2b);
+			}
+		}
+		return toList;
+	}
+
+	
+
+}

@@ -1,0 +1,38 @@
+package com.avnet.emasia.webquote.strategy;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.cache.ICacheUtil;
+import com.avnet.emasia.webquote.constants.Constants;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Currency;
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.ExchangeRate;
+import com.avnet.emasia.webquote.entity.Money;
+import com.avnet.emasia.webquote.entity.QuantityBreakPrice;
+
+public class MoneyConvertStrategy implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5045897959260212625L;
+
+	public BigDecimal[] findExchangeRate(Currency fromCurr, Currency toCurr, BizUnit bizUnit, Customer soldToCustomer, Date date, 
+			List<ExchangeRate> exchangeRates) {
+		return Money.findExchangeRate(fromCurr, toCurr, bizUnit, soldToCustomer, date, exchangeRates);
+	}
+}

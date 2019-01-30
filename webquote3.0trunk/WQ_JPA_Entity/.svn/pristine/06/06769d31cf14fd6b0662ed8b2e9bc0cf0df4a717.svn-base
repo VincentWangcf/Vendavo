@@ -1,0 +1,350 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+
+import com.avnet.emasia.webquote.cache.MfrDetailCacheManager;
+import com.avnet.emasia.webquote.vo.PricerInfo;
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+
+@Entity
+public class SalesCostPricer extends Pricer implements Serializable {
+	
+	private static final long serialVersionUID = 1L;
+
+	
+	@Column(name="SALES_COST_TYPE")
+	@Enumerated(EnumType.STRING)
+	private SalesCostType salesCostType;
+
+	@JoinColumn(name="PROGRAM_TYPE_ID")
+	private ProgramType programType;
+	
+	@Column(name="DISPLAY_ON_TOP")
+	private Integer displayOnTop;
+	
+	@Column(name="PROGRAM_SPECIAL_ITEM_FLAG")
+	private Integer specialItemFlag;
+	
+	@Column(name="PROGRAM_AVAILABLE_TO_SELL_QTY")
+	private Integer availableToSellQty;
+	
+	@Column(name="QTY_CONTROL")
+	private Integer qtyControl;
+	
+	@Column(name="QTY_INDICATOR")
+	private String qtyIndicator;
+	
+	@Column(name="NEW_PROGRAM_MATERIAL_INDICATOR")
+	private Boolean newItemIndicator;
+
+	@Column(name="ALLOCATION_FLAG", length=1)
+	private Boolean allocationFlag;
+
+	@Column(name="PROGRAM_AQ_FLAG")
+	private Boolean aqFlag;
+
+	
+	@OneToMany(mappedBy="materialDetail", cascade={CascadeType.PERSIST, CascadeType.REMOVE})
+	private List<QuantityBreakPrice> qtyBreakPrices;
+
+
+	public SalesCostType getSalesCostType() {
+		return salesCostType;
+	}
+
+	public void setSalesCostType(SalesCostType salesCostType) {
+		this.salesCostType = salesCostType;
+	}
+
+	public ProgramType getProgramType() {
+		return programType;
+	}
+
+	public void setProgramType(ProgramType programType) {
+		this.programType = programType;
+	}
+	
+	public Integer getDisplayOnTop() {
+		return displayOnTop;
+	}
+
+	public void setDisplayOnTop(Integer displayOnTop) {
+		this.displayOnTop = displayOnTop;
+	}
+
+	public Integer getSpecialItemFlag() {
+		return specialItemFlag;
+	}
+
+	public void setSpecialItemFlag(Integer specialItemFlag) {
+		this.specialItemFlag = specialItemFlag;
+	}
+
+	public Integer getAvailableToSellQty() {
+		return availableToSellQty;
+	}
+
+	public void setAvailableToSellQty(Integer availableToSellQty) {
+		this.availableToSellQty = availableToSellQty;
+	}
+
+	public Integer getQtyControl() {
+		return qtyControl;
+	}
+
+	public void setQtyControl(Integer qtyControl) {
+		this.qtyControl = qtyControl;
+	}
+
+	public String getQtyIndicator() {
+		return qtyIndicator;
+	}
+
+	public void setQtyIndicator(String qtyIndicator) {
+		this.qtyIndicator = qtyIndicator;
+	}
+
+	public Boolean getNewItemIndicator() {
+		return newItemIndicator;
+	}
+
+	public void setNewItemIndicator(Boolean newItemIndicator) {
+		this.newItemIndicator = newItemIndicator;
+	}
+
+	public Boolean getAllocationFlag() {
+		return allocationFlag;
+	}
+
+	public void setAllocationFlag(Boolean allocationFlag) {
+		this.allocationFlag = allocationFlag;
+	}
+
+	public Boolean getAqFlag() {
+		return aqFlag;
+	}
+
+	public void setAqFlag(Boolean aqFlag) {
+		this.aqFlag = aqFlag;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public List<QuantityBreakPrice> getQuantityBreakPrices() {
+		List<QuantityBreakPrice> sorted = new ArrayList<QuantityBreakPrice>(qtyBreakPrices);
+		Collections.sort(sorted,
+				new Comparator(){
+					 @Override
+					 public int compare(Object o1, Object o2) 
+					 {
+						 int sortByAgeFlag=((QuantityBreakPrice)o1).getQuantityBreak().compareTo(((QuantityBreakPrice)o2).getQuantityBreak());
+						 return sortByAgeFlag;
+					 }
+				}
+	    );
+		return sorted;
+	}
+
+	public void setQuantityBreakPrices(List<QuantityBreakPrice> quantityBreakPrices) {
+		this.qtyBreakPrices = quantityBreakPrices;
+	}
+
+	
+	@Override
+	public String getCostIndicatorType() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	int getPriority() {
+		return 2;
+	}
+
+
+	@Override
+	boolean allowOverride() {
+		return true;
+	}
+
+	@Override
+	boolean isCustomerMatched(Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers) {
+		return true;
+	}
+	
+
+	public List<QuantityBreakPrice> getQtyRange() {
+		
+		List<QuantityBreakPrice> result = new ArrayList<>();
+		
+		for(int i =0 ; i < qtyBreakPrices.size(); i++) {
+			QuantityBreakPrice qtyBreakPrice = new QuantityBreakPrice();
+			
+			qtyBreakPrice.setQuantityBreak(qtyBreakPrices.get(i).getQuantityBreak());
+			
+			if (i < qtyBreakPrices.size() - 1) { //not at last element of qtyBreakPrices
+				qtyBreakPrice.setQuantityBreakTo(qtyBreakPrices.get(i+1).getQuantityBreak());
+			} else {
+				qtyBreakPrice.setQuantityBreakTo(Integer.MAX_VALUE);
+			}
+			
+			result.add(qtyBreakPrice);
+		}
+			
+		return result;
+	}
+	
+	public int roundUp(int mpq, int first, int max){
+		if (first % mpq == 0) {
+			return first;
+		}
+		int temp= first;
+		while(max > temp + mpq) {
+			temp = temp +mpq;
+    	}
+		return temp;
+	}
+
+	@Override
+	boolean isSalesCostTypeMatched() {
+		if (this.salesCostType.equals(SalesCostType.ZINM)) {
+			return false;
+		}
+		MaterialRegional materialRegional = getMaterial().getMaterialRegaional(getBizUnitBean().getName());
+		if (materialRegional != null) {
+			return materialRegional.isSalesCostFlag(); 
+		}
+		return false;
+	}
+	
+	@Override
+	boolean isSalesCostTypeMatched(boolean salesCostType) {
+		
+		if (this.salesCostType.equals(SalesCostType.ZINM)) {
+			return false;
+		}
+		return salesCostType;
+	}
+
+
+	@Override
+	public void fillupPricerInfo(PricerInfo pricerInfo) {
+		super.fillupPricerInfo(pricerInfo);
+		pricerInfo.setAllocationFlag(allocationFlag);
+		pricerInfo.setMinSell(null);
+		
+		pricerInfo.setProgramType(null);
+		if (qtyIndicator != null) {
+			pricerInfo.setQtyIndicator(qtyIndicator);
+		}
+		
+		pricerInfo.setContractPricer(false);
+		
+		pricerInfo.setMaterialTypeId("NORMAL");
+		pricerInfo.setProgramType(programType == null ? null : programType.getName());
+		pricerInfo.setQtyIndicator(qtyIndicator);
+		pricerInfo.setResaleIndicator("00AA");
+		
+		
+		if (pricerInfo.getRequestedQty() == null){
+			 return;
+		}
+		QuantityBreakPrice qtyBreakPrice = getQtyBreakPrice(Integer.valueOf(pricerInfo.getRequestedQty()));
+		if (qtyBreakPrice != null) {
+			qtyBreakPrice.fillInPricer(pricerInfo);
+		}
+		pricerInfo.setSalesCostFlag(true);
+		pricerInfo.setSalesCostType(salesCostType);
+		
+		super.applyCostIndicator(pricerInfo);
+	}
+	
+	@Override
+	public void fillInPricer(RfqItemVO rfqItem) {
+		super.fillInPricer(rfqItem);
+		
+		rfqItem.setAllocationFlag(allocationFlag);
+		rfqItem.setMaterialTypeId("NORMAL");
+		rfqItem.setMultiUsage(true);
+		if(programType != null) {
+			rfqItem.setProgramType(programType.getName());
+		}
+
+		QuantityBreakPrice qtyBreakPrice = getQtyBreakPrice(Integer.valueOf(rfqItem.getRequiredQty()));
+		if (qtyBreakPrice != null) {
+			qtyBreakPrice.fillInPricer(rfqItem);
+		}
+		rfqItem.setSalesCostFlag(true);
+		rfqItem.setSalesCostType(salesCostType);
+		
+/*
+
+		
+		rfqItem.setQtyIndicator(this.getQtyIndicator());
+		rfqItem.setCancellationWindow(this.getCancellationWindow());
+		rfqItem.setReschedulingWindow(this.getRescheduledWindow());
+		rfqItem.setTermsAndCondition(this.getTermsAndConditions());
+
+		//fixed issue 378
+		if(this.getAvnetQcComments()!=null && !this.getAvnetQcComments().isEmpty())
+		{
+			rfqItem.setQcComment(this.getAvnetQcComments());
+		}
+		
+		
+		ManufacturerDetail md = null;
+		if (mfr != null && material.getProductGroup2() != null
+				&& material.getProductCategory() != null && rfqItem.getRfqHeaderVO().getBizUnit() != null) {
+			md = MfrDetailCacheManager.getMfrDetail(mfr.getId(), material.getProductGroup2().getId(),
+					material.getProductCategory().getId(), rfqItem.getRfqHeaderVO().getBizUnit());
+			if (md != null) {
+				md.fillIn(rfqItem);
+				if (this.getQtyIndicator() == null) {
+					rfqItem.setQtyIndicator(md.getQuantityIndicator());
+				}
+
+
+			}
+		}
+		rfqItem.setCostIndicatorType(this.getCostIndicatorType());
+		// by costindicator
+		fillInRfqVOByCostIndicator(rfqItem);*/
+	}
+	
+	private QuantityBreakPrice getQtyBreakPrice(int qty) {
+		for (int i = 0; i < qtyBreakPrices.size(); i++ ) {
+			if (qty >= qtyBreakPrices.get(i).getQuantityBreak()) {
+				return qtyBreakPrices.get(i);
+			}
+		}
+		return null;
+		
+	}
+	
+	@Override
+	boolean matchAQCondtions(Double targetResale, int requestedQty) {
+		if (super.matchAQCondtions(targetResale, requestedQty) == false) {
+			return false;
+		}
+		QuantityBreakPrice qtyBreakPrice = getQtyBreakPrice(requestedQty);
+		if (qtyBreakPrice == null) {
+			return false;
+		}
+		if (targetResale != null && targetResale < qtyBreakPrice.getSalesCost().doubleValue()) {
+			return false;
+		}
+		return true;
+	}	
+
+}

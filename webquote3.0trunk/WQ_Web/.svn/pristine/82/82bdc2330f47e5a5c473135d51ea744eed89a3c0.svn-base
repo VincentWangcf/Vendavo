@@ -1,0 +1,37 @@
+package com.avnet.emasia.webquote.web.edi.job;
+		
+import java.util.logging.Logger;
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+import com.avnet.emasia.webquote.edi.TIInfoExchangeSB;
+import com.avnet.emasia.webquote.utilities.schedule.IScheduleTask;
+
+@Stateless
+public class TIInBoundTask implements IScheduleTask {
+
+	private static final Logger LOG = Logger.getLogger(TIInBoundTask.class.getName());
+	 
+    @EJB
+    private TIInfoExchangeSB tISB;
+    
+	@Override
+	@Asynchronous    
+	public void executeTask(Timer timer) {
+		LOG.info("TI project inBound job beginning...");
+		StringBuilder strBuilder = new StringBuilder();
+		try{
+			tISB.tiXmlToDB(strBuilder);
+			tISB.tiCsvToDB(strBuilder);
+		} catch (Exception e) {
+			LOG.severe(e.toString());
+		}
+		LOG.info("TI project inBound job ended");
+	}
+
+	
+	
+
+
+}

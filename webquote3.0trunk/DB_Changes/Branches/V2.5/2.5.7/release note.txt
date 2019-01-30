@@ -1,0 +1,5 @@
+1) Fix INC0521555  June 2015/08/16
+2) update LastUpdatedName when the LastUpdatedBy is updated on BMTWorkingPlatform. Demon Chen@20160817
+3) INC0517696 , failed to send quote to sap- Tough
+4) added actions to quoteItem on BMTWorkingPlatform and workingPlatform by damon@20160818
+5) create a MFR if it does not exist when sap material master upload.   Lenon 2016-08-18

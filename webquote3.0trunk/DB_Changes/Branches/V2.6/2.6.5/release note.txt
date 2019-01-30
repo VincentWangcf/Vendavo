@@ -1,0 +1,5 @@
+1)Fix ReSubmit Attachment disappeared issue --add by Lenon 2016/12/19
+2)only display new teams in  Maintain User Profile page --Add by Lenon 2016/12/19
+3)update Sap Material data loading program for creating table SAP_PCN_MATERIAL to PCN Dynamic Project  --Added by Damon 2016/12/30
+4)3)Fix ticket INC0637894       --Add by Lenon 2017/01/03
+5)Fix maintain user performance issue --Add by June 2017/01/04

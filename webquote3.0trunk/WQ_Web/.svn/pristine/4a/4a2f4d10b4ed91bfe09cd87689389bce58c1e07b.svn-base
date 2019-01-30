@@ -1,0 +1,251 @@
+package com.avnet.emasia.webquote.web.quote.vo;
+
+import java.io.Serializable;
+import java.util.List;
+
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.quote.vo.WorkingPlatformItemVO;
+
+public class QuotationWarningVO implements Serializable {
+
+	private boolean proceed;
+	private WorkingPlatformItemVO workingPlatformItemVO;
+	private WorkingPlatformItemVO invalidWorkingPlatformItemVO;
+	private boolean standby;
+	
+	private List<String> messages;
+	private boolean mpqError = false;
+	private boolean moqError = false;
+	private boolean movError = false;
+	private boolean leadTimeError = false;
+	private boolean costIndicatorError = false;
+	private boolean qtyIndicatorError = false;
+	private boolean priceValidityError = false;
+	private boolean costError = false;
+	private boolean quotedQtyError = false;
+	private boolean quotedPriceError = false;
+	private boolean shipmentValidityError = false;
+	private boolean mfrQuoteQtyError = false;
+	private boolean aqQtyError = false;
+	private boolean pmoqError = false;
+	private boolean drmsError = false;
+	private boolean endCustomerMatchError = false;
+	private boolean quoteEffectiveDateError = false;
+	
+	private boolean quotedPriceWarning = false;
+	private boolean marginWarning = false;
+	private boolean quotedQtyWarning = false;
+	private boolean costWarning = false;
+	private boolean shipmentValidityWarning = false;
+	private boolean qcExternalCommentError = false;
+	private boolean restrictCustomerWarning = false;
+	
+	private boolean salesCostDataError;
+
+
+	
+	public boolean isProceed() {
+		return proceed;
+	}
+	public void setProceed(boolean proceed) {
+		this.proceed = proceed;
+	}
+	public boolean isStandby() {
+		return !isError() && !isWarn();
+		//return standby;
+	}
+	public boolean isWarn() {
+		return !isError() && (quotedPriceWarning || marginWarning || quotedQtyWarning || costWarning || shipmentValidityWarning || restrictCustomerWarning );
+		//return standby;
+	}
+
+	public boolean isError() {
+		return (salesCostDataError||mpqError || moqError || movError || leadTimeError || costIndicatorError || qtyIndicatorError || priceValidityError || costError || quotedQtyError || quotedPriceError || shipmentValidityError || mfrQuoteQtyError || aqQtyError || pmoqError || qcExternalCommentError || drmsError || endCustomerMatchError || quoteEffectiveDateError);
+		//return standby;
+	}
+
+	public void setStandby(boolean standby) {
+		this.standby = standby;
+	}
+	public boolean isMpqError() {
+		return mpqError;
+	}
+	public void setMpqError(boolean mpqError) {
+		this.mpqError = mpqError;
+	}
+	public boolean isMoqError() {
+		return moqError;
+	}
+	public void setMoqError(boolean moqError) {
+		this.moqError = moqError;
+	}
+	public boolean isMovError() {
+		return movError;
+	}
+	public void setMovError(boolean movError) {
+		this.movError = movError;
+	}
+	public boolean isLeadTimeError() {
+		return leadTimeError;
+	}
+	public void setLeadTimeError(boolean leadTimeError) {
+		this.leadTimeError = leadTimeError;
+	}
+	public boolean isCostIndicatorError() {
+		return costIndicatorError;
+	}
+	public void setCostIndicatorError(boolean costIndicatorError) {
+		this.costIndicatorError = costIndicatorError;
+	}
+	public boolean isQtyIndicatorError() {
+		return qtyIndicatorError;
+	}
+	public void setQtyIndicatorError(boolean qtyIndicatorError) {
+		this.qtyIndicatorError = qtyIndicatorError;
+	}
+	public boolean isPriceValidityError() {
+		return priceValidityError;
+	}
+	public void setPriceValidityError(boolean priceValidityError) {
+		this.priceValidityError = priceValidityError;
+	}
+	public boolean isCostError() {
+		return costError;
+	}
+	public void setCostError(boolean costError) {
+		this.costError = costError;
+	}
+	public boolean isQuotedPriceWarning() {
+		return quotedPriceWarning;
+	}
+	public void setQuotedPriceWarning(boolean quotedPriceWarning) {
+		this.quotedPriceWarning = quotedPriceWarning;
+	}
+	public boolean isMarginWarning() {
+		return marginWarning;
+	}
+	public void setMarginWarning(boolean marginWarning) {
+		this.marginWarning = marginWarning;
+	}
+	public boolean isQuotedQtyWarning() {
+		return quotedQtyWarning;
+	}
+	public void setQuotedQtyWarning(boolean quotedQtyWarning) {
+		this.quotedQtyWarning = quotedQtyWarning;
+	}
+	public boolean isQuotedQtyError() {
+		return quotedQtyError;
+	}
+	public void setQuotedQtyError(boolean quotedQtyError) {
+		this.quotedQtyError = quotedQtyError;
+	}
+	public boolean isShipmentValidityError() {
+		return shipmentValidityError;
+	}
+	public void setShipmentValidityError(boolean shipmentValidityError) {
+		this.shipmentValidityError = shipmentValidityError;
+	}
+	public List<String> getMessages() {
+		return messages;
+	}
+	public void setMessages(List<String> messages) {
+		this.messages = messages;
+	}
+	public boolean isQuotedPriceError() {
+		return quotedPriceError;
+	}
+	public void setQuotedPriceError(boolean quotedPriceError) {
+		this.quotedPriceError = quotedPriceError;
+	}
+	public boolean isCostWarning() {
+		return costWarning;
+	}
+	public void setCostWarning(boolean costWarning) {
+		this.costWarning = costWarning;
+	}
+	public boolean isMfrQuoteQtyError() {
+		return mfrQuoteQtyError;
+	}
+	public void setMfrQuoteQtyError(boolean mfrQuoteQtyError) {
+		this.mfrQuoteQtyError = mfrQuoteQtyError;
+	}
+	public boolean isAqQtyError() {
+		return aqQtyError;
+	}
+	public void setAqQtyError(boolean aqQtyError) {
+		this.aqQtyError = aqQtyError;
+	}
+	public boolean isPmoqError() {
+		return pmoqError;
+	}
+	public void setPmoqError(boolean pmoqError) {
+		this.pmoqError = pmoqError;
+	}
+	public WorkingPlatformItemVO getWorkingPlatformItemVO() {
+		return workingPlatformItemVO;
+	}
+	public void setWorkingPlatformItemVO(WorkingPlatformItemVO workingPlatformItemVO) {
+		this.workingPlatformItemVO = workingPlatformItemVO;
+	}
+	public boolean isShipmentValidityWarning() {
+		return shipmentValidityWarning;
+	}
+	public void setShipmentValidityWarning(boolean shipmentValidityWarning) {
+		this.shipmentValidityWarning = shipmentValidityWarning;
+	}
+	public WorkingPlatformItemVO getInvalidWorkingPlatformItemVO() {
+		return invalidWorkingPlatformItemVO;
+	}
+	public void setInvalidWorkingPlatformItemVO(
+			WorkingPlatformItemVO invalidWorkingPlatformItemVO) {
+		this.invalidWorkingPlatformItemVO = invalidWorkingPlatformItemVO;
+	}
+	public boolean isQcExternalCommentError() {
+		return qcExternalCommentError;
+	}
+	public void setQcExternalCommentError(boolean qcExternalCommentError) {
+		this.qcExternalCommentError = qcExternalCommentError;
+	}
+	public boolean isDrmsError() {
+		return drmsError;
+	}
+	public void setDrmsError(boolean drmsError) {
+		this.drmsError = drmsError;
+	}
+	public boolean isEndCustomerMatchError()
+	{
+		return endCustomerMatchError;
+	}
+	public void setEndCustomerMatchError(boolean endCustomerMatchError)
+	{
+		this.endCustomerMatchError = endCustomerMatchError;
+	}
+	public boolean isRestrictCustomerWarning()
+	{
+		return restrictCustomerWarning;
+	}
+	public void setRestrictCustomerWarning(boolean restrictCustomerWarning)
+	{
+		this.restrictCustomerWarning = restrictCustomerWarning;
+	}
+	public boolean isQuoteEffectiveDateError() {
+		return quoteEffectiveDateError;
+	}
+	public void setQuoteEffectiveDateError(boolean quoteEffectiveDateError) {
+		this.quoteEffectiveDateError = quoteEffectiveDateError;
+	}
+	public boolean isSalesCostDataError() {
+		return salesCostDataError;
+	}
+	public void setSalesCostDataError(boolean salesCostDataError) {
+		this.salesCostDataError = salesCostDataError;
+	}
+
+
+	
+
+	
+
+	
+}
+

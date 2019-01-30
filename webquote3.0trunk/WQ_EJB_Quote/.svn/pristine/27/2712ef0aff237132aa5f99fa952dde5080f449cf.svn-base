@@ -1,0 +1,1334 @@
+package com.avnet.emasia.webquote.quote.vo;
+
+import java.io.Serializable;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.logging.Logger;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.entity.Attachment;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.QuantityBreakPrice;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.SalesCostType;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+import com.avnet.emasia.webquote.vo.PricerInfo;
+
+public class WorkingPlatformItemVO implements Serializable {
+
+	private static final long serialVersionUID = -5835330351246846071L;
+
+	static Logger logger = Logger.getLogger("WorkingPlatformItemVO");
+
+	private QuoteItem quoteItem;
+	private long id;
+	public String statusStr;
+	public String mpqStr;
+	public String moqStr;
+	public String movStr;
+	public String resaleMarginStr;
+	public String quotedPriceStr;
+	public String costStr;
+	public String quotedQtyStr;
+	public String priceValidityStr;
+	public String shipmentValidityStr;
+	public String cancellationWindowStr;
+	public String rescheduleWindowStr;
+	public String costIndicatorStr;
+	private String quoteTypeStr;
+	public String qtyIndicatorStr;
+	public String pmoqStr;
+	public String targetMarginStr;
+	public String targetResaleStr;
+	public String referenceMarginStr;
+	public String multiUsageFlagStr;
+
+	public String aqccStr;
+	public List<String> aqccStrs;
+	public String internalCommentStr;
+	public List<String> internalCommentStrs;
+	public String termsAndConditionsStr;
+	public List<String> termsAndConditionsStrs;
+	public QcAttachments qcAttachments;
+
+	public String leadTimeStr;
+
+	public String vendorQuoteNumberStr;
+	public String vendorDebitNumberStr;
+	public String vendorQuoteQtyStr;
+
+	public String resaleIndicatorStr;
+	public String allocationFlagStr;
+	public String designInCatStr;
+	
+	public String quantityBreakStr;
+	// add for quotationHistory SR
+    private String endCustomerName;
+    //first element is for salses cost pricer showing icons, the second is for program pricer
+    private int[] iconsArray;
+
+	public String getDesignInCatStr() {
+		return designInCatStr;
+	}
+
+	public void setDesignInCatStr(String designInCatStr) {
+		if (hasDifferentValue(null, this.designInCatStr, designInCatStr))
+			this.changed = true;
+		this.designInCatStr = designInCatStr;
+	}
+
+	public String loaFlagStr;
+	public String validFlagStr;
+	public String sprFlagStr;
+
+	public String bmtFlagStr;
+	public String requestedMfr;
+	public String quotedMfr;
+	public String requestedPartNumber;
+	public String quotedPartNumber;
+
+	private Material quotedMaterial;
+
+	public String priceListRemarks1Str;
+	public String priceListRemarks2Str;
+	public String priceListRemarks3Str;
+	public String priceListRemarks4Str;
+
+	public String productGroup1Str;
+	public String productGroup2Str;
+	public String productGroup3Str;
+	public String productGroup4Str;
+
+	public String productCateogryStr;
+	public String programType;
+
+	public boolean changed = false;
+	public boolean initialized = false;
+
+	public String minSellPriceStr;
+	public String bottomPriceStr;
+	public String descriptionStr;
+
+	//public DecimalFormat df2 = (DecimalFormat)DecimalFormat.getNumberInstance(new ResourceMB().getResourceLocale());
+	//public DecimalFormat df5 = (DecimalFormat)DecimalFormat.getNumberInstance(new ResourceMB().getResourceLocale());
+	public DecimalFormat df2 = new DecimalFormat("#");
+	public DecimalFormat df5 = new DecimalFormat("#");
+	
+	public SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+
+	public String soldToChineseNameStr;
+	public String soldToCustomerNameStr;
+
+	// WebQuote 2.2 enhancement : new field quotation effective date
+	public String quotationEffectiveDateStr;
+	// WebQuote 2.2 enhancement : new field quotation effective date
+	public boolean hasFuturePricer = false;
+	// WebQuote 2.2 enhancement : new field quotation effective date
+	public String endCustomerCodeStr;
+	public String endCustomerNameStr;
+	public String sapPartNumberStr;
+	// PROGRM PRICER ENHANCEMENT
+	public String bizUnitStr;
+	public String qbpStr;
+	public boolean disableEditable;
+	public boolean disableEditableForSalesCost;
+	public String emailMessage;//bmt:5.4.2.1
+	//below added for Sales Cost Project by DamonChen@20170915
+	
+	public String salesCostPart;
+	public String salesCostTypeName;
+	public String salesCostStr;
+	public String suggestedResaleStr;
+	public String customerGroupId;
+	
+	public List<QuantityBreakPrice> orderQties = new ArrayList<>();
+
+	public WorkingPlatformItemVO() {
+		df2.setMaximumFractionDigits(2);
+		df2.setMinimumFractionDigits(2);
+		df2.setMinimumIntegerDigits(1);
+		df5.setMaximumFractionDigits(5);
+		df5.setMinimumFractionDigits(5);
+		df5.setMinimumIntegerDigits(1);
+	}
+
+	public QuoteItem getQuoteItem() {
+		return quoteItem;
+	}
+
+	// PROGRM PRICER ENHANCEMENT
+	public void setQuoteItem(QuoteItem quoteItem, BizUnit bizUnit) {
+		setQuoteItem(quoteItem, false, bizUnit);
+	}
+	
+	public void setQuoteItem(QuoteItem quoteItem) {
+		this.quoteItem = quoteItem;
+	}
+
+	public void setQuoteItem(QuoteItem quoteItem, boolean updateQuotedMaterial, BizUnit bizUnit) {
+		// PROGRM PRICER ENHANCEMENT
+		this.bizUnitStr = bizUnit.getName();
+		this.quoteItem = quoteItem;
+
+		// this.requestedPartNumber =
+		// quoteItem.getRequestedMaterial().getFullMfrPartNumber();
+		this.requestedMfr = quoteItem.getRequestedMfr().getName();
+		this.requestedPartNumber = quoteItem.getRequestedPartNumber();
+
+		if (!updateQuotedMaterial) {
+			if(quoteItem.getQuotedMfr()!=null){
+				this.quotedMfr = quoteItem.getQuotedMfr().getName();
+			}
+			this.quotedPartNumber = quoteItem.getQuotedPartNumber();
+		}
+		this.quotedMaterial = quoteItem.getQuotedMaterial();
+
+		// pricer information
+
+		costIndicatorStr = this.quoteItem.getCostIndicator();
+		/*
+		 * if(this.quotedMaterial != null){ if(this.quoteItem.getStatus() !=
+		 * null &&
+		 * this.quoteItem.getStatus().toUpperCase().equals(QuoteSBConstant
+		 * .RFQ_STATUS_RIT.toUpperCase())){
+		 */
+		if (this.quoteItem.getProductGroup1() != null)
+			productGroup1Str = this.quoteItem.getProductGroup1().getName();
+		if (this.quoteItem.getProductGroup2() != null)
+			productGroup2Str = this.quoteItem.getProductGroup2().getName();
+		productGroup3Str = this.quoteItem.getProductGroup3();
+		productGroup4Str = this.quoteItem.getProductGroup4();
+
+		mpqStr = (this.quoteItem.getMpq() == null ? null : String.valueOf(this.quoteItem.getMpq()));
+		moqStr = (this.quoteItem.getMoq() == null ? null : String.valueOf(this.quoteItem.getMoq()));
+		movStr = (this.quoteItem.getMov() == null ? null : String.valueOf(this.quoteItem.getMov()));
+		leadTimeStr = this.quoteItem.getLeadTime();
+
+		this.priceListRemarks1Str = this.quoteItem.getPriceListRemarks1();
+		this.priceListRemarks2Str = this.quoteItem.getPriceListRemarks2();
+		this.priceListRemarks3Str = this.quoteItem.getPriceListRemarks3();
+		this.priceListRemarks4Str = this.quoteItem.getPriceListRemarks4();
+
+		costStr = (this.quoteItem.getCost() == null ? null : df5.format(this.quoteItem.getCost()));
+
+		termsAndConditionsStr = this.quoteItem.getTermsAndConditions();
+
+		priceValidityStr = (this.quoteItem.getPriceValidity() == null ? null : String.valueOf(this.quoteItem.getPriceValidity()));
+		shipmentValidityStr = (this.quoteItem.getShipmentValidity() == null ? null : sdf.format(this.quoteItem.getShipmentValidity()));
+		sapPartNumberStr = (this.quoteItem.getSapPartNumber() == null ? null : this.quoteItem.getSapPartNumber());
+
+		descriptionStr = this.quoteItem.getDescription();
+		minSellPriceStr = (this.quoteItem.getMinSellPrice() == null ? null : df5.format(this.quoteItem.getMinSellPrice()));
+		bottomPriceStr = (this.quoteItem.getBottomPrice() == null ? null : df5.format(this.quoteItem.getBottomPrice()));
+		
+		
+		salesCostPart =(this.quoteItem.isSalesCostFlag() == true?"Yes":"No");
+		salesCostTypeName =(this.quoteItem.getSalesCostType()==null?null:this.quoteItem.getSalesCostType().name());
+		salesCostStr = (this.quoteItem.getSalesCost() == null ? null : df5.format(this.quoteItem.getSalesCost()));
+		suggestedResaleStr =(this.quoteItem.getSuggestedResale()== null ? null : df5.format(this.quoteItem.getSuggestedResale()));
+		customerGroupId =this.quoteItem.getCustomerGroupId()==null?null:this.quoteItem.getCustomerGroupId();
+		
+		disableEditableForSalesCost = (this.quoteItem.isSalesCostFlag() == true && this.quoteItem.getSalesCostType() != null
+				&& (!this.quoteItem.getSalesCostType().name().equals(SalesCostType.NonSC.name())));
+		
+
+		
+		this.soldToChineseNameStr = this.quoteItem.getQuote().getSoldToCustomerNameChinese();
+		this.soldToCustomerNameStr = this.quoteItem.getQuote().getSoldToCustomer().getCustomerFullName();
+		
+		
+		if (this.quoteItem.getMultiUsageFlag() != null && this.quoteItem.getMultiUsageFlag().booleanValue()) {
+			multiUsageFlagStr = "Yes";
+		} else {
+			multiUsageFlagStr = "No";
+		}
+
+		if (this.quoteItem.getAllocationFlag() != null && this.quoteItem.getAllocationFlag().booleanValue()) {
+			allocationFlagStr = "Yes";
+		} else {
+			allocationFlagStr = "No";
+		}
+
+		if (this.quoteItem.getValidFlag() != null && this.quoteItem.getValidFlag().booleanValue()) {
+			validFlagStr = "Yes";
+		} else {
+			validFlagStr = "No";
+		}
+
+		if (this.quoteItem.getLoaFlag() != null && this.quoteItem.getLoaFlag().booleanValue()) {
+			loaFlagStr = "Yes";
+		} else {
+			loaFlagStr = "No";
+		}
+
+		if (this.quoteItem.getSprFlag() != null && this.quoteItem.getSprFlag().booleanValue()) {
+			sprFlagStr = "Yes";
+		} else {
+			sprFlagStr = "No";
+		}
+
+		if (this.quoteItem.getBmtCheckedFlag() != null && this.quoteItem.getBmtCheckedFlag().booleanValue()) {
+			bmtFlagStr = "Yes";
+		} else {
+			bmtFlagStr = "No";
+		}
+		quoteTypeStr = this.quoteItem.getQuoteType();
+		designInCatStr = this.quoteItem.getDesignInCat();
+		// WebQuote 2.2 enhancement : new field quotation effective date
+		quotationEffectiveDateStr = (this.quoteItem.getQuotationEffectiveDate() == null ? null : sdf.format(this.quoteItem.getQuotationEffectiveDate()));
+		if (this.quoteItem.getEndCustomer() != null) {
+			endCustomerCodeStr = this.quoteItem.getEndCustomer().getCustomerNumber();
+		}
+
+		if (this.quoteItem.getEndCustomer() != null) {
+			endCustomerNameStr = this.quoteItem.getEndCustomer().getCustomerFullName();
+		} else if (this.quoteItem.getEndCustomerName() != null) {
+			endCustomerNameStr = this.quoteItem.getEndCustomerName();
+		} else {
+			endCustomerNameStr = null;
+		}
+
+		cancellationWindowStr = (this.quoteItem.getCancellationWindow() == null ? null : String.valueOf(this.quoteItem.getCancellationWindow()));
+		rescheduleWindowStr = (this.quoteItem.getRescheduleWindow() == null ? null : String.valueOf(this.quoteItem.getRescheduleWindow()));
+
+		quotedPriceStr = (this.quoteItem.getQuotedPrice() == null ? null : df5.format(this.quoteItem.getQuotedPrice()));
+		targetResaleStr = (this.quoteItem.getTargetResale() == null ? null : df5.format(this.quoteItem.getTargetResale()));
+
+		resaleMarginStr = null;
+		if (this.quoteItem.getCost() != null && this.quoteItem.getQuotedPrice() != null && this.quoteItem.getQuotedPrice() > 0.0) {
+			Double resaleMargin = 100 * (this.quoteItem.getQuotedPrice() - this.quoteItem.getCost()) / this.quoteItem.getQuotedPrice();
+			resaleMarginStr = df2.format(resaleMargin) + "%";
+		}
+
+		targetMarginStr = null;
+		if (this.quoteItem.getCost() != null && this.quoteItem.getTargetResale() != null && this.quoteItem.getTargetResale() > 0.0) {
+			Double targetMargin = 100 * (this.quoteItem.getTargetResale() - this.quoteItem.getCost()) / this.quoteItem.getTargetResale();
+			targetMarginStr = df2.format(targetMargin) + "%";
+		}
+
+		referenceMarginStr = null;
+		if (this.quoteItem.getReferenceMargin() != null) {
+			referenceMarginStr = df2.format(this.quoteItem.getReferenceMargin()) + "%";
+		}
+
+		quotedQtyStr = (this.quoteItem.getQuotedQty() == null ? null : String.valueOf(this.quoteItem.getQuotedQty()));
+
+		vendorQuoteNumberStr = this.quoteItem.getVendorQuoteNumber();
+		vendorDebitNumberStr = this.quoteItem.getVendorDebitNumber();
+		vendorQuoteQtyStr = (this.quoteItem.getVendorQuoteQty() == null ? null : String.valueOf(this.quoteItem.getVendorQuoteQty()));
+
+		aqccStr = this.quoteItem.getAqcc();
+		internalCommentStr = this.quoteItem.getInternalComment();
+		qtyIndicatorStr = this.quoteItem.getQtyIndicator();
+		resaleIndicatorStr = this.quoteItem.getResaleIndicator();
+
+		statusStr = this.quoteItem.getStatus();
+
+		/*
+		 * this.programType = null; if(this.programItem){ ProgramMaterial
+		 * programMaterial = this.quotedMaterial.getProgramMaterial();
+		 * if(this.quotedMaterial != null && programMaterial != null){
+		 * ProgramType temp_programType = programMaterial.getProgramType();
+		 * if(temp_programType!=null){ this.programType =
+		 * temp_programType.getName(); } } }
+		 */
+		this.programType = this.quoteItem.getProgramType();
+	}
+
+	// PROGRM PRICER ENHANCEMENT
+	// public boolean hasProgramItem(){
+	// if(this.quotedMaterial != null){
+	// ProgramMaterial programMaterial =
+	// this.quotedMaterial.getProgramMaterial();
+	// if(programMaterial != null && programMaterial.getCostIndicator() !=
+	// null){
+	// String ci = programMaterial.getCostIndicator().getName();
+	// if(ci != null && this.costIndicatorStr != null &&
+	// ci.equals(this.costIndicatorStr)){
+	// return true;
+	// }
+	// }
+	// }
+	// return false;
+	// }
+
+	public String getMpqStr() {
+		return mpqStr;
+	}
+
+	public void setMpqStr(String mpqStr) {
+		if (hasDifferentValue(null, this.mpqStr, mpqStr))
+			this.changed = true;
+		this.mpqStr = mpqStr;
+	}
+
+	public String getMoqStr() {
+		return moqStr;
+	}
+
+	public void setMoqStr(String moqStr) {
+		if (hasDifferentValue(null, this.moqStr, moqStr))
+			this.changed = true;
+		this.moqStr = moqStr;
+	}
+
+	public String getMovStr() {
+		return movStr;
+	}
+
+	public void setMovStr(String movStr) {
+		if (hasDifferentValue(null, this.movStr, movStr))
+			this.changed = true;
+		this.movStr = movStr;
+	}
+
+	public String getResaleMarginStr() {
+		return resaleMarginStr;
+	}
+
+	public void setResaleMarginStr(String resaleMarginStr) {
+		if (resaleMarginStr != null && resaleMarginStr.trim().length() > 0 && !resaleMarginStr.endsWith("%")) {
+			resaleMarginStr += "%";
+		}
+		if (hasDifferentValue(null, this.resaleMarginStr, resaleMarginStr))
+			this.changed = true;
+		this.resaleMarginStr = resaleMarginStr;
+	}
+
+	public String getQuotedPriceStr() {
+		return quotedPriceStr;
+	}
+
+	public void setQuotedPriceStr(String quotedPriceStr) {
+		if (hasDifferentValue(null, this.quotedPriceStr, quotedPriceStr))
+			this.changed = true;
+		this.quotedPriceStr = quotedPriceStr;
+	}
+
+	public String getTargetResaleStr() {
+		return targetResaleStr;
+	}
+
+	public void setTargetResaleStr(String targetResaleStr) {
+		if (hasDifferentValue(null, this.targetResaleStr, targetResaleStr))
+			this.changed = true;
+		this.targetResaleStr = targetResaleStr;
+	}
+
+	public String getCostStr() {
+		return costStr;
+	}
+
+	public void setCostStr(String costStr) {
+		if (hasDifferentValue(null, this.costStr, costStr))
+			this.changed = true;
+		this.costStr = costStr;
+	}
+
+	public String getQuotedQtyStr() {
+		return quotedQtyStr;
+	}
+
+	public void setQuotedQtyStr(String quotedQtyStr) {
+		if (hasDifferentValue(null, this.quotedQtyStr, quotedQtyStr))
+			this.changed = true;
+		this.quotedQtyStr = quotedQtyStr;
+	}
+
+	public String getVendorQuoteQtyStr() {
+		return vendorQuoteQtyStr;
+	}
+
+	public void setVendorQuoteQtyStr(String vendorQuoteQtyStr) {
+		if (hasDifferentValue(null, this.vendorQuoteQtyStr, vendorQuoteQtyStr))
+			this.changed = true;
+		this.vendorQuoteQtyStr = vendorQuoteQtyStr;
+	}
+
+	public String getPriceValidityStr() {
+		return priceValidityStr;
+	}
+
+	public void setPriceValidityStr(String priceValidityStr) {
+		if (hasDifferentValue(null, this.priceValidityStr, priceValidityStr))
+			this.changed = true;
+		this.priceValidityStr = priceValidityStr;
+	}
+
+	public String getShipmentValidityStr() {
+		return shipmentValidityStr;
+	}
+
+	public void setShipmentValidityStr(String shipmentValidityStr) {
+		if (hasDifferentValue(null, this.shipmentValidityStr, shipmentValidityStr))
+			this.changed = true;
+		this.shipmentValidityStr = shipmentValidityStr;
+	}
+
+	public String getCancellationWindowStr() {
+		return cancellationWindowStr;
+	}
+
+	public void setCancellationWindowStr(String cancellationWindowStr) {
+		if (hasDifferentValue(null, this.cancellationWindowStr, cancellationWindowStr))
+			this.changed = true;
+		this.cancellationWindowStr = cancellationWindowStr;
+	}
+
+	public String getRescheduleWindowStr() {
+		return rescheduleWindowStr;
+	}
+
+	public void setRescheduleWindowStr(String rescheduleWindowStr) {
+		if (hasDifferentValue(null, this.rescheduleWindowStr, rescheduleWindowStr))
+			this.changed = true;
+		this.rescheduleWindowStr = rescheduleWindowStr;
+	}
+
+	public String getCostIndicatorStr() {
+		return costIndicatorStr;
+	}
+
+	public void setCostIndicatorStr(String costIndicatorStr) {
+		if (hasDifferentValue(null, this.costIndicatorStr, costIndicatorStr))
+			this.changed = true;
+		this.costIndicatorStr = costIndicatorStr;
+	}
+
+	public boolean isChanged() {
+		return changed;
+	}
+
+	public void setChanged(boolean changed) {
+		this.changed = changed;
+	}
+
+	public String getQtyIndicatorStr() {
+		return qtyIndicatorStr;
+	}
+
+	public void setQtyIndicatorStr(String qtyIndicatorStr) {
+		if (hasDifferentValue(null, this.qtyIndicatorStr, qtyIndicatorStr))
+			this.changed = true;
+		this.qtyIndicatorStr = qtyIndicatorStr;
+	}
+
+	public String getPmoqStr() {
+		return pmoqStr;
+	}
+
+	public void setPmoqStr(String pmoqStr) {
+		if (hasDifferentValue(null, this.pmoqStr, pmoqStr))
+			this.changed = true;
+		this.pmoqStr = pmoqStr;
+	}
+
+	public String getTargetMarginStr() {
+		return targetMarginStr;
+	}
+
+	public void setTargetMarginStr(String targetMarginStr) {
+		if (hasDifferentValue(null, this.targetMarginStr, targetMarginStr))
+			this.changed = true;
+		this.targetMarginStr = targetMarginStr;
+	}
+
+	public String getMultiUsageFlagStr() {
+		return multiUsageFlagStr;
+	}
+
+	public void setMultiUsageFlagStr(String multiUsageFlagStr) {
+		if (hasDifferentValue(null, this.multiUsageFlagStr, multiUsageFlagStr))
+			this.changed = true;
+		this.multiUsageFlagStr = multiUsageFlagStr;
+	}
+
+	public List<String> getAqccStrs() {
+		return this.aqccStrs;
+	}
+
+	public void setAqccStrs(List<String> aqccStrs) {
+		List<String> added = new ArrayList<String>();
+		List<String> removed = new ArrayList<String>();
+		if (aqccStrs == null)
+			aqccStrs = new ArrayList<String>();
+		if (this.aqccStrs == null)
+			this.aqccStrs = new ArrayList<String>();
+
+		for (String s : aqccStrs) {
+			if (!this.aqccStrs.contains(s)) {
+				added.add(s);
+			}
+		}
+		for (String s : this.aqccStrs) {
+			if (!aqccStrs.contains(s)) {
+				removed.add(s);
+			}
+		}
+		String temp = "";
+		String[] values = new String[0];
+
+		if (!QuoteUtil.isEmpty(this.aqccStr)) {
+			values = this.aqccStr.split(";");
+		}
+		for (String s : values) {
+			boolean found = false;
+			for (String r : removed) {
+				if (s.trim().equals(r.trim())) {
+					found = true;
+				}
+			}
+			if (!found) {
+				if (temp.length() > 0)
+					temp += "; ";
+				temp += s.trim();
+			}
+		}
+		for (String s : added) {
+			if (temp.length() > 0)
+				temp += "; ";
+			temp += s;
+		}
+		this.aqccStr = temp;
+		this.aqccStrs = aqccStrs;
+	}
+
+	public String getAqccStr() {
+		return aqccStr;
+	}
+
+	public void setAqccStr(String aqccStr) {
+		if (hasDifferentValue(null, this.aqccStr, aqccStr))
+			this.changed = true;
+		this.aqccStr = aqccStr;
+	}
+
+	public List<String> getInternalCommentStrs() {
+		return this.internalCommentStrs;
+	}
+
+	public void setInternalCommentStrs(List<String> internalCommentStrs) {
+		List<String> added = new ArrayList<String>();
+		List<String> removed = new ArrayList<String>();
+		if (internalCommentStrs == null)
+			internalCommentStrs = new ArrayList<String>();
+		if (this.internalCommentStrs == null)
+			this.internalCommentStrs = new ArrayList<String>();
+
+		for (String s : internalCommentStrs) {
+			if (!this.internalCommentStrs.contains(s)) {
+				added.add(s);
+			}
+		}
+		for (String s : this.internalCommentStrs) {
+			if (!internalCommentStrs.contains(s)) {
+				removed.add(s);
+			}
+		}
+		String temp = "";
+		this.internalCommentStr = this.internalCommentStr == null?"":this.internalCommentStr;
+		String[] values = this.internalCommentStr.split(";");
+
+		for (String s : values) {
+			boolean found = false;
+			for (String r : removed) {
+				if (s.trim().equals(r.trim())) {
+					found = true;
+				}
+			}
+			if (!found) {
+				if (temp.length() > 0)
+					temp += "; ";
+				temp += s.trim();
+			}
+		}
+		for (String s : added) {
+			if (temp.length() > 0)
+				temp += "; ";
+			temp += s;
+		}
+		this.internalCommentStr = temp;
+		this.internalCommentStrs = internalCommentStrs;
+	}
+
+	public String getInternalCommentStr() {
+		return internalCommentStr;
+	}
+
+	public void setInternalCommentStr(String internalCommentStr) {
+		if (hasDifferentValue(null, this.internalCommentStr, internalCommentStr))
+			this.changed = true;
+		this.internalCommentStr = internalCommentStr;
+	}
+
+	public List<String> getTermsAndConditionsStrs() {
+		return this.termsAndConditionsStrs;
+	}
+
+	public void setTermsAndConditionsStrs(List<String> termsAndConditionsStrs) {
+		List<String> added = new ArrayList<String>();
+		List<String> removed = new ArrayList<String>();
+		if (termsAndConditionsStrs == null)
+			termsAndConditionsStrs = new ArrayList<String>();
+		if (this.termsAndConditionsStrs == null)
+			this.termsAndConditionsStrs = new ArrayList<String>();
+
+		for (String s : termsAndConditionsStrs) {
+			if (!this.termsAndConditionsStrs.contains(s)) {
+				added.add(s);
+			}
+		}
+		for (String s : this.termsAndConditionsStrs) {
+			if (!termsAndConditionsStrs.contains(s)) {
+				removed.add(s);
+			}
+		}
+		String temp = "";
+		this.termsAndConditionsStr=this.termsAndConditionsStr==null?"":this.termsAndConditionsStr;
+		String[] values = this.termsAndConditionsStr.split(";");
+
+		for (String s : values) {
+			boolean found = false;
+			for (String r : removed) {
+				if (s.trim().equals(r.trim())) {
+					found = true;
+				}
+			}
+			if (!found) {
+				if (temp.length() > 0)
+					temp += "; ";
+				temp += s.trim();
+			}
+		}
+		for (String s : added) {
+			if (temp.length() > 0)
+				temp += "; ";
+			temp += s;
+		}
+		this.termsAndConditionsStr = temp;
+		this.termsAndConditionsStrs = termsAndConditionsStrs;
+	}
+
+	public String getTermsAndConditionsStr() {
+		return termsAndConditionsStr;
+	}
+
+	public void setTermsAndConditionsStr(String termsAndConditionsStr) {
+		if (hasDifferentValue(null, this.termsAndConditionsStr, termsAndConditionsStr))
+			this.changed = true;
+		this.termsAndConditionsStr = termsAndConditionsStr;
+	}
+
+	public String getLeadTimeStr() {
+		return leadTimeStr;
+	}
+
+	public void setLeadTimeStr(String leadTimeStr) {
+		if (hasDifferentValue(null, this.leadTimeStr, leadTimeStr))
+			this.changed = true;
+		this.leadTimeStr = leadTimeStr;
+	}
+
+	public String getVendorQuoteNumberStr() {
+		return vendorQuoteNumberStr;
+	}
+
+	public void setVendorQuoteNumberStr(String vendorQuoteNumberStr) {
+		if (hasDifferentValue(null, this.vendorQuoteNumberStr, vendorQuoteNumberStr))
+			this.changed = true;
+		this.vendorQuoteNumberStr = vendorQuoteNumberStr;
+	}
+
+	public String getVendorDebitNumberStr() {
+		return vendorDebitNumberStr;
+	}
+
+	public void setVendorDebitNumberStr(String vendorDebitNumberStr) {
+		if (hasDifferentValue(null, this.vendorDebitNumberStr, vendorDebitNumberStr))
+			this.changed = true;
+		this.vendorDebitNumberStr = vendorDebitNumberStr;
+	}
+
+	public String getResaleIndicatorStr() {
+		return resaleIndicatorStr;
+	}
+
+	public void setResaleIndicatorStr(String resaleIndicatorStr) {
+		if (hasDifferentValue(null, this.resaleIndicatorStr, resaleIndicatorStr))
+			this.changed = true;
+		this.resaleIndicatorStr = resaleIndicatorStr;
+	}
+
+	public String getAllocationFlagStr() {
+		return allocationFlagStr;
+	}
+
+	public void setAllocationFlagStr(String allocationFlagStr) {
+		if (hasDifferentValue(null, this.allocationFlagStr, allocationFlagStr))
+			this.changed = true;
+		this.allocationFlagStr = allocationFlagStr;
+	}
+
+	public String getLoaFlagStr() {
+		return loaFlagStr;
+	}
+
+	public void setLoaFlagStr(String loaFlagStr) {
+		if (hasDifferentValue(null, this.loaFlagStr, loaFlagStr))
+			this.changed = true;
+		this.loaFlagStr = loaFlagStr;
+	}
+
+	public String getValidFlagStr() {
+		return validFlagStr;
+	}
+
+	public void setValidFlagStr(String validFlagStr) {
+		if (hasDifferentValue(null, this.validFlagStr, validFlagStr))
+			this.changed = true;
+		this.validFlagStr = validFlagStr;
+	}
+
+	public String getSprFlagStr() {
+		return sprFlagStr;
+	}
+
+	public void setSprFlagStr(String sprFlagStr) {
+		if (hasDifferentValue(null, this.sprFlagStr, sprFlagStr))
+			this.changed = true;
+		this.sprFlagStr = sprFlagStr;
+	}
+
+	public static Comparator<QuoteItem> alternativeQuoteNumberComparator = new Comparator<QuoteItem>() {
+
+		public int compare(QuoteItem quoteItem1, QuoteItem quoteItem2) {
+
+			if (quoteItem1.getAlternativeQuoteNumber() == null)
+				return 1;
+			if (quoteItem2.getAlternativeQuoteNumber() == null)
+				return -1;
+
+			// ascending order
+			return quoteItem1.getAlternativeQuoteNumber().compareTo(quoteItem2.getAlternativeQuoteNumber());
+
+			// descending order
+			// return
+			// quoteItem2.getAlternativeQuoteNumber().compareTo(quoteItem1.getAlternativeQuoteNumber());
+		}
+
+	};
+
+	public boolean hasDifferentValue(String val, String oldValue, String newValid) {
+		if (this.initialized) {
+			if (QuoteUtil.isEmpty(oldValue) && QuoteUtil.isEmpty(newValid)) {
+				return false;
+			} else if (QuoteUtil.isEmpty(oldValue) && !QuoteUtil.isEmpty(newValid)) {
+				// logger.log(Level.INFO, val + " : " + oldValue + " => " +
+				// newValid);
+				return true;
+			} else if (!QuoteUtil.isEmpty(oldValue) && QuoteUtil.isEmpty(newValid)) {
+				// logger.log(Level.INFO, val + " : " + oldValue + " => " +
+				// newValid);
+				return true;
+			} else {
+				if (oldValue != null && newValid != null && oldValue.equals(newValid)) {
+					return false;
+				} else {
+					// logger.log(Level.INFO, val + " : " + oldValue + " => " +
+					// newValid);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public boolean isInitialized() {
+		return initialized;
+	}
+
+	public void setInitialized(boolean initialized) {
+		this.initialized = initialized;
+	}
+
+	public String getRequestedPartNumber() {
+		return requestedPartNumber;
+	}
+
+	public void setRequestedPartNumber(String requestedPartNumber) {
+		this.requestedPartNumber = requestedPartNumber;
+	}
+
+	public String getPriceListRemarks1Str() {
+		return priceListRemarks1Str;
+	}
+
+	public void setPriceListRemarks1Str(String priceListRemarks1Str) {
+		this.priceListRemarks1Str = priceListRemarks1Str;
+	}
+
+	public String getPriceListRemarks2Str() {
+		return priceListRemarks2Str;
+	}
+
+	public void setPriceListRemarks2Str(String priceListRemarks2Str) {
+		this.priceListRemarks2Str = priceListRemarks2Str;
+	}
+
+	public String getPriceListRemarks3Str() {
+		return priceListRemarks3Str;
+	}
+
+	public void setPriceListRemarks3Str(String priceListRemarks3Str) {
+		this.priceListRemarks3Str = priceListRemarks3Str;
+	}
+
+	public String getPriceListRemarks4Str() {
+		return priceListRemarks4Str;
+	}
+
+	public void setPriceListRemarks4Str(String priceListRemarks4Str) {
+		this.priceListRemarks4Str = priceListRemarks4Str;
+	}
+
+	public String getMinSellPriceStr() {
+		return minSellPriceStr;
+	}
+
+	public void setMinSellPriceStr(String normSellPriceStr) {
+		this.minSellPriceStr = normSellPriceStr;
+	}
+
+	public String getBottomPriceStr() {
+		return bottomPriceStr;
+	}
+
+	public void setBottomPriceStr(String minSellPriceStr) {
+		this.bottomPriceStr = minSellPriceStr;
+	}
+
+	public String getDescriptionStr() {
+		return descriptionStr;
+	}
+
+	public void setDescriptionStr(String descriptionStr) {
+		this.descriptionStr = descriptionStr;
+	}
+
+	public String getQuotedPartNumber() {
+
+		if (null != quotedPartNumber && quotedPartNumber.length() > 0) {
+			quotedPartNumber = quotedPartNumber.trim().toUpperCase(); // fix
+																		// INC0147512
+																		// added
+																		// by
+																		// June
+																		// 20150520
+		}
+		return quotedPartNumber;
+	}
+
+	public void setQuotedPartNumber(String quotedPartNumber) {
+		if (hasDifferentValue(null, this.quotedPartNumber, quotedPartNumber)) {
+			this.changed = true;
+		}
+		this.quotedPartNumber = quotedPartNumber;
+	}
+
+	public Material getQuotedMaterial() {
+		return quotedMaterial;
+	}
+
+	public void setQuotedMaterial(Material quotedMaterial) {
+		this.quotedMaterial = quotedMaterial;
+	}
+
+	public String getProductGroup1Str() {
+		return productGroup1Str;
+	}
+
+	public void setProductGroup1Str(String productGroup1Str) {
+		this.productGroup1Str = productGroup1Str;
+	}
+
+	public String getProductGroup2Str() {
+		return productGroup2Str;
+	}
+
+	public void setProductGroup2Str(String productGroup2Str) {
+		this.productGroup2Str = productGroup2Str;
+	}
+
+	public String getProductGroup3Str() {
+		return productGroup3Str;
+	}
+
+	public void setProductGroup3Str(String productGroup3Str) {
+		this.productGroup3Str = productGroup3Str;
+	}
+
+	public String getProductGroup4Str() {
+		return productGroup4Str;
+	}
+
+	public void setProductGroup4Str(String productGroup4Str) {
+		this.productGroup4Str = productGroup4Str;
+	}
+
+	public String getProductCateogryStr() {
+		return productCateogryStr;
+	}
+
+	public void setProductCateogryStr(String productCateogryStr) {
+		this.productCateogryStr = productCateogryStr;
+	}
+
+	public String getSoldToChineseNameStr() {
+		return soldToChineseNameStr;
+	}
+
+	public void setSoldToChineseNameStr(String soldToChineseNameStr) {
+		this.soldToChineseNameStr = soldToChineseNameStr;
+	}
+
+	public String getSoldToCustomerNameStr() {
+		return soldToCustomerNameStr;
+	}
+
+	public void setSoldToCustomerNameStr(String soldToCustomerNameStr) {
+		this.soldToCustomerNameStr = soldToCustomerNameStr;
+	}
+
+	public String getBmtFlagStr() {
+		return bmtFlagStr;
+	}
+
+	public void setBmtFlagStr(String bmtFlagStr) {
+		this.bmtFlagStr = bmtFlagStr;
+	}
+
+	public String getRequestedMfr() {
+		return requestedMfr;
+	}
+
+	public void setRequestedMfr(String requestedMfr) {
+		this.requestedMfr = requestedMfr;
+	}
+
+	public String getQuotedMfr() {
+		return quotedMfr;
+	}
+
+	public void setQuotedMfr(String quotedMfr) {
+		this.quotedMfr = quotedMfr;
+	}
+
+	public String getReferenceMarginStr() {
+		return referenceMarginStr;
+	}
+
+	public void setReferenceMarginStr(String referenceMarginStr) {
+		this.referenceMarginStr = referenceMarginStr;
+	}
+
+	public String getProgramType() {
+		return programType;
+	}
+
+	public void setProgramType(String programType) {
+		this.programType = programType;
+	}
+
+	public String getStatusStr() {
+		return statusStr;
+	}
+
+	public void setStatusStr(String statusStr) {
+		this.statusStr = statusStr;
+	}
+
+	public String getQuoteTypeStr() {
+		return quoteTypeStr;
+	}
+
+	public void setQuoteTypeStr(String quoteTypeStr) {
+		this.quoteTypeStr = quoteTypeStr;
+	}
+
+	public String getQuotationEffectiveDateStr() {
+		return quotationEffectiveDateStr;
+	}
+
+	public void setQuotationEffectiveDateStr(String quotationEffectiveDateStr) {
+		if (hasDifferentValue(null, this.quotationEffectiveDateStr, quotationEffectiveDateStr))
+			this.changed = true;
+		this.quotationEffectiveDateStr = quotationEffectiveDateStr;
+	}
+
+	public boolean isHasFuturePricer() {
+		return hasFuturePricer;
+	}
+
+	public void setHasFuturePricer(boolean hasFuturePricer) {
+		this.hasFuturePricer = hasFuturePricer;
+	}
+
+	public String getEndCustomerCodeStr() {
+		return endCustomerCodeStr;
+	}
+
+	public void setEndCustomerCodeStr(String endCustomerCodeStr) {
+		if (hasDifferentValue(null, this.endCustomerCodeStr, endCustomerCodeStr))
+			this.changed = true;
+		this.endCustomerCodeStr = endCustomerCodeStr;
+	}
+
+	public String getEndCustomerNameStr() {
+		return endCustomerNameStr;
+	}
+
+	public void setEndCustomerNameStr(String endCustomerNameStr) {
+		if (hasDifferentValue(null, this.endCustomerNameStr, endCustomerNameStr))
+			this.changed = true;
+		this.endCustomerNameStr = endCustomerNameStr;
+	}
+
+	public String getSapPartNumberStr() {
+		return sapPartNumberStr;
+	}
+
+	public void setSapPartNumberStr(String sapPartNumberStr) {
+		if (hasDifferentValue(null, this.sapPartNumberStr, sapPartNumberStr))
+			this.changed = true;
+		this.sapPartNumberStr = sapPartNumberStr;
+	}
+
+	public String getBizUnitStr() {
+		return bizUnitStr;
+	}
+
+	public void setBizUnitStr(String bizUnitStr) {
+		this.bizUnitStr = bizUnitStr;
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getQbpStr() {
+		return qbpStr;
+	}
+
+	public void setQbpStr(String qbpStr) {
+		this.qbpStr = qbpStr;
+	}
+	
+	public boolean isDisableEditable() {
+		disableEditable = QuoteSBConstant.RFQ_STATUS_BQ.equals(quoteItem.getStatus()) || QuoteSBConstant.RFQ_STATUS_BIT.equals(quoteItem.getStatus());
+		return disableEditable;
+	}
+
+	public boolean isDisableEditableForSalesCost() {
+		////disableEditable = QuoteSBConstant.RFQ_STATUS_BQ.equals(quoteItem.getStatus()) || QuoteSBConstant.RFQ_STATUS_BIT.equals(quoteItem.getStatus());
+
+		return disableEditableForSalesCost;
+	}
+	
+	public void setDisableEditableForSalesCost(boolean disableEditableForSalesCost) {
+		this.disableEditableForSalesCost = disableEditableForSalesCost;
+	}
+
+	public String getEmailMessage() {
+		return emailMessage;
+	}
+	public void setEmailMessage(String emailMessage) {
+		this.emailMessage = emailMessage;
+	}
+	
+	
+	public boolean disabledSelectionFromItToBmt(){
+		return quoteItem.getDesignRegion() == null || "".equals(quoteItem.getDesignRegion()) ||"ASIA".equals(quoteItem.getDesignRegion()) || endCustomerCodeStr == null || "".equals(endCustomerCodeStr);
+	}
+
+	public QcAttachments  getQcAttachments() {
+		if(qcAttachments == null){
+			qcAttachments = new QcAttachments();
+		}
+		return qcAttachments;
+	}
+
+	public void setQcAttachments(QcAttachments qcAttachments) {
+		this.qcAttachments = qcAttachments;
+	}
+	
+	
+	public String getQuantityBreakStr() {
+		return quantityBreakStr;
+	}
+
+	public void setQuantityBreakStr(String quantityBreakStr) {
+		this.quantityBreakStr = quantityBreakStr;
+	}
+
+
+
+	public class QcAttachments extends ArrayList<Attachment> {
+
+		private static final long serialVersionUID = -1657857316143715928L;
+
+		@Override
+		public boolean remove(Object o) {
+			quoteItem.getAttachments().remove(o);
+			setChanged(true);
+			return super.remove(o);
+		}
+		@Override
+		public boolean add(Attachment e) {
+			setChanged(true);
+			quoteItem.getAttachments().add(e);
+			return super.add(e);
+		}
+	}
+	
+	@Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if(obj == null){
+            return false;
+        }
+        if(obj instanceof WorkingPlatformItemVO){
+           final WorkingPlatformItemVO o = (WorkingPlatformItemVO)obj;
+           return o.getQuoteItem().getId()==(getQuoteItem().getId());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.valueOf(getQuoteItem().getId()).hashCode() * 37;
+    }
+
+	public String getSalesCostPart() {
+		return salesCostPart;
+	}
+
+	public void setSalesCostPart(String salesCostFlagStr) {
+		this.salesCostPart = salesCostFlagStr;
+	}
+
+	public String getSalesCostTypeName() {
+		return salesCostTypeName;
+	}
+
+	public void setSalesCostTypeName(String salesCostTypeName) {
+		if (hasDifferentValue(null, this.salesCostTypeName, salesCostTypeName))
+			this.changed = true;
+		this.salesCostTypeName = salesCostTypeName;
+	}
+
+	public String getSalesCostStr() {
+		return salesCostStr;
+	}
+
+	public void setSalesCostStr(String salesCostStr) {
+		if (hasDifferentValue(null, this.salesCostStr, salesCostStr))
+			this.changed = true;
+		this.salesCostStr = salesCostStr;
+	}
+
+	public String getSuggestedResaleStr() {
+		return suggestedResaleStr;
+	}
+
+	public void setSuggestedResaleStr(String suggestedResaleStr) {
+		if (hasDifferentValue(null, this.suggestedResaleStr, suggestedResaleStr))
+			this.changed = true;
+		this.suggestedResaleStr = suggestedResaleStr;
+	}
+
+	public String getCustomerGroupId() {
+		return customerGroupId;
+	}
+
+	public void setCustomerGroupId(String customerGroupId) {
+		if (hasDifferentValue(null, this.customerGroupId, customerGroupId))
+			this.changed = true;
+		this.customerGroupId = customerGroupId;
+	}	
+    
+    
+	public PricerInfo createPricerInfo() {
+		PricerInfo pricerInfo = new PricerInfo();
+    	pricerInfo.setMfr(getQuotedMfr());
+    	pricerInfo.setFullMfrPartNumber(getQuotedPartNumber());
+    	pricerInfo.setBizUnit(getBizUnitStr());
+    	pricerInfo.setSoldToCustomer(getQuoteItem().getQuote().getSoldToCustomer());
+    	pricerInfo.setEndCustomer(getQuoteItem().getEndCustomer());
+    	pricerInfo.setSalesId(getQuoteItem().getQuote().getSales().getId());
+    	pricerInfo.setSalesCostFlag(getQuoteItem().isSalesCostFlag());
+    	pricerInfo.setRequestedQty(getQuoteItem().getRequestedQty());
+		return pricerInfo;
+	}
+
+	public String getEndCustomerName() {
+		return endCustomerName;
+	}
+
+	public void setEndCustomerName(String endCustomerName) {
+		this.endCustomerName = endCustomerName;
+	}
+
+	public List<QuantityBreakPrice> getOrderQties() {
+		return orderQties;
+	}
+
+	public void setOrderQties(List<QuantityBreakPrice> orderQties) {
+		this.orderQties = orderQties;
+	}
+
+	public int[] getIconsArray() {
+		return iconsArray;
+	}
+
+	public void setIconsArray(int[] iconsArray) {
+		this.iconsArray = iconsArray;
+	}
+	
+	public void fillBackQuoteItem() {
+		quoteItem.setAqcc(aqccStr);
+	    quoteItem.setVendorDebitNumber(vendorDebitNumberStr);
+	    quoteItem.setVendorQuoteNumber(vendorQuoteNumberStr);
+	    if (StringUtils.isNotEmpty(vendorQuoteQtyStr)) {
+	    	try {
+	    		int i = Integer.parseInt(vendorQuoteQtyStr);
+	    		quoteItem.setVendorQuoteQty(i);
+	    	} catch(NumberFormatException e) {
+	    		
+	    	}
+	    	
+	    }
+
+	    if (StringUtils.isNotEmpty(quotedQtyStr)) {
+	    	try {
+	    		int i = Integer.parseInt(quotedQtyStr);
+	    		quoteItem.setQuotedQty(i);
+	    	} catch(NumberFormatException e) {
+	    		
+	    	}
+	    }
+	}
+	
+	
+}

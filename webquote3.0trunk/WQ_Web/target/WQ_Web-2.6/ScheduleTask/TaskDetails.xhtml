@@ -1,0 +1,87 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="windowTitle">
+		Task Details
+	</ui:define>
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+		<h2>
+			<h:outputText value="Task Details" />
+		</h2>
+		<h:form>
+			<p:panel>
+				<h:panelGrid columns="2" bgcolor="#eff5fa">
+					<h:outputText value="Task ID:" />
+					<h:inputText id="taskId" value="#{TaskMB.selectedTask.taskId}" readonly="#{!TaskMB.selectedTask.newRecord}" />
+					
+					<h:outputText value="Single node? (Persistent):" />
+					<h:selectBooleanCheckbox value="#{TaskMB.selectedTask.persistent}" disabled="#{!TaskMB.selectedTask.newRecord}"/>
+					
+					<h:outputText value="Task Name:" />
+					<h:inputText id="taskName" value="#{TaskMB.selectedTask.taskName}" />
+					
+					<h:outputText value="task Class Name:" />
+					<h:inputText id="taskClass" value="#{TaskMB.selectedTask.taskClassName}" size="40" />
+					
+					<ui:remove>
+					<h:outputText value="Start Date:" />
+					<p:calendar id="startDate" value="#{TaskMB.selectedTask.startDate}" />
+					
+					<h:outputText value="End Date:" />
+					<p:calendar id="endDate" value="#{TaskMB.selectedTask.endDate}" />
+					</ui:remove>
+					
+					<h:outputText value="Second:" />
+					<h:inputText id="second" value="#{TaskMB.selectedTask.second}" />
+					
+					<h:outputText value="Minute:" />
+					<h:inputText id="minute" value="#{TaskMB.selectedTask.minute}" />
+					
+					<h:outputText value="Hour:" />
+					<h:inputText id="hour" value="#{TaskMB.selectedTask.hour}" />
+					
+					<h:outputText value="Day of Month:" />
+					<h:inputText id="dayOfMonth" value="#{TaskMB.selectedTask.dayOfMonth}" />
+					
+					<h:outputText value="Month:" />
+					<h:inputText id="month" value="#{TaskMB.selectedTask.month}" />
+					
+					<h:outputText value="Year:" />
+					<h:inputText id="year" value="#{TaskMB.selectedTask.year}" />
+					
+					<h:outputText value="Day Of Week:" />
+					<h:inputText id="dayOfWeek" value="#{TaskMB.selectedTask.dayOfWeek}" />
+					
+					<h:outputText value="task Description:" />
+					<h:inputTextarea cols="40" rows="4" id="description"
+						value="#{TaskMB.selectedTask.description}" />
+					<h:outputText value="Next Timeout:" />
+					
+					<h:inputText id="nextTimeout" value="#{TaskMB.selectedTask.nextTimeoutStr}" readonly="true" />
+					
+				</h:panelGrid>
+				
+				<h:commandButton id="back" value="Back" action="TaskList" immediate="true" />
+				<p:spacer width="10" height="10" />
+				
+				<h:commandButton id="save" value="Save" action="#{TaskMB.updateTask}" />
+				<p:spacer width="10" height="10" />
+				
+				<h:commandButton id="delete" value="Delete" action="#{TaskMB.deleteTask}" rendered="#{! TaskMB.selectedTask.newRecord}"/>
+				<p:spacer width="10" height="10" />
+
+				<h:outputLink id="help" value="http://java.sun.com/javaee/6/docs/tutorial/doc/bnboy.html" target="help">Help</h:outputLink>
+				
+			</p:panel>
+		</h:form>
+		<p:messages showDetail="true" />
+	</ui:define>
+</ui:composition>
+

@@ -1,0 +1,98 @@
+package com.avnet.emasia.webquote.quote.vo;
+
+import java.io.Serializable;
+
+import com.avnet.emasia.webquote.utilities.bean.PoiCommonBean;
+import com.avnet.emasia.webquote.utilities.bean.QuoteBuilderExcelAlias;
+
+public class CatalogSearchItemBean extends PoiCommonBean implements Serializable {
+	
+	
+	private static final long serialVersionUID = -3441679163833448134L;
+	
+	private int lineSeq;
+	private Integer requestQty;
+	
+	
+	@QuoteBuilderExcelAlias(name="wq.label.mfr",mandatory="false",cellNum="1",fieldLength="-1")
+	private String mfr;
+	@QuoteBuilderExcelAlias(name="wq.label.reqPN",mandatory="true",cellNum="2",fieldLength="-1")
+	private String fullMfrPart;
+	@QuoteBuilderExcelAlias(name="wq.label.reqQty",mandatory="false",cellNum="3",fieldLength="-1")
+	private String requestQtyStr;
+	//@QuoteBuilderExcelAlias(name="wq.label.custmrName",mandatory="false",cellNum="4",fieldLength="-1")
+	private String soldToParty;
+	@QuoteBuilderExcelAlias(name="wq.label.SoldToCode",mandatory="false",cellNum="4",fieldLength="-1")
+	private String soldToCode;
+	//@QuoteBuilderExcelAlias(name="wq.label.endCust",mandatory="false",cellNum="5",fieldLength="-1")
+	private String endCustomer;
+	@QuoteBuilderExcelAlias(name="wq.label.EndCustomerCode",mandatory="false",cellNum="5",fieldLength="-1")
+	private String endCustomerCode;
+	
+	public int getLineSeq() {
+		return lineSeq;
+	}
+
+	public void setLineSeq(int lineSeq) {
+		this.lineSeq = lineSeq;
+	}
+	
+	public String getMfr() {
+		return mfr;
+	}
+	public void setMfr(String mfr) {
+		this.mfr = mfr;
+	}
+	public String getFullMfrPart() {
+		return fullMfrPart;
+	}
+	public void setFullMfrPart(String fullMfrPart) {
+		this.fullMfrPart = fullMfrPart;
+	}
+	public String getRequestQtyStr() {
+		return requestQtyStr;
+	}
+	public void setRequestQtyStr(String requestQtyStr) {
+		this.requestQtyStr = requestQtyStr;
+	}
+	/*public void setRequestQty(Integer requestQty) {
+		this.requestQty = requestQty;
+	}*/
+	public Integer getRequestQty() {
+		try {
+			if(requestQtyStr!=null && !requestQtyStr.isEmpty()) {
+				return Integer.parseInt(requestQtyStr);
+			}
+			return null;
+		}catch(Exception e) {
+			return null;
+		}
+	}
+	public String getSoldToParty() {
+		return soldToParty;
+	}
+	public void setSoldToParty(String soldToParty) {
+		this.soldToParty = soldToParty;
+	}
+	public String getEndCustomer() {
+		return endCustomer;
+	}
+	public void setEndCustomer(String endCustomer) {
+		this.endCustomer = endCustomer;
+	}
+	public String getSoldToCode() {
+		return soldToCode;
+	}
+	public void setSoldToCode(String soldToCode) {
+		this.soldToCode = soldToCode;
+	}
+	public String getEndCustomerCode() {
+		return endCustomerCode;
+	}
+	public void setEndCustomerCode(String endCustomerCode) {
+		this.endCustomerCode = endCustomerCode;
+	}
+
+	
+	
+}

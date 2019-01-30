@@ -1,0 +1,348 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+
+import com.avnet.emasia.webquote.constants.StatusEnum;
+import com.avnet.emasia.webquote.entity.Role;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.MyQuoteSearchSB;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.quote.vo.MyQuoteSearchCriteria;
+import com.avnet.emasia.webquote.quote.vo.QuoteVo;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+
+@ManagedBean
+@SessionScoped
+public class MyFormSearchMB implements Serializable {
+
+	private static final long serialVersionUID = 8193756794034744576L;
+
+	private static final Logger LOG =Logger.getLogger(MyFormSearchMB.class.getName());
+	
+	//This is an enhancement. It will be in trunk only
+	
+	//This is a bug fix. It will be in trunk and branch. 
+
+	@EJB
+	MyQuoteSearchSB myQuoteSearchSB;
+
+	@EJB
+	UserSB userSB;
+
+
+	@ManagedProperty("#{myQuoteSearchMB}")
+	MyQuoteSearchMB myQuoteSearchMB ;
+
+
+	private MyQuoteSearchCriteria criteria;
+
+	private List<QuoteVo> results;
+
+	private QuoteVo selectedQuoteVo;
+
+	//When My Form List page is loaded first time,
+	//will do a auto search for the quote uploaded within 7 days.
+	private boolean firstTimeSearch;
+
+	//Sales and Inside Sales share same search page
+	private boolean insideSalesSearch = false;	
+	
+	/**
+	 * Reset Form
+	 */
+	public void reset(){
+		init();
+	}
+	
+	@PostConstruct
+	public void init(){
+		criteria = new MyQuoteSearchCriteria();
+
+		Date date = new Date();
+
+		criteria.setPageUploadDateFrom(getDate(Calendar.MONTH, -6));
+		criteria.setPageUploadDateTo(date);
+
+		criteria.setPageSentOutDateFrom(getDate(Calendar.MONTH, -6));
+		criteria.setPageSentOutDateTo(date);
+
+		firstTimeSearch = true;
+
+		List<Role> roles = UserInfo.getUser().getRoles();
+		for(Role role : roles){
+			if(role.getName().contains("ROLE_INSIDE_SALES")){
+				insideSalesSearch = true;
+				break;
+			}			
+		}			
+	}
+
+	private Date getDate(int field, int amount){
+		Date date = new Date();
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		cal.add(field, amount);
+
+		return cal.getTime();
+	}
+
+
+	//Jump to MyQuoteListForSales Page
+	public String showQuoteItemDetail(){
+
+		FacesContext context = FacesContext.getCurrentInstance();
+		Map<String, String> params = context.getExternalContext().getRequestParameterMap();
+		long quoteId = Long.parseLong(params.get("id"));
+
+		for(QuoteVo vo : results){
+			if(vo.getQuote().getId() == quoteId){
+				selectedQuoteVo = vo;
+				break;
+			}
+		}
+
+		List<String> attachmentTypes = new ArrayList<String>();
+		attachmentTypes.add(QuoteSBConstant.ATTACHMENT_TYPE_QUOTE);
+		attachmentTypes.add(QuoteSBConstant.ATTACHMENT_TYPE_QUOTE_ITEM);
+		attachmentTypes.add(QuoteSBConstant.ATTACHMENT_TYPE_REFRESH);
+
+		
+		myQuoteSearchMB.postContruct();
+		MyQuoteSearchCriteria criteria = myQuoteSearchMB.getCriteria();
+		criteria.setPageQuoteExpiryDateFrom(null);
+		criteria.setPageQuoteExpiryDateTo(null);
+		criteria.setPageSentOutDateFrom(null);
+		criteria.setPageSentOutDateTo(null);
+		criteria.setPageUploadDateFrom(null);
+		criteria.setPageUploadDateTo(null);
+		
+		List<Long> ids = new ArrayList<Long>();
+		ids.add(quoteId);
+		criteria.setQuoteId(ids);
+		myQuoteSearchMB.salesSearch(true);
+		//myQuoteSearchMB.postContruct();
+
+		myQuoteSearchMB.setShowFormForSales(true);
+		
+		//criteria.setQuoteId(null);
+
+		return "/RFQ/MyQuoteListForSales.xhtml?faces-redirect=true";
+	}
+
+	public void search(){
+		LOG.info(UserInfo.getUser().getEmployeeId() + "Search .my form .... firstTimeSearch====>>>"+ firstTimeSearch);
+		long fromDate = System.currentTimeMillis();
+		String errMsg = checkDate();
+		if(errMsg != null){
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, errMsg , ""));
+			return;
+		}
+		
+		if(null!=criteria.getsCustomerName()&&criteria.getsCustomerName().length()>0 && criteria.getsCustomerName().length()<3)
+		{
+			FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_WARN, ResourceMB.getText("wq.message.cutmrLenError"),"");
+            FacesContext.getCurrentInstance().addMessage("growl", msg);
+    		return;
+		}
+
+		List<String> stages = new ArrayList<String>();
+		stages.add(QuoteSBConstant.QUOTE_STAGE_FINISH);
+		stages.add(QuoteSBConstant.QUOTE_STAGE_INVALID);
+		stages.add(QuoteSBConstant.QUOTE_STAGE_PENDING);
+		stages.add(QuoteSBConstant.QUOTE_STAGE_DRAFT);
+		criteria.setStage(stages);
+
+		
+		List<StatusEnum> statuss = Arrays.asList(StatusEnum.values());
+		List<String> strStatuss = new ArrayList<String> ();
+		for(StatusEnum stt:statuss) {
+			strStatuss.add(stt.toString());
+		}
+		criteria.setStatus(strStatuss);
+		
+		/*List<String> status = new ArrayList<String>();
+		status.add(QuoteSBConstant.RFQ_STATUS_AQ);
+		status.add(QuoteSBConstant.RFQ_STATUS_DQ);
+		status.add(QuoteSBConstant.RFQ_STATUS_IT);
+		status.add(QuoteSBConstant.RFQ_STATUS_QC);
+		status.add(QuoteSBConstant.RFQ_STATUS_RIT);
+		status.add(QuoteSBConstant.RFQ_STATUS_SQ);
+		criteria.setStatus(status);		*/
+
+
+		if(firstTimeSearch){
+			Date date = new Date();
+			criteria.setUploadDateTo(date);
+
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			cal.add(Calendar.DATE, -7);
+			cal.set(Calendar.HOUR, 0);
+			cal.set(Calendar.MINUTE, 0);
+			cal.set(Calendar.SECOND, 0);
+			criteria.setUploadDateFrom(cal.getTime());
+
+		}else{
+			criteria.setupUIInCriteria();
+		}
+
+
+		User user = UserInfo.getUser();
+
+		criteria.setBizUnits(user.getBizUnits());
+
+		List<String> attachmentTypes = new ArrayList<String>();
+		attachmentTypes.add(QuoteSBConstant.ATTACHMENT_TYPE_QUOTE);
+		criteria.setAttachmentType(attachmentTypes);
+
+		List<User> sales = new ArrayList<User>();
+		if(insideSalesSearch){
+			sales = userSB.findAllSalesForCs(user);
+		}else{
+			sales = userSB.findAllSubordinates(user, 10);
+		}
+		sales.add(user);
+
+		criteria.setRestrictedSales(sales);
+
+		setupQuoteExpiryDateInCriteria();
+		
+		criteria.setDataAccesses(userSB.findAllDataAccesses(user));
+
+		//LOG.fine(criteria.toString());
+
+		results = myQuoteSearchSB.formSearch(criteria);
+
+		firstTimeSearch = false;
+		
+		
+		LOG.info("Search .....");
+		LOG.info("Results size is ==>> "
+				+ results.size());
+		long toDate = System.currentTimeMillis();
+		
+		long diff = toDate - fromDate ;
+
+		long days = diff / (1000 * 60 * 60 * 24);
+		long hour=diff/(1000*60*60);
+
+		long m=(diff-hour*1000*60*60)/(60*1000);
+
+		long s=(diff-hour*1000*60*60-m*60*1000)/1000;
+		
+		LOG.info("fromDate ==>> "+ fromDate);
+		LOG.info("toDate ==>> "+ toDate);
+		LOG.info("Total differenced  ==>>"+days+" days,"+ hour +" hour " + m+" minutes "+ s +" seconds ");
+
+	}
+
+
+	private void setupQuoteExpiryDateInCriteria(){
+
+		//Some users can only search the records whose Quote Expiry Date is within 2 years
+		Calendar securityFrom = Calendar.getInstance();
+
+		securityFrom.add(Calendar.YEAR, -2);
+
+		securityFrom.set(Calendar.HOUR, 0);
+		securityFrom.set(Calendar.MINUTE, 0);
+		securityFrom.set(Calendar.SECOND, 0);
+		securityFrom.set(Calendar.MILLISECOND, 0);
+
+		Calendar securityTo = new GregorianCalendar(9999,11,31); 
+
+		if(criteria.getQuoteExpiryDateFrom() == null){
+			criteria.setQuoteExpiryDateFrom(securityFrom.getTime());
+		}else{
+			if(criteria.getQuoteExpiryDateFrom().before(securityFrom.getTime())){
+				criteria.setQuoteExpiryDateFrom(securityFrom.getTime());
+			}
+		}
+
+		if(criteria.getQuoteExpiryDateTo() == null){
+			criteria.setQuoteExpiryDateTo(securityTo.getTime());
+		}else{
+			if(criteria.getQuoteExpiryDateTo().before(securityTo.getTime())){
+				criteria.setQuoteExpiryDateTo(securityTo.getTime());
+			}
+		}		
+	}	
+
+
+	private String checkDate(){
+		String errMsg = ResourceMB.getText("wq.message.date")+".";
+		if(criteria.getPageUploadDateFrom() != null && criteria.getPageUploadDateTo() != null){
+			if(criteria.getPageUploadDateFrom().after(criteria.getPageUploadDateTo())){
+				return errMsg;
+			}
+		}
+
+		if(criteria.getPageSentOutDateFrom() != null && criteria.getPageSentOutDateTo() != null){
+			if(criteria.getPageSentOutDateFrom().after(criteria.getPageSentOutDateTo())){
+				return errMsg;
+			}
+		}
+		return null;
+	}	
+
+	//Getters, Setters
+
+	public MyQuoteSearchCriteria getCriteria() {
+		return criteria;
+	}
+
+	public void setMyQuoteSearchCriteria(MyQuoteSearchCriteria criteria) {
+		this.criteria = criteria;
+	}
+
+	public void setCriteria(MyQuoteSearchCriteria criteria) {
+		this.criteria = criteria;
+	}
+
+	public List<QuoteVo> getResults() {
+		return results;
+	}
+
+	public void setResults(List<QuoteVo> results) {
+		this.results = results;
+	}
+
+	public void setMyQuoteSearchMB(MyQuoteSearchMB myQuoteSearchMB) {
+		this.myQuoteSearchMB = myQuoteSearchMB;
+	}
+
+	public QuoteVo getSelectedQuoteVo() {
+		return selectedQuoteVo;
+	}
+
+	public void setSelectedQuoteVo(QuoteVo selectedQuoteVo) {
+		this.selectedQuoteVo = selectedQuoteVo;
+	}
+
+	public boolean isFirstTimeSearch() {
+		return firstTimeSearch;
+	}
+
+
+
+}
+

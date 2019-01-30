@@ -1,0 +1,141 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.Resource;
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
+import javax.transaction.UserTransaction;
+
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.QuotationEmail;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.MaterialSB;
+import com.avnet.emasia.webquote.quote.ejb.QuoteSB;
+import com.avnet.emasia.webquote.quote.ejb.QuoteToSoPendingSB;
+import com.avnet.emasia.webquote.quote.ejb.SAPWebServiceSB;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+
+@Stateless
+@LocalBean
+@TransactionManagement(TransactionManagementType.BEAN)
+public class AsyncPostQuotationSB {
+
+	private static final Logger LOGGER = Logger.getLogger(AsyncPostQuotationSB.class.getName());
+	@EJB
+	private MaterialSB materialSB;
+	@EJB
+	private QuoteSB quoteSB;
+	
+	@Resource
+	public UserTransaction ut;
+
+	@EJB
+	private UserSB userSB;
+	
+	@EJB
+	MailUtilsSB mailUtilsSB;	
+	
+	@EJB
+	private SAPWebServiceSB sapWebServiceSB;	
+	
+	@EJB
+	private QuoteToSoPendingSB quoteToSoPendingSB;	
+
+	@EJB
+	private SystemCodeMaintenanceSB sysMaintSB;
+	
+	@EJB
+	SysConfigSB sysConfigSB;
+	
+	@EJB
+	protected EJBCommonSB ejbCommonSB;
+	
+	
+	@Asynchronous
+	public void proceedQuotation(List<QuotationEmail> emails,User currentUser ,String quoteItemIdArray){
+	  	LOGGER.info("async post quotation start ");
+		try {
+			ut.setTransactionTimeout(10*60*1000);
+			ut.begin();
+			ejbCommonSB.proceedQuotationEmailSending(currentUser.getDefaultBizUnit().getName(),emails, "AsyncPostQuotationSB");
+			proceedQuoteToSo(quoteItemIdArray,currentUser);
+			ut.commit();
+		} catch (Exception e) {
+		
+			LOGGER.log(Level.SEVERE, "exception in proceeding quotation : "+quoteItemIdArray+" , current user : "+currentUser.getEmployeeId()+" , exception message : "+e.getMessage(), e);
+		}	
+		
+		LOGGER.info("async post quotation finish ");
+	}
+	
+	private void proceedQuoteToSo( String quoteItemIdArray,User user) {	
+		LOGGER.info("start proceedQuoteToSo, quoteItemIds: " + quoteItemIdArray);
+		List<QuoteItem> quoteItems = null;
+		if(quoteItemIdArray != null){
+			String[] quoteItemIdsArr = quoteItemIdArray.split(",");
+			List<Long> ids = new ArrayList<Long>();
+			for(String id : quoteItemIdsArr){
+				if(id.length() > 0){
+					ids.add(Long.valueOf(id));
+				}
+			}
+			if(ids.size()>0){
+				quoteItems = quoteSB.findQuoteItemsByPKs(ids);
+			}
+		}
+		
+		if(quoteItems== null) return;
+		
+		String quotedPartNumber = null;
+		Manufacturer quotedMfr = null;
+		long count = 0l;
+		Material material = null;
+		Material quotedMaterial = null;
+
+		for(QuoteItem quoteItem:quoteItems){
+			quotedPartNumber = quoteItem.getQuotedPartNumber();
+			quotedMfr = quoteItem.getQuotedMfr();
+			LOGGER.log(Level.INFO, "QuoteToSo: {0}, MFR: {1}, Full Part Number: {2}", new Object[]{quoteItem.getQuoteNumber(),quotedMfr.getName(), quotedPartNumber} );
+			count = materialSB.findCountMaterialBymfrAndPN(quotedMfr, quotedPartNumber);
+			if(count ==0){
+				material = new Material();
+				material.setManufacturer(quotedMfr);
+				material.setFullMfrPartNumber(quotedPartNumber);
+				material.setValid(true);
+				material.setMaterialType("NORMAL");
+				if(null!=user) {
+					material.setCreatedBy(user.getEmployeeId()); // fix Issue 1 �C wrong value assigned to CREATED_BY of Material when releasing the quote 
+				}
+				
+				material.setCreatedOn(new Date());
+				LOGGER.info("create new Material: " + quotedMfr.getName() + " " + quotedPartNumber);
+				materialSB.createMaterial(material);
+			}
+			quotedMaterial = materialSB.findMinMaterialBymfrAndPN(quotedMfr, quotedPartNumber);
+			if(quotedMaterial!=null){
+				quoteItem.setQuotedMaterial(quotedMaterial);	
+				quoteSB.updateQuoteItem(quoteItem);
+			}	
+		}
+		
+		ejbCommonSB.createQuoteToSo(quoteItems);
+		
+		LOGGER.info("end proceedQuoteToSo");		
+	}
+}
+	

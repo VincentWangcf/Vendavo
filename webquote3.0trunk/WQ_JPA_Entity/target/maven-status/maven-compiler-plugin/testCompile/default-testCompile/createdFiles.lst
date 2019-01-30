@@ -1,0 +1,14 @@
+com\avnet\emasia\webquote\entity\BizUnitTest.class
+com\avnet\emasia\webquote\entity\PricerUploadTest.class
+com\avnet\emasia\webquote\entity\MaterialRegionalTest.class
+com\avnet\emasia\webquote\entity\CostIndicatorTest.class
+com\avnet\emasia\webquote\entity\QtyBreakPricerTest.class
+com\avnet\emasia\webquote\entity\QuoteItemTest.class
+com\avnet\emasia\webquote\entity\UserTest.class
+com\avnet\emasia\webquote\entity\QtyCalTest.class
+com\avnet\emasia\webquote\entity\ManufacturerTest.class
+com\avnet\emasia\webquote\vo\RfqItemVOTest.class
+com\avnet\emasia\webquote\entity\MaterialTest.class
+com\avnet\emasia\webquote\entity\ManufacturerDetailTest.class
+com\avnet\emasia\webquote\entity\MaterialFactory.class
+com\avnet\emasia\webquote\entity\PricerTest.class

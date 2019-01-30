@@ -1,0 +1,395 @@
+package com.avnet.emasia.webquote.helper;
+
+import java.text.DecimalFormat;
+import java.math.BigDecimal;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.entity.MaterialRegional;
+import com.avnet.emasia.webquote.entity.ProgramPricer;
+import com.avnet.emasia.webquote.entity.QtyBreakPricer;
+import com.avnet.emasia.webquote.entity.QuantityBreakPrice;
+import com.avnet.emasia.webquote.entity.SalesCostPricer;
+import com.avnet.emasia.webquote.utilities.DateUtils;
+import com.avnet.emasia.webquote.vo.CatalogMainVO;
+import com.avnet.emasia.webquote.vo.CatalogMaintVo;
+
+public class TransferHelper {
+
+	private static Logger logger = Logger.getLogger(TransferHelper.class
+			.getName());
+	
+	public static final DecimalFormat THOUSAND_FORMAT = new DecimalFormat("###,###");
+	
+    private final static String PLUS = "+";
+    private final static String INDICATOR_SUBSTR = "-";
+
+
+	public static List<CatalogMainVO> transferToCataLogMainVOList(List<QtyBreakPricer> qbpricers,String region) {
+		List<CatalogMainVO> piVoList = new ArrayList<CatalogMainVO>();
+		if(qbpricers != null && qbpricers.size() > 0) {
+			for (int i = 0; i < qbpricers.size(); i++) {
+				QtyBreakPricer qp = qbpricers.get(i);
+				CatalogMainVO vo = new CatalogMainVO();
+				vo.setId(String.valueOf(qp.getId()));
+				if(qp.getMaterial() != null) {
+					vo.setMfr(qp.getMaterial().getManufacturer().getName());
+					vo.setFullPartNumber(qp.getMaterial().getFullMfrPartNumber());
+					MaterialRegional materialRegional = qp.getMaterial().getMaterialRegaional(region);
+					vo.setSalesCostPart(materialRegional.isSalesCostFlag() ?  "Yes" : "No");
+					if(materialRegional != null) {
+						vo.setProductGroup(getFullroductGroupName(materialRegional));
+
+					}
+				}
+				
+				if(qp.getProgramType() != null) {
+					vo.setProgram(qp.getProgramType().getName());
+				}
+				vo.setMoq(qp.getMoq());
+				vo.setMpq(qp.getMpq());
+				vo.setPriceValidity(convertValidityDate(qp.getPriceValidity()));
+				vo.setAvailableSellQty(convertAvailableToSellQty(qp));
+				vo.setAllocation(booleanToString(qp.getAllocationFlag()));
+				vo.setLeadTime(qp.getLeadTime());
+				vo.setTermsAndConditions(qp.getTermsAndConditions());
+				List<QuantityBreakPrice> pricesList = qp.calQtyBreakRange();
+				if(pricesList != null && pricesList.size() > 0) {
+					vo.setOrderQty(convertQrderQty(pricesList));
+					vo.setNormalSellPrice(convertNormalSellPrice(pricesList));
+					vo.setSalesCost(convertSalesCost(pricesList));
+					vo.setSuggestedResale(convertSuggestedResale(pricesList));
+				}
+				piVoList.add(vo);
+			}
+		}
+		return piVoList;
+	}
+	
+	private static String convertQrderQty(List<QuantityBreakPrice> pricesList) {
+		int qbPSize = pricesList.size();
+		StringBuffer sb = new StringBuffer(""); 
+		sb.append("<div style='width:100%'>");
+		int size = (qbPSize >= 5) ? 5 : qbPSize;
+		for(int i = 0; i < size; i++) {
+			sb.append("<div style='margin-left:20px;text-align: left'>").append(thousandFormat(pricesList.get(i).getRoundedQuantityBreak()))
+			.append(INDICATOR_SUBSTR).append(thousandFormat(pricesList.get(i).getRoundedQuantityBreakTo()));
+			sb.append("</div>");
+		}
+		sb.append("</div>");
+		return sb.toString();
+	}
+	
+	private static String convertNormalSellPrice(List<QuantityBreakPrice> pricesList) {
+		int qbPSize = pricesList.size();
+		StringBuffer sb = new StringBuffer(""); 
+		sb.append("<div style='width:100%'>");
+		int size = (qbPSize >= 5) ? 5 : qbPSize;
+		for(int i = 0; i < size; i++) {
+			if(pricesList.get(i).getQuantityBreakPrice() != null) {
+				 sb.append("<div>").append(pricesList.get(i).getQuantityBreakPrice()).append("</div>");
+
+			}
+		}
+		sb.append("</div>");
+		return sb.toString();
+	}
+	
+	private static String convertSalesCost(List<QuantityBreakPrice> pricesList) {
+		int qbPSize = pricesList.size();
+		StringBuffer sb = new StringBuffer(""); 
+		sb.append("<div style='width:100%'>");
+		int size = (qbPSize >= 5) ? 5 : qbPSize;
+		for(int i = 0; i < size; i++) {
+			if(pricesList.get(i).getSalesCost() != null) {
+				 sb.append("<div>").append(pricesList.get(i).getSalesCost()).append("</div>");
+			}
+		}
+		sb.append("</div>");
+		return sb.toString();
+	}
+	
+	private static String convertSuggestedResale(List<QuantityBreakPrice> pricesList) {
+		int qbPSize = pricesList.size();
+		StringBuffer sb = new StringBuffer(""); 
+		sb.append("<div style='width:100%'>");
+		int size = (qbPSize >= 5) ? 5 : qbPSize;
+		for(int i = 0; i < size; i++) {
+			if(pricesList.get(i).getSuggestedResale() != null) {
+				 sb.append("<div>").append(pricesList.get(i).getSuggestedResale()).append("</div>");
+			}
+		}
+		sb.append("</div>");
+		return sb.toString();
+	}
+	
+	private static String convertValidityDate(String validity) {
+		String qed = "";
+		if (StringUtils.isNotBlank(validity)) {
+			if (DateUtils.isDate(validity)) {
+				qed = DateUtils.addDay(validity, -1);
+			} else {
+				if (StringUtils.isNumeric(validity)) {
+					qed = DateUtils.addDay(DateUtils.getCurrentDateStrForValidity(),
+							(Integer.valueOf(validity).intValue() - 1));
+				}
+			}
+		}
+		return qed;
+	}
+	
+	
+	
+	private static String thousandFormat(int mpq) {
+		String returnStr = "";
+		try {
+			returnStr = THOUSAND_FORMAT.format(mpq);
+		} catch (Exception e) {
+			logger.log(Level.WARNING, "Exception occuring in method thousandFormat " + e.getMessage(), e);
+		}
+		return returnStr;
+	}
+	
+	private static String convertAvailableToSellQty(QtyBreakPricer qbp) {
+		StringBuffer sb = new StringBuffer();
+		Integer availableSellToQty = qbp.getAvailableToSellQty();
+		if (availableSellToQty != null) {
+			if (qbp instanceof ProgramPricer) {
+				ProgramPricer pm = (ProgramPricer) qbp;
+				if (pm.getAvailableToSellMoreFlag()) {
+					sb.append(thousandFormat(availableSellToQty)).append(PLUS);
+				} else {
+					sb.append(thousandFormat(availableSellToQty));
+				}
+			} else {
+				sb.append(thousandFormat(availableSellToQty));
+			}
+
+		} else {
+			return "";
+		}
+		return sb.toString();
+	}
+	
+	private static String getFullroductGroupName(MaterialRegional materialRegional) {
+		StringBuffer pgName = new StringBuffer("");
+		String productGroupName = "";
+		if(materialRegional != null) {
+			if(materialRegional.getProductGroup1() != null) {
+				pgName.append(materialRegional.getProductGroup1().getName());
+			}
+			pgName.append("  |");
+			if(materialRegional.getProductGroup2() != null) {
+				pgName.append(materialRegional.getProductGroup2().getName());
+			}
+			pgName.append("  |");
+			if(StringUtils.isNotBlank(materialRegional.getProductGroup3())) {
+				pgName.append(materialRegional.getProductGroup3());
+			}
+			pgName.append("  |");
+			if(StringUtils.isNotBlank(materialRegional.getProductGroup4())) {
+				pgName.append(materialRegional.getProductGroup4());
+			}
+			productGroupName = pgName.toString();
+		}
+		return productGroupName;
+	}
+	
+	public static List<CatalogMaintVo> transferPricerToPIMainVo(List<QtyBreakPricer> piList,String region) {
+		List<CatalogMaintVo> piVoList = new ArrayList<CatalogMaintVo>();
+		for (int i = 0; i < piList.size(); i++) {
+			QtyBreakPricer pi = piList.get(i);
+			// ProgramPricer pi = (ProgramPricer) piList.get(i);
+			CatalogMaintVo pimv = new CatalogMaintVo();
+			pimv.setRowNO(String.valueOf(i + 1));
+			pimv.setId(String.valueOf(pi.getId()));
+			if(pi.getMaterial() != null) {
+				pimv.setFullMFRPart(pi.getMaterial().getFullMfrPartNumber());
+				pimv.setMfr(pi.getMaterial().getManufacturer().getName());
+				MaterialRegional materialRegional = pi.getMaterial().getMaterialRegaional(region);
+				pimv.setSalesCostPart(materialRegional.isSalesCostFlag() ?  "Yes" : "No");
+				if(materialRegional != null) {
+					pimv.setProductGroup(getFullroductGroupName(materialRegional));
+
+				}
+			}
+			
+
+			// tool tip columns
+			pimv.setMoq(String.valueOf(pi.getMoq()));
+			pimv.setMpq(String.valueOf(pi.getMpq()));
+			pimv.setLeadTime(pi.getLeadTime());
+			pimv.setQuoteExpiryDate(tranferValidityToQED(pi.getPriceValidity()));
+			pimv.setTermsandConditions(pi.getTermsAndConditions());
+
+			pimv.setDisplayOnTop(pi.getMaterial().getDisplayOnTop());
+			// pimv.setMinimumCost(pi.getProgramMinimumCost());
+			// for defect 378
+			pimv.setMinimumCost(pi.getCost());
+			pimv.setMov(pi.getMov());
+
+			pimv.setAvnetQuoteCentreComments(pi.getAvnetQcComments());
+			pimv.setLastUpdate(DateUtils.formatDatetime(pi.getLastUpdatedOn()));
+
+			if (pi.getLastUpdatedBy() != null)
+				pimv.setLastUpdateBy(pi.getLastUpdatedBy());
+			pimv.setCreatedOn(DateUtils.formatDatetime(pi.getCreatedOn()));
+			if (pi.getCreatedBy() != null)
+				pimv.setCreatedBy(pi.getCreatedBy());
+
+			if (pi.getShipmentValidity() != null)
+				pimv.setValidity(DateUtils.formatDate(pi.getShipmentValidity()));
+
+			if (pi.getShipmentValidity() != null)
+				pimv.setShipmentValidity(DateUtils.formatDate(pi.getShipmentValidity()));
+			
+			pimv.setAllocation(booleanToString(pi.getAllocationFlag()));
+			pimv.setProgram(pi.getProgramType().getName());
+			pimv.setAvailableToSellQuantity(pi.getAvailableToSellQty());
+			// icon columns
+			pimv.setSpecialItemIndicator(pi.getSpecialItemFlag());
+			if (pi.getCostIndicator() != null)
+				pimv.setCostIndicator(pi.getCostIndicator().getName());
+			pimv.setQuantityIndicator(pi.getQtyIndicator());
+			pimv.setAllocationFlag(booleanToString(pi.getAllocationFlag()));
+			pimv.setNewItemIndicator(booleanToString(pi.getNewItemIndicator()));
+			pimv.setAqFlag(booleanToString(pi.getAqFlag()));
+			List<QuantityBreakPrice> pricesList = pi.getQuantityBreakPrices();
+			if (null != pricesList && pricesList.size() > 0) {
+				pimv = setVoWithPrice(pimv, pricesList);
+			}
+			if (pi instanceof ProgramPricer) {
+				ProgramPricer programPricer = (ProgramPricer) pi;
+				pimv.setCallForQuote(booleanToString(programPricer.getProgramCallForQuote()));
+				pimv.setProgramEffectiveDate(DateUtils.formatDate(programPricer.getProgramEffectiveDate()));
+				pimv.setProgramClosingDate(DateUtils.formatDate(programPricer.getProgramClosingDate()));
+				pimv.setResaleIndicator(programPricer.getResaleIndicator());
+			} 
+
+			piVoList.add(pimv);
+
+		}
+		return piVoList;
+	}
+
+	public static String tranferValidityToQED(String validity) {
+		String qed = null;
+		if (validity != null) {
+			if (DateUtils.isDate(validity)) {
+				qed = DateUtils.addDay(validity, -1);
+			} else {
+				if (StringUtils.isNumeric(validity)) {
+					qed = String
+							.valueOf(Integer.valueOf(validity).intValue() - 1);
+				}
+			}
+		}
+		return qed;
+	}
+
+	public static String booleanToString(Boolean booValue) {
+		if (booValue == null || !booValue)
+			return "N";
+		else
+			return "Y";
+	}
+
+	protected static CatalogMaintVo setVoWithPrice(
+			CatalogMaintVo pimv, List<QuantityBreakPrice> pricesList) {
+		int size = pricesList.size();
+		if (size > 0) {
+			pimv.setQuantityBreak1(getQuantity(pricesList.get(0)));
+			pimv.setQuantityBreakPrice1(getPrice(pricesList.get(0)));
+			pimv.setSalesCost1(getSalesCost(pricesList.get(0)));
+			pimv.setSuggestedResale1(getSuggestedResale(pricesList.get(0)));
+		}
+		if (size > 1) {
+			pimv.setQuantityBreak2(getQuantity(pricesList.get(1)));
+			pimv.setQuantityBreakPrice2(getPrice(pricesList.get(1)));
+			pimv.setSalesCost2(getSalesCost(pricesList.get(1)));
+			pimv.setSuggestedResale2(getSuggestedResale(pricesList.get(1)));
+		}
+		if (size > 2) {
+			pimv.setQuantityBreak3(getQuantity(pricesList.get(2)));
+			pimv.setQuantityBreakPrice3(getPrice(pricesList.get(2)));
+			pimv.setSalesCost3(getSalesCost(pricesList.get(2)));
+			pimv.setSuggestedResale3(getSuggestedResale(pricesList.get(2)));
+		}
+		if (size > 3) {
+			pimv.setQuantityBreak4(getQuantity(pricesList.get(3)));
+			pimv.setQuantityBreakPrice4(getPrice(pricesList.get(3)));
+			pimv.setSalesCost4(getSalesCost(pricesList.get(3)));
+			pimv.setSuggestedResale4(getSuggestedResale(pricesList.get(3)));
+		}
+		if (size > 4) {
+			pimv.setQuantityBreak5(getQuantity(pricesList.get(4)));
+			pimv.setQuantityBreakPrice5(getPrice(pricesList.get(4)));
+			pimv.setSalesCost5(getSalesCost(pricesList.get(4)));
+			pimv.setSuggestedResale5(getSuggestedResale(pricesList.get(4)));
+		}
+		/*if (size > 5) {
+			pimv.setQuantityBreak6(getQuantity(pricesList.get(5)));
+			pimv.setQuantityBreakPrice6(getPrice(pricesList.get(5)));
+		}
+		if (size > 6) {
+			pimv.setQuantityBreak7(getQuantity(pricesList.get(6)));
+			pimv.setQuantityBreakPrice7(getPrice(pricesList.get(6)));
+		}
+		if (size > 7) {
+			pimv.setQuantityBreak8(getQuantity(pricesList.get(7)));
+			pimv.setQuantityBreakPrice8(getPrice(pricesList.get(7)));
+		}
+		if (size > 8) {
+			pimv.setQuantityBreak9(getQuantity(pricesList.get(8)));
+			pimv.setQuantityBreakPrice9(getPrice(pricesList.get(8)));
+		}
+		if (size > 9) {
+			pimv.setQuantityBreak10(getQuantity(pricesList.get(9)));
+			pimv.setQuantityBreakPrice10(getPrice(pricesList.get(9)));
+		}*/
+
+		return pimv;
+	}
+
+	protected static String getPrice(QuantityBreakPrice pib) {
+		String quantityBreakPrice = "";
+		if (pib.getQuantityBreakPrice() != null && pib.getQuantityBreakPrice() == -999999) {
+			quantityBreakPrice = String.valueOf(pib.getQuantityBreakPrice());
+		}
+		return quantityBreakPrice;
+	}
+
+	protected static String getQuantity(QuantityBreakPrice pib) {
+		String quantityBreak = "";
+		if(pib.getQuantityBreak() != null) {
+			quantityBreak = String.valueOf(pib.getQuantityBreak());
+		}
+		return quantityBreak;
+	}
+	
+	protected static String getSalesCost(QuantityBreakPrice pib) {
+		if (pib.getSalesCost() == null || pib.getSalesCost().doubleValue() == -999999)
+			return "";
+		else
+			return String.valueOf(pib.getSalesCost());
+	}
+	
+	protected static String getSuggestedResale(QuantityBreakPrice pib) {
+		if (pib.getSuggestedResale() == null || pib.getSuggestedResale().doubleValue() == -999999)
+			return "";
+		else
+			return String.valueOf(pib.getSuggestedResale());
+	}
+
+	public static String ConvertBigDecimalToStr(BigDecimal obj) {
+		if(obj == null)  {
+			return null;
+		}
+		return obj.toString();
+	}
+}

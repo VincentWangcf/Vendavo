@@ -1,0 +1,69 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="windowTitle">
+		#{dbResource['wq.header.taskList']}
+	</ui:define>
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+		<h2>#{dbResource['wq.header.taskListTest']}</h2>
+		<h:form>
+			<p:panel>
+				<p:dataTable value="#{TaskList.tasks}" var="item" paginator="true"
+					rows="50" rowsPerPageTemplate="20,50,100" id="taskList"
+					emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="#{dbResource['wq.label.taskID']}" />
+						</f:facet>
+						<h:commandLink action="#{TaskMB.setSelectedTask(item)}"
+							value="#{item.taskId}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="#{dbResource['wq.label.name']}" />
+						</f:facet>
+						<h:outputText value="#{item.taskName}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="#{dbResource['wq.label.class']}" />
+						</f:facet>
+						<h:outputText value="#{item.taskClassName}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="#{dbResource['wq.label.lstartDate']}" />
+						</f:facet>
+						<h:outputText value="#{item.startDateStr}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="#{dbResource['wq.label.endDate']}" />
+						</f:facet>
+						<h:outputText value="#{item.endDateStr}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="#{dbResource['wq.label.nextTimeout']}" />
+						</f:facet>
+						<h:outputText value="#{item.nextTimeoutStr}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="#{dbResource['wq.label.expression']}" />
+						</f:facet>
+						<h:outputText value="#{item.expression}" />
+					</p:column>
+				</p:dataTable>
+				<h:commandButton action="#{TaskMB.gotoNew}" value="#{dbResource['wq.label.newTask']}" />				
+			</p:panel>	
+		</h:form>
+	</ui:define>
+</ui:composition>

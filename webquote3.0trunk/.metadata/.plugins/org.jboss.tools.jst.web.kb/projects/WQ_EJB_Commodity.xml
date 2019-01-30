@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kb-project>
+ <depends-on-projects>
+  <project name="WQ_EJB_Quote"/>
+  <project name="WQ_JPA_Entity"/>
+  <project name="WQ_EJB_MasterData"/>
+  <project name="WQ_EJB_AuditTrail"/>
+  <project name="WQ_EJB_Utility"/>
+ </depends-on-projects>
+ <used-by-projects>
+  <project name="WQ_EJB_Reports"/>
+  <project name="WQ_Web"/>
+ </used-by-projects>
+ <paths>
+  <path value="C:/Users/046755/.m2/repository/org/springframework/spring-expression/3.0.6.RELEASE/spring-expression-3.0.6.RELEASE.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/springframework/spring-core/3.0.6.RELEASE/spring-core-3.0.6.RELEASE.jar"/>
+  <path value="C:/Users/046755/.m2/repository/commons-lang/commons-lang/2.6/commons-lang-2.6.jar"/>
+  <path value="C:/Users/046755/.m2/repository/com/sun/mail/javax.mail/1.5.5.redhat-1/javax.mail-1.5.5.redhat-1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/jboss/spec/javax/jms/jboss-jms-api_2.0_spec/1.0.0.Final-redhat-1/jboss-jms-api_2.0_spec-1.0.0.Final-redhat-1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/cxf/cxf-rt-frontend-simple/2.4.9/cxf-rt-frontend-simple-2.4.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/eclipse/jetty/jetty-server/7.4.5.v20110725/jetty-server-7.4.5.v20110725.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/cxf/cxf-rt-databinding-jaxb/2.4.9/cxf-rt-databinding-jaxb-2.4.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/poi/poi-scratchpad/3.11/poi-scratchpad-3.11.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/cxf/cxf-rt-bindings-soap/2.4.9/cxf-rt-bindings-soap-2.4.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/javax/validation/validation-api/1.0.0.GA/validation-api-1.0.0.GA.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/codehaus/woodstox/woodstox-core-asl/4.1.4/woodstox-core-asl-4.1.4.jar"/>
+  <path value="C:/Users/046755/.m2/repository/junit/junit/4.11/junit-4.11.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/codehaus/woodstox/stax2-api/3.1.1/stax2-api-3.1.1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/slf4j/slf4j-api/1.6.2/slf4j-api-1.6.2.jar"/>
+  <path value="C:/Users/046755/.m2/repository/commons-beanutils/commons-beanutils/1.9.2/commons-beanutils-1.9.2.jar"/>
+  <path value="C:/Users/046755/.m2/repository/xml-resolver/xml-resolver/1.2/xml-resolver-1.2.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/jboss/spec/javax/annotation/jboss-annotations-api_1.2_spec/1.0.0.Final-redhat-1/jboss-annotations-api_1.2_spec-1.0.0.Final-redhat-1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/jboss/interceptor/jboss-interceptor-api/1.1/jboss-interceptor-api-1.1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/eclipse/jetty/jetty-http/7.4.5.v20110725/jetty-http-7.4.5.v20110725.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/jboss/ejb3/jboss-ejb3-ext-api/2.2.0.Final-redhat-1/jboss-ejb3-ext-api-2.2.0.Final-redhat-1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/eclipse/jetty/jetty-util/7.4.5.v20110725/jetty-util-7.4.5.v20110725.jar"/>
+  <path value="C:/Users/046755/.m2/repository/dom4j/dom4j/1.6.1/dom4j-1.6.1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/cxf/cxf-rt-transports-http/2.4.9/cxf-rt-transports-http-2.4.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/wsdl4j/wsdl4j/1.6.2/wsdl4j-1.6.2.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/springframework/spring-beans/3.0.6.RELEASE/spring-beans-3.0.6.RELEASE.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/jboss/spec/javax/ejb/jboss-ejb-api_3.2_spec/1.0.0.Final-redhat-1/jboss-ejb-api_3.2_spec-1.0.0.Final-redhat-1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/stax/stax-api/1.0.1/stax-api-1.0.1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/cxf/cxf-rt-frontend-jaxws/2.4.9/cxf-rt-frontend-jaxws-2.4.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/neethi/neethi/3.0.2/neethi-3.0.2.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/eclipse/persistence/commonj.sdo/2.1.1/commonj.sdo-2.1.1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/cxf/cxf-rt-ws-addr/2.4.9/cxf-rt-ws-addr-2.4.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/cxf/cxf-rt-transports-common/2.4.9/cxf-rt-transports-common-2.4.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/cxf/cxf-tools-common/2.4.9/cxf-tools-common-2.4.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/eclipse/jetty/jetty-io/7.4.5.v20110725/jetty-io-7.4.5.v20110725.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/geronimo/specs/geronimo-servlet_2.5_spec/1.1.2/geronimo-servlet_2.5_spec-1.1.2.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/eclipse/persistence/eclipselink/2.6.4/eclipselink-2.6.4.jar"/>
+  <path value="C:/Users/046755/.m2/repository/xml-apis/xml-apis/1.0.b2/xml-apis-1.0.b2.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/eclipse/persistence/javax.persistence/2.1.1/javax.persistence-2.1.1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/springframework/spring-aop/3.0.6.RELEASE/spring-aop-3.0.6.RELEASE.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/eclipse/jetty/jetty-continuation/7.4.5.v20110725/jetty-continuation-7.4.5.v20110725.jar"/>
+  <path value="C:/Users/046755/.m2/repository/javax/activation/activation/1.1/activation-1.1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/javax/validation/validation-api/1.1.0.Final/validation-api-1.1.0.Final.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/cxf/cxf-api/2.4.9/cxf-api-2.4.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/com/sun/xml/bind/jaxb-impl/2.1.13/jaxb-impl-2.1.13.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/springframework/spring-web/3.0.6.RELEASE/spring-web-3.0.6.RELEASE.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/springframework/spring-context/3.0.6.RELEASE/spring-context-3.0.6.RELEASE.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/jboss/spec/javax/transaction/jboss-transaction-api_1.2_spec/1.0.0.Final-redhat-1/jboss-transaction-api_1.2_spec-1.0.0.Final-redhat-1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/javax/cache/cache-api/1.0.0/cache-api-1.0.0.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/cxf/cxf-common-utilities/2.4.9/cxf-common-utilities-2.4.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/springframework/spring-asm/3.0.6.RELEASE/spring-asm-3.0.6.RELEASE.jar"/>
+  <path value="C:/Users/046755/.m2/repository/javax/enterprise/cdi-api/1.0-SP1/cdi-api-1.0-SP1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/jboss/jboss-annotations-ejb3/4.2.2.GA/jboss-annotations-ejb3-4.2.2.GA.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/ws/xmlschema/xmlschema-core/2.0.3/xmlschema-core-2.0.3.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/glassfish/javax.json/1.0.4/javax.json-1.0.4.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/poi/poi-ooxml/3.11/poi-ooxml-3.11.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/xmlbeans/xmlbeans/2.6.0/xmlbeans-2.6.0.jar"/>
+  <path value="C:/Users/046755/.m2/repository/com/sun/faces/jsf-impl/2.1.0-b03/jsf-impl-2.1.0-b03.jar">
+   <libraries>
+    <library class="tld">
+     <id class="model-object"
+      path="FileSystems/lib-jsf-impl-2.1.0-b03.jar/meta-inf/html_basic.tld" project="WQ_JPA_Entity"/>
+    </library>
+    <library class="tld">
+     <id class="model-object"
+      path="FileSystems/lib-jsf-impl-2.1.0-b03.jar/meta-inf/jsf_core.tld" project="WQ_JPA_Entity"/>
+    </library>
+    <library class="facelet">
+     <id class="model-object"
+      path="FileSystems/lib-jsf-impl-2.1.0-b03.jar/meta-inf/mojarra_ext.taglib.xml" project="WQ_JPA_Entity"/>
+    </library>
+    <library class="tld">
+     <id class="model-object"
+      path="FileSystems/lib-jsf-impl-2.1.0-b03.jar/meta-inf/mojarra_ext.tld" project="WQ_JPA_Entity"/>
+    </library>
+    <library class="facelet">
+     <id class="model-object"
+      path="FileSystems/lib-jsf-impl-2.1.0-b03.jar/com/sun/faces/metadata/taglib/composite.taglib.xml" project="WQ_JPA_Entity"/>
+    </library>
+    <library class="facelet">
+     <id class="model-object"
+      path="FileSystems/lib-jsf-impl-2.1.0-b03.jar/com/sun/faces/metadata/taglib/facelets_jsf_core.taglib.xml" project="WQ_JPA_Entity"/>
+    </library>
+    <library class="facelet">
+     <id class="model-object"
+      path="FileSystems/lib-jsf-impl-2.1.0-b03.jar/com/sun/faces/metadata/taglib/html_basic.taglib.xml" project="WQ_JPA_Entity"/>
+    </library>
+    <library class="facelet">
+     <id class="model-object"
+      path="FileSystems/lib-jsf-impl-2.1.0-b03.jar/com/sun/faces/metadata/taglib/jstl-core.taglib.xml" project="WQ_JPA_Entity"/>
+    </library>
+    <library class="facelet">
+     <id class="model-object"
+      path="FileSystems/lib-jsf-impl-2.1.0-b03.jar/com/sun/faces/metadata/taglib/jstl-fn.taglib.xml" project="WQ_JPA_Entity"/>
+    </library>
+    <library class="facelet">
+     <id class="model-object"
+      path="FileSystems/lib-jsf-impl-2.1.0-b03.jar/com/sun/faces/metadata/taglib/mojarra_ext.taglib.xml" project="WQ_JPA_Entity"/>
+    </library>
+    <library class="facelet">
+     <id class="model-object"
+      path="FileSystems/lib-jsf-impl-2.1.0-b03.jar/com/sun/faces/metadata/taglib/ui.taglib.xml" project="WQ_JPA_Entity"/>
+    </library>
+   </libraries>
+  </path>
+  <path value="C:/Users/046755/.m2/repository/org/apache/cxf/cxf-rt-bindings-xml/2.4.9/cxf-rt-bindings-xml-2.4.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/geronimo/specs/geronimo-javamail_1.4_spec/1.7.1/geronimo-javamail_1.4_spec-1.7.1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/cxf/cxf-rt-core/2.4.9/cxf-rt-core-2.4.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/ehcache/ehcache/3.4.0/ehcache-3.4.0.jar"/>
+  <path value="C:/Users/046755/.m2/repository/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/javax/annotation/jsr250-api/1.0/jsr250-api-1.0.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/cxf/cxf-rt-transports-http-jetty/2.4.9/cxf-rt-transports-http-jetty-2.4.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/javax/inject/javax.inject/1.0.0.redhat-6/javax.inject-1.0.0.redhat-6.jar"/>
+  <path value="C:/Users/046755/.m2/repository/aopalliance/aopalliance/1.0/aopalliance-1.0.jar"/>
+  <path value="C:/Users/046755/.m2/repository/commons-codec/commons-codec/1.9/commons-codec-1.9.jar"/>
+  <path value="C:/Users/046755/.m2/repository/asm/asm/3.3.1/asm-3.3.1.jar"/>
+  <path value="C:/Users/046755/.m2/repository/com/sun/faces/jsf-api/2.1.0-b03/jsf-api-2.1.0-b03.jar"/>
+  <path value="C:/Users/046755/.m2/repository/com/jcraft/jsch/0.1.54/jsch-0.1.54.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/eclipse/jetty/jetty-security/7.4.5.v20110725/jetty-security-7.4.5.v20110725.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/poi/poi-ooxml-schemas/3.11/poi-ooxml-schemas-3.11.jar"/>
+  <path value="C:/Users/046755/.m2/repository/org/apache/poi/poi/3.11/poi-3.11.jar"/>
+ </paths>
+ <validation>
+  <el/>
+ </validation>
+ <aliases/>
+ <includes/>
+ <uris/>
+</kb-project>

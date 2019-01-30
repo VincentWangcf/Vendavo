@@ -1,0 +1,249 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+		<h:form id="MFRDetailsSearchForm">
+			<p:growl id="growl" for="growl" showDetail="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" />
+			<p:accordionPanel>
+				<p:tab title="#{dbResource['wq.label.searchCriteria']}">			
+					<h:panelGrid cellpadding="0" style="width:18%;" columns="2">
+
+					<h:outputText value="#{dbResource['wq.label.region']}:"  escape="false" />
+					<h:selectOneMenu id="region"  value="#{mfrDetailsMB.region}" style="width:80%;">
+						<f:selectItems value="#{mfrDetailsMB.regionList}" />
+						<p:ajax event="change" 
+									listener="#{mfrDetailsMB.regionChanged}"
+									oncomplete="stop();" global="false" onstart="start();"
+									onerror="stopWithError();" />
+					</h:selectOneMenu>	
+									
+					<h:outputText value="#{dbResource['wq.label.mfr']}:"  escape="false" />
+					<p:inputText id="mfrNumber" size="20" value="#{mfrDetailsMB.mfrKeyword}" autoResize="false" />
+					<h:outputText value="#{dbResource['wq.label.proGroup']} 2:"/>
+					<p:inputText id="productGroup2Number" size="20" value="#{mfrDetailsMB.productGroup2Keyword}" autoResize="false" />
+					<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search" actionListener="#{mfrDetailsMB.mfrSearch}" update=":MFRDetailsSearchForm:mfrDetails_datatable"/>
+					</h:panelGrid>
+				</p:tab>			
+			</p:accordionPanel>
+		
+		<p:panel header="#{dbResource['wq.label.manufacturerDetail']}" style="font-size:12pt" >
+		
+			<h:panelGrid columns="13" cellpadding="0" >
+		        <p:commandButton value="#{dbResource['wq.label.addManufacturerDetail']}" update=":addMfrDetailForm:dialogAddMfrDetail" oncomplete="PF('dialogAddMfrDetailWidget').show()"></p:commandButton>
+		        <p:commandButton value="#{dbResource['wq.message.editMFR']}" update=":MFRDetailsSearchForm:mfrDetails_datatable, :MFRDetailsSearchForm:growl, :batchEditMfrDetailForm:dialogBatchEditMfrDetail" action="#{mfrDetailsMB.checkSelectedManufacturerDetailsBatchEditMfrDetails}"></p:commandButton>
+			</h:panelGrid>	
+			
+	    <p:dataTable		var="vo" 
+		    				value="#{mfrDetailsMB.manufacturerDetails}"  
+		    				paginator="true" 
+		    				rowIndexVar="rowIndex" 
+		    				rows="10" 
+		    				rowKey="#{vo.id}"
+	    					rowsPerPageTemplate="10,20,50"
+		                 	selection="#{mfrDetailsMB.selectedManufacturerDetails}"  
+		                 	id="mfrDetails_datatable" 
+		                 	paginatorPosition="top" 
+		                 	scrollable="true" 
+		                 	scrollHeight="100%" 
+		                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}." >
+	   
+	   			<p:ajax event="rowSelect"
+                          listener="#{mfrDetailsMB.onRowSelect}">
+               </p:ajax>
+				<p:ajax event="rowSelectCheckbox"
+                          listener="#{mfrDetailsMB.onRowSelect}">
+               </p:ajax>
+               <p:ajax event="rowUnselectCheckbox"
+                          listener="#{mfrDetailsMB.onRowUnselect}">
+               </p:ajax>                 	
+
+			<p:column selectionMode="multiple" styleClass="column_icon"/> 
+	
+			
+			<p:column headerText="#{dbResource['wq.label.region']}" sortBy="#{vo.bizUnit.name}" filterBy="#{vo.bizUnit.name}" filterMatchMode="contains" styleClass="column_mfr" widgetVar="mfrWidget">
+				<h:outputText value="#{vo.bizUnit.name}" />
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{vo.manufacturer.name}" filterBy="#{vo.manufacturer.name}" filterMatchMode="contains" styleClass="column_mfr" widgetVar="mfrWidget">
+				<h:outputText value="#{vo.manufacturer.name}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.message.multiUsage']}" sortBy="#{vo.multiUsage? 'Yes':'No'}"  filterBy="#{vo.multiUsage? 'Yes':'No'}" filterMatchMode="contains" styleClass="column_multiUsage">
+			<h:outputText value="#{vo.multiUsage? 'Yes':'No'}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.rescheduling']}&lt;br/&gt;#{dbResource['wq.button.window']}" sortBy="#{vo.reschedulingWindow}"  filterBy="#{vo.reschedulingWindow}" filterMatchMode="contains" styleClass="column_reschedulingWindow">
+			<h:outputText value="#{vo.reschedulingWindow}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.cancellation']}&lt;br/&gt;#{dbResource['wq.button.window']}" sortBy="#{vo.cancellationWindow}"  filterBy="#{vo.cancellationWindow}" filterMatchMode="contains" styleClass="column_cancellationWindow">
+			<h:outputText value="#{vo.cancellationWindow}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.charsTruncated']}" sortBy="#{vo.charsTruncated}"  filterBy="#{vo.charsTruncated}" filterMatchMode="contains" styleClass="column_mfr">
+			<h:outputText value="#{vo.charsTruncated}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.resale']}&lt;br/&gt;#{dbResource['wq.label.indicator']}" sortBy="#{vo.resaleIndicator}"  filterBy="#{vo.resaleIndicator}" filterMatchMode="contains" styleClass="column_resalesIndicator">
+			<h:outputText value="#{vo.resaleIndicator}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.quantityIndicator']}" sortBy="#{vo.quantityIndicator}"  filterBy="#{vo.quantityIndicator}" filterMatchMode="contains" styleClass="column_qtyIndicator">
+			<h:outputText value="#{vo.quantityIndicator}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.proGroup']}" sortBy="#{vo.productGroup.name}"  filterBy="#{vo.productGroup.name}" filterMatchMode="contains" styleClass="column_productGroup">
+			<h:outputText value="#{vo.productGroup.name}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.productCategory']}" sortBy="#{vo.productCategory.categoryCode}"  filterBy="#{vo.productCategory.categoryCode}" filterMatchMode="contains" styleClass="column_productCategory">
+			<h:outputText value="#{vo.productCategory.categoryCode}" />
+			</p:column>
+   		</p:dataTable>
+    	</p:panel>
+		</h:form>
+		
+	
+		<script type="text/javascript">
+		</script>
+		
+		<h:form id ="addMfrDetailForm">	
+		<p:dialog id="dialogAddMfrDetail" header="#{dbResource['wq.message.MFRDetail']}" widgetVar="dialogAddMfrDetailWidget"  
+		                showEffect="fade" hideEffect="fade">
+	        <h:panelGrid columns="2" cellpadding="4">
+	       	 		<h:outputText value="#{dbResource['wq.label.mfr']}:" />
+		            <p:autoComplete size="8" value="#{mfrDetailsMB.mfr}" completeMethod="#{mfrDetailsMB.autoCompleteForManufacturer}" autoResize="false">
+		               <p:ajax event="query" global="false"/>
+				    </p:autoComplete>
+		            <h:outputText value="#{dbResource['wq.label.proGroup']}2:" />
+		            <p:autoComplete size="8" value="#{mfrDetailsMB.productGroup2}" completeMethod="#{mfrDetailsMB.autoCompleteForProductGroup2}" autoResize="false">
+		               <p:ajax event="query" global="false"/>
+				    </p:autoComplete>
+		            <h:outputText value="#{dbResource['wq.label.productCategory']}:" />
+		            <p:autoComplete size="8" value="#{mfrDetailsMB.productCategory}" completeMethod="#{mfrDetailsMB.autoCompleteForProductCategory}" autoResize="false">
+		               <p:ajax event="query" global="false"/>
+				    </p:autoComplete>
+		            <h:outputText value="#{dbResource['wq.message.multiUsage']}:" />
+		            <p:selectBooleanCheckbox value="#{mfrDetailsMB.multiUsage}" />
+		            <h:outputText value="#{dbResource['wq.label.reschedulingWindow']}:" />
+		            <p:inputText size="8" value="#{mfrDetailsMB.reschedulingWindow}" autoResize="false" />
+		            <h:outputText value="#{dbResource['wq.label.cancellationWindow']}:" />
+		            <p:inputText size="8" value="#{mfrDetailsMB.cancellationWindow}" autoResize="false" />
+		            <h:outputText value="#{dbResource['wq.label.truncatedChar']}:" />
+		            <p:selectOneMenu value="#{mfrDetailsMB.truncatedCharacters}">  
+            			<f:selectItem itemLabel="0" itemValue="0" />  
+            			<f:selectItem itemLabel="1" itemValue="1" />  
+            			<f:selectItem itemLabel="2" itemValue="2" />  
+            			<f:selectItem itemLabel="3" itemValue="3" /> 
+            			<f:selectItem itemLabel="4" itemValue="4" />  
+            			<f:selectItem itemLabel="5" itemValue="5" />  
+            			<f:selectItem itemLabel="6" itemValue="6" />  
+            			<f:selectItem itemLabel="7" itemValue="7" /> 
+            			<f:selectItem itemLabel="8" itemValue="8" />  
+            			<f:selectItem itemLabel="9" itemValue="9" />  
+            			<f:selectItem itemLabel="10" itemValue="10" />  
+       				</p:selectOneMenu>  
+       				<h:outputText value="#{dbResource['wq.label.resaleIndicator']}:" />
+					<p:inputText size="8" value="#{mfrDetailsMB.resaleIndicator}" autoResize="false" />
+		            <h:outputText value="#{dbResource['wq.label.qtyIndicator']}:" />
+		           <p:selectOneMenu value="#{mfrDetailsMB.qtyIndicator}">  
+		           		<f:selectItem itemLabel="Exact" itemValue="Exact" />  
+            			<f:selectItem itemLabel="MOQ" itemValue="MOQ" />  
+            			<f:selectItem itemLabel="MPQ" itemValue="MPQ" />  
+            			<f:selectItem itemLabel="MOV" itemValue="MOV" />  
+            			<f:selectItem itemLabel="0%" itemValue="0%" />  
+            			<f:selectItem itemLabel="25%" itemValue="25%" /> 
+            			<f:selectItem itemLabel="50%" itemValue="50%" /> 
+            			<f:selectItem itemLabel="75%" itemValue="75%" /> 
+            			<f:selectItem itemLabel="100%" itemValue="100%" /> 
+       				</p:selectOneMenu>   
+		    </h:panelGrid>
+		         
+			<h:panelGrid columns="2" cellpadding="4">
+			  <p:commandButton value="#{dbResource['wq.button.submit']}" actionListener="#{mfrDetailsMB.addMfrDetail}" onclick="PF('dialogAddMfrDetailWidget').hide();" update=":MFRDetailsSearchForm:mfrDetails_datatable, :MFRDetailsSearchForm:growl"></p:commandButton>
+			  <p:commandButton value="#{dbResource['wq.button.cancel']}" onclick="PF('dialogAddMfrDetailWidget').hide();"></p:commandButton>
+			</h:panelGrid>
+		</p:dialog>
+		</h:form>
+	
+		<h:form id ="batchEditMfrDetailForm">	
+		<p:dialog id="dialogBatchEditMfrDetail" header="#{dbResource['wq.message.editMFR']}" widgetVar="dialogBatchEditMfrDetailWidget"  
+		                showEffect="fade" hideEffect="fade">
+	        <h:panelGrid columns="2" cellpadding="4">
+		            <h:outputText value="#{dbResource['wq.label.productCategory']}:" />
+		            <p:autoComplete size="8" value="#{mfrDetailsMB.productCategory}" completeMethod="#{mfrDetailsMB.autoCompleteForProductCategory}" autoResize="false">
+		               <p:ajax event="query" global="false"/>
+				    </p:autoComplete>
+		            <h:outputText value="#{dbResource['wq.message.multiUsage']}:" />
+		            <p:selectBooleanCheckbox value="#{mfrDetailsMB.multiUsage}" />
+		            <h:outputText value="#{dbResource['wq.label.reschedulingWindow']}:" />
+		            <p:inputText size="8" value="#{mfrDetailsMB.reschedulingWindow}" autoResize="false" />
+		            <h:outputText value="#{dbResource['wq.label.cancellationWindow']}:" />
+		            <p:inputText size="8" value="#{mfrDetailsMB.cancellationWindow}" autoResize="false" />
+		            <h:outputText value="#{dbResource['wq.label.truncatedChar']}:" />
+		            <p:selectOneMenu value="#{mfrDetailsMB.truncatedCharacters}">  
+            			<f:selectItem itemLabel="0" itemValue="0" />  
+            			<f:selectItem itemLabel="1" itemValue="1" />  
+            			<f:selectItem itemLabel="2" itemValue="2" />  
+            			<f:selectItem itemLabel="3" itemValue="3" /> 
+            			<f:selectItem itemLabel="4" itemValue="4" />  
+            			<f:selectItem itemLabel="5" itemValue="5" />  
+            			<f:selectItem itemLabel="6" itemValue="6" />  
+            			<f:selectItem itemLabel="7" itemValue="7" /> 
+            			<f:selectItem itemLabel="8" itemValue="8" />  
+            			<f:selectItem itemLabel="9" itemValue="9" />  
+            			<f:selectItem itemLabel="10" itemValue="10" />  
+       				</p:selectOneMenu>  
+       				<h:outputText value="#{dbResource['wq.label.resaleIndicator']}:" />
+					<p:inputText size="8" value="#{mfrDetailsMB.resaleIndicator}" autoResize="false" />
+		            <h:outputText value="#{dbResource['wq.label.qtyIndicator']}:" />
+		           <p:selectOneMenu value="#{mfrDetailsMB.qtyIndicator}">  
+		          		<f:selectItem itemLabel="#{dbResource['wq.label.exact']}" itemValue="Exact" />  
+            			<f:selectItem itemLabel="#{dbResource['wq.label.moq']}" itemValue="MOQ" />  
+            			<f:selectItem itemLabel="#{dbResource['wq.label.MPQ']}" itemValue="MPQ" />  
+            			<f:selectItem itemLabel="#{dbResource['wq.label.mov']}" itemValue="MOV" />  
+            			<f:selectItem itemLabel="0%" itemValue="0%" />  
+            			<f:selectItem itemLabel="25%" itemValue="25%" /> 
+            			<f:selectItem itemLabel="50%" itemValue="50%" /> 
+            			<f:selectItem itemLabel="75%" itemValue="75%" /> 
+            			<f:selectItem itemLabel="100%" itemValue="100%" /> 
+       				</p:selectOneMenu>   
+		    </h:panelGrid>
+		         
+			<h:panelGrid columns="2" cellpadding="4">
+			  <p:commandButton value="#{dbResource['wq.button.submit']}" actionListener="#{mfrDetailsMB.batchEditMfrDetail}" onclick="PF('dialogBatchEditMfrDetailWidget').hide();" update=":MFRDetailsSearchForm:mfrDetails_datatable, :MFRDetailsSearchForm:growl"></p:commandButton>
+			  <p:commandButton value="#{dbResource['wq.button.cancel']}" onclick="PF('dialogBatchEditMfrDetailWidget').hide();"></p:commandButton>
+			</h:panelGrid>
+		</p:dialog>
+		</h:form>
+		
+	<p:dialog id="addMfrDetailConfirmationDialog" header="#{dbResource['wq.label.message']}" widgetVar="addMfrDetailConfirmationWidget"  
+		                showEffect="fade" hideEffect="fade">
+ 		<h:panelGrid columns="1" cellpadding="4">	  
+ 			<h:outputText rendered="#{mfrDetailsMB.updateSuccess == false}" value="#{dbResource['wq.message.addMFRDetailFailed']}: #{mfrDetailsMB.errorMessage}" />	
+            <h:outputText rendered="#{mfrDetailsMB.updateSuccess == true}" value="#{dbResource['wq.message.addMfrDetail']}"/>
+	    </h:panelGrid>
+	</p:dialog>
+	
+	<p:dialog id="batchEditMfrDetailConfirmationDialog" header="#{dbResource['wq.label.message']}" widgetVar="batchEditMfrDetailConfirmationWidget"  
+		                showEffect="fade" hideEffect="fade">
+ 		<h:panelGrid columns="1" cellpadding="4">	  
+ 			<h:outputText rendered="#{mfrDetailsMB.updateSuccess == false}" value="#{dbResource['wq.message.batchEditMFRFailed']}: #{mfrDetailsMB.errorMessage}" />	
+            <h:outputText rendered="#{mfrDetailsMB.updateSuccess == true}" value="#{dbResource['wq.message.editMFRsucc']}"/>
+	    </h:panelGrid>
+	</p:dialog>
+	
+	</ui:define>
+</ui:composition>

@@ -1,0 +1,201 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+
+	<ui:define name="css">
+		<!-- <h:outputStylesheet library="css" name="wq.css" /> -->
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+		<p:ajaxStatus onstart="start();" onsuccess="stop();"
+			onerror="stopWithError();" />
+		<h:form id="rptForm">
+			<p:messages id="msgId" escape="false" closable="true"
+				autoUpdate="true" />
+			<p:accordionPanel>
+				<p:tab title="#{dbResource['wq.header.RFQBacklog']}">
+
+					<h:panelGrid cellpadding="0" style="width:100%;" columns="8">
+						<h:outputText value="#{dbResource['wq.label.salesmanName']}:" escape="false" />
+						<p:autoComplete
+							value="#{rFQBacklogReportMB.reportCriteria.salemanName}"
+							completeMethod="#{rFQBacklogReportMB.autoCompleteSale}"
+							minQueryLength="3" style="width:80%;" >
+							<p:ajax event="query" global="false"/>
+						</p:autoComplete>
+
+						<h:outputText value="#{dbResource['wq.header.form']}#:" id="formNo" escape="false" />
+						<p:autoComplete
+							value="#{rFQBacklogReportMB.reportCriteria.formNo}"
+							completeMethod="#{rFQBacklogReportMB.autoCompleteFormNo}"
+							minQueryLength="3" style="width:80%;" >
+							<p:ajax event="query" global="false"/>
+						</p:autoComplete>
+
+						<h:outputText value="#{dbResource['wq.label.qcName']} :" escape="false" />
+						<p:autoComplete
+							value="#{rFQBacklogReportMB.reportCriteria.qcPricer}"
+							completeMethod="#{rFQBacklogReportMB.autoCompleteQCP}"
+							minQueryLength="3" style="width:80%;" >
+							<p:ajax event="query" global="false"/>
+						</p:autoComplete>
+
+						<h:outputText value="#{dbResource['wq.label.pendingTime']}:" escape="false" />
+						<p:inputText
+							value="#{rFQBacklogReportMB.reportCriteria.pendingTime}"
+							style="width:80%;"></p:inputText>
+
+						<h:outputText value="#{dbResource['wq.label.rfqCreatedForm']}:" escape="false" />
+						<p:calendar
+							value="#{rFQBacklogReportMB.reportCriteria.createFrom}"
+							showOn="button" pattern="dd/MM/yyyy"  />
+
+						<h:outputText value="#{dbResource['wq.label.rfqCreated']}:" escape="false" />
+						<p:calendar value="#{rFQBacklogReportMB.reportCriteria.createTo}"
+							showOn="button" pattern="dd/MM/yyyy" />
+
+						<h:outputText value="#{dbResource['wq.label.reqRef']}:" escape="false" />
+						<p:inputText
+							value="#{rFQBacklogReportMB.reportCriteria.yourReference}"
+							style="width:80%;"></p:inputText>
+					</h:panelGrid>
+
+					<h:panelGrid columns="3" cellpadding="0">
+						<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search"
+							actionListener="#{rFQBacklogReportMB.searchCriteriaForReport}"
+							update=":rptForm:RFQRBacklogReport_dataTable" />
+						<p:commandButton value="#{dbResource['wq.label.reset']}" icon="ui-icon-triangle-1-w"
+							actionListener="#{rFQBacklogReportMB.resetCriteria}"
+							update=":rptForm" />
+					</h:panelGrid>
+				</p:tab>
+			</p:accordionPanel>
+			<p:panel header="#{dbResource['wq.header.RFQReport']}" style="font-size:12pt">
+				<h:panelGrid columns="11" cellpadding="0">
+					<p:commandButton value="#{dbResource['wq.button.xlsDownload']}" ajax="false">
+						<p:dataExporter type="xls" target="RFQRBacklogReport_dataTable"
+							fileName="#{rFQBacklogReportMB.exportFileName}"
+							postProcessor="#{rFQBacklogReportMB.postProcessXLS}" />
+					</p:commandButton>
+				</h:panelGrid>
+			</p:panel>
+			
+			<p:dataTable var="vo"
+				value="#{rFQBacklogReportMB.rfqBacklogReportLst}" rowKey="#{vo.seq}"
+				paginator="true" rowIndexVar="rowIndex" rows="10"
+				rowsPerPageTemplate="10,20,50"
+				filteredValue="#{rFQBacklogReportMB.filteredRfqBacklogReportLst}"
+				id="RFQRBacklogReport_dataTable" paginatorPosition="top"
+				scrollable="true" scrollHeight="100%"
+				emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+				<p:column headerText="#{dbResource['wq.label.no']}" styleClass="column_seq">
+					<h:outputText value="#{rowIndex+1}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.team']}" sortBy="#{vo.team}"
+					filterBy="#{vo.team}" filterMatchMode="contains"
+					styleClass="column_team">
+					<h:outputText value="#{vo.team}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.salesman']}&lt;br/&gt;#{dbResource['wq.label.name']}" sortBy="#{vo.salemanName}"
+					filterBy="#{vo.salemanName}" filterMatchMode="contains"
+					styleClass="column_employeeName">
+					<h:outputText value="#{vo.salemanName}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.form']}" sortBy="#{vo.formNo}"
+					filterBy="#{vo.formNo}" filterMatchMode="contains"
+					styleClass="column_formNumber">
+					<h:outputText id="formNo" value="#{vo.formNo}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.reqRef']}" sortBy="#{vo.yourReference}"
+					filterBy="#{vo.yourReference}" filterMatchMode="contains"
+					styleClass="column_yourReference">
+					<h:outputText value="#{vo.yourReference}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.custmrName']}" sortBy="#{vo.customerName}"
+					filterBy="#{vo.customerName}" filterMatchMode="contains"
+					styleClass="column_shipToCustomerName">
+					<h:outputText value="#{vo.customerName}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.endCustName']}"
+					sortBy="#{vo.endCustomerName}" filterBy="#{vo.endCustomerName}"
+					filterMatchMode="contains" styleClass="column_shipToCustomerName">
+					<h:outputText value="#{vo.endCustomerName}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.header.quoteType']}" sortBy="#{vo.quoteType}" filterBy="#{vo.quoteType}" filterMatchMode="contains" styleClass="column_mfr">				
+					<h:outputText value="#{vo.quoteType}">
+				</h:outputText>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{vo.mfr.name}"
+					filterBy="#{vo.mfr.name}" filterMatchMode="contains"
+					styleClass="column_mfr">
+					<h:outputText value="#{vo.mfr.name}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.reqPN']}" sortBy="#{vo.fullPartNo}"
+					filterBy="#{vo.fullPartNo}" filterMatchMode="contains"
+					styleClass="column_fullMfrPart">
+					<h:outputText value="#{vo.fullPartNo}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.header.qcHandler']}" sortBy="#{vo.qcPricer}"
+					filterBy="#{vo.qcPricer}" filterMatchMode="contains"
+					styleClass="column_termsAndConditions">
+					<h:outputText value="#{vo.qcPricer}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.pendingTime']}&lt;br/&gt;(#{dbResource['wq.header.inDays']})"
+					sortBy="#{vo.pendingTime}" filterBy="#{vo.pendingTime}"
+					filterMatchMode="contains" styleClass="column_uploadTime">
+					<h:outputText value="#{vo.pendingTime}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.header.pendingFive']}" sortBy="#{vo.pending}"
+					filterBy="#{vo.pending}" filterMatchMode="contains"
+					styleClass="column_uploadTime">
+					<h:outputText value="#{vo.pending}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.header.pendingFor']}" sortBy="#{vo.pendingFor}"
+					filterBy="#{vo.pendingFor}" filterMatchMode="contains"
+					styleClass="column_uploadTime">
+					<h:outputText value="#{vo.pendingFor}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.header.pendingInternal']}&lt;br/&gt;#{dbResource['wq.header.transferredTime']}&lt;br/&gt;(#{dbResource['wq.header.inDays']})"
+					sortBy="#{vo.pndItnalTfTime}" filterBy="#{vo.pndItnalTfTime}"
+					filterMatchMode="contains" styleClass="column_uploadTime">
+					<h:outputText value="#{vo.pndItnalTfTime}">
+						<f:convertNumber pattern="#,##0.00000" minFractionDigits="5" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.bum']}" sortBy="#{vo.bum}"
+					filterBy="#{vo.bum}" filterMatchMode="contains"
+					styleClass="column_employeeName">
+					<h:outputText value="#{vo.bum}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.pm']}" sortBy="#{vo.pm}"
+					filterBy="#{vo.pm}" id="pmoq" filterMatchMode="contains"
+					styleClass="column_employeeName">
+					<h:outputText value="#{vo.pm}" />
+				</p:column>
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

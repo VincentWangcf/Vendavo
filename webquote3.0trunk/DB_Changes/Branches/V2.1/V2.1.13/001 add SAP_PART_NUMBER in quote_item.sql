@@ -1,0 +1,1 @@
+alter table QUOTE_ITEM add (SAP_PART_NUMBER varchar2(36));

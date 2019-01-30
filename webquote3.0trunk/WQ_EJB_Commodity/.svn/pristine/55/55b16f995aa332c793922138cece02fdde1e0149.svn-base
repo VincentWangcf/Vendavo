@@ -1,0 +1,42 @@
+package com.avnet.emasia.webquote.commodity.constant;
+
+public class PricerConstant {
+
+	public static final String A_COST_INDICATOR = "A-Book Cost";
+	public final static String PRICER_TEMPLATE_NAME = "new pricer template.xlsx";
+	
+	public final static int COLUMN_OF_LENGTH = 71;
+	
+	/**To prevent memory leaks, setting maximum*/
+	public final static int STRING_MAX_LENGTH = 200*1000;
+	
+	/*The header line number */
+	public final static int PRICER_TEMPLATE_HEADER_ROW_NUMBER = 7;
+	
+
+	public static final String XML_ENCODING = "UTF-8";
+	
+	public final static int NUMBER_OF_ALLOW_MAX_UPLOAD = 20000;
+	
+	public final static String SELECT_FILE_MSG = "Please select an file.";
+	public final static String SELECT_EXECL_FILE_MSG = "please select an excel file.";
+	public final static String VALIDATE_FORMAT_MSG = "Please select an excel file in correct format.";
+	public final static String UPLOAD_SUCCESS_MSG = " upload success";
+	public final static String UPLOAD_ERROR_MSG = " upload error";
+	
+	public final static String ACTION_VARIFY_MSG = "only have one action and one pricer type!";
+	
+	public static final int BATCH_SIZE = 300;
+	
+	public static final String MARK_PROCESSED_UPLOAD_FILE = "processed";
+	
+	public static final String COMMONPARTKEY = "_";
+	
+	public static final String SALES_COST_FLAG_YES = "Yes";
+	public static final String SALES_COST_FLAG_NO = "No";
+	public static final String SALES_COST_FLAG_ALL = "ALL";
+
+	
+	
+	
+}

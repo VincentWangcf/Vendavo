@@ -1,0 +1,778 @@
+
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+import com.avnet.emasia.webquote.cache.MfrDetailCacheManager;
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.exception.WebQuoteRuntimeException;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.vo.PricerInfo;
+import com.avnet.emasia.webquote.vo.ProgramMaterialQtyRange;
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+
+
+/**
+ * The persistent class for the PROGRAM_MATERIAL database table.
+ * Normal
+ */
+@Entity
+public class ProgramPricer extends Pricer implements Serializable{
+	private static final long serialVersionUID = -5432324616099393430L;
+	
+		@Column(name="ALLOCATION_FLAG", length=1)
+		private Boolean allocationFlag;
+
+		@Column(name="CANCELLATION_WINDOW", precision=3)
+		private Integer cancellationWindow;
+
+		@Column(name="COMMODITY_CODE", length=2)
+		private String commodityCode;
+
+		@Column(name="FULL_MFR_PART_NUMBER", length=40)
+		private String fullMfrPartNumber;
+
+		@Column(name="GREEN_PRODUCT_INDICATOR", length=2)
+		private String greenProductIndicator;
+
+		@Column(precision=10, scale=3)
+		private Integer moq;
+
+		@Column(precision=10, scale=3)
+		private Integer mpq;
+
+		@Column(name="NCNR_FLAG", length=1)
+		private Boolean ncnrFlag;
+
+		@Temporal(TemporalType.DATE)
+		@Column(name="NCNR_VALID_FROM")
+		private Date ncnrValidFrom;
+
+/*		@Column(name="NORMAL_SELL", precision=10, scale=5)
+		private Double normalSell;*/
+
+		@Column(name="PRICE_LIST_REMARKS1", length=255)
+		private String priceListRemarks1;
+
+		@Column(name="PRICE_LIST_REMARKS2", length=255)
+		private String priceListRemarks2;
+
+		@Column(name="PRICE_LIST_REMARKS3", length=255)
+		private String priceListRemarks3;
+
+		@Column(name="PRICE_LIST_REMARKS4", length=255)
+		private String priceListRemarks4;
+
+
+		@Column(name="QTY_INDICATOR", length=20)
+		private String qtyIndicator;
+
+		@Column(name="RESCHEDULED_WINDOW", precision=3)
+		private Integer rescheduledWindow;
+
+		@Column(name="SUPPLIER_NUMBER")
+		private String supplierNumber;
+		
+		@Temporal(TemporalType.DATE)
+		@Column(name="LAST_BUY_DATE")
+		private Date lastBuyDate;
+
+		@Temporal(TemporalType.DATE)
+		@Column(name="LAST_SHIP_DATE")
+		private Date lastShipDate;
+		
+		@Column(name="SHIP_DEBIT", length=3)
+		private String shipDebit;
+		
+		@Temporal(TemporalType.DATE)
+		@Column(name="ALLOCATION_VALID_FROM")
+		private Date allocationValidFrom;
+		
+		@Column(length=14)
+		private String eccn;
+
+		@Column(name="DISPLAY_ON_TOP")
+		private Integer displayOnTop;
+		
+		@OneToMany(mappedBy="materialDetail",fetch=FetchType.EAGER)
+		private List<QuantityBreakPrice> quantityBreakPrices;
+
+		
+		//Added by tonmy on 15 Oct 2013
+		@Column(name="AVAILABLE_TO_SELL_MORE_FLAG", length=1)
+		private Boolean availableToSellMoreFlag;
+		
+		
+
+		@ManyToOne(fetch=FetchType.EAGER)
+		@JoinColumn(name="PROGRAM_TYPE_ID")
+		private ProgramType programType;
+
+		@Column(name="PROGRAM_AVAILABLE_TO_SELL_QTY")
+		private Integer programAvailableToSellQty;
+
+		@Column(name="PROGRAM_CALL_FOR_QUOTE", length=1)
+		private Boolean programCallForQuote;
+
+		@Temporal(TemporalType.TIMESTAMP)
+		@Column(name="PROGRAM_CLOSING_DATE")
+		private Date programClosingDate;
+
+		@Temporal(TemporalType.TIMESTAMP)
+		@Column(name="PROGRAM_EFFECTIVE_DATE")
+		private Date programEffectiveDate;
+
+		@Column(name="PROGRAM_MINIMUM_COST", precision=9, scale=5)
+		private Double programMinimumCost;
+
+		@Column(name="PROGRAM_AQ_FLAG")
+		private Boolean programAqFlag;
+
+		@Column(name="PROGRAM_SPECIAL_ITEM_FLAG")
+		private Integer programSpecialItemFlag;
+		
+		@Column(name="RESALE_INDICATOR")
+		private String resaleIndicator;
+		
+		@Column(name="NEW_PROGRAM_MATERIAL_INDICATOR")
+		private Boolean newProgramMaterialIndicator;
+		
+		public ProgramPricer() {
+		}
+
+
+
+		public Integer getProgramAvailableToSellQty() {
+			return this.programAvailableToSellQty;
+		}
+
+		public void setProgramAvailableToSellQty(Integer programAvailableToSellQty) {
+			this.programAvailableToSellQty = programAvailableToSellQty;
+		}
+
+		public Boolean getProgramCallForQuote() {
+			return this.programCallForQuote;
+		}
+
+		public void setProgramCallForQuote(Boolean programCallForQuote) {
+			this.programCallForQuote = programCallForQuote;
+		}
+
+		public Date getProgramClosingDate() {
+			return this.programClosingDate;
+		}
+
+		public void setProgramClosingDate(Date programClosingDate) {
+			this.programClosingDate = programClosingDate;
+		}
+
+		public Date getProgramEffectiveDate() {
+			return this.programEffectiveDate;
+		}
+
+		public void setProgramEffectiveDate(Date programEffectiveDate) {
+			this.programEffectiveDate = programEffectiveDate;
+		}
+
+		public Double getProgramMinimumCost() {
+			return this.programMinimumCost;
+		}
+
+		public void setProgramMinimumCost(Double programMinimumCost) {
+			this.programMinimumCost = programMinimumCost;
+		}
+
+		public ProgramType getProgramType() {
+			return programType;
+		}
+		
+		public void setProgramType(ProgramType programType) {
+			this.programType = programType;
+		}
+
+		public Boolean getProgramAqFlag() {
+			return programAqFlag;
+		}
+
+		public void setProgramAqFlag(Boolean programAqFlag) {
+			this.programAqFlag = programAqFlag;
+		}
+
+		public Integer getProgramSpecialItemFlag() {
+			return programSpecialItemFlag;
+		}
+
+		public void setProgramSpecialItemFlag(Integer programSpecialItemFlag) {
+			this.programSpecialItemFlag = programSpecialItemFlag;
+		}
+
+		public String getResaleIndicator() {
+			return resaleIndicator;
+		}
+
+		public void setResaleIndicator(String resaleIndicator) {
+			this.resaleIndicator = resaleIndicator;
+		}
+
+		public Boolean getNewProgramMaterialIndicator() {
+			return newProgramMaterialIndicator;
+		}
+
+		public void setNewProgramMaterialIndicator(Boolean newProgramMaterialIndicator) {
+			this.newProgramMaterialIndicator = newProgramMaterialIndicator;
+		}
+
+		public Boolean getAllocationFlag() {
+			return this.allocationFlag;
+		}
+
+		public void setAllocationFlag(Boolean allocationFlag) {
+			this.allocationFlag = allocationFlag;
+		}
+
+		public Integer getCancellationWindow() {
+			return this.cancellationWindow;
+		}
+
+		public void setCancellationWindow(Integer cancellationWindow) {
+			this.cancellationWindow = cancellationWindow;
+		}
+
+		public String getCommodityCode() {
+			return this.commodityCode;
+		}
+
+		public void setCommodityCode(String commodityCode) {
+			this.commodityCode = commodityCode;
+		}
+
+
+		public static long getSerialversionuid() {
+			return serialVersionUID;
+		}
+
+		public String getFullMfrPartNumber() {
+			return this.fullMfrPartNumber;
+		}
+
+		public void setFullMfrPartNumber(String fullMfrPartNumber) {
+			this.fullMfrPartNumber = fullMfrPartNumber;
+		}
+
+		public String getGreenProductIndicator() {
+			return this.greenProductIndicator;
+		}
+
+		public void setGreenProductIndicator(String greenProductIndicator) {
+			this.greenProductIndicator = greenProductIndicator;
+		}
+
+
+		public Integer getMoq() {
+			return this.moq;
+		}
+
+		public void setMoq(Integer moq) {
+			this.moq = moq;
+		}
+
+
+		public Integer getMpq() {
+			return this.mpq;
+		}
+
+		public void setMpq(Integer mpq) {
+			this.mpq = mpq;
+		}
+
+		public Boolean getNcnrFlag() {
+			return this.ncnrFlag;
+		}
+
+		public void setNcnrFlag(Boolean ncnrFlag) {
+			this.ncnrFlag = ncnrFlag;
+		}
+
+		public Date getNcnrValidFrom() {
+			return this.ncnrValidFrom;
+		}
+
+		public void setNcnrValidFrom(Date ncnrValidFrom) {
+			this.ncnrValidFrom = ncnrValidFrom;
+		}
+
+		/*public Double getNormalSell() {
+			return this.normalSell;
+		}
+
+		public void setNormalSell(Double normalSell) {
+			this.normalSell = normalSell;
+		}*/
+
+		public String getPriceListRemarks1() {
+			return this.priceListRemarks1;
+		}
+
+		public void setPriceListRemarks1(String priceListRemarks1) {
+			this.priceListRemarks1 = priceListRemarks1;
+		}
+
+		public String getPriceListRemarks2() {
+			return this.priceListRemarks2;
+		}
+
+		public void setPriceListRemarks2(String priceListRemarks2) {
+			this.priceListRemarks2 = priceListRemarks2;
+		}
+
+		public String getPriceListRemarks3() {
+			return this.priceListRemarks3;
+		}
+
+		public void setPriceListRemarks3(String priceListRemarks3) {
+			this.priceListRemarks3 = priceListRemarks3;
+		}
+
+		public String getPriceListRemarks4() {
+			return this.priceListRemarks4;
+		}
+
+		public void setPriceListRemarks4(String priceListRemarks4) {
+			this.priceListRemarks4 = priceListRemarks4;
+		}
+
+
+		public String getQtyIndicator() {
+			return this.qtyIndicator;
+		}
+
+		public void setQtyIndicator(String qtyIndicator) {
+			this.qtyIndicator = qtyIndicator;
+		}
+
+		public Integer getRescheduledWindow() {
+			return this.rescheduledWindow;
+		}
+
+		public void setRescheduledWindow(Integer rescheduledWindow) {
+			this.rescheduledWindow = rescheduledWindow;
+		}
+
+		public String getSupplierNumber() {
+			return this.supplierNumber;
+		}
+
+		public void setSupplierNumber(String supplierNumber) {
+			this.supplierNumber = supplierNumber;
+		}
+
+		public Date getAllocationValidFrom() {
+			return this.allocationValidFrom;
+		}
+
+		public void setAllocationValidFrom(Date allocationValidFrom) {
+			this.allocationValidFrom = allocationValidFrom;
+		}
+		
+		public String getEccn() {
+			return this.eccn;
+		}
+
+		public void setEccn(String eccn) {
+			this.eccn = eccn;
+		}
+		
+		public Date getLastBuyDate() {
+			return this.lastBuyDate;
+		}
+
+		public void setLastBuyDate(Date lastBuyDate) {
+			this.lastBuyDate = lastBuyDate;
+		}
+
+		public Date getLastShipDate() {
+			return this.lastShipDate;
+		}
+
+		public void setLastShipDate(Date lastShipDate) {
+			this.lastShipDate = lastShipDate;
+		}
+		
+		public String getShipDebit() {
+			return this.shipDebit;
+		}
+
+		public void setShipDebit(String shipDebit) {
+			this.shipDebit = shipDebit;
+		}
+
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		public List<QuantityBreakPrice> getQuantityBreakPrices() {
+			List<QuantityBreakPrice> sorted = new ArrayList<QuantityBreakPrice>(quantityBreakPrices);
+			Collections.sort(sorted,
+					new Comparator(){
+						 @Override
+						 public int compare(Object o1, Object o2) 
+						 {
+							 int sortByAgeFlag=((QuantityBreakPrice)o1).getQuantityBreak().compareTo(((QuantityBreakPrice)o2).getQuantityBreak());
+							 return sortByAgeFlag;
+						 }
+					}
+		    );
+			return sorted;
+		}
+
+		public void setQuantityBreakPrices(List<QuantityBreakPrice> quantityBreakPrices) {
+			this.quantityBreakPrices = quantityBreakPrices;
+		}
+
+		@Override
+		public String toString() {
+			return "MaterialDetail [costIndicator=" + getCostIndicator()
+					+ ", fullMfrPartNumber=" + fullMfrPartNumber + ", bizUnitBean=" + 
+				getBizUnitBean() + ", material=" + getMaterial() + "]";
+		}
+
+		public Boolean getAvailableToSellMoreFlag()
+		{
+			return availableToSellMoreFlag;
+		}
+
+		public void setAvailableToSellMoreFlag(Boolean availableToSellMoreFlag)
+		{
+			this.availableToSellMoreFlag = availableToSellMoreFlag;
+		}
+		
+		public Integer getDisplayOnTop() {
+			return displayOnTop;
+		}
+
+		public void setDisplayOnTop(Integer displayOnTop) {
+			this.displayOnTop = displayOnTop;
+		}
+
+		public Double getProgramNormalSell()
+		{
+		      List<QuantityBreakPrice> breakPriceList = getQuantityBreakPrices();
+		      if(breakPriceList!=null && breakPriceList.size()>0)
+		      {
+		    	  QuantityBreakPrice firstQBP = breakPriceList.get(0);
+		    	  if(firstQBP!=null && firstQBP.getQuantityBreakPrice()!=null)
+		    	  {
+		    		  return firstQBP.getQuantityBreakPrice();
+		    	  }
+		      }
+		      return null;
+				
+		}
+
+	
+		
+	 
+		
+		
+	
+	
+
+	@Override
+	int getPriority() {
+		return 2;
+	}
+	
+	@Override
+	public RfqItemVO fillInPricer(RfqItemVO rfqItem) {
+		//need to call super function ,added by Damonchen
+		super.fillInPricer(rfqItem);
+		rfqItem.setRequestedProgramMaterialForProgram(this);
+		Material material = this.getMaterial();
+		Manufacturer mfr = null;
+		if(material != null) {
+			mfr = this.getMaterial().getManufacturer();
+		}
+
+		rfqItem.setAllocationFlag(allocationFlag);
+		rfqItem.setMpq(this.getMpq());
+		rfqItem.setMoq(this.getMoq());
+		rfqItem.setMov(this.getMov());
+		rfqItem.setLeadTime(this.getLeadTime());
+		//rfqItem.setCost(programMD.getProgramMinimumCost());
+		//for defect 378
+		rfqItem.setCost(this.getCost());
+    	
+		// Fixed issue 1404
+		if (this.getQuantityBreakPrices() != null && rfqItem.getRequiredQty() != null
+				&& !rfqItem.getRequiredQty().isEmpty()) {
+			try {
+				Double tempPrice = getProgNormSellPrice(rfqItem);
+				if (tempPrice != null && tempPrice != 0d && tempPrice != -999999d) {
+					rfqItem.setMinSellPrice(tempPrice);
+				}
+			} catch (Exception e) {
+				rfqItem.setMinSellPrice(null);
+			}
+		} else {
+			rfqItem.setMinSellPrice(null);
+		}
+		
+		//rfqItem.setMinSell(this.getMinSell());
+		rfqItem.setShipmentValidity(this.getShipmentValidity());
+		rfqItem.setPriceValidity(this.getPriceValidity());
+
+		rfqItem.setPriceListRemarks1(this.getPriceListRemarks1());
+		rfqItem.setPriceListRemarks2(this.getPriceListRemarks2());
+		rfqItem.setPriceListRemarks3(this.getPriceListRemarks3());
+		rfqItem.setPriceListRemarks4(this.getPriceListRemarks4());
+
+
+		if (this.getCostIndicator() != null)
+			rfqItem.setCostIndicator(this.getCostIndicator().getName());
+		rfqItem.setQtyIndicator(this.getQtyIndicator());
+
+
+		rfqItem.setMultiUsage(true);
+		rfqItem.setQtyIndicator(this.getQtyIndicator());
+		rfqItem.setCancellationWindow(this.getCancellationWindow());
+		rfqItem.setReschedulingWindow(this.getRescheduledWindow());
+		rfqItem.setTermsAndCondition(this.getTermsAndConditions());
+
+		//fixed issue 378
+		if(this.getAvnetQcComments()!=null && !this.getAvnetQcComments().isEmpty())
+		{
+			rfqItem.setQcComment(this.getAvnetQcComments());
+		}
+		
+		
+		ManufacturerDetail md = null;
+		if (mfr != null && material.getProductGroup2() != null
+				&& material.getProductCategory() != null && rfqItem.getRfqHeaderVO().getBizUnit() != null) {
+			md = MfrDetailCacheManager.getMfrDetail(mfr.getId(), material.getProductGroup2().getId(),
+					material.getProductCategory().getId(), rfqItem.getRfqHeaderVO().getBizUnit());
+			if (md != null) {
+				md.fillIn(rfqItem);
+				if (this.getQtyIndicator() == null) {
+					rfqItem.setQtyIndicator(md.getQuantityIndicator());
+				}
+
+
+			}
+		}
+		rfqItem.setCostIndicatorType(this.getCostIndicatorType());
+		return rfqItem;
+	}
+	
+	public double getProgNormSellPrice(RfqItemVO itemVO) {
+		if (!isQtyInRanges(itemVO)) {
+			throw new WebQuoteRuntimeException(CommonConstants.WQ_EJB_MASTER_DATA_QUANTITY_IS_NOT_IN_ANY_RANGE,
+					new Object[] { Integer.valueOf(itemVO.getRequiredQty()) });
+		}
+		List<ProgramMaterialQtyRange> ranges = getQtyRanges(itemVO);
+		for (ProgramMaterialQtyRange range : ranges) {
+			int requestQty = Integer.valueOf(itemVO.getRequiredQty());
+			if (this.getMpq() != null && requestQty < this.getMpq().intValue()) {
+				requestQty = this.getMpq().intValue();
+			}
+			if (range.isQtyInRange(requestQty)) {
+				return range.getPrice();
+			}
+		}
+		return 0;
+	}
+
+	public boolean isQtyInRanges(RfqItemVO itemVO) {
+		int requestQty = Integer.valueOf(itemVO.getRequiredQty());
+		if (this.getMpq() != null && requestQty < this.getMpq().intValue()) {
+			requestQty = this.getMpq();
+		}
+		List<ProgramMaterialQtyRange> ranges = getQtyRanges(itemVO);
+		for (ProgramMaterialQtyRange range : ranges) {
+			if (range.isQtyInRange(requestQty)) {
+				return true;
+			}
+		}
+		return false;
+
+	}
+
+	public List<ProgramMaterialQtyRange> getQtyRanges(RfqItemVO itemVO) throws IllegalArgumentException {
+		List<ProgramMaterialQtyRange> qtyRanges = new ArrayList<ProgramMaterialQtyRange>();
+		List<QuantityBreakPrice> priceList = this.getQuantityBreakPrices();
+
+		if (priceList != null && priceList.size() > 0) {
+			int size = priceList.size();
+			for (int i = 0; i < size; i++) {
+				//int qtyFrom = 0;
+				//double qtyTo = 0;
+				//double price = 0;
+				//double priceToleranceFrom = 0;
+				//double priceToleranceTo = 0;
+				///boolean callForQuote = false;
+				QuantityBreakPrice qbp = priceList.get(i);
+				int qtyFrom = qbp.getQuantityBreak();
+				int qtyTo = 0;
+				double price = qbp.getQuantityBreakPrice().doubleValue();
+				double priceToleranceFrom = getPriceToleranceFrom(getResaleIndicator(),price);
+				double priceToleranceTo = getPriceToleranceTo(getResaleIndicator(),price);
+				boolean callForQuote = false;
+				
+				if ((i + 1) < size) {
+					qtyTo = priceList.get(i + 1).getQuantityBreak();
+				} else {
+					if (this.getProgramCallForQuote() != null && this.getProgramCallForQuote()) {
+						callForQuote = true;
+						qtyTo = Integer.MAX_VALUE;
+					} else {
+						callForQuote = false;
+						if (price == 0d) {
+							qtyTo = priceList.get(i).getQuantityBreak();
+							break;
+						} else {
+							qtyTo = Integer.MAX_VALUE;
+						}
+					}
+				}
+
+				qtyRanges.add(new ProgramMaterialQtyRange(mpqRoundUpPi(qtyFrom, this.getMpq().intValue()),
+						mpqRoundDownPi(qtyTo, this.getMpq().intValue()), price, priceToleranceFrom, priceToleranceTo,
+						callForQuote));
+			}
+		}
+
+		if (qtyRanges.size() >= 6) {
+			for (int i = qtyRanges.size() - 1; i >= 5; i--) {
+				qtyRanges.remove(i);
+			}
+		}
+		return qtyRanges;
+	}
+
+
+	private double getPriceToleranceFrom(String resaleIndicator, double price)throws IllegalArgumentException{
+		if(null==resaleIndicator || resaleIndicator.length() != 4){
+			throw new IllegalArgumentException(CommonConstants.COMMON_RESALEINDICATOR_MUST_BE_4_CHARATERS_LANG_FOR_PROGRAMMATERIAL);
+		}
+		String indicator = resaleIndicator.substring(0,2);
+		double lowerLimit = Double.parseDouble(indicator);
+		lowerLimit = lowerLimit / 100;
+		return price * (1 - lowerLimit);
+	}
+
+	private  double getPriceToleranceTo(String resaleIndicator, double price)throws IllegalArgumentException{
+		if(null==resaleIndicator || resaleIndicator.length() != 4){
+			throw new IllegalArgumentException(CommonConstants.COMMON_RESALEINDICATOR_MUST_BE_4_CHARATERS_LANG_FOR_PROGRAMMATERIAL);
+		}
+		String indicator = resaleIndicator.substring(2);
+		if(indicator.equalsIgnoreCase("AA")){
+			return Integer.MAX_VALUE;
+		}
+		double higherLimit = Double.parseDouble(indicator);
+		higherLimit = higherLimit / 100;
+		return price * (1 + higherLimit);
+	}
+
+
+	private int mpqRoundUpPi(double qty, int mpq) {
+		double d = qty / mpq;
+		if (d == 0) {
+			d = 1;
+		}
+		return (int) (mpq * Math.ceil(d));
+	}
+
+	private int mpqRoundDownPi(double qty, int mpq) {
+		double d = qty / mpq;
+		int i = (int) (mpq * Math.floor(d));
+		if (i == (int) qty) {
+			i = (int) qty - mpq;
+		}
+		return i;
+	}
+	
+	@Override
+	public String getCostIndicatorType() {
+		return RFQ_COST_INDICATOR_TYPE_P;
+	}
+
+
+
+	
+	@Override
+	boolean allowOverride() {
+		return true;
+	}
+	
+	
+	@Override
+	public void fillupPricerInfo(PricerInfo pricerInfo) {
+		super.fillupPricerInfo(pricerInfo);
+		
+		pricerInfo.setAllocationFlag(allocationFlag);
+		pricerInfo.setMinSell(null);
+		
+		//pricerInfo.setMinSell(getMinSell());
+//		pricerInfo.setNormalSell(normalSell);
+		if(getProgramType()!=null) {
+			pricerInfo.setProgramType(getProgramType().getName());
+		}
+		pricerInfo.setContractPricer(false);
+				
+		pricerInfo.setQtyIndicator(qtyIndicator);
+		pricerInfo.setMaterialTypeId("PROGRAM");
+		pricerInfo.setProgramType(programType == null ? null : programType.getName());
+		
+		super.applyCostIndicator(pricerInfo);
+	}
+	
+	@Override
+	boolean isCustomerMatched(Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers) {
+		return true;
+	}
+	
+	
+	@Override
+	boolean isEffectivePricer() {
+		Date date = new Date();
+		return super.isEffectivePricer() &&
+				((programEffectiveDate != null 
+				&& !programEffectiveDate.after(date))
+				&& (programClosingDate) != null 
+				&& !programClosingDate.before(date));
+	
+	}
+
+
+
+	@Override
+	boolean isSalesCostTypeMatched() {
+		MaterialRegional materialRegional = getMaterial().getMaterialRegaional(getBizUnitBean().getName());
+		if (materialRegional != null) {
+			return ! materialRegional.isSalesCostFlag(); 
+		}
+		return false;
+	}
+	
+	@Override
+	boolean isSalesCostTypeMatched(boolean salesCostType) {
+		return ! salesCostType;
+	}
+
+	@Override
+	boolean matchAQCondtions(Double targetResale, int requestedQty) {
+		
+		return false;
+	}
+	
+}

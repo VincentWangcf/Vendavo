@@ -1,0 +1,152 @@
+*{
+	font: 12px calibri;
+	word-wrap: break-word;
+	
+}
+
+.align_right {text-align: right;}
+
+.align_center {text-align: center}
+
+
+
+.errorRow
+{
+   background-image: none !important;
+   background: red !important;
+   
+}
+
+.ui-widget-content {
+	border:1px solid rgb(153, 188, 232) !important;
+	background:none !important;
+	background-color:rgb(216, 228, 242) !important;
+}
+
+.old { background:#fafafa;}
+
+.tdmandatoryvalue {
+	font-weight:bold;
+	background-color:rgb(251, 236, 136) !important;	
+}
+
+.ui-datatable .ui-datatable-data .ui-state-highlight td {
+	background-color:rgb(255, 255, 255);
+	color:rgb(215, 0, 0);
+}
+
+.myquote_date_width{width:100px;}
+.myquote_column_seq	{width:30px;}
+.myquote_column_allocationFlag	{width:60px;}
+.myquote_column_bmtChecked	{width:65px;}
+.myquote_column_bom	{width:60px;}
+.myquote_column_sprFlag	{width:40px;}
+.myquote_column_icon	{width:40px;}
+.myquote_column_loaFlag	{width:40px;}
+.myquote_column_multiUsageFlag	{width:60px;}
+.myquote_column_orderOnHandFlag	{width:70px;}
+.myquote_column_transferred	{width:40px;}
+.myquote_column_readyForOrder	{width:80px;}
+.myquote_column_specialPriceIndicator	{width:40px;}
+.myquote_column_mfr {width:80px;}
+.myquote_column_application	{width:200px;}
+.myquote_column_attachment	{width:100px;}
+.myquote_column_avnetRegionalDemandCreation {width:120px;}
+.myquote_column_bomNumber	{width:100px;}
+.myquote_column_bomRemarks	{width:250px;}
+.myquote_column_customerRemarks	{width:250px;}
+.myquote_column_cancellationWindow	{width:80px;}
+.myquote_column_competitorInformation	{width:150px;}
+.myquote_column_copyToCs	{width:250px;}
+.myquote_column_cost	{width:100px;}
+.myquote_column_costIndicator	{width:190px;}
+.myquote_column_customerType	{width:100px;}
+.myquote_column_description	{width:200px;}
+.myquote_column_designLocation	{width:150px;}
+.myquote_column_designRegistrationNumber	{width:100px;}
+.myquote_column_drmsNumber	{width:100px;}
+.myquote_column_eau	{width:100px;}
+.myquote_column_enquirySegment	{width:200px;}
+.myquote_column_firstRfqCode	{width:90px;}
+.myquote_column_formNumber	{width:80px;}
+.myquote_column_fullMfrPart	{width:160px;}
+.myquote_column_sapPartNumber	{width:160px;}
+.myquote_column_internalComment	{width:250px;}
+.myquote_column_lastResale	{width:50px;}
+.myquote_column_leadTime	{width:70px;}
+.myquote_column_manufacturerName {width:90px;}
+.myquote_column_minSell	{width:50px;}
+.myquote_column_normSell	{width:50px;}
+.myquote_column_moq	{width:60px;}
+.myquote_column_mov	{width:60px;}
+.myquote_column_mpq	{width:60px;}
+.myquote_column_mpSchedule	{width:80px;}
+.myquote_column_partMask	{width:60px;}
+.myquote_column_pmoq	{width:120px;}
+.myquote_column_poExpiryDate	{width:100px;}
+.myquote_column_ppSchedule	{width:80px;}
+.myquote_column_priceListRemark	{width:200px;}
+.myquote_column_productCategory	{width:120px;}
+.myquote_column_productGroup	{width:120px;}
+.myquote_column_programType {width:150px;}
+.myquote_column_materialType {width:100px;}
+.myquote_column_projectName	{width:200px;}
+.myquote_column_qtyIndicator	{width:70px;}
+.myquote_column_qcComment	{width:250px;}
+.myquote_column_quotedMargin	{width:70px;}	
+.myquote_column_quotedPartNumber	{width:160px;}
+.myquote_column_quotedPrice	{width:110px;}
+.myquote_column_quotedQty	{width:100px;}
+.myquote_column_quoteExpiryDate	{width:100px;}
+.myquote_column_reasonForCopy	{width:200px;}
+.myquote_column_reasonForNotReadyForOrder	{width:150px;}
+.myquote_column_reasonForRefresh	{width:250px;}
+.myquote_column_refreshAttachmentId	{width:100px;}
+.myquote_column_remarks	{width:250px;}
+.myquote_column_requestedQty	{width:120px;}
+.myquote_column_vendorQuotedQty {width:120px;}
+.myquote_column_resaleIndicator	{width:80px;}
+.myquote_column_reschedulingWindow	{width:80px;}
+.myquote_column_revertVersion	{width:70px;}
+.myquote_column_quoteNumber	{width:90px;}
+.myquote_column_formNumber	{width:90px;}
+.myquote_column_status	{width:60px;}
+.myquote_column_employeeName	{width:120px;}
+.myquote_column_employeeNumber	{width:100px;}
+.myquote_column_sentOutTime	{width:140px;}
+.myquote_column_shipmentValidity	{width:100px;}
+.myquote_column_soldToCustomerNumber {width:90px;}
+.myquote_column_shipToCustomerNumber	{width:90px;}
+.myquote_column_endCustomerNumber	{width:90px;}
+.myquote_column_soldToCustomerName	{width:250px;}
+.myquote_column_shipToCustomerName	{width:250px;}
+.myquote_column_endCustomerName	{width:250px;}
+.myquote_column_supplierBidNoDpaNo	{width:100px;}
+.myquote_column_systemQuoteReference	{width:100px;}
+.myquote_column_targetPriceMargin	{width:50px;}
+.myquote_column_targetResale	{width:100px;}
+.myquote_column_team	{width:150px;}
+.myquote_column_termsAndConditions	{width:250px;}
+.myquote_column_uploadTime	{width:140px;}
+.myquote_column_validity	{width:80px;}
+.myquote_column_validRfq	{width:50px;}
+.myquote_column_vendorDebitNumber	{width:100px;}
+.myquote_column_vendorQuoteNumber	{width:100px;}
+.myquote_column_version	{width:50px;}
+.myquote_column_yourReference	{width:200px;}
+.myquote_column_itemRemarks {width:250px;}
+.myquote_column_resaleMin {width:80px;}
+.myquote_column_resaleMax {width:80px;}
+.myquote_column_priceValidity {width:80px;}
+.myquote_column_remarks	{width:250px;}
+.myquote_column_remarksToCustomer	{width:250px;}
+.myquote_column_stage	{width:80px;}
+.myquote_column_reasonForNotReadyForOrder {width:200px;}
+.myquote_column_seq {width:40px;}
+.myquote_column_supplierDrNumber {width:100px;}
+.myquote_column_sapSoldToType {width:100px;}
+.myquote_column_authGp {width:100px;}
+.myquote_column_authGpReasonDesc {width:200px;}
+.myquote_column_authGpRemark {width:200px;}
+.myquote_column_drExpiryDate {width:100px;}
+.myquote_column_rateRemarks	{width:180px;}

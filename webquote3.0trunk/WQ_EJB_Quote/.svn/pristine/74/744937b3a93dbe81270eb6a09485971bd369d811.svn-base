@@ -1,0 +1,234 @@
+package com.avnet.emasia.webquote.quote.ejb; 
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.MaterialType;
+import com.avnet.emasia.webquote.entity.ProgramPricer;
+import com.avnet.emasia.webquote.entity.Quote;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.QuoteNumber;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.quote.vo.QuoteItemVo;
+
+@Stateless
+@LocalBean
+public class ConvertQuoteSB {
+	
+	@PersistenceContext(unitName="Server_Source")
+	EntityManager em;
+	
+	@EJB 
+	QuoteSB quoteSB;
+	
+	@EJB
+	QuoteNumberSB quoteNumberSB;
+	
+	@EJB
+	MaterialSB materialSB;
+
+	private static final Logger LOG =Logger.getLogger(ConvertQuoteSB.class.getName());
+    
+	public void convertProgramQuote(List<QuoteItemVo> quoteItemVos, BizUnit bizUnit){
+    	
+    	List<QuoteItem> quoteItems = new ArrayList<QuoteItem>();
+    	
+    	for(QuoteItemVo vo : quoteItemVos){
+    		quoteItems.add(vo.getQuoteItem());
+    	}
+    	
+    	populateDataForProgramQuote(quoteItems, bizUnit);
+		
+    	convert(quoteItems);
+		
+	}    
+	
+    public void convertNormalQuote(List<QuoteItemVo> quoteItemVos){
+    	
+    	List<QuoteItem> quoteItems = new ArrayList<QuoteItem>();
+    	
+    	for(QuoteItemVo vo : quoteItemVos){
+    		quoteItems.add(vo.getQuoteItem());
+    	}
+    	
+    	populateDataForNormalQuote(quoteItems);
+    	
+    	convert(quoteItems);
+		
+    }
+	   
+    /*
+     * Give the converted QuoteItem a new Quote
+     * If two QuoteItems have same Quote, they still need have one new quote after conversion
+     * If the QuoteItem's quote is empty after conversion, remove this Quote.
+     */
+    private void convert(List<QuoteItem> quoteItems){
+    	
+    	Map<String, String> oldNewFormNoMapping = new HashMap<String, String>();
+    	
+    	List<Quote> oldQuotes = new ArrayList<Quote>();
+    	List<Quote> newQuotes = new ArrayList<Quote>(); 	    	
+    	List<BizUnit> bizUnits = new ArrayList<BizUnit>();
+    	
+    	for(QuoteItem item : quoteItems){
+    		if(! bizUnits.contains(item.getQuote().getBizUnit())){
+    			bizUnits.add(item.getQuote().getBizUnit());
+    		}
+    	}
+    	
+    	Map<String, QuoteNumber> bizUnitFormNumberMap = new HashMap<String, QuoteNumber>();
+    	
+    	for(BizUnit bu : bizUnits){
+    		QuoteNumber formNo = quoteNumberSB.lockNumber(QuoteSBConstant.DOC_TYPE_FORM, bu);
+    		bizUnitFormNumberMap.put(bu.getName(), formNo);
+    		
+    	}
+	
+    	//QuoteNumber formNo = quoteNumberSB.lockNumber(QuoteSBConstant.DOC_TYPE_FORM, bizUnit);
+    	
+    	for(QuoteItem item : quoteItems){
+    		
+    		String oldFormNo = item.getQuote().getFormNumber();
+    		String newFormNo = null;
+    		
+    		boolean isNewQuote = false;
+    		
+    		if(oldNewFormNoMapping.containsKey(oldFormNo)){
+    			newFormNo = oldNewFormNoMapping.get(oldFormNo);
+    			isNewQuote = false;
+    		}else{
+    			//newFormNo = quoteNumberSB.nextNumber(formNo);
+    			newFormNo = quoteNumberSB.nextNumber(bizUnitFormNumberMap.get(item.getQuote().getBizUnit().getName()));
+    			oldNewFormNoMapping.put(oldFormNo, newFormNo);
+    			isNewQuote = true;
+    			oldQuotes.add(item.getQuote());
+    			LOG.info("In convert Quote,  new Quote is created (Form number:" + newFormNo + ")");
+    		}
+    			
+			//remove quote item from old quote
+			Quote oldQuote = item.getQuote();
+			for(int i = 0; i < oldQuote.getQuoteItems().size(); i++){
+				if(item.getId() == oldQuote.getQuoteItems().get(i).getId()){
+					oldQuote.getQuoteItems().remove(i);
+					LOG.info("In convert Quote,  remove QuoteItem " + item.getQuoteNumber() + " from Quote " + oldQuote.getFormNumber());
+					break;
+				}
+			}
+			
+			if(isNewQuote){
+				
+				Quote newQuote = new Quote();
+				
+				//populate quote
+				newQuote.setSoldToCustomer(oldQuote.getSoldToCustomer());
+				newQuote.setCopyToCS(item.getQuote().getCopyToCS());
+				newQuote.setQuoteType(item.getQuote().getQuoteType());
+				newQuote.setCreatedOn(oldQuote.getCreatedOn());
+				newQuote.setLastUpdatedOn(oldQuote.getLastUpdatedOn());
+				newQuote.setRemarks(oldQuote.getRemarks());
+				newQuote.setRemarksToCustomer(oldQuote.getRemarksToCustomer());
+				newQuote.setSales(oldQuote.getSales());
+				newQuote.setTeam(oldQuote.getTeam());
+				newQuote.setYourReference(oldQuote.getYourReference());
+				newQuote.setCreatedBy(oldQuote.getCreatedBy());
+				newQuote.setLastUpdatedBy(oldQuote.getLastUpdatedBy());
+				newQuote.setLastUpdatedName(oldQuote.getLastUpdatedName());
+				newQuote.setBizUnit(oldQuote.getBizUnit());
+				
+				newQuote.setFormNumber(newFormNo);
+				item.setQuote(newQuote);
+				newQuote.addItem(item);
+				newQuotes.add(newQuote);	
+				LOG.info("In convert Quote,  add QuoteItem " + item.getQuoteNumber() + " to newly created Quote " + newQuote.getFormNumber());
+				
+			}else{
+				for(Quote quote : newQuotes){
+					if(quote.getFormNumber().equals(newFormNo)){
+						item.setQuote(quote);
+						quote.addItem(item);
+						LOG.info("In convert Quote,  add QuoteItem " + item.getQuoteNumber() + " to Quote " + quote.getFormNumber());
+						break;
+					}
+				}				
+			}		
+    	}
+    	
+    	for(Quote oldQuote : oldQuotes){
+    		
+    		//This special handling is because UI allow user change 
+    		//the remarks to customer (quote level) and quote remarks in quote item level
+    		//The item converted should not affect it's old quote's value;
+    		Quote oldQuoteInDB = em.find(Quote.class, oldQuote.getId());
+    		oldQuote.setRemarksToCustomer(oldQuoteInDB.getRemarksToCustomer());
+    		oldQuote.setRemarks(oldQuoteInDB.getRemarks());
+    		
+    		oldQuote = em.merge(oldQuote);
+    		if(oldQuote.getQuoteItems().size() == 0){
+    			LOG.info("In convert Quote,  Quote " + oldQuote.getFormNumber() + " is empty and removed. " );
+    			em.remove(oldQuote);
+    		}
+    	}
+    	
+    	for(Quote newQuote : newQuotes){
+    		em.merge(newQuote);
+    	}
+    	
+    }
+
+    private void populateDataForNormalQuote(List<QuoteItem> quoteItems){
+    	MaterialType materialType = em.find(MaterialType.class, "PROGRAM");
+    	
+		List<String[]> mfrAndPartNumbers = new ArrayList<String[]>();
+		for(QuoteItem item : quoteItems){
+			String[] mfrAndPartNumber = new String[3];
+			mfrAndPartNumber[0] = item.getRequestedMfr().getName();
+			mfrAndPartNumber[1] = item.getRequestedPartNumber();
+			mfrAndPartNumber[2] = item.getQuote().getBizUnit().getName();
+			mfrAndPartNumbers.add(mfrAndPartNumber);
+		}
+
+		List<ProgramPricer> programMaterials = materialSB.findProgramMaterialbyMfrAndPartNumber(mfrAndPartNumbers);
+		
+		for(QuoteItem item : quoteItems){
+			for(ProgramPricer programMaterial : programMaterials){
+				if(item.getRequestedMfr().getName().equals(programMaterial.getMaterial().getManufacturer().getName()) &&
+						item.getRequestedPartNumber().equals(programMaterial.getMaterial().getFullMfrPartNumber())){
+					item.setMaterialTypeId(materialType.getName());//andy modify 2.2
+					item.setProgramType(programMaterial.getProgramType().getName());//andy modify 2.2
+					//TODO, product group should be at Material Detail level ?
+					item.setProductGroup2(programMaterial.getMaterial().getProductGroup2());
+					break;
+				}
+			}
+			
+			item.setStatus(QuoteSBConstant.RFQ_STATUS_QC);
+			item.setStage(QuoteSBConstant.QUOTE_STAGE_PENDING);
+		}			
+    }
+
+    private void populateDataForProgramQuote(List<QuoteItem> quoteItems, BizUnit bizUnit){
+    	
+    	MaterialType materialType = em.find(MaterialType.class, "NORMAL");
+
+		for(QuoteItem item : quoteItems){
+			
+			item.setMaterialTypeId(materialType.getName());//andy modify 2.2
+			item.setProgramType(null);
+		    //TODO
+		    //need to check with Timothy on the logic , how to get product group 
+//			item.setProductGroup(null);
+			item.setStatus(QuoteSBConstant.RFQ_STATUS_QC);
+			item.setStage(QuoteSBConstant.QUOTE_STAGE_PENDING);
+		}			
+    }    
+}

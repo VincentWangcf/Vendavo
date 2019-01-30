@@ -1,0 +1,844 @@
+<ui:composition template="/templates/MasterLayoutAutoFit.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	
+	<ui:define name="windowTitle">
+		#{dbResource['wq.title.webQuoteVersion']}
+	</ui:define>  
+	<ui:define name="content">
+    <h:form id="form">
+		<h:panelGrid columns="2" columnClasses="webpromo_announcmentPanel,webpromo_promotionItemPanel" >
+			   <p:column>
+			       <p:panel header="#{dbResource['wq.label.announcement']}" autoUpdate="true" styleClass="announceTable"  >
+						<f:facet name="actions" position="margin-right:10px;">  
+					           <p:commandButton icon="ui-icon-plus" title="#{dbResource['wq.button.add']}" 
+					           update=":form:addAnnouncementDialogId"                
+					           action="#{announcementMB.resetNewAnnouncement}" 
+					            oncomplete="PF('addAnnouncementDialog').show()" 
+					            styleClass="webpromoMaintance_button"/>
+					    </f:facet>  
+						<p:dataTable id="announTable" var="announcement" value="#{announcementMB.announcements}" scrollable="true" scrollHeight="150" 
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}."  >
+					        <p:column style="align:left;">  
+					             <h:outputText id="announDes" value="#{announcement}"  converter="webquote.commodity.AnnouncementMaint" escape="false" style="align:left"/>
+					             <p:overlayPanel id="imgPanel" for="announDes" showEffect="fade" hideEffect="fade" showEvent="mouseover" hideEvent="mouseout"  
+									                 dismissable="false" showCloseIcon="false">  
+									                 <h:outputText value="#{announcement.description}" />
+								 </p:overlayPanel> 
+					        </p:column> 
+					        <p:column style="width:170px;align:right;" >
+					            <h:panelGrid columns="4" styleClass="noBorder" >     
+									<p:commandButton id="annouMoveUpButton" icon="ui-icon-arrowthick-1-n" title="#{dbResource['wq.label.moveUP']}" 
+									update=":form:announTable"
+									action="#{announcementMB.ascendAnnouncement}" styleClass="webpromoMaintance_button" >
+									     <f:setPropertyActionListener value="#{announcement}" target="#{announcementMB.selectedAnnouncement}" />
+									</p:commandButton>
+									<p:commandButton id="annouMoveDownButton" icon="ui-icon-arrowthick-1-s" title="#{dbResource['wq.label.moveDown']}" 
+									update=":form:announTable" 
+									action="#{announcementMB.declineAnnouncement}" styleClass="webpromoMaintance_button">
+									     <f:setPropertyActionListener value="#{announcement}" target="#{announcementMB.selectedAnnouncement}" />
+									</p:commandButton>
+									<p:commandButton id="annouEditButton"  
+									update=":form:editAnnouncementDialogId" 
+									oncomplete="PF('editAnnouncementDialog').show()" 
+									icon="ui-icon-pencil" 
+									title="#{dbResource['wq.label.edit']}" styleClass="webpromoMaintance_button">
+									     <f:setPropertyActionListener value="#{announcement}" target="#{announcementMB.selectedAnnouncement}" />
+									</p:commandButton>  
+									<p:commandButton id="annouDeleteButton" icon="ui-icon-close" 
+									title="#{dbResource['wq.label.delete']}" 
+									oncomplete="PF('deleteAnnouConfirmDialog').show()" styleClass="webpromoMaintance_button">
+									     <f:setPropertyActionListener value="#{announcement}" target="#{announcementMB.selectedAnnouncement}" />
+									</p:commandButton>
+								</h:panelGrid>
+							</p:column> 
+						</p:dataTable>  
+					</p:panel>
+				</p:column>   
+			    <p:column>
+					<p:panel header="#{dbResource['wq.label.promotionalItems']}" styleClass="promotionItemTable" >
+					
+						<f:facet name="actions" position="margin-right:10px">  
+			                <p:commandButton icon="ui-icon-plus" title="#{dbResource['wq.button.add']}"   
+			                  update=":form:proItemAddDialogId"
+						      action="#{promotionItemMB.resetNewPromotionItem}" 
+						      oncomplete="PF('proItemAddDialog').show()" 
+						      styleClass="webpromoMaintance_button"/>
+			            </f:facet>  
+		                <p:dataTable id="proItemTable" var="promotionItem" value="#{promotionItemMB.promotionItems}" scrollable="true" scrollHeight="150"  
+		                emptyMessage="#{dbResource['wq.message.noRecordFound']}.">  
+			                    <p:column style="align:left;" >  
+						             <h:outputText id="promoDes" value="#{promotionItem}" converter="webquote.commodity.PromotionItemMaint" escape="false"/>
+						             <p:overlayPanel id="imgPanel2" for="promoDes" showEffect="fade" hideEffect="fade" showEvent="mouseover" hideEvent="mouseout"  
+									                 dismissable="false" showCloseIcon="false">  
+									                 <h:outputText value="#{promotionItem.material.manufacturer.name}, #{promotionItem.material.fullMfrPartNumber}, #{promotionItem.description}"  />
+									  </p:overlayPanel>
+						        </p:column> 
+						        <p:column style="width:170px;align:right;" >
+						            <h:panelGrid columns="4" styleClass="noBorder">
+										<p:commandButton id="proItemMoveUpButton" icon="ui-icon-arrowthick-1-n" title="#{dbResource['wq.label.moveUP']}" 
+										update=":form:proItemTable"
+										action="#{promotionItemMB.ascendPromotionItem}" styleClass="webpromoMaintance_button">
+										     <f:setPropertyActionListener value="#{promotionItem}" target="#{promotionItemMB.selectedPromotionItem}" />
+										</p:commandButton>
+										<p:commandButton id="proItemMoveDownButton" icon="ui-icon-arrowthick-1-s" title="#{dbResource['wq.label.moveDown']}" 
+										update=":form:proItemTable" 
+										action="#{promotionItemMB.declinePromotionItem}" styleClass="webpromoMaintance_button">
+										     <f:setPropertyActionListener value="#{promotionItem}" target="#{promotionItemMB.selectedPromotionItem}" />
+										</p:commandButton>		
+										<p:commandButton id="proItemEditButton"  oncomplete="PF('proItemEditDialog').show()" icon="ui-icon-pencil" title="#{dbResource['wq.label.edit']}" 
+										     update=":form:proItemEditDialogId"
+										     action="#{promotionItemMB.defaultLoading}" styleClass="webpromoMaintance_button">
+										     <f:setPropertyActionListener value="#{promotionItem}" target="#{promotionItemMB.selectedPromotionItem}" />
+										</p:commandButton>           
+										<p:commandButton id="proItemDeleteButton" icon="ui-icon-close" title="#{dbResource['wq.label.delete']}" 
+										oncomplete="PF('deleteProItemConfirmDialog').show()" styleClass="webpromoMaintance_button">
+										     <f:setPropertyActionListener value="#{promotionItem}" target="#{promotionItemMB.selectedPromotionItem}" />
+										</p:commandButton>
+									</h:panelGrid>
+								</p:column> 
+					    </p:dataTable>
+				  </p:panel>
+			  </p:column>
+
+	   </h:panelGrid>
+         <!-- For Announcement -->  
+	     <p:dialog header="#{dbResource['wq.label.addAnnoucement']}" widgetVar="addAnnouncementDialog" id="addAnnouncementDialogId"
+			resizable="true" 
+			position="center" dynamic="true" style="height:200px; width:300px">
+	            <p:messages id="addAnnouMessages" autoUpdate="true" closable="true" />  
+				<h:panelGrid position="center" style="margin:0 auto;width:150px" columns="1">
+	
+					<h:outputText for="newAnnouDesc" value="#{dbResource['wq.label.description']} : " />  
+					<h:inputTextarea  id="newAnnouDesc" value="#{announcementMB.newAnnouncement.description}" rows="6" cols="33" >
+					</h:inputTextarea>
+					<h:outputText for="newAnnouUrl" value="#{dbResource['wq.label.URL']} : " />   
+					<h:inputText  id="newAnnouUrl" value="#{announcementMB.newAnnouncement.url}" />
+	          	    <h:outputLabel for="newAnnouExpDate" value="#{dbResource['wq.label.expirationDate']} : " />    
+		            <p:calendar id="newAnnouExpDate" value="#{announcementMB.newAnnouncement.expirationDate}"  pattern="dd/MM/yyyy" showOn="button" effectDuration="1000000" effect="size" /> 
+					<h:panelGrid position="center" columns="2">
+						<p:commandButton value="#{dbResource['wq.button.cancel']}" onclick="PF('addAnnouncementDialog').hide()"/>  
+						<p:commandButton value="#{dbResource['wq.button.submit']}" update=":form:announTable"    
+						  actionListener="#{announcementMB.createAnnouncement}" 
+						  oncomplete="handleAddAnnouncementRequest(xhr, status, args)"/>  
+	                </h:panelGrid>
+	
+				</h:panelGrid>
+		</p:dialog>
+		<p:dialog id="addAnnouConfirmDialog"  widgetVar="addAnnouConfirmDialog">
+		    <h:panelGrid columns="2">  
+	           <h:outputText value="#{dbResource['wq.message.annoucmntAddedSuccess']}!" />   
+	        </h:panelGrid>  
+			<p:commandButton id="addAnnouConfirm" value="#{dbResource['wq.button.ok']}"  oncomplete="PF('addAnnouConfirmDialog').hide()" />	
+		</p:dialog>
+		<p:dialog id="editAnnouConfirmDialog"  widgetVar="editAnnouConfirmDialog">
+			<h:panelGrid columns="2">  
+	           <h:outputText value="#{dbResource['wq.message.modAnnouncement']}!" />   
+	        </h:panelGrid> 
+			<p:commandButton id="editAnnouConfirm" value="#{dbResource['wq.button.ok']}"  oncomplete="PF('editAnnouConfirmDialog').hide()" />	
+		</p:dialog>
+		<p:dialog id="deleteAnnouConfirmDialog"  widgetVar="deleteAnnouConfirmDialog" >
+		    <h:panelGrid columns="1">  
+	           <h:outputText value="#{dbResource['wq.label.deleteAnnouncemet']}?" />   
+	        </h:panelGrid> 
+			<p:commandButton id="yes" value="#{dbResource['wq.button.yes']}"  oncomplete="PF('deleteAnnouConfirmDialog').hide()"     
+			update=":form:announTable" 
+			action="#{announcementMB.deleteAnnouncement}">
+			</p:commandButton>
+			<p:commandButton id="no" value="#{dbResource['wq.button.no']}"  oncomplete="PF('deleteAnnouConfirmDialog').hide()" />		
+		</p:dialog>
+		<p:dialog header="#{dbResource['wq.label.editAnnouncemet']}" widgetVar="editAnnouncementDialog" id="editAnnouncementDialogId"      
+			resizable="true" 
+			position="center" dynamic="true" style="height:200px; width:300px">
+	            <p:messages id="editAnnouMessages"  autoUpdate="true" closable="true" />  
+				<h:panelGrid  position="center" style="margin:0 auto;width:150px" columns="1">
+	
+					<h:outputLabel for="selectedAnnouDesc" value="#{dbResource['wq.label.description']} : " />				
+					<h:inputTextarea  id="selectedAnnouDesc" value="#{announcementMB.selectedAnnouncement.description}" rows="6" cols="33" >
+					</h:inputTextarea>
+		            <h:outputText for="selectedAnnouUrl" value="#{dbResource['wq.label.URL']} : " />    
+					<h:inputText  id="selectedAnnouUrl" value="#{announcementMB.selectedAnnouncement.url}"  />
+		            <h:outputLabel for="selectedAnnouExpDate" value="#{dbResource['wq.label.expirationDate']}: " />  		
+		            <p:calendar id="selectedAnnouExpDate" value="#{announcementMB.selectedAnnouncement.expirationDate}"  pattern="dd/MM/yyyy" showOn="button" effectDuration="1000000" effect="size" /> 
+		            <h:panelGrid position="center" columns="2">
+						<p:commandButton value="#{dbResource['wq.button.cancel']}" onclick="PF('editAnnouncementDialog').hide()"  />		
+						<p:commandButton value="#{dbResource['wq.button.submit']}" update=":form:announTable"							
+						  actionListener="#{announcementMB.updateAnnouncement}" 
+						  oncomplete="handleEditAnnouncementRequest(xhr, status, args)" />
+	                </h:panelGrid>
+				</h:panelGrid>
+		</p:dialog>
+		<!-- For Promotion item -->
+		<p:dialog id="deleteProItemConfirmDialogId"  widgetVar="deleteProItemConfirmDialog">
+			<h:panelGrid columns="1">  
+	           <h:outputText value="#{dbResource['wq.label.deletePromotion']}?" />   
+	        </h:panelGrid> 
+			<p:commandButton id="pyes" value="#{dbResource['wq.button.yes']}"  oncomplete="PF('deleteProItemConfirmDialog').hide()"   
+			update=":form:proItemTable" 
+			action="#{promotionItemMB.deletePromotionItem}">
+			</p:commandButton>
+			<p:commandButton id="pno" value="#{dbResource['wq.button.no']}"  oncomplete="PF('deleteProItemConfirmDialog').hide()" />		 
+		</p:dialog>
+		
+		<p:dialog id="proItemAddConfirmDialog"  widgetVar="proItemAddConfirmDialog">
+		    <h:panelGrid columns="2">  
+	           <h:outputText value="#{dbResource['wq.label.addedPromotionItem']}!" />   
+	        </h:panelGrid>  
+			<p:commandButton id="proItemAddConfirm" value="#{dbResource['wq.button.ok']}"  oncomplete="PF('proItemAddConfirmDialog').hide()" />	
+		</p:dialog>
+		<p:dialog id="proItemEditConfirmDialog"  widgetVar="proItemEditConfirmDialog">
+		    <h:panelGrid columns="2">  
+	           <h:outputText value="#{dbResource['wq.label.addedPromotionEItem']}!" />   
+	        </h:panelGrid>  
+			<p:commandButton id="proItemEditConfirm" value="#{dbResource['wq.button.ok']}"  oncomplete="PF('proItemEditConfirmDialog').hide()" />		
+		</p:dialog>
+		<p:dialog id="bizUnitSwitchConfirmId"  widgetVar="bizUnitSwitchConfirmDialog">
+			<br/> 
+	        <h:outputText value="#{dbResource['wq.label.switchRegion']} ? " /> 	
+	        <br/><br/>
+				<p:commandButton id="pdyes"
+					value="#{dbResource['wq.button.yes']}"
+					oncomplete="PF('bizUnitSwitchConfirmDialog').hide();adjustForOnReside();"
+					update="@form" action="#{commodityMaintainMB.switchBizUnit}">
+				</p:commandButton>
+				<p:spacer width="10" height="10" /> 
+			<p:commandButton id="pdno" value="#{dbResource['wq.button.no']}"  oncomplete="PF('bizUnitSwitchConfirmDialog').hide();" />		
+		</p:dialog>
+		
+		
+		<p:dialog id="proItemAddDialogId"  header="#{dbResource['wq.label.addPromtionItem']}" widgetVar="proItemAddDialog"			
+			resizable="true" position="center" scrollable="true" autoUpdate="true" 
+			style="width:700px;height:600px;">
+            <p:messages id="addProItemMessages" autoUpdate="true" closable="true" />  
+			<h:panelGrid id="searchAddContent" position="center" style="margin:0 auto;width:400px;height:300px;" columns="1">
+				<h:panelGrid id="searchCriteriaAdd" position="center"
+					style="margin:0 auto;width:auto" columns="5">
+					<h:outputText value="#{dbResource['wq.label.searchBy']}:" />  
+					 <p:selectOneMenu value="#{promotionItemMB.searchType}">               
+			            <f:selectItem itemLabel="#{dbResource['wq.label.umfrPart']}" itemValue="mfrpart" />  
+			            <f:selectItem itemLabel="#{dbResource['wq.label.mfr']}" itemValue="mfr" />    
+			         </p:selectOneMenu> 
+					<h:outputText value="#{dbResource['wq.label.searchFor']}:" />			
+					<p:inputText id="promoItemAddSeaarchCon" value="#{promotionItemMB.searchContent}" />
+                    <p:commandButton icon="ui-icon-search"
+					    actionListener="#{promotionItemMB.searchAdd}"
+						update=":form:proItemAddTable"  />
+				</h:panelGrid>
+				<p:dataTable 
+				    id="proItemAddTable" 
+				    var="pmItem"
+					value="#{promotionItemMB.searchAddResultModel}"
+					paginator="true" 
+					rows="10"
+					style="text-align: top;"
+					styleClass="dtable"
+					selection="#{promotionItemMB.selectedAddProgramMaterial}"
+					scrollable="true"
+                 	scrollHeight="200"  
+                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}." >
+					    <p:column headerText="#{dbResource['wq.label.mfr']}"  width="50" sortBy="#{pmItem.manufacturer.name}" >  
+					        #{pmItem.material.manufacturer.name}
+				        </p:column>
+						<p:column headerText="#{dbResource['wq.label.mfrPN']}"  width="150" style="width:100%" sortBy="#{pmItem.fullMfrPartNumber}" >  
+					        #{pmItem.material.fullMfrPartNumber}
+				        </p:column>
+						<p:column headerText="#{dbResource['wq.label.proGroup']} 2"  width="95" sortBy="#{pmItem.productGroup.name}" >  
+					        #{pmItem.material.productGroup2.name}
+				        </p:column>
+				        <p:column headerText="#{dbResource['wq.label.prog']}" width="85" sortBy="#{pmItem.programType.name}" >   
+					        #{pmItem.programType.name}
+				        </p:column>
+				        <p:column headerText="#{dbResource['wq.label.displayOnTop']}"  width="100" sortBy="#{pmItem.displayOnTop}" >    
+					        #{pmItem.material.displayOnTop}
+				        </p:column>
+						<p:column headerText="#{dbResource['wq.label.specialItemIndicator']}"  width="150" sortBy="#{pmItem.specialItemFlag}">   
+					        #{pmItem.programSpecialItemFlag}
+				        </p:column>
+				        <p:column selectionMode="single" width="40" />
+				</p:dataTable>
+			    <h:panelGrid columns="2" style="width:100%">
+					<h:outputText value="#{dbResource['wq.label.description']}: "/>    
+					<p:inputTextarea id="promoItemDe" value="#{promotionItemMB.newPromotionItem.description}" rows="3" cols="60" />
+				</h:panelGrid>
+				<h:panelGrid columns="2">
+					<p:commandButton value="#{dbResource['wq.button.cancel']}"   
+						onclick="PF('proItemAddDialog').hide()" />
+					<p:commandButton value="#{dbResource['wq.button.submit']}"														
+					    update=":form:proItemTable,:form:proItemAddTable,:form:promoItemAddSeaarchCon,:form:promoItemDe"
+					    actionListener="#{promotionItemMB.createPromotionItem}" 
+						oncomplete="handleAddPromoItemRequest(xhr, status, args)"   />
+				</h:panelGrid>
+			</h:panelGrid>
+
+
+		</p:dialog>
+		
+		
+		<p:dialog id="proItemEditDialogId"  header="#{dbResource['wq.label.editPromotionItem']}" widgetVar="proItemEditDialog"   
+			resizable="true" 
+			position="center"  scrollable="true" autoUpdate="true" 
+			style="width:700px;height:600px;">
+            <p:messages id="editProItemMessages" autoUpdate="true" closable="true" />  
+			<h:panelGrid id="searchEditContent" position="center" style="margin:0 auto;width:400px;height:300px;" columns="1">
+				<h:panelGrid id="searchCriteriaEdit" position="center"
+					style="margin:0 auto;width:auto" columns="5">
+					<h:outputText value="#{dbResource['wq.label.searchBy']}:" />   
+					 <p:selectOneMenu value="#{promotionItemMB.searchType2}">               
+			            <f:selectItem itemLabel="#{dbResource['wq.label.umfrPart']}" itemValue="mfrpart" />     
+			            <f:selectItem itemLabel="#{dbResource['wq.label.mfr']}" itemValue="mfr" />    
+			        </p:selectOneMenu> 
+					<h:outputText value="#{dbResource['wq.label.searchFor']}:" />              
+					<p:inputText value="#{promotionItemMB.searchContent2}" />
+                    <p:commandButton icon="ui-icon-search"
+					    actionListener="#{promotionItemMB.searchEdit}" 
+						update=":form:proItemEditTable" styleClass="webpromo_search_button" />
+				</h:panelGrid>
+				<p:dataTable 
+				    var="pmItem"
+					value="#{promotionItemMB.searchEditResultModel}"
+					rowKey="#{pmItem.id}" 
+					rowIndexVar="searchRowIndex"
+					id="proItemEditTable" 
+					paginator="true" rows="10"
+		            paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+		            rowsPerPageTemplate="5,10,15"
+					style="text-align: top;"
+					styleClass="dtable"
+					selection="#{promotionItemMB.selectedEditProgramMaterial}"
+					scrollable="true"
+                 	scrollHeight="200"  
+                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}."  >
+						<p:column headerText="#{dbResource['wq.label.no']}" id="rowNumber" width="30">			
+					        #{searchRowIndex+1}
+				        </p:column>
+							<p:column headerText="#{dbResource['wq.label.mfr']}" width="50" sortBy="#{pmItem.manufacturer.name}" >		
+					        #{pmItem.material.manufacturer.name}
+				        </p:column>
+						<p:column headerText="#{dbResource['wq.label.mfrPN']}"  width="150" style="width:100%" sortBy="#{pmItem.fullMfrPartNumber}" >		
+					        #{pmItem.material.fullMfrPartNumber}
+				        </p:column>
+						<p:column headerText="#{dbResource['wq.label.proGroup']} 2"  width="90" sortBy="#{pmItem.productGroup.name}" >   
+					        #{pmItem.material.productGroup2.name}
+				        </p:column>
+				        <p:column headerText="#{dbResource['wq.label.prog']}" width="80" sortBy="#{pmItem.programType.name}" >		
+					        #{pmItem.programType.name}
+				        </p:column>
+				        <p:column headerText="#{dbResource['wq.label.displayOnTop']}" width="100" sortBy="#{pmItem.displayOnTop}" >   
+					        #{pmItem.material.displayOnTop}
+				        </p:column>
+						<p:column headerText="#{dbResource['wq.label.specialItemIndicator']}" width="150" sortBy="#{pmItem.specialItemFlag}">  
+					        #{pmItem.programSpecialItemFlag}
+				        </p:column>
+				        <p:column selectionMode="single" width="50" />
+				</p:dataTable>
+
+				<h:panelGrid columns="2" style="width:100%">
+					<h:outputText value="#{dbResource['wq.label.description']}: "/>			
+					<p:inputTextarea value="#{promotionItemMB.selectedPromotionItem.description}" rows="3" cols="60" />
+				</h:panelGrid>
+				<h:panelGrid columns="2">
+					<p:commandButton value="#{dbResource['wq.button.cancel']}"					
+						onclick="PF('proItemEditDialog').hide()" />
+					<p:commandButton value="#{dbResource['wq.button.submit']}"				
+					   update=":form:proItemTable"
+					    action="#{promotionItemMB.updatePromotionItem}" 
+						  oncomplete="handleEditPromoItemRequest(xhr, status, args)"   />
+				</h:panelGrid>
+			</h:panelGrid>
+
+
+		</p:dialog>
+
+
+
+       <p:panelGrid id="southPanel" columns="2" columnClasses="southPanel_column_filterPanel,southPanel_column_programPanel" styleClass="southPanel">
+			  <p:column>					
+				  <p:scrollPanel id="filterPanel" style="width:210px;height:330px;padding: 0px 0px 0px 0px;margin: 0px 0px 0px 0px;" styleClass="southPanel_filterPanel">
+							<p:fieldset legend="#{dbResource['wq.label.region']}: " toggleable="true" toggleSpeed="500" >					
+										<h:selectOneMenu id="bizUnit" value="#{commodityMaintainMB.bizUnitStr}" onchange="PF('bizUnitSwitchConfirmDialog').show();"  style="padding:2px 2px 2px 3px;margin: 4px 1px 1px 1px;">
+											<f:selectItems value="#{commodityMaintainMB.bizUnitSelectList}" />														
+										</h:selectOneMenu>
+							</p:fieldset>   		
+							<p:fieldset legend="#{dbResource['wq.label.mfrPart']}: " toggleable="true" toggleSpeed="500" >
+								<p:inputText id="mfrPart" value="#{commodityMaintainMB.mfrPart}"  style="width:100px"/>
+								<p:commandButton icon="ui-icon-search"  id="searchBtn" 
+                                       update=":form:ptcb,:form:pgcb,:form:mfcb,:form:programMaterialPanel"
+									     action="#{commodityMaintainMB.searchAction}" global="false" onstart="start();" oncomplete="stop();" onerror="stopWithError();"/>
+							    <p:defaultCommand target="searchBtn" /> 
+							</p:fieldset>					
+							<p:fieldset id="ptcb" legend="#{dbResource['wq.label.programs']}:" toggleable="true" toggleSpeed="500" >
+	                            <p:selectManyCheckbox   styleClass="noBorder"                         
+									value="#{commodityMaintainMB.selectedProgramTypeList}" layout="pageDirection"  >
+									<f:selectItems value="#{commodityMaintainMB.checkBoxSet.programType}" var="programType" 
+									itemValue="#{programType.name}"  itemLabel="#{programType.name}"   itemDisabled="#{!programType.enable}"  >
+									</f:selectItems>
+									<p:ajax  listener="#{commodityMaintainMB.programTypeCBChange}" update=":form:ptcb,:form:pgcb,:form:mfcb,:form:programMaterialPanel" global="false" onstart="start();" oncomplete="stop();" onerror="stopWithError();"></p:ajax>
+								</p:selectManyCheckbox>
+							</p:fieldset>						
+							<p:fieldset  id="pgcb" legend="#{dbResource['wq.label.productGroups']}:" toggleable="true" toggleSpeed="500">
+								<p:selectManyCheckbox styleClass="noBorder" 
+									value="#{commodityMaintainMB.selectedProductGroupList}" layout="pageDirection" >
+									<f:selectItems value="#{commodityMaintainMB.checkBoxSet.productGroup}" var="productGroup" 
+									itemValue="#{productGroup.name}"  itemLabel="#{productGroup.name}"   itemDisabled="#{!productGroup.enable}" >								
+									</f:selectItems>
+									<p:ajax  listener="#{commodityMaintainMB.productGroupCBChange}" update=":form:pgcb,:form:ptcb,:form:mfcb,:form:programMaterialPanel" global="false" onstart="start();" oncomplete="stop();" onerror="stopWithError();"></p:ajax>
+								</p:selectManyCheckbox>
+							</p:fieldset>						
+							<p:fieldset id="mfcb" legend="#{dbResource['wq.label.mfr']}: " toggleable="true" toggleSpeed="500">
+								<p:selectManyCheckbox styleClass="noBorder" 
+									value="#{commodityMaintainMB.selectedMfrList}"  layout="pageDirection"  >
+									<f:selectItems value="#{commodityMaintainMB.checkBoxSet.mfr}" var="mfr" 
+									itemValue="#{mfr.name}" itemLabel="#{mfr.name}"  itemDisabled="#{!mfr.enable}"  />
+									<p:ajax  listener="#{commodityMaintainMB.mfrCBChange}" update=":form:mfcb,:form:ptcb,:form:pgcb,:form:programMaterialPanel" global="false" onstart="start();" oncomplete="stop();" onerror="stopWithError();"></p:ajax>
+								</p:selectManyCheckbox>
+							</p:fieldset>
+							<p:spacer height="50"></p:spacer>
+				</p:scrollPanel>
+			</p:column>
+			<p:column>
+				<p:panel id="programMaterialPanel" style="padding: 0px 0px 0px 0px;margin: 0px 0px 0px 0px;width:1000px;">
+					<p:dataTable id="programMaterialTable"
+						         var="item"		
+						 	     lazy="true"
+						 	     value="#{commodityMaintainMB.programMaterialLazyModel}"
+				                 paginator="true" 
+				                 rows="25"
+				                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+				                 rowsPerPageTemplate="25,50,100"
+				                 paginatorPosition="bottom"
+				                 rowIndexVar="rowIndex" 
+				                 emptyMessage="#{dbResource['wq.message.noRecordWidCriteria']}"   
+				                 scrollable="true"
+		                 	     scrollHeight="220" >
+						         
+								<p:column id="sequenceNumber"  width="40">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.no']}"/>			
+									</f:facet>
+									<h:outputText value="#{rowIndex+1}" /> 
+								</p:column>
+								<p:column id="mfr"  sortBy="#{item.mfr}"  width="70">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.mfr']}"/>			
+									</f:facet>
+							        <h:outputText value="#{item.mfr}" /> 
+						        </p:column>
+								<p:column id="fullPart" sortBy="#{item.fullMFRPart}" width="200" >
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.mfrPN']}"/>			
+									</f:facet>
+							        <h:outputText value="#{item.fullMFRPart}" /> 
+						        </p:column>
+						        <p:column id="productGroup" sortBy="#{item.productGroup}"  width="140">
+						            <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.proGroup']} 2"/>		
+									</f:facet>
+							        <h:outputText value="#{item.productGroup}" /> 
+						        </p:column>
+								<p:column id="program" sortBy="#{item.program}"  width="100">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.prog']}"/>		
+									</f:facet>
+							        <h:outputText value="#{item.program}" /> 
+						        </p:column>
+						        <p:column id="displayOnTop" sortBy="#{item.displayOnTop}"  width="109">
+						            <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.displayOnTop']}"/>		
+									</f:facet>
+							        <h:outputText value="#{item.displayOnTop}" /> 
+						        </p:column>
+				                <p:column id="specialItemIndicator" sortBy="#{item.specialItemIndicator}"  width="140">
+				                    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.specialItemIndicator']}"/>   
+									</f:facet>
+							        <h:outputText value="#{item.specialItemIndicator}" /> 
+						        </p:column>
+								<p:column id="minimumCost" sortBy="#{item.minimumCost}"  width="100">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.minimumCost']}"/>		
+									</f:facet>
+							        <h:outputText value="#{item.minimumCost}" /> 
+						        </p:column>
+								<p:column id="availableToSellQty"  sortBy="#{item.availableToSellQuantity}"  width="150">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.AvailableToSellQuantity']}"/>  
+									</f:facet>
+							        <h:outputText value="#{item.availableToSellQuantity}" /> 
+						        </p:column>
+								
+		                        <p:column id="quantityBreak1" width="120">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.QuantityBreak']} 1"/>		
+									</f:facet>
+		                            <h:outputText value="#{item.quantityBreak1}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreakPrice1" width="160">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.quantityBreakPrice']} 1"/>  
+									</f:facet>
+				                     <h:outputText value="#{item.quantityBreakPrice1}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreak2" width="120">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.QuantityBreak']} 2"/>  
+									</f:facet>
+		                            <h:outputText value="#{item.quantityBreak2}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreakPrice2" width="160">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.quantityBreakPrice']} 2"/>
+									</f:facet>
+				                     <h:outputText value="#{item.quantityBreakPrice2}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreak3" width="120">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.QuantityBreak']} 3"/>
+									</f:facet>
+		                            <h:outputText value="#{item.quantityBreak3}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreakPrice3" width="160">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.quantityBreakPrice']} 3"/>
+									</f:facet>
+				                     <h:outputText value="#{item.quantityBreakPrice3}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreak4" width="120">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.QuantityBreak']} 4"/>
+									</f:facet>
+		                            <h:outputText value="#{item.quantityBreak4}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreakPrice4" width="160">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.quantityBreakPrice']} 4"/>
+									</f:facet>
+				                     <h:outputText value="#{item.quantityBreakPrice4}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreak5" width="120">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.QuantityBreak']} 5"/>
+									</f:facet>
+		                            <h:outputText value="#{item.quantityBreak5}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreakPrice5" width="160">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.quantityBreakPrice']} 5"/>
+									</f:facet>
+				                     <h:outputText value="#{item.quantityBreakPrice5}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreak6" width="120">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.QuantityBreak']} 6"/>
+									</f:facet>
+		                            <h:outputText value="#{item.quantityBreak6}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreakPrice6" width="160">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.quantityBreakPrice']} 6"/>
+									</f:facet>
+				                     <h:outputText value="#{item.quantityBreakPrice6}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreak7" width="120">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.QuantityBreak']} 7"/>
+									</f:facet>
+		                            <h:outputText value="#{item.quantityBreak7}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreakPrice7" width="160">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.quantityBreakPrice']} 7"/>
+									</f:facet>
+				                     <h:outputText value="#{item.quantityBreakPrice7}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreak8" width="120">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.QuantityBreak']} 8"/>
+									</f:facet>
+		                            <h:outputText value="#{item.quantityBreak8}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreakPrice8" width="160">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.quantityBreakPrice']} 8"/>
+									</f:facet>
+				                     <h:outputText value="#{item.quantityBreakPrice8}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreak9" width="120">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.QuantityBreak']} 9"/>
+									</f:facet>
+		                            <h:outputText value="#{item.quantityBreak9}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreakPrice9" width="160">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.quantityBreakPrice']} 9"/>
+									</f:facet>
+				                     <h:outputText value="#{item.quantityBreakPrice9}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreak10" width="120">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.QuantityBreak']} 10"/>
+									</f:facet>
+		                            <h:outputText value="#{item.quantityBreak10}" /> 
+				                </p:column>
+				                
+				                <p:column id="quantityBreakPrice10" width="160">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.quantityBreakPrice']} 10"/>
+									</f:facet>
+				                     <h:outputText value="#{item.quantityBreakPrice10}" /> 
+				                </p:column>
+			                
+		                        <p:column id="callForQuote" sortBy="#{item.callForQuote}"  width="100">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.CallQuote']}"/>  
+									</f:facet>
+							        <h:outputText value="#{item.callForQuote}" /> 
+						        </p:column>
+						        
+						        <p:column id="mpq" sortBy="#{item.mpq}"  width="100">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.MPQ']}"/>  
+									</f:facet>
+							        <h:outputText value="#{item.mpq}" /> 
+						        </p:column>
+						        
+						        <p:column id="moq" sortBy="#{item.moq}"  width="100">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.moq']}"/>  
+									</f:facet>
+							        <h:outputText value="#{item.moq}" /> 
+						        </p:column>
+						        
+						        <p:column id="mov" sortBy="#{item.mov}" width="100">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.mov']}"/>  
+									</f:facet>
+							        <h:outputText value="#{item.mov}" /> 
+						        </p:column>
+						        
+						        <p:column id="costIndicator" sortBy="#{item.costIndicator}"  width="130">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.costIndicator']}"/>  
+									</f:facet>
+							        <h:outputText value="#{item.costIndicator}" /> 
+						        </p:column>
+						        
+						        <p:column id="programEffectiveDate" sortBy="#{item.programEffectiveDate}"  width="150">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.programEffectiveDate']}"/>  
+									</f:facet>
+							        <h:outputText value="#{item.programEffectiveDate}" /> 
+						        </p:column>
+						        
+						        <p:column id="programClosingDate" sortBy="#{item.programClosingDate}"  width="150">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.programclosingDate']}"/>    
+									</f:facet>
+							        <h:outputText value="#{item.programClosingDate}" /> 
+						        </p:column>
+						        
+						        <p:column id="validity" sortBy="#{item.validity}"  width="100">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.validity']}"/>  
+									</f:facet>
+							        <h:outputText value="#{item.validity}" /> 
+						        </p:column>
+						        
+						        <p:column id="shipmentValidity" sortBy="#{item.shipmentValidity}"  width="120">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.shipmentVal']}"/>  
+									</f:facet>
+							        <h:outputText value="#{item.shipmentValidity}" /> 
+						        </p:column>
+						        
+						        <p:column id="leadTime" sortBy="#{item.leadTime}"  width="100">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.leadTime']}"/>          
+									</f:facet>
+							        <h:outputText value="#{item.leadTime}" /> 
+						        </p:column>
+						        
+						        <p:column id="qtyIndicator" sortBy="#{item.quantityIndicator}"  width="120">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.quantityIndicator']}"/>            
+									</f:facet>
+							        <h:outputText value="#{item.quantityIndicator}" /> 
+						        </p:column>
+						        
+						        <p:column id="newItemFlag" sortBy="#{item.newItemIndicator}"  width="130">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.newItemIndicator']}"/>         
+									</f:facet>
+							        <h:outputText value="#{item.newItemIndicator}" /> 
+						        </p:column>
+						        
+						        <p:column id="allocationFlag" sortBy="#{item.allocationFlag}"  width="110">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.allocatnPart']}"/>    
+									</f:facet>
+							        <h:outputText value="#{item.allocationFlag}" /> 
+						        </p:column>
+						        
+						        <p:column id="resaleIndicator" sortBy="#{item.resaleIndicator}"  width="120">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.resaleIndicator']}"/>  
+									</f:facet>
+							        <h:outputText value="#{item.resaleIndicator}" /> 
+						        </p:column>
+						        
+						        <p:column id="termsAndConditions" sortBy="#{item.termsandConditions}"  width="150">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.quotation']} #{dbResource['wq.label.tc']}"/>    
+									</f:facet>
+							        <h:outputText value="#{item.termsandConditions}" /> 
+						        </p:column>
+						        
+						        <p:column id="avnetQcComments" sortBy="#{item.avnetQuoteCentreComments}"  width="190">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.avnetQC']}"/>   
+									</f:facet>
+							        <h:outputText value="#{item.avnetQuoteCentreComments}" /> 
+						        </p:column>
+						        
+						        <p:column id="createdOn" sortBy="#{item.createdOn}"  width="140">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.createdDate']}"/>   
+									</f:facet>
+							        <h:outputText value="#{item.createdOn}" /> 
+						        </p:column>
+						        
+						        <p:column id="createdBy" sortBy="#{item.createdBy}"  width="90">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.createdBy']}"/>  
+									</f:facet>
+							        <h:outputText value="#{item.createdBy}" /> 
+						        </p:column>
+						        
+						        <p:column id="lastUpdatedOn" sortBy="#{item.createdOn}"  width="140">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.updatedDate']}"/>   
+									</f:facet>
+							         <h:outputText value="#{item.createdOn}" /> 
+						        </p:column>
+						        
+						        <p:column id="uploadedBy" sortBy="#{item.lastUpdateBy}"  width="90">
+								    <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.message.uploadedBy']}"/>   
+									</f:facet>
+							        <h:outputText value="#{item.lastUpdateBy}" /> 
+						        </p:column>
+	
+				   </p:dataTable>   
+				   <f:facet name="footer">  
+				         <h:panelGrid columns="1" styleClass="bottom_noBorder"  style="height:20px;" >
+					            <p:column style="align:left;">
+								       <p:spacer width="20" height="10" /> 
+                                       <p:commandButton value="#{dbResource['wq.label.fulExport']}" id="full_export" ajax="false">
+										    <p:dataExporter type="xls" target=":form:programMaterialTable" fileName="ProgramItems" postProcessor="#{commodityMaintainMB.postProcessXLS}"/>
+									   </p:commandButton>
+					             </p:column>
+			             </h:panelGrid>
+                   </f:facet>  
+			   </p:panel>
+            </p:column>
+               
+</p:panelGrid>
+</h:form>		
+		
+<script type="text/javascript">  
+    function handleAddAnnouncementRequest(xhr, status, args) 
+    {   
+        if(args.validationFailed || !args.isSuccess)
+        {     
+            //To-Do
+        }
+        else 
+        {   
+        	PF('addAnnouncementDialog').hide();  
+        	PF('addAnnouConfirmDialog').show();   
+        }   
+    } 
+    function handleEditAnnouncementRequest(xhr, status, args) 
+    {   
+
+        if(args.validationFailed || !args.isSuccess)
+        {   
+        	//To-Do
+        } 
+        else 
+        {   
+        	PF('editAnnouncementDialog').hide(); 
+        	PF('editAnnouConfirmDialog').show();  
+        }   
+    }  
+    function handleAddPromoItemRequest(xhr, status, args) 
+    {   
+
+        if(args.validationFailed || !args.isSuccess)
+        {   
+        	//To-Do
+        } 
+        else 
+        {   
+        	PF('proItemAddDialog').hide(); 
+        	PF('proItemAddConfirmDialog').show();  
+        }   
+    }  
+    function handleEditPromoItemRequest(xhr, status, args) 
+    {   
+
+        if(args.validationFailed || !args.isSuccess)
+        {   
+        	//To-Do
+        } 
+        else 
+        {   
+        	PF('proItemEditDialog').hide(); 
+        	PF('proItemEditConfirmDialog').show();  
+        }   
+    }    
+
+
+    window.onload = function adjustForOnLoad()
+    {
+    	var proTable = document.getElementById("form:programMaterialPanel");
+    	proTable.style.width=(document.body.clientWidth -270)+'px';
+	
+    }
+    window.onresize =function adjustForOnReside()
+    {
+    	var proTable = document.getElementById("form:programMaterialPanel");
+     	proTable.style.width=(document.body.clientWidth -270)+'px';
+    }
+
+
+</script> 
+
+
+	</ui:define>
+</ui:composition>
+
+
+	

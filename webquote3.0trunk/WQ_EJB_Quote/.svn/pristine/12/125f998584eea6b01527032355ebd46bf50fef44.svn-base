@@ -1,0 +1,535 @@
+package com.avnet.emasia.webquote.edi.utils;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FilenameFilter;
+import java.io.InputStreamReader;
+import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.net.InetAddress;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.text.DateFormat;
+import java.text.MessageFormat;
+import java.text.ParseException;
+import com.avnet.emasia.webquote.utilities.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import javax.persistence.Column;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import com.avnet.emasia.webquote.constants.EdiMesgType;
+import com.avnet.emasia.webquote.edi.MesgLog;
+import com.avnet.emasia.webquote.edi.ThreeAMesgOne;
+public class TIEntityFactory {
+
+	private static final Logger LOG = Logger.getLogger(TIEntityFactory.class.getName());
+	
+	public static final String TI_RECIEVER_EMAILS = "TI_RECIEVER_EMAILS"; 
+	public static final String LOG_STATUS_PASS = "PASS";
+	public static final String LOG_STATUS_FAIL = "FAIL";
+	public static final String CHARSET_UTF8 = "UTF-8";
+	
+	/*private static final String XMLFILE_DIR_INBOUND = "C:\\david\\xml\\inbound";	
+	private static final String XMLFILE_DIR_EXCEPTION = "C:\\david\\xml\\exception";	
+	private static final String XMLFILE_DIR_BACKUP = "C:\\david\\xml\\backup";*/
+	
+	//PRODUCTION CONFIG
+	private static  String FILE_DIR_INBOUND = "/app/eap62/webquote/b2bfiles/TIS/inbound";
+	private static  String FILE_DIR_EXCEPTION = "/app/eap62/webquote/b2bfiles/TIS/exception";
+	private static  String FILE_DIR_BACKUP = "/app/eap62/webquote/b2bfiles/TIS/backup";
+	
+	static {
+        try { 
+           String address = InetAddress.getLocalHost().getHostName().toString();
+           LOG.info(address);
+           if("cis2115vmts".equalsIgnoreCase(address)) {
+        	   FILE_DIR_INBOUND = "C:\\david\\xml\\inbound";	
+        	   FILE_DIR_EXCEPTION = "C:\\david\\xml\\exception";	
+        	   FILE_DIR_BACKUP = "C:\\david\\xml\\backup";
+           }
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+        } 
+	}
+	private static final String XMLFILE_SPLIT = "_";
+	
+	private static final String CSVFILE_SPLIT = ",";
+	
+	private static final String CSV_SUFFIX = "csv";
+	//private static final String ROOTAGNAME = "item";
+	private static final String CREATED_ON = "createdOn";
+	
+	private static final String FILE_NAME = "fileName";
+
+	/*** GET ALL THE XML FILE FROM SHARED FILE DIRECTOR **/
+	public static File[] GetXmlFileListInBound() {
+		File[] tempList = GetXmlFileList(FILE_DIR_INBOUND);
+		if(tempList!=null&&tempList.length>1) {
+			 Arrays.sort(tempList, new FileComparator());
+		}
+		return tempList;
+	}
+	
+	private static class FileComparator implements Comparator<File> {
+        public int compare(File file, File newFile) {
+          if (file.lastModified() > newFile.lastModified()) {
+              return 1;
+          } else if (file.lastModified() == newFile.lastModified()) {
+              return 0;
+         } else {
+             return -1;
+         }
+       }
+	}
+	
+	public static File[] GetCsvFileListInBound() {
+		File[] tempList = GetCsvFileList(FILE_DIR_INBOUND);
+		if(tempList!=null&&tempList.length>1) {
+			 Arrays.sort(tempList, new FileComparator());
+		}
+		return tempList;
+	}
+	
+	private static File[] GetXmlFileList(String path) {
+		File file = new File(path);
+		File[] tempList = file.listFiles(new FilterBySuffix("xml"));
+		return tempList;
+	}
+	
+	private static File[] GetCsvFileList(String path) {
+		 //CSV_SUFFIX
+		String startWith = "em-apac.quote.avnet.tis";
+		File[] files =  GetFileList(path, CSV_SUFFIX);
+		List<File> fileList = new ArrayList<File>(); 
+		for(File file :files) {
+			if(file.isFile() &&file.getName().toLowerCase().startsWith(startWith)) {
+				fileList.add(file);
+			}else {
+				LOG.info(MessageFormat.format("File [{0}] no match startWith : [em-apac.quote.avnet.tis] or is not file, then move to Exception Dir.", file.getName()));
+				MoveToExceptionDir(file);
+			}
+		}
+		
+		return  fileList.toArray(new File[0]);
+	}
+	
+	private static File[] GetFileList(String path, String Suffix) {
+		File file = new File(path);
+		File[] tempList = file.listFiles(new FilterBySuffix(Suffix));
+		return tempList;
+	}
+	
+	/***/
+	public static MesgLog CreateLogForCsv(File file) throws Exception {
+		if(file ==null || !file.exists()) {
+			return null;
+		}
+		MesgLog mesgLog = new MesgLog();
+		try{
+		
+			mesgLog.setReadTiMesg(Files.lines(file.toPath()).collect(Collectors.joining("\n")));
+			mesgLog.setMesgType(EdiMesgType.TAONE.getMesgTypeName()); 
+			mesgLog.setPoNum("need to discuss"); //?
+			mesgLog.setTiMesgFileName(file.getName());
+			mesgLog.setStatus(LOG_STATUS_FAIL);
+			mesgLog.setCreatedOn(new Date());
+		}catch (Exception ex){
+			Exception se = new Exception("TIEntityFactory::CreateLog::" + ex.getMessage());
+			se.initCause(ex);
+			throw se;
+		}
+		return mesgLog;
+	}
+	/***/
+	public static MesgLog CreateLog(File file) throws Exception {
+		if(file ==null || !file.exists()) {
+			return null;
+		}
+		MesgLog mesgLog = new MesgLog();
+		try{
+		
+			mesgLog.setReadTiMesg(Files.lines(file.toPath()).collect(Collectors.joining("\n")));
+			mesgLog.setMesgType(GetMesgTypeByFileName(file));
+			mesgLog.setPoNum(file.getName().split(XMLFILE_SPLIT)[0]);
+			mesgLog.setTiMesgFileName(file.getName());
+			mesgLog.setStatus(LOG_STATUS_FAIL);
+			mesgLog.setCreatedOn(new Date());
+		}catch (Exception ex){
+			Exception se = new Exception("TIEntityFactory::CreateLog::" + ex.getMessage());
+			se.initCause(ex);
+			throw se;
+		}
+		return mesgLog;
+		
+	}
+	
+	/*****/
+	public static boolean MoveToExceptionDir(File file) {
+		try {
+			if (file.exists()) {
+				File target = new File(FILE_DIR_EXCEPTION + File.separator + file.getName());
+				if (target != null && target.exists()) {
+					String toFile =  file.getName()+ "_" + new Random().nextInt();
+					LOG.warning(MessageFormat.format("TI MoveToExceptionDir Issue :: the target director has existed the same name file:[{0}]."
+							+ "change name to [{1}]", file.getName(), toFile));
+					return file.renameTo(new File(FILE_DIR_EXCEPTION + File.separator + toFile));
+				}
+				return file.renameTo(new File(FILE_DIR_EXCEPTION + File.separator + file.getName()));
+			} else {
+				LOG.warning("MoveToExceptionDir failed :: file do not exist");
+			}
+		} catch (Exception ex) {
+			LOG.warning("Move failed ::" + ex.getStackTrace());
+		}
+
+		return false;
+	}
+
+	public static boolean Backup(File file) {
+		try {
+			if (file.exists()) {
+				File target = new File(FILE_DIR_BACKUP + File.separator + file.getName());
+				if (target != null && target.exists()) {
+					
+					String toFile =  file.getName()+ "_" + new Random().nextInt();
+					LOG.warning(MessageFormat.format("TI File Backup Issue :: the target director has existed the same name file:[{0}]."
+							+ "change name to [{1}]", file.getName(), toFile));
+					return file.renameTo(new File(FILE_DIR_BACKUP + File.separator + toFile));
+				}
+				return file.renameTo(new File(FILE_DIR_BACKUP + File.separator + file.getName()));
+			} else {
+				LOG.info("Backup failed :: file do not exist");
+			}
+		} catch (Exception ex) {
+			LOG.info("Backup failed ::" + ex.getStackTrace());
+		}
+
+		return false;
+	}
+	
+	public static void DeleteFileByCreatedTime(Date timeBefore) {
+		File[] filesInException= GetXmlFileList(FILE_DIR_EXCEPTION);
+		File[] filesInBackup= GetXmlFileList(FILE_DIR_BACKUP);
+		DeleteFileByCreatedTime(timeBefore,filesInException);
+		DeleteFileByCreatedTime(timeBefore,filesInBackup);
+	}
+	
+	private static void DeleteFileByCreatedTime(Date timeBefore, File[] files) {
+		if (files == null || files.length<1) {
+			return;
+		}
+		for(File file: files) {
+			if(file.exists()) {
+				 Calendar cal = Calendar.getInstance();  
+			     long time = file.lastModified();  
+				 cal.setTimeInMillis(time);
+				 if(cal.getTime().before(timeBefore)) {
+					 file.delete();
+				 }
+
+			}
+		}
+	}
+	
+	
+	public static String DateToddMMyyy(Date date) {
+		if(date == null) {
+			return null;
+		}
+		DateFormat format1 = new SimpleDateFormat("dd/MM/yyyy");
+		return format1.format(date);
+	}
+	/**
+	 * @throws Exception
+	 ***/
+	private static Date ConvertToYMDDate(String source) throws Exception {
+		DateFormat format = new SimpleDateFormat("yyyyMMdd");
+		format.setLenient(false);
+		try {
+			return format.parse(source);
+		} catch (Exception e) {
+			// throw e;
+		}
+		return null;
+	}
+	
+	private static Date ConvertToDMYDate(String source) throws Exception {
+		DateFormat format = new SimpleDateFormat("ddMMyyyy");
+		format.setLenient(false);
+		try {
+			return format.parse(source);
+		} catch (Exception e) {
+			// throw e;
+		}
+		return null;
+	}
+
+	public static Object XmlToBean(File file) throws Exception {
+		Object entity = null;
+		try {
+			String mesgType = GetMesgTypeByFileName(file);
+			if (mesgType == null) {
+				throw new Exception("MesgType is null. The xml file name fromat is not expected.");
+			}
+			TIExchangeContext exCtx = TIExchangeContextFactory.GetExchengCtxByKey(mesgType);
+			if (exCtx == null) {
+				throw new Exception("TIExchangeContext is null. The xml file name do not contain the Message type.");
+			}
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder builder = factory.newDocumentBuilder();
+			
+			org.w3c.dom.Document doc = builder.parse(file);
+			Class entityClass = Class.forName(exCtx.getClassName());
+			/* entityClass.getSuperclass(); */
+			entity = entityClass.newInstance();
+			/**
+			 * use the set with fieldName-xmltagname to get data from xml. but
+			 * need to let the tag/index in xml to have not duplicated
+			 **/
+			for (Entry<String, String> entry : exCtx.getEntityMapFile().entrySet()) {
+				NodeList items = doc.getElementsByTagName(entry.getValue());
+				if (items == null || items.getLength() != 1) {
+					throw new Exception(MessageFormat.format("File has no or more tag/index [{0}] in xml.", entry.getValue()));
+				}
+				Node item = items.item(0);
+				dataToEntity(entry.getValue(), item.getTextContent(), entry.getKey(), entity, entityClass);
+			}
+			/**for create_on*/
+			AddEntityCreatedOn(entity,entityClass);
+		} catch (Exception ex) {
+			Exception se = new Exception("TIEntityFactory.XmlToBean()::" + ex.getMessage());
+			se.initCause(ex);
+			throw se;
+		}
+		return entity;
+	}
+
+	public static List<ThreeAMesgOne> CsvToBeans(File file) throws Exception {
+		Object entity = null;
+		List<ThreeAMesgOne> list =  new ArrayList<ThreeAMesgOne>();
+		try {
+			String mesgType = EdiMesgType.TAONE.getMesgTypeName();
+			TIExchangeContext exCtx = TIExchangeContextFactory.GetExchengCtxByKey(mesgType);
+			List<String[]> itemsList = new ArrayList<String[]>();
+			BufferedReader reader = null;
+			try {
+				  reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), CHARSET_UTF8));
+		          reader.readLine();//first line is no need ;      
+		          String line = null; 
+		          while((line=reader.readLine())!=null){ 
+		              itemsList.add(line.split(CSVFILE_SPLIT));
+		           }   
+			}finally {
+				if(reader!=null) {
+					reader.close();
+				}
+			}
+			LOG.info("TAONE fine name :" +file.getName() + "; line count :" + itemsList.size());
+			Class entityClass = Class.forName(exCtx.getClassName());
+			/* entityClass.getSuperclass(); */
+			
+			for(int i=0; i< itemsList.size(); i++) {
+				entity = entityClass.newInstance();
+				String[] items = itemsList.get(i);
+				// need remove before go line.
+				LOG.info("TAONE fine name :" + file.getName() 
+						+ "; item count ::" + items.length + "; line :: " + items.toString() );
+				for (Entry<String, String> entry : exCtx.getEntityMapFile().entrySet()) {
+					if(Integer.parseInt(entry.getValue()) >=items.length) {
+						LOG.info("ignore for no have sent the data.");
+						continue;
+					}
+					String item = items[Integer.parseInt(entry.getValue())];
+					dataToEntity(entry.getValue(), item, entry.getKey(), entity, entityClass);
+				}
+				AddEntityCreatedOn(entity,entityClass);
+				AddEntityStringField(entity,entityClass,FILE_NAME,file.getName());
+				
+				list.add((ThreeAMesgOne)entity);
+			}
+			/**for create_on*/
+			
+		} catch (Exception ex) {
+			Exception se = new Exception("TIEntityFactory.CsvToBeans()::" + ex.getMessage());
+			se.initCause(ex);
+			throw se;
+		}
+		return list;
+	}
+	private static boolean dataToEntity(String tagName, String value, String fieldName, Object entity,
+			Class entityClass) throws Exception {
+		// post process to trim
+		if (value != null) {
+			value = value.trim();
+		}
+		Field field = FindFieldByName(fieldName, entityClass);
+		if (field == null) {
+			throw new Exception(MessageFormat.format("Can not find filed [{0}] in [{1}]", fieldName, entityClass.getName()));
+		}
+		// field type;
+		String fieldType = field.getType().getSimpleName();
+		// first verify the nullable.
+		if (IsEmpty(value)) {
+			javax.persistence.Column column = field.getAnnotation(Column.class);
+			boolean nullAble = column.nullable();
+			if (!nullAble) {
+				throw new Exception(MessageFormat.format("The value of tag/index [{0}] must not be null.", tagName));
+			}
+		}
+		// veriify the data from xml .
+		if ("String".equals(fieldType)) {
+			javax.persistence.Column column = field.getAnnotation(Column.class);
+			int length = column.length();
+			if (!IsEmpty(value) && value.length() > length) {
+				throw new Exception(MessageFormat.format(
+						"The length of the value  [{0}] of tag/index [{1}] " + "must not be more than [{2}].", value, tagName, length));
+			}
+			field.set(entity, value);
+		} else if ("Date".equals(fieldType)) {
+			if (!IsEmpty(value)) {
+				Date date = ConvertToYMDDate(value);
+				if (date == null) {
+					throw new Exception(MessageFormat.format("The value [{0}] of tag/index [{1}] "
+							+ "can not be converted to Date,it should be YYYYMMDD format.", value, tagName));
+				}
+				field.set(entity, date);
+			}
+		} else if ("Long".equals(fieldType)) {
+			if (!IsEmpty(value)) {
+				Long data = null;
+				try {
+					data = new Long(value);
+				} catch (Exception ex) {
+					throw new Exception(MessageFormat.format("The value [{0}] of tag/index [{1}] " + "can not be converted to Long.",
+							value, tagName));
+				}
+				field.set(entity, data);
+			}
+		} else if ("BigDecimal".equals(fieldType)) {
+			if (!IsEmpty(value)) {
+				BigDecimal data = null;
+				try {
+					data = new BigDecimal(value);
+				} catch (Exception ex) {
+					throw new Exception(MessageFormat.format("The value [{0}] of tag/index [{1}] " + "can not be converted to BigDecimal.",
+							value, tagName));
+				}
+				field.set(entity, data);
+			}
+		}else {
+			throw new Exception(MessageFormat.format("The value [{0}] of tag/index [{1}] " + "can not find the function to convert.",
+					value, tagName));
+		}
+		// System.out.println("outer2::" + obj.getName());
+		return true;
+	}
+	
+	/***GET FIELD BY FIELD NAME AND CLASS**/
+	public static Field FindFieldByName(String fieldName, Class entityClass) {
+		Field field = null;
+		Class curClass = entityClass;
+		while (curClass != null) {
+			try {
+				field = curClass.getDeclaredField(fieldName);
+				field.setAccessible(true);
+				break;
+			} catch (Exception ex) {
+				curClass = curClass.getSuperclass();
+				continue;
+			}
+		}
+		return field;
+	}
+	
+	private static boolean AddEntityCreatedOn(Object entity, Class entityClass) throws Exception {
+		String fieldName = CREATED_ON;
+		Field field  = FindFieldByName(fieldName, entityClass);
+		if(field == null) {
+			throw new Exception(MessageFormat.format("Can not find filed [{0}] in [{1}]", fieldName, entityClass.getName()));
+		}
+		field.set(entity, new Date());
+		return true;
+		
+	}
+	// add field string value, So the target field must be String type
+	private static boolean AddEntityStringField(Object entity, Class entityClass, String fieldName, String fieldValue) throws Exception {
+		Field field  = FindFieldByName(fieldName, entityClass);
+		if(field == null) {
+			throw new Exception(MessageFormat.format("Can not find filed [{0}] in [{1}]", fieldName, entityClass.getName()));
+		}
+		String fieldType = field.getType().getSimpleName();
+		if(!"String".equalsIgnoreCase(fieldType)) {
+			throw new Exception(MessageFormat.format("Can not set filed [{0}] type[{2}] to the String value [{1}]", fieldName, 
+					entityClass.getName(), fieldType));
+		}
+		field.set(entity, fieldValue);
+		return true;
+		
+	}
+	
+	private static boolean IsEmpty(String value) {
+		return value == null || value.trim().length() < 1;
+	}
+
+	/********/
+	private static String GetMesgTypeByFileName(File file) {
+		try {
+			StringBuilder sb = new StringBuilder(file.getName().split(XMLFILE_SPLIT)[1]);
+			sb.insert(3, "_");
+			return sb.toString();
+		} catch (Exception ex) {
+			LOG.info(MessageFormat.format(
+					"TIEntityFactory.GetMesgTypeByFileName(File):: file name [{0}]'s fromat is not correct.", file.getName()));
+		}
+		return null;
+	}
+	
+	public static boolean verifyFileNameFormat(String fileName) throws Exception {
+		//PO Number_MsgType_DateTimeStamp(DDMMYYYY_HHMMSS)
+		String[] parts = fileName.split(XMLFILE_SPLIT);
+		String formatMesg ="Xml format error : ";
+		
+		//String mesgTypeErrow = "The xml file name do not contain the correct Message type. ";
+		String mesg = "Received xml file should be with the following naming convention:[PO Number_MsgType_DateTimeStamp(DDMMYYYY_HHMMSS).xml.";
+		if(parts.length != 4) {
+			throw new Exception(formatMesg + mesg);
+		}
+		/****verify THE LENGTH OF poNum is NOT LENGTH THAN 35***/
+		if(parts[0].length()>35) {
+			throw new Exception(formatMesg + "The length of PO_NUMBER in file name must not be more than 35. " + mesg );
+		}
+		/****verify mesg type is or not expected***/
+		StringBuilder mesgType = new StringBuilder(parts[1]);
+		if(mesgType.length() >= 3) {
+			mesgType.insert(3, "_");
+		}
+		TIExchangeContext exCtx = TIExchangeContextFactory.GetExchengCtxByKey(mesgType.toString());
+		if (exCtx == null) {
+			throw new Exception(formatMesg + "The xml file name do not contain the correct Message type. " + mesg );
+		}
+		/** verify date time only need test the date format DDMMYYYY **/
+		if (ConvertToDMYDate(parts[2]) == null) {
+			throw new Exception(formatMesg + "The xml file name do not contain the correct DateTime. " + mesg );
+		}
+		return true;
+	}
+}

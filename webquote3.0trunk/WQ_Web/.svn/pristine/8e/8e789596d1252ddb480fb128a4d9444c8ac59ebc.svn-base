@@ -1,0 +1,881 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.model.SelectItem;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFDataValidation;
+import org.apache.poi.xssf.usermodel.XSSFDataValidationConstraint;
+import org.apache.poi.xssf.usermodel.XSSFDataValidationHelper;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.primefaces.component.commandbutton.CommandButton;
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.FlowEvent;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.StreamedContent;
+import org.primefaces.model.UploadedFile;
+
+import com.avnet.emasia.webquote.cluster.dispatcher.CacheSynCommandClusterService;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.ExchangeRate;
+import com.avnet.emasia.webquote.entity.ExchangeRateType;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.ExchangeRateSB;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.quote.vo.ExchangeRateVo;
+import com.avnet.emasia.webquote.rowdata.DefaultRowDataConverter;
+import com.avnet.emasia.webquote.rowdata.FileType;
+import com.avnet.emasia.webquote.rowdata.datasource.DefaultExcelResolveInfo;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.DeploymentConfiguration;
+import com.avnet.emasia.webquote.utilites.web.util.DownloadUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+/* 
+ * Passwords of the protected workbook and worksheet are both "ok" 
+ */
+
+@ManagedBean
+@SessionScoped
+public class ExchangeRateMB implements Serializable {
+
+	@EJB
+	private ExchangeRateSB exchangeRateSB;
+
+	@EJB
+	private SystemCodeMaintenanceSB systemCodeMaintenanceSB;
+
+	private static final long serialVersionUID = 1L;
+	private static final Logger LOG = Logger.getLogger(ExchangeRateMB.class.getName());
+	// private static String[] column= { "Currency From", "Currency To", "Ex
+	// Rate From", "Ex Rate To", "Vat", "Handling", "Sold To Code"};
+	private static String[] column = {  "Exchange Rate Type", "Currency From", "Currency To", "Ex Rate To", "Vat", "Handling",
+			"Sold To Code", "Rounding", "Decimal Point", "Rate Remark" };
+	private static String[] currencyFromList = new String[] { "USD" };
+	private static String[] exchangeRateType = ExchangeRateType.exchangeRateTypeList();
+	private static String[] currencyToList = null;
+	private static String[] roundingType = new String[] { "Round up", "Round down", "Round off" };
+
+	private List<ExchangeRateVo> exchangeRateVos;
+
+	private UploadedFile uploadFile;
+
+	private String uploadFileName;
+
+	private List<SelectItem> bizUnits;
+
+	private String selectedBizUnit;
+
+	private int[] results;
+
+	private static String backHome = "/RFQ/ExchangeRate.jsf?faces-redirect=true";
+
+	private String employeeId;
+	private Set<String> allowCurrencys;
+
+	@SuppressWarnings("unused")
+	private User user = null;
+	private InputStream stream1;
+	private InputStream stream2;
+
+	private InputStream tmpInputStream;
+
+	/** The resource MB. */
+	@ManagedProperty(value = "#{resourceMB}")
+	/** To Inject ResourceMB instance */
+	private ResourceMB resourceMB;
+
+	/**
+	 * @param resourceMB
+	 *            the resourceMB to set
+	 */
+	public void setResourceMB(ResourceMB resourceMB) {
+		this.resourceMB = resourceMB;
+	}
+
+	@PostConstruct
+	public void initialize() {
+		this.bizUnits = new ArrayList<SelectItem>();
+
+		List<BizUnit> lbizUnits = UserInfo.getUser().getBizUnits();
+
+		employeeId = UserInfo.getUser().getEmployeeId();
+
+		if (lbizUnits.size() != 1) {
+			SelectItem selectItem = new SelectItem("", ResourceMB.getText("wq.label.sel"));
+			bizUnits.add(selectItem);
+		}
+
+		for (BizUnit lbizUnit : lbizUnits) {
+			SelectItem selectItem = new SelectItem(lbizUnit.getName(), lbizUnit.getName());
+			bizUnits.add(selectItem);
+		}
+		allowCurrencys = UserInfo.getUser().getDefaultBizUnit().getAllowCurrencies();
+		//All The exchange rate records should be from USD to non-USD currency
+		allowCurrencys.remove("USD");
+		currencyToList = allowCurrencys.toArray(new String[allowCurrencys.size()]);
+		this.tmpInputStream = null;
+	}
+
+	public boolean isNumeric(String str) {
+		Pattern pattern = Pattern.compile("[0-9]*");
+		Matcher isNum = pattern.matcher(str);
+		if (!isNum.matches()) {
+			return false;
+		}
+		return true;
+	}
+
+
+	@SuppressWarnings({ "resource", "unused" })
+	public String onFlowProcess(FlowEvent event) {
+		String oldStep = event.getOldStep();
+		String newStep = event.getNewStep();
+		// boolean isErrorFound=false;
+		FacesContext context = FacesContext.getCurrentInstance();
+		user = UserInfo.getUser();
+		if (oldStep.equals("upload") && newStep.equals("validation")) {
+
+			uploadFileName = "";
+			if (uploadFile == null || uploadFile.getFileName() == null) {
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+						ResourceMB.getText("wq.message.selFile"), ResourceMB.getText("wq.message.selFile")));
+				return oldStep;
+			}
+
+			if (selectedBizUnit == null || selectedBizUnit.equals("")) {
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+						ResourceMB.getText("wq.message.selectRegion"), ResourceMB.getText("wq.message.selectRegion")));
+				return oldStep;
+			}
+			InputStream inputStream = null;
+			try {
+				// inputStream = uploadFile.getInputstream();
+				inputStream = this.getTmpInputStream();
+
+				ByteArrayOutputStream baosOutputStream = new ByteArrayOutputStream();
+				byte[] buffer = new byte[1024];
+				int len;
+				while ((len = inputStream.read(buffer)) > -1) {
+					baosOutputStream.write(buffer, 0, len);
+				}
+				baosOutputStream.flush();
+
+				stream1 = new ByteArrayInputStream(baosOutputStream.toByteArray());
+				stream2 = new ByteArrayInputStream(baosOutputStream.toByteArray());
+
+				@SuppressWarnings("rawtypes")
+				DefaultRowDataConverter Converter = new DefaultRowDataConverter();
+
+				@SuppressWarnings("unchecked")
+				List<ExchangeRateVo> ConverterExchangeRateVos = Converter.convertAndValidate(stream1, FileType.EXCEL, new DefaultExcelResolveInfo(),
+						ExchangeRateVo.class);
+				this.exchangeRateVos = ConverterExchangeRateVos;
+//				StringBuffer sBuffer = new StringBuffer();
+				
+				/*for (ExchangeRateVo exchangeRateVo : ConverterExchangeRateVos) {
+					// String validateViolationMessage =
+					// exchangeRateVo.getValidateViolationMessage();
+					// String convertErrors = exchangeRateVo.getConvertErrors();
+
+					if (exchangeRateVo.getconvertAndValidationError() != null) {
+						sBuffer.append(exchangeRateVo.getconvertAndValidationError());
+						sBuffer.append(exchangeRateVo.getconvertAndValidationError() + "</br>");
+					}
+					// LOG.info("String
+					// validateViolationMessage"+validateViolationMessage);
+					// LOG.info("String convertErrors"+convertErrors);
+				}*/
+				
+//				Set<String> allowCurrencys =
+//						  UserInfo.getUser().getDefaultBizUnit().getAllowCurrencys();
+//				allowCurrencys.remove("USD");
+				String language = resourceMB.getDefaultLocaleAsString();
+				String validateExchangeRateMessage=exchangeRateSB.validateExchangeRate(ConverterExchangeRateVos, selectedBizUnit, allowCurrencys, new Locale(language));
+				if (!"".equals(validateExchangeRateMessage)) {
+					FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, validateExchangeRateMessage, validateExchangeRateMessage));
+					return oldStep;
+				}
+			} catch (Exception e) {
+				LOG.log(Level.SEVERE,
+						"cannot open inputStream for file " + uploadFileName + " ;user " + employeeId + ", Reason for failure: " + e.getMessage(), e);
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.errUploadFile"), ""));
+				return oldStep;
+			}
+
+			XSSFWorkbook workbook = null;
+
+			try {
+				workbook = new XSSFWorkbook(stream2);
+
+			} catch (Exception e) {
+				LOG.log(Level.SEVERE, "cannot open excel file " + uploadFileName + " ;user " + employeeId + ", Reason for failure: " + e.getMessage(),
+						e);
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.errInExcel"), ""));
+				return oldStep;
+			}
+			String errMessage = checkExcelFileColumn(workbook.getSheetAt(0));
+			// String errMessage = ConverterExchangeRateVos;
+			if (errMessage != null) {
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, errMessage, errMessage));
+				return oldStep;
+			}
+			/*
+			 * if (isErrorFound) { RequestContext requestContext =
+			 * RequestContext.getCurrentInstance();
+			 * requestContext.update("form:growl"); CommandButton nextBtn =
+			 * (CommandButton)
+			 * context.getViewRoot().findComponent(":form:nextButton");
+			 * nextBtn.setStyleClass("nextButton");
+			 * requestContext.update("form:nextButton"); return oldStep; }
+			 */
+			// convertExcelToVo(workbook);
+			//String language = resourceMB.getDefaultLocaleAsString();
+			
+			uploadFile = null;
+			uploadFileName = null;
+			return newStep;
+
+		} else if (oldStep.equals("validation") && newStep.equals("confirm")) {
+			//String language = resourceMB.getDefaultLocaleAsString();
+			String errMessage = null;
+			if (errMessage == null || errMessage.equals("")) {
+				// List<ExchangeRate> exchangeRates =
+				// convertExchangeRateVoToEntity(exchangeRateVos);
+				List<ExchangeRate> exchangeRates = convertExRateVoToEntity(exchangeRateVos);
+				try {
+					// results =
+					// exchangeRateSB.updateExchangeRate(exchangeRates,
+					// selectedBizUnit);
+					results = exchangeRateSB.updateEChangeRate(exchangeRates, selectedBizUnit);
+					LOG.info(employeeId + " has added/updated/deleted " + results[0] + "/" + results[1]);
+					CacheSynCommandClusterService.doClearExRatesCache();
+				} catch (Exception e) {
+					LOG.log(Level.SEVERE,
+							"Exception happened while calling exchangeRateSB.updateExchangeRate. User: " + employeeId + ", " + "exchangeRates:"
+									+ exchangeRates.toString() + " , for business unit : " + selectedBizUnit + ", Reason for failure:"
+									+ MessageFormatorUtil.getParameterizedStringFromException(e),
+							e);
+					FacesContext.getCurrentInstance().addMessage(null,
+							new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.errExchangeUpload"), ""));
+					RequestContext requestContext = RequestContext.getCurrentInstance();
+					requestContext.update("form:growl");
+					CommandButton nextBtn = (CommandButton) context.getViewRoot().findComponent(":form:nextButton");
+					nextBtn.setStyleClass("nextButton");
+					requestContext.update("form:nextButton");
+					return oldStep;
+				}
+				nullifyVariables();
+				return newStep;
+			} else {
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, errMessage, ""));
+				RequestContext requestContext = RequestContext.getCurrentInstance();
+				requestContext.update("form:growl");
+				CommandButton nextBtn = (CommandButton) context.getViewRoot().findComponent(":form:nextButton");
+				nextBtn.setStyleClass("nextButton");
+				requestContext.update("form:nextButton");
+				return oldStep;
+			}
+		}
+		return newStep;
+	}
+
+	public Date getCurrentDateAfterOneDay() {
+		Calendar todayStart = Calendar.getInstance();
+		todayStart.set(Calendar.HOUR_OF_DAY, 36);
+		return todayStart.getTime();
+	}
+
+	public void upload() {
+		if (uploadFile != null) {
+
+			long uploadfileSizeLimit = systemCodeMaintenanceSB.getUploadFileSizeLimit();
+			if (uploadFile.getSize() > uploadfileSizeLimit) {
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN,
+						ResourceMB.getParameterizedString("wq.error.fileSizeError", Long.toString(uploadfileSizeLimit)), ""));
+				return;
+			}
+
+			setUploadFile(uploadFile);
+			setUploadFileName(uploadFile.getFileName());
+
+			try {
+				this.setTmpInputStream(uploadFile.getInputstream());
+			} catch (IOException e) {
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_WARN, ResourceMB.getText("wq.message.errInExcel") + ".", ""));
+				LOG.log(Level.SEVERE, "cannot open inputStream for file " + uploadFileName + " ;user: " + employeeId + e.getMessage());
+				e.printStackTrace();
+				return;
+			}
+		}
+
+	}
+
+	private Date getTimesmorning(Date date) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		return cal.getTime();
+	}
+
+	public StreamedContent download() {
+
+		if (selectedBizUnit == null || selectedBizUnit.equals("")) {
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+					ResourceMB.getText("wq.message.selectRegion"), ResourceMB.getText("wq.message.selectRegion")));
+			return null;
+		}
+
+		String fileLocation = DeploymentConfiguration.configPath + File.separator + QuoteConstant.EXCHANGE_RATE_TEMPLATE_LOCATION;
+		// /app/eap70/webquote/share/template_files\ExchangeRateTemplate.xlsx
+//		fileLocation = "C:\\Users\\046755\\Desktop\\excel\\ETTemplate.xlsx";
+		//fileLocation = "C:\\Users\\046755\\Desktop\\excel\\ExchangeRateTemplate.xlsx";
+		FileInputStream in = null;
+		XSSFWorkbook workbook = null;
+		try {
+			in = new FileInputStream(fileLocation);
+			if (in != null) {
+				workbook = new XSSFWorkbook(in);
+			}
+			XSSFSheet sheet = workbook.getSheetAt(0);
+			// XSSFSheet sheet = workbook.getSheet("Exchange Rate Master");
+			generateDropDownList(sheet);
+
+			// Date date = new Date();
+//			Date date = getTimesmorning(new Date());
+			Date date = new Date();
+			// String date="28-AUG-18";
+			List<ExchangeRate> exchangeRates = exchangeRateSB.findExchangeRateByBizUnitInValiday(selectedBizUnit, date);
+//			ExchangeRate.sortByExchangeRateType(exchangeRates);
+//			sortStringMethod
+			LOG.info(" for ExchangeRate download exchangeRates"+exchangeRates.size() );
+			// List<ExchangeRate> exchangeRates =
+			// exchangeRateSB.findExchangeRateByBizUnit(selectedBizUnit);
+
+			int rowNumber = 1;
+
+			for (ExchangeRate exchangeRate : exchangeRates) {
+
+				
+				int column = 0;
+				XSSFRow row = sheet.createRow(rowNumber++);
+
+				/*XSSFCell cell = row.createCell(column++);
+				cell.getCellStyle().setLocked(false);
+				cell.setCellValue();*/
+
+				XSSFCell cell = row.createCell(column++);
+				if (exchangeRate.getExchangeRateType() != null) {
+					cell.setCellValue(
+							exchangeRate.getExchangeRateType().name().equals("CUSTOMER_FIXED_RATE") ? "Customer Fixed Rate" : "Company Rate");
+				}
+
+				cell = row.createCell(column++);
+				cell.setCellValue(exchangeRate.getCurrFrom());
+
+				cell = row.createCell(column++);
+				cell.setCellValue(exchangeRate.getCurrTo());
+
+				cell = row.createCell(column++);
+				cell.setCellValue(exchangeRate.getExRateTo().doubleValue());
+
+				cell = row.createCell(column++);
+				if (exchangeRate.getVat() != null) {
+					cell.setCellValue(exchangeRate.getVat().doubleValue());
+				}
+
+				cell = row.createCell(column++);
+				if (exchangeRate.getHandling() != null) {
+					cell.setCellValue(exchangeRate.getHandling().doubleValue());
+				}
+
+				cell = row.createCell(column++);
+				if (exchangeRate.getSoldToCode() != null) {
+					cell.setCellValue(Integer.valueOf(exchangeRate.getSoldToCode()));
+				}
+				cell = row.createCell(column++);
+				if (exchangeRate.getRoundType()!= null ) {
+					String RoundType = null;
+					if (BigDecimal.ROUND_HALF_UP == exchangeRate.getRoundType()) {
+						RoundType = "Round up";
+					} else if (BigDecimal.ROUND_HALF_DOWN == exchangeRate.getRoundType()) {
+						RoundType = "Round down";
+					} else if (BigDecimal.ROUND_FLOOR == exchangeRate.getRoundType()) {
+						RoundType = "Round off";
+					}
+					cell.setCellValue(RoundType);
+				}
+				cell = row.createCell(column++);
+				if (exchangeRate.getScale()  != null) {
+					cell.setCellValue(Integer.valueOf(exchangeRate.getScale()));
+				}
+				cell = row.createCell(column++);
+				if (exchangeRate.getRemarks() != null) {
+					cell.setCellValue(exchangeRate.getRemarks());
+				}
+
+			}
+
+			try {
+				ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+				workbook.write(byteOut);
+				byteOut.flush();
+				ByteArrayInputStream byteIn = new ByteArrayInputStream(byteOut.toByteArray());
+				StreamedContent file = new DefaultStreamedContent(byteIn, DownloadUtil.getMimeType(fileLocation),
+						QuoteConstant.EXCHANGE_RATE_TEMPLATE_LOCATION);
+				byteIn.close();
+				byteOut.close();
+				return file;
+
+			} catch (IOException e) {
+				LOG.log(Level.SEVERE, "cannot generate excel file for download for bizUnit" + selectedBizUnit + ", file location" + fileLocation
+						+ ", Exception message: " + e.getMessage(), e);
+			}
+
+		} catch (IOException e) {
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.downloadfail") + ".", ""));
+			LOG.log(Level.SEVERE, "File on this path " + fileLocation + " not found " + e.getMessage(), e);
+		}
+
+		return null;
+	}
+
+	/**
+	 * @Description: TODO @author 046755 @param sheet @return void @throws
+	 */
+	private void generateDropDownList(XSSFSheet sheet) {
+		// for set dropDown list
+		XSSFDataValidationHelper dvHelper = new XSSFDataValidationHelper(sheet);
+		XSSFDataValidationConstraint dvConstraint = (XSSFDataValidationConstraint) dvHelper.createExplicitListConstraint(currencyFromList);
+		XSSFDataValidationConstraint dvConstraintForexchangeRateType = (XSSFDataValidationConstraint) dvHelper
+				.createExplicitListConstraint(exchangeRateType);
+		XSSFDataValidationConstraint dvConstraintForCurrencyToList;
+		dvConstraintForCurrencyToList = (XSSFDataValidationConstraint) dvHelper.createExplicitListConstraint(currencyToList);
+		XSSFDataValidationConstraint dvConstraintforRound = (XSSFDataValidationConstraint) dvHelper.createExplicitListConstraint(roundingType);
+		CellRangeAddressList addressList = null;
+		XSSFDataValidation validation = null;
+		for (int i = 1; i < 100; i++) {
+			
+			addressList = new CellRangeAddressList(i, i, 1, 1);
+			CellRangeAddressList addressListForExchangeRateType = new CellRangeAddressList(i, i, 0, 0);
+			CellRangeAddressList addressListForRound = new CellRangeAddressList(i, i, 7, 7);
+			CellRangeAddressList addressListForCurrencyToList = new CellRangeAddressList(i, i, 2, 2);
+			validation = (XSSFDataValidation) dvHelper.createValidation(dvConstraint, addressList);
+			XSSFDataValidation validationForexchangeRateType = (XSSFDataValidation) dvHelper.createValidation(dvConstraintForexchangeRateType,
+					addressListForExchangeRateType);
+			XSSFDataValidation validationForCurrencyToList = (XSSFDataValidation) dvHelper.createValidation(dvConstraintForCurrencyToList,
+					addressListForCurrencyToList);
+			XSSFDataValidation validationForRound = (XSSFDataValidation) dvHelper.createValidation(dvConstraintforRound, addressListForRound);
+			sheet.addValidationData(validation);
+			sheet.addValidationData(validationForexchangeRateType);
+			sheet.addValidationData(validationForCurrencyToList);
+			sheet.addValidationData(validationForRound);
+		}
+	}
+
+	private String checkExcelFileColumn(Sheet sheet) {
+		String errMsg = null;
+		errMsg = "row" + ResourceMB.getText("wq.message.colDonotMatch");
+
+		Row row = sheet.getRow(0);
+
+		if (row == null) {
+			return errMsg;
+		}
+
+		int columnCount = row.getLastCellNum();
+
+		if (column.length != columnCount) {
+			return errMsg;
+		}
+
+		for (int c = 0; c < columnCount; c++) {
+			Cell cell = row.getCell(c);
+			if (cell == null) {
+				return errMsg;
+			}
+			if (cell.getCellType() == Cell.CELL_TYPE_STRING) {
+				String columnName = cell.getStringCellValue();
+				if (columnName == null || !columnName.trim().equalsIgnoreCase(column[c])) {
+					return errMsg;
+				}
+			} else {
+				return errMsg;
+			}
+		}
+
+		return null;
+	}
+
+	// private List<ExchangeRateVo> convertExcelToVo(XSSFWorkbook workbook) {
+	//
+	// XSSFSheet sheet = workbook.getSheetAt(0);
+	//
+	// exchangeRateVos = new ArrayList<ExchangeRateVo>();
+	//
+	// for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+	//
+	// Row row = sheet.getRow(i);
+	//
+	// // when meet a blank row, skip all the rows after it
+	// if (row == null) {
+	// break;
+	// }
+	//
+	// ExchangeRateVo vo = new ExchangeRateVo();
+	//
+	// for (int k = 0; k < column.length; k++) {
+	//
+	// Cell cell = row.getCell(k, Row.CREATE_NULL_AS_BLANK);
+	//
+	// String cellValue = null;
+	//
+	// switch (cell.getCellType()) {
+	// case Cell.CELL_TYPE_BOOLEAN:
+	// cellValue = String.valueOf(cell.getBooleanCellValue());
+	// break;
+	// case Cell.CELL_TYPE_NUMERIC:
+	//// cellValue = String.valueOf(cell.getNumericCellValue());
+	// cellValue = String.valueOf(cell.getNumericCellValue());
+	//
+	// break;
+	// case Cell.CELL_TYPE_STRING:
+	// cellValue = cell.getStringCellValue().trim().toUpperCase();
+	// break;
+	// case Cell.CELL_TYPE_BLANK:
+	// break;
+	// }
+	//
+	// if (cellValue != null) {
+	// cellValue = cellValue.toUpperCase();
+	// }
+	//
+	// switch (k) {
+	// case 0:
+	// vo.setBizUnit(cellValue);
+	// break;
+	// case 1:
+	//
+	// vo.setExchangeRateType("CUSTOMER FIXED RATE".equals(cellValue)?"Customer
+	// Fixed Rate":"Company Rate");
+	// break;
+	// case 2:
+	// vo.setCurrencyFrom(cellValue);
+	// break;
+	// case 3:
+	// vo.setCurrencyTo(cellValue);
+	// break;
+	// case 4:
+	// vo.setExchangeRateTo(cellValue);
+	// break;
+	// case 5:
+	// vo.setVat(cellValue);
+	// break;
+	// case 6:
+	// vo.setHandling(cellValue);
+	// break;
+	// case 7:
+	// if (cellValue != null && cellValue.contains(".")) {
+	// cellValue = cellValue.substring(0, cellValue.indexOf("."));
+	// }
+	// vo.setSoldToCode(cellValue);
+	// break;
+	// case 8:
+	// if("ROUND UP".equals(cellValue)){
+	// cellValue="Round up";
+	// }
+	// else if("ROUND DOWN".equals(cellValue)){
+	// cellValue="Round down";
+	// }
+	// else if("ROUND OFF".equals(cellValue)){
+	// cellValue="Round off";
+	// }
+	// vo.setRounding(cellValue);
+	// break;
+	// case 9:
+	// vo.setDecimalPoint(cellValue);
+	// break;
+	// case 10:
+	//// String format1 = String.format("%f",
+	// double1).substring(0,cellValue.indexOf(".")
+	//// String format = String.format("%f", cellValue);
+	//// String substring = String.format("%f", cellValue).substring(0,
+	// cellValue.indexOf("."));
+	//// System.out.println(format);
+	//// System.out.println(substring);
+	//// vo.setRateRemark((String.format("%f",
+	// cellValue)).substring(0,cellValue.indexOf(".")));
+	//// System.out.println("vo.setRateRemark"+vo.getRateRemark());
+	////
+	// vo.setRateRemark(cellValue);
+	//
+	// break;
+	//
+	// }
+	// // switch(k){
+	// // case 0:
+	// // vo.setCurrencyFrom(cellValue);
+	// // break;
+	// // case 1:
+	// // vo.setCurrencyTo(cellValue);
+	// // break;
+	// // case 2:
+	// // vo.setExchangeRateFrom(cellValue);
+	// // break;
+	// // case 3:
+	// // vo.setExchangeRateTo(cellValue);
+	// // break;
+	// // case 4:
+	// // vo.setVat(cellValue);
+	// // break;
+	// // case 5:
+	// // vo.setHandling(cellValue);
+	// // break;
+	// // case 6:
+	// // if(cellValue != null && cellValue.contains(".")){
+	// // cellValue = cellValue.substring(0,cellValue.indexOf("."));
+	// // }
+	// // vo.setSoldToCode(cellValue);
+	// // break;
+	// //
+	// // }
+	//
+	// }
+	//
+	//
+	// if(vo.getBizUnit()!=null){
+	// vo.setSeq(i);
+	// exchangeRateVos.add(vo);
+	// }
+	// }
+	//
+	// return exchangeRateVos;
+	// }
+
+	private List<ExchangeRate> convertExchangeRateVoToEntity(List<ExchangeRateVo> exchangeRateVos) {
+
+		List<ExchangeRate> exchangeRates = new ArrayList<ExchangeRate>();
+
+		Date date = new Date();
+
+		for (ExchangeRateVo vo : exchangeRateVos) {
+			
+
+			ExchangeRate exchangeRate = new ExchangeRate();
+
+			exchangeRates.add(exchangeRate);
+
+			ExchangeRateType exchangeRateType;
+			if (vo.getExchangeRateType().equals("Company Rate")) {
+				exchangeRateType = ExchangeRateType.COMPANY_RATE;
+			} else {
+				exchangeRateType = ExchangeRateType.CUSTOMER_FIXED_RATE;
+			}
+			exchangeRate.setExchangeRateType(exchangeRateType);
+			exchangeRate.setCurrFrom(vo.getCurrencyFrom());
+			exchangeRate.setCurrTo(vo.getCurrencyTo());
+			// exchangeRate.setExRateFrom(new
+			// BigDecimal(vo.getExchangeRateFrom()));
+			exchangeRate.setExRateFrom(new BigDecimal("1"));
+			// exchangeRate.setExRateTo(new BigDecimal(vo.getExchangeRateTo()));
+
+			// exchangeRate.setVat(new BigDecimal(vo.getVat()));
+			// exchangeRate.setVat(new BigDecimal(vo.getVat()));
+			// exchangeRate.setHandling(new BigDecimal(vo.getHandling()));
+
+			exchangeRate.setSoldToCode(vo.getSoldToCode());
+
+			exchangeRate.setBizUnit(selectedBizUnit);
+
+			exchangeRate.setValidFrom(date);
+
+			// exchangeRate.setDeleteFlag(false);
+			exchangeRate.setLastUpdatedBy(employeeId);
+			int RoundType = 0;
+			if (vo.getRounding() != null) {
+				if (vo.getRounding().equals("Round up")) {
+					RoundType = BigDecimal.ROUND_HALF_UP;
+				} else if (vo.getRounding().equals("Round down")) {
+					RoundType = BigDecimal.ROUND_HALF_DOWN;
+				} else if (vo.getRounding().equals("Round off")) {
+					RoundType = BigDecimal.ROUND_FLOOR;
+				}
+			}
+			exchangeRate.setRoundType(RoundType);
+			// exchangeRate.setScale(new Integer(vo.getDecimalPoint()));
+			// exchangeRate.setScale(Integer.parseInt(vo.getDecimalPoint().substring(0,
+			// vo.getDecimalPoint().indexOf("."))));
+			exchangeRate.setRemarks(vo.getRateRemark());
+			;
+
+		}
+		return exchangeRates;
+	}
+
+	private List<ExchangeRate> convertExRateVoToEntity(List<ExchangeRateVo> exchangeRateVos) {
+
+		List<ExchangeRate> exchangeRates = new ArrayList<ExchangeRate>();
+
+		Date date = new Date();
+
+		for (ExchangeRateVo vo : exchangeRateVos) {
+
+			ExchangeRate exchangeRate = new ExchangeRate();
+
+			exchangeRates.add(exchangeRate);
+
+			ExchangeRateType exchangeRateType;
+			if (vo.getExchangeRateType().equals("Company Rate")) {
+				exchangeRateType = ExchangeRateType.COMPANY_RATE;
+			} else {
+				exchangeRateType = ExchangeRateType.CUSTOMER_FIXED_RATE;
+			}
+			exchangeRate.setExchangeRateType(exchangeRateType);
+			exchangeRate.setCurrFrom(vo.getCurrencyFrom());
+			exchangeRate.setCurrTo(vo.getCurrencyTo());
+			// exchangeRate.setExRateFrom(new
+			// BigDecimal(vo.getExchangeRateFrom()));
+			exchangeRate.setExRateFrom(new BigDecimal("1"));
+			exchangeRate.setExRateTo(vo.getExchangeRateTo());
+			exchangeRate.setVat(vo.getVat());
+			exchangeRate.setHandling(vo.getHandling());
+			// exchangeRate.setExRateTo(new BigDecimal(vo.getExchangeRateTo()));
+
+			// exchangeRate.setVat(new BigDecimal(vo.getVat()));
+			// exchangeRate.setVat(new BigDecimal(vo.getVat()));
+			// exchangeRate.setHandling(new BigDecimal(vo.getHandling()));
+
+			exchangeRate.setSoldToCode(vo.getSoldToCode());
+
+			exchangeRate.setBizUnit(selectedBizUnit);
+
+			exchangeRate.setValidFrom(date);
+
+			// exchangeRate.setDeleteFlag(false);
+			exchangeRate.setLastUpdatedBy(employeeId);
+			int RoundType = 0;
+			if (vo.getRounding() != null) {
+				if (vo.getRounding().equals("Round up")) {
+					RoundType = BigDecimal.ROUND_HALF_UP;
+				} else if (vo.getRounding().equals("Round down")) {
+					RoundType = BigDecimal.ROUND_HALF_DOWN;
+				} else if (vo.getRounding().equals("Round off")) {
+					RoundType = BigDecimal.ROUND_FLOOR;
+				}
+			}
+			exchangeRate.setRoundType(RoundType);
+			exchangeRate.setScale(vo.getDecimalPoint());
+			// exchangeRate.setScale(Integer.parseInt(vo.getDecimalPoint().substring(0,
+			// vo.getDecimalPoint().indexOf("."))));
+			exchangeRate.setRemarks(vo.getRateRemark());
+			;
+
+		}
+		return exchangeRates;
+	}
+
+	private void nullifyVariables() {
+		uploadFile = null;
+		uploadFileName = null;
+		selectedBizUnit = null;
+		exchangeRateVos = null;
+
+	}
+
+	public String backToHome() {
+		return backHome;
+	}
+
+	public UploadedFile getUploadFile() {
+		return uploadFile;
+	}
+
+	public void setUploadFile(UploadedFile file) {
+		this.uploadFile = file;
+	}
+
+	public String getUploadFileName() {
+		return uploadFileName;
+	}
+
+	public void setUploadFileName(String uploadFileName) {
+		this.uploadFileName = uploadFileName;
+	}
+
+	public List<ExchangeRateVo> getExchangeRateVos() {
+		return exchangeRateVos;
+	}
+
+	public void setExchangeRateVos(List<ExchangeRateVo> exchangeRateVos) {
+		this.exchangeRateVos = exchangeRateVos;
+	}
+
+	public List<SelectItem> getBizUnits() {
+		return bizUnits;
+	}
+
+	public void setBizUnits(List<SelectItem> bizUnits) {
+		this.bizUnits = bizUnits;
+	}
+
+	public String getSelectedBizUnit() {
+		return selectedBizUnit;
+	}
+
+	public void setSelectedBizUnit(String selectedBizUnit) {
+		this.selectedBizUnit = selectedBizUnit;
+	}
+
+	public int[] getResults() {
+		return results;
+	}
+
+	public InputStream getTmpInputStream() {
+		return tmpInputStream;
+	}
+
+	public void setTmpInputStream(InputStream tmpInputStream) {
+		this.tmpInputStream = tmpInputStream;
+	}
+
+}

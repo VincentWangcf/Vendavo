@@ -1,0 +1,78 @@
+﻿/**andy hu 2014-09-12 15:48 comment ********************************************************************************************/
+1: 001restructureProgramType.sql
+the change reason:
+	When upload program pricer, there��s a field called Program. Currently the design and logic about this field has some issues,
+  	change it as below: 
+  		1.	Remove BIZ_UNIT_ID column in programType table,  no need to differentiate same type in different regions. 
+		2.	The matching should be ignore case, so either COMMODITY or Commodity should mapped to ID=1 record.
+		3.	If Program in the pricer does not exist, system should automatically create the field and insert into the table, and then link it to the new uploaded pricer. 
+/*****************************************************************************************************************/
+
+/**Tonmy li 2014-10-15
+2,002_specialcustomer.sql
+add the special customer enhanment.
+1, need to create a new table special_customer.
+2, add the new schedule configuration at schedule job config table.
+/******************************************************************
+
+/**andy hu 2014-10-28 15 comment ********************************************************************************************/
+3:003updateContractPricer.sql
+the change reason:
+add QUOTATION_EFFECTIVE_DATE field to CONTRACT_PRICE_UK1
+
+/**andy hu 2014-10-30 9 comment ********************************************************************************************/
+4:004addPRICER_UPLOAD_SUMMARY.sql
+the change reason:
+add PRICER_UPLOAD_SUMMARY table 
+
+/**andy hu 2014-11-05 15 comment ********************************************************************************************/
+5:005updateTRIGGERAUDIT_QUOTE_ITEM.sql 
+the change reason:
+Found AUDIT_QUOTE_ITEM trigger is  change, so record it
+LAST_UPDATED_BY change id to EMPLOYEE_ID 
+
+/**Tonmy hu 2014-11-21 15 comment ********************************************************************************************/
+6:006AddPricerTypeMappingIndex.sql
+improve the query performance.
+
+/**Tonmy hu 2014-11-26 15 comment ********************************************************************************************/
+7:007AddSAPMaterialTableIndex.sql
+improve the query performance.
+
+/**andy hu 2014-11-24 15 comment ********************************************************************************************/
+8:008insertSAP_WEB_SERVICE_ZWQ_DR_AGP_URL.sql
+we need to develop the webserive to send the mapping of MFR and region to SAP.
+
+/**andy hu 2014-11-26 11 comment ********************************************************************************************/
+9:009addSpecial_materialInMaterial.sql
+defect 159:For this enhancement, system should not display the special material in the search function. It covers ALL autocomplete function and part search of dialog in the system.
+
+/**June Guo 2014-12-12 comment ********************************************************************************************/
+10:011addMQPMOQTCToContractPrices
+defect 118:For this enhancement, add three columns MPQ,MOQ and term and conditions to table contract pricer 
+
+
+/**Tonmy Li 2014-12-18  comment ********************************************************************************************/
+6:010modifyCostIndicatorRule.sql
+the change contains below contents:
+1,239, 267 , 
+  Refer to WQ rule 1.9 , default cost indicator, and instant price checking.
+  
+  
+7:Fixed the production ticket INC0063300 fixed by Tonmy
+8:Fixed Production ticket INC0056433 fixed by Tonmy
+9:Fixed the webpromo null pointer exception. fixed by Tonmy 2015/1/7
+
+/**andy hu 2014-10-15 17:23 comment ********************************************************************************************/
+1: 012 add table in PRICER_OFFLINE.sql
+the change reason:
+	1.	upload offline ,use schedule job 
+/*****************************************************************************************************************/
+
+
+/**June Guo 2015-03-17 comment ********************************************************************************************/
+13:014Add Part Master Enquiry access Info.sql
+defect 356:add new page for part master enquiry
+
+/**Tonmy 2015-04-12 comment ********************************************************************************************/
+13:014divide the future price query.sql

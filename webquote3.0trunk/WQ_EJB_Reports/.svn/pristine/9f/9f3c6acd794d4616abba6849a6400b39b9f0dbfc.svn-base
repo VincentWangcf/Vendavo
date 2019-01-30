@@ -1,0 +1,128 @@
+package com.avnet.emasia.webquote.reports.util;
+
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import com.avnet.emasia.webquote.entity.ProgramPricer;
+import com.avnet.emasia.webquote.entity.QuantityBreakPrice;
+import com.avnet.emasia.webquote.vo.Oqmsp;
+
+public class ProgOqmspUtil {
+
+	private static Logger logger = Logger.getLogger(ProgOqmspUtil.class.getName());
+
+	private final static String INDICATOR_PLUS = "+";
+	private final static String INDICATOR_SUBSTR = "-";
+	private static final String CALL_FOR_SQ = "Call for Special Quote";
+	private static double nullPrice = -999999d;
+
+	public static List<Oqmsp> getOpmspList(ProgramPricer pm) {
+
+		List<Oqmsp> returnList = new ArrayList<Oqmsp>();
+		List<QuantityBreakPrice> progItemBreakList = pm.getQuantityBreakPrices();
+		if (progItemBreakList == null)
+			return null;
+
+		Oqmsp oqm;
+		QuantityBreakPrice pibp1, pibp2;
+		int orgBreakSize = progItemBreakList.size();
+		int breakSize = orgBreakSize;
+		int lastQ = 0;
+		if (breakSize > 5)
+			breakSize = 5;
+
+		for (int i = 0; i < breakSize; i++) {
+			oqm = new Oqmsp();
+			if (breakSize == 1) {
+				pibp1 = (QuantityBreakPrice) progItemBreakList.get(i);
+				oqm.setStartQuantity(pm.getMpq());
+				oqm.setEndQuantity(Integer.MAX_VALUE);
+				oqm.setOq(thousandFormat(pm.getMpq()) + INDICATOR_PLUS);
+				if (pm.getProgramCallForQuote() != null && pm.getProgramCallForQuote() == true) {
+					oqm.setMsp(CALL_FOR_SQ);
+					oqm.setPrice(Double.MAX_VALUE);
+				} else {
+					oqm.setMsp(String.valueOf(pibp1.getQuantityBreakPrice()));
+					oqm.setPrice(pibp1.getQuantityBreakPrice());
+				}
+				returnList.add(oqm);
+			} else {
+				if (i + 1 == breakSize) {
+					if (orgBreakSize > 5) {
+						pibp1 = (QuantityBreakPrice) progItemBreakList.get(i);
+						pibp2 = (QuantityBreakPrice) progItemBreakList.get(i + 1);
+						int firstQ = roundUp(pm.getMpq(), lastQ, pibp1.getQuantityBreak() + pm.getMpq());
+						lastQ = roundUp(pm.getMpq(), lastQ, pibp2.getQuantityBreak());
+						oqm.setStartQuantity(firstQ);
+						oqm.setEndQuantity(lastQ);
+						oqm.setPrice(pibp1.getQuantityBreakPrice());
+						oqm.setOq(thousandFormat(firstQ) + INDICATOR_SUBSTR + thousandFormat(lastQ));
+						oqm.setMsp(String.valueOf(pibp1.getQuantityBreakPrice()));
+						returnList.add(oqm);
+					} else {
+						pibp1 = (QuantityBreakPrice) progItemBreakList.get(i);
+						if (pm.getProgramCallForQuote() != null && pm.getProgramCallForQuote() == true) {
+							int firstq = roundUp(pm.getMpq(), lastQ, pibp1.getQuantityBreak() + pm.getMpq());
+							oqm.setStartQuantity(firstq);
+							oqm.setEndQuantity(Integer.MAX_VALUE);
+							oqm.setOq(thousandFormat(firstq) + INDICATOR_PLUS);
+							oqm.setMsp(CALL_FOR_SQ);
+							oqm.setPrice(Double.MAX_VALUE);
+							returnList.add(oqm);
+						} else {
+							if (pibp1.getQuantityBreakPrice() != null
+									&& pibp1.getQuantityBreakPrice().doubleValue() != nullPrice) {
+								int firstq = roundUp(pm.getMpq(), lastQ, pibp1.getQuantityBreak() + pm.getMpq());
+								oqm.setStartQuantity(firstq);
+								oqm.setEndQuantity(Integer.MAX_VALUE);
+								oqm.setOq(thousandFormat(firstq) + INDICATOR_PLUS);
+								oqm.setPrice(pibp1.getQuantityBreakPrice());
+								oqm.setMsp(String.valueOf(pibp1.getQuantityBreakPrice()));
+								returnList.add(oqm);
+							}
+						}
+					}
+
+				} else {
+					pibp1 = (QuantityBreakPrice) progItemBreakList.get(i);
+					pibp2 = (QuantityBreakPrice) progItemBreakList.get(i + 1);
+					int firstQ = roundUp(pm.getMpq(), lastQ, pibp1.getQuantityBreak() + pm.getMpq());
+					lastQ = roundUp(pm.getMpq(), lastQ, pibp2.getQuantityBreak());
+					oqm.setStartQuantity(firstQ);
+					oqm.setEndQuantity(lastQ);
+					oqm.setPrice(pibp1.getQuantityBreakPrice());
+					oqm.setOq(thousandFormat(firstQ) + INDICATOR_SUBSTR + thousandFormat(lastQ));
+					oqm.setMsp(String.valueOf(pibp1.getQuantityBreakPrice()));
+					returnList.add(oqm);
+				}
+
+			}
+
+		}
+		return returnList;
+	}
+
+	public static final DecimalFormat THOUSAND_FORMAT = new DecimalFormat("###,###");
+
+	public static String thousandFormat(int mpq) {
+		String returnStr = "";
+		try {
+			returnStr = THOUSAND_FORMAT.format(mpq);
+		} catch (Exception e) {
+			logger.log(Level.WARNING, "Exception occuring in method thousandFormat " + e.getMessage(), e);
+		}
+		return returnStr;
+	}
+
+	public static int roundUp(int mpq, int first, int max) {
+		int temp = first;
+		while (max > temp + mpq) {
+			temp = temp + mpq;
+		}
+		return temp;
+	}
+
+}

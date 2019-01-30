@@ -1,0 +1,23 @@
+package com.avnet.emasia.webquote.columndata;
+
+public class Field<T> {
+	private T value;
+	private String sourceValue;
+
+	public T getValue() {
+		return value;
+	}
+
+	public void setValue(T value) {
+		this.value = value;
+	}
+
+	public String getSourceValue() {
+		return sourceValue;
+	}
+
+	public void setSourceValue(String sourceValue) {
+		this.sourceValue = sourceValue;
+	}
+
+}

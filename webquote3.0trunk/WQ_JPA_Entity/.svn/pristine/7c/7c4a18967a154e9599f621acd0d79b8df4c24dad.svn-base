@@ -1,0 +1,578 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Version;
+
+/*
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.vo.PricerInfo;
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+*/
+
+@Entity
+//@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
+@Table(name="PRICER_DELETED")
+//@DiscriminatorColumn(name="PRICER_TYPE")
+public class PricerDeleted implements Serializable {
+	
+	@Id
+	@SequenceGenerator(name = "PRICER_DELETED_ID_GENERATOR", sequenceName = "PRICER_DELETED_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "PRICER_DELETED_ID_GENERATOR")
+	@Column(name="DELETE_ID", unique = true, nullable = false)
+	private long deletedId;
+	
+	@Column(name = "DELETED_BY", nullable = false, length = 10)
+	private String deletedBy;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "DELETED_ON", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+	private Date deletedOn;
+
+	@Column(name="DELETED_BATCH_STATUS")
+	private int deletedBatchStatus;
+
+	@Column(name="ID")
+	private long id;	
+
+	@ManyToOne(fetch=FetchType.LAZY)
+	@JoinColumn(name = "MATERIAL_ID", nullable = false)
+	private Material material;
+	
+	@Column(name = "\"VERSION\"")
+	@Version
+	private Integer version;
+	
+	
+	@Column(precision = 10, scale = 5)
+	private Double cost;
+	
+	@ManyToOne
+	@JoinColumn(name = "COST_INDICATOR")
+	private CostIndicator costIndicator;
+	
+	@Column(name = "QTY_INDICATOR")
+	protected String qtyIndicator;
+	
+	@Column(name = "PRICE_VALIDITY", length = 10)
+	private String priceValidity;
+	
+	@Column(name="SUPPLIER_NUMBER")
+	private long supplierNumber;	
+
+	@Column(name="LEAD_TIME", length=30)
+	private String leadTime;
+
+	@Column(name="BOTTOM_PRICE", precision=10, scale=5)
+	private Double bottomPrice;
+
+	@Column(precision = 10, scale = 3)
+	private Integer moq;
+	
+	@Column(precision=11, scale=2)
+	private Integer mov;
+
+	@Column(precision = 10, scale = 3)
+	private Integer mpq;
+
+	@Column(name="MIN_SELL_PRICE", precision=10, scale=5)
+	private Double minSellPrice;
+
+	@Column(name="FULL_MFR_PART_NUMBER", length=40)
+	private String fullMfrPartNumber;
+
+	@Column(name="PRICE_LIST_REMARKS1", length=255)
+	private String priceListRemarks1;
+
+	@Column(name="PRICE_LIST_REMARKS2", length=255)
+	private String priceListRemarks2;
+
+	@Column(name="PRICE_LIST_REMARKS3", length=255)
+	private String priceListRemarks3;
+
+	@Column(name="PRICE_LIST_REMARKS4", length=255)
+	private String priceListRemarks4;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "SHIPMENT_VALIDITY")
+	private Date shipmentValidity;
+	
+	@Column(name = "TERMS_AND_CONDITIONS", length = 255)
+	private String termsAndConditions;
+	
+	@Column(name = "ALLOCATION_FLAG", length = 1)
+	protected Boolean allocationFlag;
+	
+
+	@Column(name="AVNET_QC_COMMENTS")
+	private String avnetQcComments;	
+
+	@Column(name="CANCELLATION_WINDOW", precision=5)
+	private Integer cancellationWindow;
+
+	
+	@Column(name="PRICER_TYPE")
+	private String pricerType;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "CREATED_ON", nullable = false)
+	private Date createdOn;
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_UPDATED_ON")
+	private Date lastUpdatedOn;
+	
+	@Column(name = "LAST_UPDATED_BY", length = 10)
+	private String lastUpdatedBy;
+	
+	@Column(name = "CREATED_BY", nullable = false, length = 10)
+	private String createdBy;
+	
+	@ManyToOne
+	@JoinColumn(name = "BIZ_UNIT", nullable = false)
+	private BizUnit bizUnitBean;
+
+	@Column(name = "PROGRAM_AVAILABLE_TO_SELL_QTY")
+	private Integer availableToSellQty;
+	
+	
+	@Column(name="QTY_CONTROL")
+	private Integer qtyControl;
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "PRE_VALID_TO_DATE")
+	private Date preValidToDate;
+
+	@Column(name="BATCH_STATUS")
+	private int batchStatus;
+	
+
+	public Integer getQtyControl() {
+		return qtyControl;
+	}
+
+
+	public void setQtyControl(Integer qtyControl) {
+		this.qtyControl = qtyControl;
+	}
+
+	public String getQtyIndicator() {
+		return qtyIndicator;
+	}
+
+
+	public Date getPreValidToDate() {
+		return preValidToDate;
+	}
+
+
+	public void setPreValidToDate(Date preValidToDate) {
+		this.preValidToDate = preValidToDate;
+	}
+
+
+	public int getBatchStatus() {
+		return batchStatus;
+	}
+
+
+	public void setBatchStatus(int batchStatus) {
+		this.batchStatus = batchStatus;
+	}
+
+
+	public void setQtyIndicator(String qtyIndicator) {
+		this.qtyIndicator = qtyIndicator;
+	}
+
+
+	public long getSupplierNumber() {
+		return supplierNumber;
+	}
+
+
+	public void setSupplierNumber(long supplierNumber) {
+		this.supplierNumber = supplierNumber;
+	}
+
+
+	public Double getBottomPrice() {
+		return bottomPrice;
+	}
+
+
+	public void setBottomPrice(Double bottomPrice) {
+		this.bottomPrice = bottomPrice;
+	}
+
+
+	public Double getMinSellPrice() {
+		return minSellPrice;
+	}
+
+
+	public void setMinSellPrice(Double minSellPrice) {
+		this.minSellPrice = minSellPrice;
+	}
+
+
+	public String getFullMfrPartNumber() {
+		return fullMfrPartNumber;
+	}
+
+
+	public void setFullMfrPartNumber(String fullMfrPartNumber) {
+		this.fullMfrPartNumber = fullMfrPartNumber;
+	}
+
+
+	public String getPriceListRemarks1() {
+		return priceListRemarks1;
+	}
+
+
+	public void setPriceListRemarks1(String priceListRemarks1) {
+		this.priceListRemarks1 = priceListRemarks1;
+	}
+
+
+	public String getPriceListRemarks2() {
+		return priceListRemarks2;
+	}
+
+
+	public void setPriceListRemarks2(String priceListRemarks2) {
+		this.priceListRemarks2 = priceListRemarks2;
+	}
+
+
+	public String getPriceListRemarks3() {
+		return priceListRemarks3;
+	}
+
+
+	public void setPriceListRemarks3(String priceListRemarks3) {
+		this.priceListRemarks3 = priceListRemarks3;
+	}
+
+
+	public String getPriceListRemarks4() {
+		return priceListRemarks4;
+	}
+
+
+	public void setPriceListRemarks4(String priceListRemarks4) {
+		this.priceListRemarks4 = priceListRemarks4;
+	}
+
+
+	public Boolean getAllocationFlag() {
+		return allocationFlag;
+	}
+
+
+	public void setAllocationFlag(Boolean allocationFlag) {
+		this.allocationFlag = allocationFlag;
+	}
+
+
+	public Integer getCancellationWindow() {
+		return cancellationWindow;
+	}
+
+
+	public void setCancellationWindow(Integer cancellationWindow) {
+		this.cancellationWindow = cancellationWindow;
+	}
+
+
+	public Integer getAvailableToSellQty() {
+		return availableToSellQty;
+	}
+
+
+	public void setAvailableToSellQty(Integer availableToSellQty) {
+		this.availableToSellQty = availableToSellQty;
+	}
+
+
+	public SalesCostType getSalesCostType() {
+		return salesCostType;
+	}
+
+
+	public void setSalesCostType(SalesCostType salesCostType) {
+		this.salesCostType = salesCostType;
+	}
+
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "QUOTATION_EFFECTIVE_DATE")
+	private Date quotationEffectiveDate;
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "QUOTATION_EFFECTIVE_TO")
+	private Date quotationEffectiveTo;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "DISPLAY_QUOTE_EFF_DATE", length = 7)
+	private Date displayQuoteEffDate;
+	
+	@Column(name="SALES_COST_TYPE")
+	@Enumerated(EnumType.STRING)
+	private SalesCostType salesCostType;
+
+	
+
+	public PricerDeleted() {
+	}
+
+	
+	public long getId() {
+		return this.id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getPricerType() {
+		return pricerType;
+	}
+
+
+	public void setPricerType(String pricerType) {
+		this.pricerType = pricerType;
+	}
+
+
+	public Double getCost() {
+		return this.cost;
+	}
+
+	public void setCost(Double cost) {
+		this.cost = cost;
+	}
+
+	public CostIndicator getCostIndicator() {
+		return costIndicator;
+	}
+
+	public void setCostIndicator(CostIndicator costIndicator) {
+		this.costIndicator = costIndicator;
+	}
+
+	public Date getCreatedOn() {
+		return this.createdOn;
+	}
+
+	public void setCreatedOn(Date createdOn) {
+		this.createdOn = createdOn;
+	}
+
+	public Date getLastUpdatedOn() {
+		return this.lastUpdatedOn;
+	}
+
+	public void setLastUpdatedOn(Date lastUpdatedOn) {
+		this.lastUpdatedOn = lastUpdatedOn;
+	}
+
+	public String getLeadTime() {
+		return this.leadTime;
+	}
+
+	public void setLeadTime(String leadTime) {
+		this.leadTime = leadTime;
+	}
+	
+	public Integer getMov() {
+		return this.mov;
+	}
+
+	public void setMov(Integer mov) {
+		this.mov = mov;
+	}
+	
+	public Integer getMoq() {
+		return this.moq;
+	}
+
+	public void setMoq(Integer moq) {
+		this.moq = moq;
+	}
+
+	public Integer getMpq() {
+		return this.mpq;
+	}
+
+	public void setMpq(Integer mpq) {
+		this.mpq = mpq;
+	}
+
+	public Date getShipmentValidity() {
+		return this.shipmentValidity;
+	}
+
+	public void setShipmentValidity(Date shipmentValidity) {
+		this.shipmentValidity = shipmentValidity;
+	}
+
+	public String getPriceValidity() {
+		return priceValidity;
+	}
+
+	public void setPriceValidity(String priceValidity) {
+		this.priceValidity = priceValidity;
+	}
+
+	public Integer getVersion() {
+		return this.version;
+	}
+
+	public void setVersion(Integer version) {
+		this.version = version;
+	}
+
+	public String getLastUpdatedBy() {
+		return lastUpdatedBy;
+	}
+
+	public void setLastUpdatedBy(String lastUpdatedBy) {
+		this.lastUpdatedBy = lastUpdatedBy;
+	}
+
+	public String getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public BizUnit getBizUnitBean() {
+		return this.bizUnitBean;
+	}
+
+	public void setBizUnitBean(BizUnit bizUnitBean) {
+		this.bizUnitBean = bizUnitBean;
+	}
+
+	public Material getMaterial() {
+		return this.material;
+	}
+
+	public void setMaterial(Material material) {
+		this.material = material;
+	}
+
+	public Date getQuotationEffectiveTo() {
+		return quotationEffectiveTo;
+	}
+
+	public void setQuotationEffectiveTo(Date quotationEffectiveTo) {
+		this.quotationEffectiveTo = quotationEffectiveTo;
+	}
+
+	public Date getDisplayQuoteEffDate() {
+		return this.displayQuoteEffDate;
+	}
+
+	public void setDisplayQuoteEffDate(Date displayQuoteEffDate) {
+		this.displayQuoteEffDate = displayQuoteEffDate;
+	}
+	
+	public String getTermsAndConditions() {
+		return termsAndConditions;
+	}
+
+	public void setTermsAndConditions(String termsAndConditions) {
+		this.termsAndConditions = termsAndConditions;
+	}
+
+	public Date getQuotationEffectiveDate() {
+		return quotationEffectiveDate;
+	}
+
+	public void setQuotationEffectiveDate(Date quotationEffectiveDate) {
+		this.quotationEffectiveDate = quotationEffectiveDate;
+	}
+	
+	public String getAvnetQcComments() {
+		return avnetQcComments;
+	}
+
+	public void setAvnetQcComments(String avnetQcComments) {
+		this.avnetQcComments = avnetQcComments;
+	}
+
+
+	public long getDeletedId() {
+		return deletedId;
+	}
+
+
+	public void setDeletedId(long deletedId) {
+		this.deletedId = deletedId;
+	}
+
+
+	public String getDeletedBy() {
+		return deletedBy;
+	}
+
+
+	public void setDeletedBy(String deletedBy) {
+		this.deletedBy = deletedBy;
+	}
+
+
+	public Date getDeletedOn() {
+		return deletedOn;
+	}
+
+
+	public void setDeletedOn(Date deletedOn) {
+		this.deletedOn = deletedOn;
+	}
+
+
+	public int getDeletedBatchStatus() {
+		return deletedBatchStatus;
+	}
+
+
+	public void setDeletedBatchStatus(int deletedBatchStatus) {
+		this.deletedBatchStatus = deletedBatchStatus;
+	}
+
+	
+}

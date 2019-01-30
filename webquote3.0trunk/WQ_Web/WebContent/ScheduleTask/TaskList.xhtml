@@ -1,0 +1,78 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="windowTitle">
+		Task List
+	</ui:define>
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+		<h2>Task List test</h2>
+		<h:form>
+			<p:panel>
+				<p:dataTable value="#{TaskMB.taskList}" var="item" paginator="true"
+					rows="50" rowsPerPageTemplate="20,50,100" id="taskList">
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="Task ID" />
+						</f:facet>
+						<h:commandLink action="#{TaskMB.editTask(item)}" value="#{item.taskId}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="Name" />
+						</f:facet>
+						<h:outputText value="#{item.taskName}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="Class" />
+						</f:facet>
+						<h:outputText value="#{item.taskClassName}" />
+					</p:column>
+					<ui:remove>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="Start Date" />
+						</f:facet>
+						<h:outputText value="#{item.startDate}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="End Date" />
+						</f:facet>
+						<h:outputText value="#{item.endDate}" />
+					</p:column>
+					</ui:remove>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="All nodes" />
+						</f:facet>
+						<h:outputText value="#{! item.persistent}" />
+					</p:column>
+					
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="Next Timeout" />
+						</f:facet>
+						<h:outputText value="#{item.nextTimeout}" >
+							<f:convertDateTime pattern="yyyy/MM/dd HH:mm:ss"/>
+						</h:outputText>
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="Expression" />
+						</f:facet>
+						<h:outputText value="#{item.expression}" />
+					</p:column>
+				</p:dataTable>
+				<h:commandButton action="#{TaskMB.createNewTask}" value="New Task" />				
+			</p:panel>	
+		</h:form>
+	</ui:define>
+</ui:composition>

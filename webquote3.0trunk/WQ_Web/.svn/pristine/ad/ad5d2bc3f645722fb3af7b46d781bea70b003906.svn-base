@@ -1,0 +1,537 @@
+package com.avnet.emasia.webquote.utilites.web.common;
+
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+//import java.util.List;
+import java.util.TreeMap;
+import java.util.logging.Logger;
+
+import javax.cache.integration.CacheLoader;
+import javax.cache.integration.CacheLoaderException;
+import javax.ejb.EJB;
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+
+import com.avnet.emasia.webquote.cache.MfrDetailCacheManager;
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.City;
+import com.avnet.emasia.webquote.entity.CostIndicator;
+import com.avnet.emasia.webquote.entity.Country;
+import com.avnet.emasia.webquote.entity.DesignLocation;
+import com.avnet.emasia.webquote.entity.LocaleMaster;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.ManufacturerDetail;
+import com.avnet.emasia.webquote.entity.Plant;
+import com.avnet.emasia.webquote.entity.Role;
+import com.avnet.emasia.webquote.entity.SalesOrg;
+import com.avnet.emasia.webquote.entity.SystemCodeMaintenance;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.entity.ValidationRule;
+import com.avnet.emasia.webquote.quote.cache.DesignLocationCacheManager;
+import com.avnet.emasia.webquote.quote.ejb.CountrySB;
+import com.avnet.emasia.webquote.quote.strategy.factory.DrmsValidationUpdateStrategyFactory;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.web.quote.cache.AccountGroupCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.ApplicationCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.AvnetQuoteCentreCommentCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.BizUnitCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.CityCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.DesignInCatCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.EnquirySegmentCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.MfrCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.QtyIndicatorCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.QuoteTypeCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.RoleCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.TermsAndConditionsCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.UserCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.ValidationRuleCacheManager;
+import com.avnet.emasia.webquote.web.quote.vo.AvnetQuoteCentreCommentVO;
+import com.avnet.emasia.webquote.web.quote.vo.TermsAndConditionsVO;
+import com.avnet.emasia.webquote.web.quote.vo.ValidationRuleVO;
+
+
+//public class SimpleCacheLoader implements CacheLoader<Integer, List<String>> {
+public class TreeMapCacheLoader<K, V> implements CacheLoader<K, TreeMap<K,V>> {
+	private static final Logger LOG = Logger.getLogger(TreeMapCacheLoader.class.getName());
+	
+	private EntityManager em;
+	
+	public EntityManager getEm() {
+		return em;
+	}
+	
+	public void setEm(EntityManager em) {
+		this.em = em;
+	}
+
+	public TreeMapCacheLoader(EntityManager em){
+		this.em = em;
+	}
+
+	@Override
+	public Map loadAll(Iterable keys) throws CacheLoaderException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private TreeMap<String, String> accountGroupMap = new TreeMap<String, String>();
+	private TreeMap<String, List<City>> cityMap = new TreeMap<String, List<City>>();
+	private TreeMap<String, BizUnit> bizUnitMap = new TreeMap<String, BizUnit>();
+	private TreeMap<String, Role> roleMap = new TreeMap<String, Role>();
+	private TreeMap<String, List<SalesOrg>> salesOrgMap = new TreeMap<String, List<SalesOrg>>();
+	private TreeMap<String, List<Plant>> plantMap = new TreeMap<String, List<Plant>>();
+	private TreeMap<String, CostIndicator> costIndicatorMap = new TreeMap<String, CostIndicator>();
+	private TreeMap<String, String> qtyIndicatorMap = new TreeMap<String, String>();
+	private TreeMap<String, AvnetQuoteCentreCommentVO> avnetQuoteCentreCommentMap = new TreeMap<String, AvnetQuoteCentreCommentVO>();
+	private TreeMap<String, TermsAndConditionsVO> termsAndConditionsMap = new TreeMap<String, TermsAndConditionsVO>();
+	private TreeMap<String, String> applicationMap = new TreeMap<String, String>();
+	private TreeMap<String, String> enquirySegmentMap = new TreeMap<String, String>();
+	//private TreeMap<String, DesignLocation> designLocationMap = new TreeMap<String, DesignLocation>();
+	
+	private TreeMap<String, Map> designLocationRegionMap = new TreeMap<String, Map>();
+	
+	private TreeMap<String, String> designRegionMap = new TreeMap<String, String>();
+	private TreeMap<String, List<Manufacturer>> manufacturerMap = new TreeMap<String, List<Manufacturer>>();
+	private TreeMap<String, ManufacturerDetail> mfrDetailMap = new TreeMap<String, ManufacturerDetail>();
+	private TreeMap<String, String> designInCatMap = new TreeMap<String, String>();
+	private TreeMap<String, String> quoteTypeMap = new TreeMap<String, String>();
+	private TreeMap<String, ValidationRuleVO> validationRuleMap = new TreeMap<String, ValidationRuleVO>();
+	private TreeMap<String, List<User>> emailAddressMap = new TreeMap<String, List<User>>();
+	
+	
+	@Override
+	public TreeMap<K,V>load(K key) throws CacheLoaderException {
+		LOG.info("=========================================");
+		LOG.info("TreeMapCache - Key: " + key + " - Load data from DB...");
+		
+		String k = (String)key;
+		
+		if(k.equals(Constants.ACCOUNT_GROUP)){
+			
+			putAccountGroup("0001", "Sold-to party");
+	    	putAccountGroup("0002", "Ship-to party");
+	    	putAccountGroup("0005", "Prospective Customer");
+	    	putAccountGroup("Z004", "End Customer");
+	    	
+			return (TreeMap<K,V>)accountGroupMap;
+			
+		}else if(k.equals(Constants.CITY)){
+			Query query = em.createQuery("select c from City c order by c.name");
+			List<City> cities = (List<City>)query.getResultList();
+			
+			for(City city : cities){
+	    		putCity(city);
+			}
+			
+			return (TreeMap<K,V>)cityMap;
+			
+		}else if(k.equals(Constants.BIZ_UNIT)){
+			Query query = em.createQuery("select b from BizUnit b");
+			List<BizUnit> bizUnits = (List<BizUnit>)query.getResultList();
+			
+			for(BizUnit bizUnit : bizUnits){
+	    		putBizUnit(bizUnit);    		
+	    	}
+			
+			return (TreeMap<K,V>)bizUnitMap;
+			
+		}else if(k.equals(Constants.ROLE)){
+			TypedQuery<Role> query = em.createQuery("select r from Role r order by r.name", Role.class);
+			List<Role> roles =  query.getResultList();
+			
+			for(Role role : roles){
+	    		putRole(role);    		
+	    	}
+			
+			return (TreeMap<K,V>)roleMap;
+			
+		}else if(k.equals(Constants.SALESORG)){
+			Query query = em.createQuery("select s from SalesOrg s order by s.name");
+			List<SalesOrg> salesOrgs = (List<SalesOrg>)query.getResultList();
+			
+			for(SalesOrg so : salesOrgs){
+				putSalesOrg(so);    		
+	    	}
+			
+			return (TreeMap<K,V>)salesOrgMap;
+			
+		}else if(k.equals(Constants.PLANT)){
+			Query query = em.createQuery("select p from Plant p order by p.name");
+			List<Plant> plants = (List<Plant>)query.getResultList();
+			
+			for(Plant plant : plants){
+				putPlant(plant);    		
+	    	}
+			
+			return (TreeMap<K,V>)plantMap;
+			
+		}else if(k.equals(Constants.COST_INDICATOR)){
+			Query query = em.createQuery("select c from CostIndicator c where c.status = true");
+			List<CostIndicator> costIndicators = (List<CostIndicator>)query.getResultList();
+
+			for(CostIndicator costIndicator : costIndicators){
+				putCostIndicator(costIndicator);    		
+	    	}
+			
+			return (TreeMap<K,V>)costIndicatorMap;
+			
+		}else if(k.equals(Constants.QUANTITY_INDICATOR)){
+			Query query = em
+					.createQuery("select c.value from SystemCodeMaintenance c where c.category='QTY INDICATOR'");
+			List<String> quantityIndicators = query.getResultList();
+			
+			for(String qtyIndicator : quantityIndicators){
+	    		putQtyIndicator(qtyIndicator);
+	    	}
+			
+			return (TreeMap<K,V>)qtyIndicatorMap;
+			
+		}else if(k.equals(Constants.QUOTE_CENTRE_COMMENT)){
+			
+			Query query = em
+					.createQuery("select c.value from SystemCodeMaintenance c where c.category='AVNET QUOTE CENTRE COMMENT'");
+			List<String> avnetQuoteCentreComments = query.getResultList();
+			
+			for(int i=0; i<avnetQuoteCentreComments.size(); i++){
+	    		String avnetQuoteCentreComment = avnetQuoteCentreComments.get(i);
+	    		AvnetQuoteCentreCommentVO avnetQuoteCentreCommentVO = new AvnetQuoteCentreCommentVO();
+	    		avnetQuoteCentreCommentVO.setName(avnetQuoteCentreComment);
+	    		avnetQuoteCentreCommentVO.setId(i);
+	    		putAvnetQuoteCentreComment(avnetQuoteCentreCommentVO);
+	    	}
+			
+			return (TreeMap<K,V>)avnetQuoteCentreCommentMap;
+			
+		}else if(k.equals(Constants.TERM_AND_CONDITION)){
+			
+			Query query = em
+					.createQuery("select c.value from SystemCodeMaintenance c where c.category='TERMS AND CONDITIONS'");
+			List<String> termsAndConditionss = query.getResultList();
+			
+			for(int i=0; i<termsAndConditionss.size(); i++){
+	    		String termsAndConditions = termsAndConditionss.get(i);
+	    		TermsAndConditionsVO termsAndConditionsVO = new TermsAndConditionsVO();
+	    		termsAndConditionsVO.setId(i);
+	    		termsAndConditionsVO.setName(termsAndConditions);
+	    		putTermsAndConditions(termsAndConditionsVO);
+	    	}
+			
+			return (TreeMap<K,V>)termsAndConditionsMap;
+			
+		}else if(k.equals(Constants.APPLICATION)){
+			
+			Query query = em
+					.createQuery("select c.value from SystemCodeMaintenance c where c.category='APPLICATION'");
+			List<String> applications = query.getResultList();
+			
+			for(String application : applications){
+	    		putApplication(application);
+	    	}
+			
+			return (TreeMap<K,V>)applicationMap;
+			
+		}else if(k.equals(Constants.ENQUIRY_SEGMENT)){
+			
+			Query query = em
+					.createQuery("select c.value from SystemCodeMaintenance c where c.category='ENQUIRY SEGMENT'");
+			List<String> enquirySegments = query.getResultList();
+			
+			for(String enquirySegment : enquirySegments){
+	    		putEnquirySegment(enquirySegment);
+	    	}
+			
+			return (TreeMap<K,V>)enquirySegmentMap;
+			
+		}
+		else if(k.equals(Constants.DESIGN_LOCATION)){
+			
+			TypedQuery<DesignLocation> query = em.createQuery("select distinct c from DesignLocation c order by c.name", DesignLocation.class);
+			List<DesignLocation> designLocations = query.getResultList();
+			
+			TreeMap designLocationTree = new TreeMap();
+		    Map<String,String> designLocationMap = new TreeMap();
+		    Map<String,List<String>> regionLocationMap = new HashMap<>();
+			
+			for(DesignLocation designLocation : designLocations){
+	    		putDesignLocation(designLocation, designLocationTree, designLocationMap, regionLocationMap);
+	    	}
+			
+			designLocationRegionMap.put("DESIGN_LOCATION_TREE", designLocationTree);
+			designLocationRegionMap.put("DESIGN_LOCATION_MAP", designLocationMap);
+			designLocationRegionMap.put("REGION_LOCATION_MAP", regionLocationMap);
+			return (TreeMap<K,V>)designLocationRegionMap;
+		}
+		else if(k.equals(Constants.DESIGN_REGION)){
+			
+			TypedQuery<String> query = em.createQuery("select distinct c.designRegion from DesignLocation c order by c.name",String.class);
+			List<String> designRegions = query.getResultList();
+			
+			for(String designRegion : designRegions){
+	    		putDesignRegion(designRegion);
+	    	}
+			
+			return (TreeMap<K,V>)designRegionMap;
+			
+		}else if(k.equals(Constants.MANUFACTURER)){
+			Query query = em.createQuery("select b from BizUnit b");
+			List<BizUnit> bizUnits = (List<BizUnit>)query.getResultList();
+			
+			for(BizUnit bizUnit : bizUnits){   
+				query = em.createQuery("select m from Manufacturer m join fetch m.bizUnits b where b = :bizUnit order by m.name");
+				query.setParameter("bizUnit", bizUnit);
+	    		List<Manufacturer> manufacturers = (List<Manufacturer>)query.getResultList();
+   				putMfrListByBizUnit(manufacturers, bizUnit.getName());
+	    	}
+			
+			return (TreeMap<K,V>)manufacturerMap;
+			
+		}else if(k.equals(Constants.MANUFACTURER_DETAIL)){
+			Query query = em.createQuery("select md from ManufacturerDetail md");
+			List<ManufacturerDetail> mfrDetails = (List<ManufacturerDetail>)query.getResultList();
+			
+			for(ManufacturerDetail mfrDetail : mfrDetails){
+	    		putMfrDetail(mfrDetail);
+	    	}
+			
+			return (TreeMap<K,V>)mfrDetailMap;
+			
+		}else if(k.equals(Constants.DESIGN_IN_CAT)){
+			List<String> designInCats = em
+					.createQuery("select c.value from SystemCodeMaintenance c where c.category='DESIGN IN CAT'")
+					.getResultList();
+			
+			for(String designInCat : designInCats){
+	    		putDesignInCat(designInCat);
+	    	}
+			
+			return (TreeMap<K,V>)designInCatMap;
+			
+		}else if(k.equals(Constants.QUOTE_TYPE)){
+			List<String> quoteTypes = em
+					.createQuery("select c.value from SystemCodeMaintenance c where c.category='QUOTE TYPE'")
+					.getResultList();
+			
+			for(String quoteType : quoteTypes){
+	    		putQuoteType(quoteType);
+	    	}
+			
+			return (TreeMap<K,V>)quoteTypeMap;
+			
+		}else if(k.equals(Constants.VALIDATION_RULE)){
+			Query query = em.createQuery("select v from ValidationRule v");
+			List<ValidationRule> validationRules =  query.getResultList();
+			
+			for(ValidationRule validationRule : validationRules){
+	    		ValidationRuleVO validationRuleVO = new ValidationRuleVO();
+	    		validationRuleVO.setMfr(validationRule.getManufacturer().getName());
+	    		validationRuleVO.setRegion(validationRule.getBizUnit().getName());
+	    		validationRuleVO.setApplication(validationRule.getApplication());
+	    		validationRuleVO.setCompetitorInformation(validationRule.getCompetitorInformation());
+	    		validationRuleVO.setDesignLocation(validationRule.getDesignLocation());
+	    		validationRuleVO.setEau(validationRule.getEau());
+	    		validationRuleVO.setEndCustomerCode(validationRule.getEndCustomer());
+	    		validationRuleVO.setMpSchedule(validationRule.getMpSchedule());
+	    		validationRuleVO.setPpSchedule(validationRule.getPpSchedule());
+	    		validationRuleVO.setShipToCode(validationRule.getShipToCode());
+	    		validationRuleVO.setSupplierDrNumber(validationRule.getSupplierDrNo());
+	    		validationRuleVO.setTargetResale(validationRule.getTargetResale());
+	    		validationRuleVO.setProjectName(validationRule.getProject());
+	    		putValidationRule(validationRuleVO);	    		
+	    	}
+			
+			return (TreeMap<K,V>)validationRuleMap;
+			
+		}else if(k.equals(Constants.EMAIL_ADDRESS)){
+			EJBCommonSB commonSB = new EJBCommonSB();
+			List<String> roleNames = commonSB.populateRoleNameList();
+			
+			Query query = em.createQuery("select b from BizUnit b");
+			List<BizUnit> bizUnits = (List<BizUnit>)query.getResultList();
+			
+	    	for(BizUnit bizUnit : bizUnits){
+	    		String sql = "select distinct u from User u join fetch  u.roles r join fetch  u.bizUnits b where u.active = true "
+	    				+ " and r.name in :roleNames and b = :bizUnit order by u.name";
+
+	    		query = em.createQuery(sql);
+
+	    		query.setParameter("roleNames", roleNames);
+	    		query.setParameter("bizUnit", bizUnit);
+
+	    		List<User> users = query.getResultList();
+	    		
+	    		for(User user : users){
+	    			putEmailAddress(user);
+	    		}
+	    	}
+			
+			return (TreeMap<K,V>)emailAddressMap;
+			
+		}else if(k.equals(Constants.DRMS_VALIDATION)){
+			Query query = em.createQuery("select c from SystemCodeMaintenance c where c.category = :category");
+			query.setParameter("category", "DRMS_VALIDATION_IMPL");
+			List<SystemCodeMaintenance> configList = query.getResultList();
+			
+			if(configList != null && configList.size() > 0) {
+    			Map<String,String> map = new HashMap<String,String>();
+    			for(SystemCodeMaintenance config : configList) {
+    				String region = config.getRegion().trim();
+    				String value = config.getValue().trim();
+    				map.put(region, value);
+    			}
+    			DrmsValidationUpdateStrategyFactory.getInstance().initImplMap(map);
+    			
+    			TreeMap<String, DrmsValidationUpdateStrategyFactory> drmsValidationMap = new TreeMap<String, DrmsValidationUpdateStrategyFactory>();
+    			drmsValidationMap.put(Constants.DRMS_VALIDATION, DrmsValidationUpdateStrategyFactory.getInstance());
+    			return (TreeMap<K,V>)drmsValidationMap;
+    		}
+			
+			return null;
+		}
+		
+		return null;
+
+	}
+	
+	public void putAccountGroup(String accountGroup, String description) {
+    	accountGroupMap.put(accountGroup, description);
+    }
+	
+	public void putCity(City city) {
+    	List<City> list = new ArrayList<City>();
+    	if(cityMap.containsKey(city.getCountry().getId())){
+    		list = (List<City>) cityMap.get(city.getCountry().getId());
+    	} else {
+    		list = new ArrayList<City>();
+    	}
+    	list.add(city);
+    	cityMap.put(city.getCountry().getId(), list);
+    }
+	
+	public void putBizUnit(BizUnit bizUnit) {
+    	bizUnitMap.put(bizUnit.getName(), bizUnit);
+    }
+	
+	public void putRole(Role role) {
+    	roleMap.put(role.getName(), role);
+    }
+	
+	public void putSalesOrg(SalesOrg salesOrg) {
+    	List<BizUnit> bizUnits = salesOrg.getBizUnits();
+    	if(bizUnits != null){
+    		for(BizUnit bizUnit : bizUnits){
+    			List<SalesOrg> salesOrgs = null;
+    			if(salesOrgMap.containsKey(bizUnit.getName())){
+    				salesOrgs = (List<SalesOrg>) salesOrgMap.get(bizUnit.getName());    				
+    			} else {
+    				salesOrgs = new ArrayList<SalesOrg>();    				
+    			}
+    			salesOrgs.add(salesOrg);
+    			salesOrgMap.put(bizUnit.getName(), salesOrgs);    			
+    		}
+    	}
+    }
+	
+	public void putPlant(Plant plant) {
+    	List<SalesOrg> salesOrgs = plant.getSalesOrgs();
+    	if(salesOrgs != null){
+    		for(SalesOrg salesOrg : salesOrgs){
+    			List<BizUnit> bizUnits = salesOrg.getBizUnits();   		
+        		for(BizUnit bizUnit : bizUnits){
+        			List<Plant> plants = null;
+	    			if(plantMap.containsKey(bizUnit.getName())){
+	    				plants = (List<Plant>) plantMap.get(bizUnit.getName());    				
+	    			} else {
+	    				plants = new ArrayList<Plant>();    				
+	    			}
+	    			plants.add(plant);
+	    			plantMap.put(bizUnit.getName(), plants);  
+        		}
+    		}
+    	}
+    }
+
+	public void putCostIndicator(CostIndicator costIndicator) {
+		costIndicatorMap.put(costIndicator.getName(), costIndicator);
+	}
+	
+	public void putQtyIndicator(String qtyIndicator) {
+    	qtyIndicatorMap.put(qtyIndicator, qtyIndicator);
+    }
+	
+	public void putAvnetQuoteCentreComment(AvnetQuoteCentreCommentVO avnetQuoteCentreComment) {
+		avnetQuoteCentreCommentMap.put(avnetQuoteCentreComment.getName(), avnetQuoteCentreComment);
+    }
+	
+	 public void putTermsAndConditions(TermsAndConditionsVO termsAndConditions) {
+		 termsAndConditionsMap.put(termsAndConditions.getName(), termsAndConditions);
+	 }
+	 
+	 public void putApplication(String application) {
+		 applicationMap.put(application, application);
+	 }
+	 
+	 public void putEnquirySegment(String enquirySegment) {
+		 enquirySegmentMap.put(enquirySegment, enquirySegment);
+	 }
+	 
+	 public void putDesignLocation(DesignLocation designLocation, TreeMap designLocationTree, 
+			 Map<String,String> designLocationMap, Map<String,List<String>> regionLocationMap) {
+		 
+
+		 
+		 designLocationTree.put(designLocation.getCode(), designLocation);
+		 designLocationMap.put(designLocation.getCode(), designLocation.getCode());
+
+		 if(regionLocationMap.get(designLocation.getDesignRegion()) == null){
+			 List<String> sis = new ArrayList<>();
+			 sis.add(designLocation.getCode());
+			 regionLocationMap.put(designLocation.getDesignRegion(), sis);
+		 }else{
+			 regionLocationMap.get(designLocation.getDesignRegion()).add(designLocation.getCode());
+		 }
+	 }
+	 
+	 public void putDesignRegion(String designRegion) {
+		 designRegionMap.put(designRegion, designRegion);
+	 }
+	 
+	 public void putMfrListByBizUnit(List<Manufacturer> mfrs, String bizUnit) {
+		 manufacturerMap.put(bizUnit, mfrs);
+	 }
+	 
+	 public void putMfrDetail(ManufacturerDetail mfrDetail) {    
+		 if(mfrDetail!=null){
+			 mfrDetailMap.put(mfrDetail.getManufacturer().getId()+"_"+mfrDetail.getProductGroup().getId()+"_"
+					 +mfrDetail.getProductCategory().getId()+"_"+mfrDetail.getBizUnit().getName(), mfrDetail); 
+		 }
+	 }
+	 
+	 public void putDesignInCat(String designInCat) {
+		 designInCatMap.put(designInCat, designInCat);
+	 }
+	 
+	 public void putQuoteType(String quoteType) {
+		 quoteTypeMap.put(quoteType, quoteType);
+	 }
+	 
+	 public void putValidationRule(ValidationRuleVO validationRule) {
+		 validationRuleMap.put(validationRule.getRegion()+"_"+validationRule.getMfr(), validationRule);
+	 } 
+	 
+	 public void putEmailAddress(User user) {
+		 BizUnit bizUnit = user.getDefaultBizUnit();
+		 List<User> users = (List<User>) emailAddressMap.get(bizUnit.getName());
+		 if(users == null)
+			 users = new ArrayList<User>();
+		 users.add(user);
+		 emailAddressMap.put(bizUnit.getName(), users);
+	 }
+	 
+
+}
+

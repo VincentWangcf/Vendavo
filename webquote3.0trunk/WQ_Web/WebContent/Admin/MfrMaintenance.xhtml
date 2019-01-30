@@ -1,0 +1,143 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="content">
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+<style>
+table td { vertical-align: top;}
+</style>	
+	<h:form id="form1">
+	<p:messages id="messages" escape="false" closable="true"/>
+
+	<p:accordionPanel>
+		<p:tab title="#{dbResource['wq.label.edit']} #{dbResource['wq.label.mfr']} #{dbResource['wq.label.description']}">
+<!-- 			
+		<p:panel header="#{dbResource['wq.label.edit']} #{dbResource['wq.label.mfr']} #{dbResource['wq.label.description']}">
+		</p:panel>
+ -->
+			<h:outputText value="#{dbResource['wq.label.mfr']} &#160;"  />
+			<p:inputText value="#{mfrMaintenanceMB.editMFRName}" /> 
+			<h:outputText value="&#160;&#160;&#160;" />
+			<p:commandButton value="#{dbResource['wq.button.search']}"  icon="ui-icon-search" action="#{mfrMaintenanceMB.editSearch}"  update="@form" />
+			<br/>
+			<hr/>
+			<h:outputText value="#{dbResource['wq.label.mfr']}: &#160;#{mfrMaintenanceMB.editMFRNameCurrent} &#160;&#160;&#160;&#160;" />
+			<br/>
+			<h:outputText value="#{dbResource['wq.label.description']} &#160;"  />
+			<p:inputText value="#{mfrMaintenanceMB.editMFRDesc}" /> 
+			<h:outputText value="&#160;&#160;&#160;" />
+
+			<p:commandButton value="#{dbResource['wq.header.save']}" action="#{mfrMaintenanceMB.editSave}"  update="@form" >
+				<f:attribute name="button" value="#{dbResource['wq.header.save']}" />
+			</p:commandButton>
+		</p:tab>
+
+	</p:accordionPanel>
+	<br/>
+	<br/>
+
+	<p:accordionPanel>
+		<p:tab title="#{dbResource['wq.button.add']} #{dbResource['wq.label.mfr']}">
+<!-- 			
+		<p:panel header="#{dbResource['wq.button.add']} #{dbResource['wq.label.mfr']}">
+		</p:panel>
+ -->
+			<h:outputText value="#{dbResource['wq.label.mfr']} &#160;"  />
+			<p:inputText value="#{mfrMaintenanceMB.manufacturerNew.name}" /> 
+			<h:outputText value="&#160;&#160;&#160;" />
+
+			<h:outputText value="#{dbResource['wq.label.description']} &#160;"  />
+			<p:inputText value="#{mfrMaintenanceMB.manufacturerNew.description}" /> 
+			<h:outputText value="&#160;&#160;&#160;" />
+
+			<p:commandButton value="#{dbResource['wq.header.save']}" action="#{mfrMaintenanceMB.addSave}"  update="@form" >
+				<f:attribute name="button" value="#{dbResource['wq.header.save']}" />
+			</p:commandButton>
+		</p:tab>
+
+	</p:accordionPanel>
+	<br/>
+	<br/>
+	<p:accordionPanel>
+		<p:tab title="#{dbResource['wq.label.dMapping']}"><!-- wq.label.maintainMFR -->
+		
+			<h:panelGrid cellpadding="0" style="width:100%" columns="2">
+				<p:column style="vertical-align: top;">
+				<h:panelGrid cellpadding="0" style="width:400px;" columns="1">
+					<p:row>
+						<h:outputText value="#{dbResource['wq.label.region']} &#160;"  />
+						<h:selectOneMenu id="bizUnitSelect" value="#{mfrMaintenanceMB.buSelected}" style="">	
+							<f:selectItems value="#{mfrMaintenanceMB.bizUnitAll}"  var = "item" itemLabel = "#{item.getName()}" itemValue = "#{item.getName()}"/>  
+						</h:selectOneMenu>
+						<h:outputText value="&#160;&#160;&#160;" />
+						<p:commandButton value="#{dbResource['wq.button.search']}"  icon="ui-icon-search" action="#{mfrMaintenanceMB.search}"  update="@form" />
+					</p:row>
+					<hr/>
+					<p:row>
+						<h:outputText value="#{dbResource['wq.label.mfr']} &#160;"  />
+						<p:inputText value="#{mfrMaintenanceMB.mfrSelected}" /> 
+<!-- 						
+						<h:selectOneMenu id="mfrSelect" value="#{mfrMaintenanceMB.mfrSelected}" style="">	
+							<f:selectItems value="#{mfrMaintenanceMB.mfrAll}"  var = "item" itemLabel = "#{item.getName()}" itemValue = "#{item.getName()}"/>  
+						</h:selectOneMenu>
+ -->						
+						<h:outputText value="&#160;&#160;&#160;" />
+
+						<h:outputText value="#{dbResource['wq.label.pricer']} &#160;" />
+						<h:selectOneMenu id="priceFlagList" value="#{mfrMaintenanceMB.mfrMappingNewPricerFlag}" >	
+		                     <f:selectItem itemLabel="false" itemValue="0" />  
+					         <f:selectItem itemLabel="true" itemValue="1" />  
+						</h:selectOneMenu>
+						<h:outputText value="&#160;&#160;&#160;" />
+						<p:commandButton value="#{dbResource['wq.header.save']}" action="#{mfrMaintenanceMB.save}"  update="@form" >
+							<f:attribute name="button" value="#{dbResource['wq.header.save']}" />
+						</p:commandButton>
+					</p:row>
+				</h:panelGrid>
+				</p:column>
+				<p:column>
+				<h:panelGrid cellpadding="0" style="width:800px; text-align:left;" columns="1">
+				<br/>
+					<p:dataTable id="mfrMapping_Table" value="#{mfrMaintenanceMB.mfrMappingResult}"  widgetVar="mfrMappingTable"			
+						var="mpp" 
+						filteredValue=""
+						paginator="true" 
+						rows="20"
+	    				rowsPerPageTemplate="20,50,100"
+						paginatorPosition="bottom" 
+						style="width:500px"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+					
+						<p:column headerText="#{dbResource['wq.label.mfr']}" filterBy="#{mpp.manufacturer.name}" filterMatchMode="contains" sortBy="#{mpp.manufacturer.name}">
+							<h:outputText value="#{mpp.manufacturer.name}" />
+						</p:column>
+	
+						<p:column headerText="#{dbResource['wq.label.pricer']}" filterBy="#{mpp.pricer}" filterMatchMode="contains" sortBy="#{mpp.pricer}">
+							<h:outputText value="#{mpp.pricer}" />
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.delete']}" style="text-align: center">
+							<p:commandButton value="#{dbResource['wq.label.delete']}" process="@this" update="mfrMapping_Table" onclick="PF('mfrMappingTable').clearFilters();" title="#{dbResource['wq.label.delete']}" action="#{mfrMaintenanceMB.delete}" >
+								<f:param name="mfrName" value="#{mpp.manufacturer.name}"/>
+							</p:commandButton>
+						</p:column>
+						
+					</p:dataTable>
+				</h:panelGrid>
+				</p:column>
+			</h:panelGrid>
+
+		</p:tab>
+
+	</p:accordionPanel>
+		
+	</h:form>
+	</ui:define>
+</ui:composition>
+
+
+

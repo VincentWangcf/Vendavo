@@ -1,0 +1,66 @@
+/*package com.avnet.emasia.webquote.utilities.schedule;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.jboss.as.server.ServerEnvironment;
+import org.jboss.as.server.ServerEnvironmentService;
+import org.jboss.msc.service.ServiceActivator;
+import org.jboss.msc.service.ServiceActivatorContext;
+import org.jboss.msc.service.ServiceController;
+import org.jboss.msc.service.ServiceRegistryException;
+import org.wildfly.clustering.singleton.SingletonServiceBuilderFactory;
+import org.wildfly.clustering.singleton.SingletonServiceName;
+import org.wildfly.clustering.singleton.election.NamePreference;
+import org.wildfly.clustering.singleton.election.PreferredSingletonElectionPolicy;
+import org.wildfly.clustering.singleton.election.SimpleSingletonElectionPolicy;
+
+import com.avnet.emasia.webquote.exception.CommonConstants;
+
+
+public class HATimerServiceActivator implements ServiceActivator {
+
+	private static final Logger LOG = Logger.getLogger(HATimerServiceActivator.class.getName());
+	
+	private static final String CONTAINER_NAME = "server"; 
+    private static final String CACHE_NAME = "default"; 
+    public static final String PREFERRED_NODE = System.getProperty(HATimerService.JBOSS_NODE_NAME);
+	@Override
+	public void activate(ServiceActivatorContext context) {
+
+		try {
+			LOG.info("----------- HATimerService will be installed on server: -----" + System.getProperty(HATimerService.JBOSS_NODE_NAME));
+			if (System.getProperty("jboss.server.base.dir").endsWith("standalone")) {
+				LOG.info("************** Run on Standalone, stop install HA Timer Service **********");
+				return;
+			}
+		   HATimerService service = new HATimerService();
+
+	       SingletonServiceBuilderFactory factory = (SingletonServiceBuilderFactory) context.getServiceRegistry()
+	    		   .getRequiredService(SingletonServiceName.BUILDER.getServiceName(CONTAINER_NAME,CACHE_NAME)).awaitValue();
+	       factory.createSingletonServiceBuilder(HATimerService.SINGLETON_SERVICE_NAME, service) 
+           			.electionPolicy(new PreferredSingletonElectionPolicy(new SimpleSingletonElectionPolicy(), new NamePreference(PREFERRED_NODE + "/" + CONTAINER_NAME))) 
+	                .build(context.getServiceTarget()) 
+	                .addDependency(ServerEnvironmentService.SERVICE_NAME, ServerEnvironment.class, service.env) 
+	                .setInitialMode(ServiceController.Mode.ACTIVE) 
+	                .install() ; 
+			SingletonService<String> singleton = new SingletonService<String>(service, HATimerService.SINGLETON_SERVICE_NAME);
+
+			singleton.build(new DelegatingServiceContainer(context.getServiceTarget(), context.getServiceRegistry()))
+					.addDependency(ServerEnvironmentService.SERVICE_NAME, ServerEnvironment.class, service.env).setInitialMode(ServiceController.Mode.ACTIVE)
+					.install();
+			LOG.info("-----------------HATimerService installed on server ");
+			LOG.info("******************************************************************************");
+		} catch (Exception e) {
+			LOG.log(Level.WARNING, "******************************************************************************"+e.getMessage(),"");
+			LOG.log(Level.WARNING, "---------HATimerService installed error-------"+e.getMessage(),"");
+			LOG.log(Level.WARNING, "******************************************************************************"+e.getMessage(),"");
+			throw new ServiceRegistryException(CommonConstants.WQ_EJB_UTILITY_HA_TIMER_SERVICE_START_WITH_ERROR);
+		}
+	}
+	
+	
+	
+
+}
+*/

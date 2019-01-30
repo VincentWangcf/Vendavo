@@ -1,0 +1,8 @@
+alter table QUOTE_ITEM rename column MIN_SELL_PRICE to BOTTOM_PRICE;
+alter table QUOTE_ITEM rename column NORM_SELL_PRICE to MIN_SELL_PRICE;
+
+alter table QUOTE_ITEM_HIS rename column MIN_SELL_PRICE to BOTTOM_PRICE;
+alter table QUOTE_ITEM_HIS rename column NORM_SELL_PRICE to MIN_SELL_PRICE;
+
+ALTER TABLE PRICER rename column  "MIN_SELL" to "BOTTOM_PRICE";
+ALTER TABLE PRICER rename column  "NORMAL_SELL" to "MIN_SELL_PRICE";

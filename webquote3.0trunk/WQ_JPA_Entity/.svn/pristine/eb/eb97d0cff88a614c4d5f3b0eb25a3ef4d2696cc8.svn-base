@@ -1,0 +1,261 @@
+package com.avnet.emasia.webquote.entity;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import com.avnet.emasia.webquote.cache.ICacheUtil;
+import com.avnet.emasia.webquote.strategy.MoneyConvertStrategyWithCustomer;
+import com.avnet.emasia.webquote.strategy.MoneyConvertStrategyWithoutCustomer;
+import com.avnet.emasia.webquote.strategy.MoneyConvertStrategy;
+
+@Test
+public class MoneyTest {
+	
+	
+	private Customer customer;
+	private BizUnit bizUnit;
+	private CacheUtilTest cacheUtil;
+	
+	@BeforeMethod
+	public void setup() {
+		customer = new Customer();
+		customer.setCustomerNumber("123");
+		bizUnit = new BizUnit("CHINA");
+		cacheUtil = new CacheUtilTest();
+	}
+	
+	public void test1() {
+		Money money = Money.of("0.77", "USD");
+		Money.setCacheUtil(cacheUtil);
+		
+		Money convertTo = money.convertToRfq(Currency.RMB, bizUnit, customer, new Date());
+		Money money2 = Money.of("5.18980", "RMB");
+		assertEquals(convertTo, money2);
+		
+	}
+	
+	
+	public void test2() {
+		Money money = Money.of("0.77", "USD");
+		Money.setCacheUtil(cacheUtil);
+		customer.setCustomerNumber("335");
+		
+		Money convertTo = money.convertToRfq(Currency.RMB, bizUnit, customer, new Date());
+		Money money2 = Money.of("5.16670", "RMB");
+		assertEquals(convertTo, money2);
+		
+	}
+	
+	public void test3() {
+		Money money = Money.of("0.77", "USD");
+		Money.setCacheUtil(cacheUtil);
+		customer.setCustomerNumber("335");
+		
+		Money convertTo = money.convertToRfq(Currency.RMB, bizUnit, null, new Date());
+		Money money2 = Money.of("5.18980", "RMB");
+		assertEquals(convertTo, money2);
+		
+	}
+
+	
+	public void test4() {
+		Money money = Money.of("7.3", "EUR");
+		Money.setCacheUtil(cacheUtil);
+		
+		Money convertTo = money.convertToRfq(Currency.RMB, bizUnit, customer, new Date());
+		Money money2 = Money.of("57.88471", "RMB");
+		assertEquals(convertTo, money2);
+		
+	}
+	
+	public void test5() {
+		Money money = Money.of("7.3", "EUR");
+		Money.setCacheUtil(cacheUtil);
+		customer.setCustomerNumber("335");
+		Money convertTo = money.convertToRfq(Currency.RMB, bizUnit, customer, new Date());
+		Money money2 = Money.of("57.88471", "RMB");
+		assertEquals(convertTo, money2);
+		
+	}
+	
+	public void test6() {
+		Money money = Money.of("7.3", "EUR");
+		Money.setCacheUtil(cacheUtil);
+		
+		Money convertTo = money.convertToRfq(Currency.EUR, bizUnit, customer, new Date());
+		Money money2 = Money.of("7.30000", "EUR");
+		assertEquals(convertTo, money2);
+		
+	}
+	
+	public void test7() {
+		
+		Money money1 = Money.of("1.00001", "RMB").convertToRfq(Currency.USD, bizUnit, null, new Date(),5);
+		Money money2 = Money.of("1", "RMB").convertToRfq(Currency.USD, bizUnit, null, new Date(),5);
+		assertEquals(money1, money2);
+		
+		money1 = Money.of("1.00001", "RMB").convertToRfq(Currency.USD, bizUnit, null, new Date());
+		money2 = Money.of("1", "RMB").convertToRfq(Currency.USD, bizUnit, null, new Date());
+		assertEquals(money1, money2);
+		
+		money1 = Money.of("1.00001", "RMB").convertToRfq(Currency.USD, bizUnit, null, new Date(),6);
+		money2 = Money.of("1", "RMB").convertToRfq(Currency.USD, bizUnit, null, new Date(),6);
+		assertNotEquals(money1, money2);
+	}
+
+	
+}
+
+class CacheUtilTest implements ICacheUtil{
+	
+	List<ExchangeRate> rates = new ArrayList<>();
+
+	public CacheUtilTest() {
+		ExchangeRate r1 = new ExchangeRate();
+		r1.setBizUnit("CHINA");
+		r1.setCurrFrom("USD");
+		r1.setCurrTo("RMB");
+//		r1.setDeleteFlag(false);
+		r1.setExRateTo(new BigDecimal("6.74"));
+		r1.setVat(new BigDecimal("1"));
+		r1.setHandling(new BigDecimal("1.04"));
+		r1.setValidFrom(new Date(100, 01, 01));
+		r1.setValidTo(new Date(200, 01, 01));
+		
+		
+		ExchangeRate r2 = new ExchangeRate();
+		r2.setBizUnit("CHINA");
+		r2.setCurrFrom("USD");
+		r2.setCurrTo("EUR");
+//		r2.setDeleteFlag(false);
+		r2.setExRateTo(new BigDecimal("0.85"));
+		r2.setVat(new BigDecimal("1.08"));
+		r2.setHandling(new BigDecimal("1.03"));
+		r2.setValidFrom(new Date(100, 01, 01));
+		r2.setValidTo(new Date(200, 01, 01));
+		
+		ExchangeRate r3 = new ExchangeRate();
+		r3.setBizUnit("CHINA");
+		r3.setCurrFrom("USD");
+		r3.setCurrTo("JPY");
+//		r3.setDeleteFlag(false);
+		r3.setExRateTo(new BigDecimal("110.63"));
+		r3.setVat(new BigDecimal("1.06"));
+		r3.setHandling(new BigDecimal("1.02"));
+		r3.setValidFrom(new Date(100, 01, 01));
+		r3.setValidTo(new Date(200, 01, 01));
+		
+		ExchangeRate r4 = new ExchangeRate();
+		r4.setBizUnit("CHINA");
+		r4.setCurrFrom("USD");
+		r4.setCurrTo("TWD");
+//		r4.setDeleteFlag(false);
+		r4.setExRateTo(new BigDecimal("30.28"));
+		r4.setVat(new BigDecimal("1.04"));
+		r4.setHandling(new BigDecimal("1.01"));
+		r4.setValidFrom(new Date(100, 01, 01));
+		r4.setValidTo(new Date(200, 01, 01));
+		
+		ExchangeRate r5 = new ExchangeRate();
+		r5.setBizUnit("CHINA");
+		r5.setCurrFrom("USD");
+		r5.setCurrTo("SGD");
+//		r5.setDeleteFlag(false);
+		r5.setExRateTo(new BigDecimal("1.33"));
+		r5.setVat(new BigDecimal("1.01"));
+		r5.setHandling(new BigDecimal("1.02"));
+		r5.setValidFrom(new Date(100, 01, 01));
+		r5.setValidTo(new Date(200, 01, 01));
+		
+		
+		//below 2 have sold to
+		ExchangeRate r6 = new ExchangeRate();
+		r6.setBizUnit("CHINA");
+		r6.setCurrFrom("USD");
+		r6.setCurrTo("RMB");
+//		r6.setDeleteFlag(false);
+		r6.setExRateTo(new BigDecimal("6.71"));
+		r6.setVat(new BigDecimal("1.17"));
+		r6.setHandling(new BigDecimal("1.025"));
+		r6.setValidFrom(new Date(100, 01, 01));
+		r6.setValidTo(new Date(200, 01, 01));
+		r6.setSoldToCode("335");
+		
+		ExchangeRate r7 = new ExchangeRate();
+		r7.setBizUnit("CHINA");
+		r7.setCurrFrom("USD");
+		r7.setCurrTo("TWD");
+//		r7.setDeleteFlag(false);
+		r7.setExRateTo(new BigDecimal("30.13"));
+		r7.setHandling(new BigDecimal("1.07"));
+		r7.setVat(new BigDecimal("1.031"));
+		r7.setValidFrom(new Date(100, 01, 01));
+		r7.setValidTo(new Date(200, 01, 01));
+		r7.setSoldToCode("335");
+		
+		/*
+		ExchangeRate r8 = new ExchangeRate();
+		r8.setBizUnit("CHINA");
+		r8.setCurrFrom("USD");
+		r8.setCurrTo("RMB");
+		r8.setDeleteFlag(false);
+		r8.setExRateTo(new BigDecimal("6.74"));
+		r8.setHandling(new BigDecimal("1"));
+		r8.setVat(new BigDecimal("1.04"));
+		r8.setValidFrom(new Date(2000, 01, 01));
+		r8.setValidTo(new Date(2100, 01, 01));
+		r8.setSoldToCode("335");
+		*/
+		
+		rates.add(r1);
+		rates.add(r2);
+		rates.add(r3);
+		rates.add(r4);
+		rates.add(r5);
+		rates.add(r6);
+		rates.add(r7);
+//		rates.add(r8);
+		
+
+	}
+	
+	@Override
+	public List<ExchangeRate> getExchangeRates() {
+		return rates;
+	}
+
+	public List<String> getDesignRegionList() {
+		return null;
+	}
+
+	public String getDesignRegion(String designRegion) {
+		return null;
+	}
+
+	public Map<String,String> getDesignLocationMap() {
+		return null;
+	}
+
+	public List<DesignLocation> getDesignLocationList() {
+		return null;
+	}
+
+	public List<String> getLocationByRegion(String region) {
+		return null;
+	}
+
+	public DesignLocation getDesignLocation(String designLocation) {
+		return null;
+	}
+
+
+
+}

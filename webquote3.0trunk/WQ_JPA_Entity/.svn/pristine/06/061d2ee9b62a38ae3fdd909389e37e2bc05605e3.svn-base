@@ -1,0 +1,5 @@
+package com.avnet.emasia.webquote.strategy;
+
+public class MoneyConvertStrategyWithCustomer extends MoneyConvertStrategy {
+
+}

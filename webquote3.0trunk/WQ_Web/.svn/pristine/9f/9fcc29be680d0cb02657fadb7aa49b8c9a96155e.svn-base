@@ -1,0 +1,774 @@
+package com.avnet.emasia.webquote.web.mbt;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+import javax.mail.MessagingException;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateFormatUtils;
+import org.apache.poi.hssf.usermodel.DVConstraint;
+import org.apache.poi.hssf.usermodel.HSSFDataValidation;
+import org.apache.poi.hssf.usermodel.HSSFDateUtil;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Name;
+import org.apache.poi.ss.usermodel.RichTextString;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.primefaces.event.FileUploadEvent;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.event.data.FilterEvent;
+import org.primefaces.model.UploadedFile;
+
+import com.avnet.emasia.webquote.constants.ActionEnum;
+import com.avnet.emasia.webquote.constants.BmtFlagEnum;
+import com.avnet.emasia.webquote.entity.Attachment;
+import com.avnet.emasia.webquote.entity.BmtFlag;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.QuoteItemDesign;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+import com.avnet.emasia.webquote.quote.cache.DesignLocationCacheManager;
+import com.avnet.emasia.webquote.quote.ejb.BmtQuoteSB;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.ExcelUtil;
+import com.avnet.emasia.webquote.utilites.web.util.POICellColor;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.common.FilterMatchMode;
+import com.avnet.emasia.webquote.utilities.common.QueryBean;
+import com.avnet.emasia.webquote.utilities.util.DateUtil;
+import com.avnet.emasia.webquote.web.datatable.BaseLazyDataMB;
+import com.avnet.emasia.webquote.web.datatable.LazyEntityDataModel;
+import com.avnet.emasia.webquote.web.quote.FacesUtil;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+@ManagedBean
+@SessionScoped
+public class BmtPlatformMB extends BaseLazyDataMB<QuoteItemDesign> implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+
+	private LazyEntityDataModel<QuoteItemDesign> bmtPlatformVOs;
+	@EJB
+	private BmtQuoteSB bmtQuoteSB;
+	private List<QuoteItemDesign> transferToQcList;
+	private List<Attachment> bmtAttachment;
+	private HashMap<Long, List<Attachment>> cacheUploadFiles = new HashMap<>();
+	@EJB
+	private SystemCodeMaintenanceSB codeMaintenanceSB;
+	@ManagedProperty("#{bmtQuotationHistoryMB}")
+	private BmtQuotationHistoryMB bmtQuotationHistoryMB;
+	
+	public String MSG_SUMMARY_TO_QC=ResourceMB.getText("wq.button.TransferToQC"); 
+	public String MSG_SUMMARY_UPLOAD_TEMPLATE=ResourceMB.getText("wq.button.uploadTemplate");
+	public String MSG_SUMMARY_SAVE_ALL=ResourceMB.getText("wq.button.saveAll");
+	
+	@ManagedProperty(value="#{resourceMB}")
+	/** To Inject ResourceMB instance  */
+    private ResourceMB resourceMB;
+	
+	@PostConstruct
+	private void init() {
+		if (bmtPlatformVOs == null) {
+			bmtPlatformVOs = new LazyEntityDataModel<QuoteItemDesign>(bmtQuoteSB.getDataAccess(UserInfo.getUser()), bmtQuoteSB ,getDataAccess(), "topForm:lazyData");
+		}
+	}
+	public void  preExportOrder(Object order){
+		order = ((StringBuilder)order).append("QC Region,Avnet Quote#,Revert Version,First RFQ Code,Pending Day,RFQ Status,Avnet Quoted Price,Avnet Quoted P/N,Multi-Usage,QC Internal Comment,PM Comment,MFR Quote #,MFR Debit #,MFR Quote Qty,Price Validity,Shipment Validity,Description,Cost Indicator,Cost,Quotation Effective Date,MFR,Requested P/N,Required Qty,EAU,Target Resale,Quote Type,RFQ Submission Date,Salesman Employee Code,Salesman,Team,Sold-To-Party,Sold-To-Code,Customer Type,Project Name,Application,Segment,Design Location,Design In Cat,DRMS Project ID,End Customer,Ship-To-Code,Ship-To-Party,End Customer Code,Remarks,Competitor Information,MFR DR #,PP Schedule,MP Schedule,Item Remarks,SPR,Refresh Attachment,Reason For Refresh,Form No,Sold To Party (Chinese),Design Region,SAP Material Number,Target Margin%,BMT Flag,BMT MFR DR#,BMT Suggest Cost,BMT Suggest Resale,BMT Suggest Margin,BMT MFR Quote#,BMT SQ Effective Date,BMT SQ Expiry Date,BMT Comments,BMT Quoted Qty,BMT Suggest Cost (Non-USD),BMT Suggest Resale (Non-USD),BMT Currency,BMT Exchange Rate (Non-USD),BMT Attachment,Last Update BMT");
+	}
+	
+	public void postExportExcel(Object doc) {
+		LOGGER.info("User: "+UserInfo.getUser().getEmployeeId() +" Export BMT Working platform table");
+//		if(true){return;}
+		HSSFWorkbook  wb = (HSSFWorkbook) doc;
+		Sheet sheet = wb.getSheetAt(0);
+		CellStyle stylePink = ExcelUtil.createStyle(wb, POICellColor.OPTIONAL,CellStyle.ALIGN_LEFT);
+		CellStyle styleYellow = ExcelUtil.createStyle(wb, POICellColor.MANDATORY,CellStyle.ALIGN_LEFT);     
+		CellStyle sheetStyle = ExcelUtil.createStyle(wb, POICellColor.NORMAL,CellStyle.ALIGN_LEFT);
+		
+		for (int i = 0; i < sheet.getPhysicalNumberOfRows(); i++) {
+			Row row = sheet.getRow(i);
+			if(i!=0){
+				BmtFlag bmtFlag = new BmtFlag();
+				bmtFlag.setBmtFlagCode(row.getCell(57).getStringCellValue());
+				row.getCell(57).setCellValue(bmtFlag.getDescription());
+			}
+			for (int c = 0; c < row.getPhysicalNumberOfCells(); c++) {
+				if (c == 36 || c == 69 || c == 70 || c == 62 || c == 63 || c == 64 || c == 65 || c == 66 || c == 67 || c == 68) {
+					row.getCell(c).setCellStyle(stylePink);
+				} else if (c == 57 || c == 58 || c == 59 || c == 60) {
+					row.getCell(c).setCellStyle(styleYellow);
+				}else{
+					row.getCell(c).setCellStyle(sheetStyle);					
+				}
+//				if (c==50 && i!=0){
+//					if(row.getCell(c).getStringCellValue().endsWith("Yes")){
+//						row.getCell(c).setCellValue("Yes");
+//					}
+//					if(row.getCell(c).getStringCellValue().endsWith("No")){
+//						row.getCell(c).setCellValue("No");
+//					}
+//				}
+			}
+		}
+		CellRangeAddressList designLocaationRegions = new CellRangeAddressList(1, -1, 36, 36);  
+        String[] designLocaationItems = (String[]) DesignLocationCacheManager.getDesignLocationMap().keySet().toArray(new String[0]);
+        List<String> currencyLst;
+        
+        String[] currencyItems =  {""};
+		try {
+			currencyLst = codeMaintenanceSB.findCurrency();
+			currencyItems = (String[]) currencyLst.toArray(new String[0]);
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Error occured for User Id: "+UserInfo.getUser().getEmployeeId()+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+		}
+        String[] bmtItems = (String[]) getAllMmtFlag().values().toArray(new String[0]);
+        Sheet hidden = wb.createSheet("hidden");
+        wb.setSheetHidden(1, true);
+        
+        for (int i = 0, length = designLocaationItems.length; i < length; i++) {
+          Row row = hidden.createRow(i);
+          Cell cell = row.createCell(0);
+          cell.setCellValue(designLocaationItems[i]);
+        }
+        
+//        
+//        for (int i = 0, length = bmtItems.length; i < length; i++) {
+//        	HSSFRow row = hidden.getRow(i);
+//        	if(row == null){
+//        		row = hidden.createRow(i);
+//        	}
+//        	HSSFCell cell = row.createCell(1);
+//        	cell.setCellValue(bmtItems[i]);
+//        }
+
+        for (int i = 0, length = currencyItems.length; i < length; i++) {
+        	Row row = hidden.getRow(i);
+        	if(row == null){
+        		row = hidden.createRow(i);
+        	}
+        	Cell cell = row.createCell(2);
+        	cell.setCellValue(currencyItems[i]);
+        }
+        
+        Name namedCelldesignLocation = wb.createName();
+        namedCelldesignLocation.setNameName("hidden");
+        namedCelldesignLocation.setRefersToFormula("hidden!$A$1:$A$" + designLocaationItems.length);
+		DVConstraint constraintdesignLocation = DVConstraint.createFormulaListConstraint("hidden");
+
+        HSSFDataValidation designLocationDataValidation = new HSSFDataValidation(designLocaationRegions,constraintdesignLocation); 
+        designLocationDataValidation.setShowErrorBox(false);
+        sheet.addValidationData(designLocationDataValidation);
+        
+        CellRangeAddressList bmtRegions = new CellRangeAddressList(1, -1, 57, 57);  
+      
+        DVConstraint bmtConstraint = DVConstraint.createExplicitListConstraint(bmtItems);  
+        HSSFDataValidation bmtDataValidation = new HSSFDataValidation(bmtRegions,bmtConstraint);  
+        bmtDataValidation.setShowErrorBox(false);
+        sheet.addValidationData(bmtDataValidation);
+        //need to change to cell 69
+        CellRangeAddressList currencyRegions = new CellRangeAddressList(1, -1, 69, 69);  
+        
+       
+        Name namedCellCurrency = wb.createName();
+        namedCellCurrency.setNameName("hidden2");
+        namedCellCurrency.setRefersToFormula("hidden!$C$1:$C$" + currencyItems.length);
+        DVConstraint constraintCurrency = DVConstraint.createFormulaListConstraint("hidden2");
+        
+        HSSFDataValidation currencyDataValidation = new HSSFDataValidation(currencyRegions,constraintCurrency);  
+        currencyDataValidation.setShowErrorBox(false);
+        sheet.addValidationData(currencyDataValidation);
+        LOGGER.info("User: "+UserInfo.getUser().getEmployeeId() +" Export BMT Working platform table end");
+	}
+
+	// TODO: move to utils class
+	private Map<String, String> getAllMmtFlag() {
+		Map<String, String> flags = new HashMap<>(5);
+		for (BmtFlagEnum bfe : BmtFlagEnum.values()) {
+			flags.put(bfe.code(), bfe.description());
+		}
+		return flags;
+	}
+ 
+	public void doTransferToQc(String uiId) {
+		bmtQuoteSB.transferToQcSendEmail(transferToQcList, UserInfo.getUser());		
+		try{
+			boolean successful = bmtQuoteSB.doTransferToQc(transferToQcList, UserInfo.getUser());
+			if (successful) {
+				transferToQcList = null;
+				bmtPlatformVOs.clearCachePageSelectDatas();
+				FacesUtil.showInfoMessage(ResourceMB.getText("wq.button.TransferToQC"), 
+						ResourceMB.getText("wq.message.successful")+".");
+				FacesUtil.updateUI(uiId.split(","));
+			}
+		}catch(MessagingException e){ 
+			LOGGER.log(Level.SEVERE, "Error occured for User: "+UserInfo.getUser().getEmployeeId()+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+			FacesUtil.showWarnMessage(ResourceMB.getText("wq.button.TransferToQC"),ResourceMB.getText("wq.label.sendEmailError")+".");
+		}catch(Exception e){
+			LOGGER.log(Level.SEVERE, "Error occured for User: "+UserInfo.getUser().getEmployeeId()+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+			FacesUtil.showWarnMessage(ResourceMB.getText("wq.button.TransferToQC"), ResourceMB.getText("wq.message.operationFailed")+".");
+		}
+	}
+	
+	public void clearBmtDatasFilter(String uiId) {
+		if (bmtPlatformVOs.getCacheModifyDatas().isEmpty()) {
+			doClearBmtDatasFilter(uiId);
+		}
+	}
+
+	public void doClearBmtDatasFilter(String uiId) {
+		currentSelectedQuoteItem = null;
+		bmtPlatformVOs.clearCacheModifyDatas();
+		bmtPlatformVOs.clearCachePageSelectDatas();
+		FacesUtil.executeJS("lazyBmtData.clearFilters()");
+		FacesUtil.showInfoMessage(ResourceMB.getText("wq.button.clearFilter"), ResourceMB.getText("wq.message.successful")+".");
+		FacesUtil.updateUI(uiId.split(","));
+	}
+	
+	private List<QueryBean> getDataAccess(){
+		List<QueryBean> dataaccess = new ArrayList<QueryBean>();
+		dataaccess.add(new QueryBean(FilterMatchMode.IN, "o.quoteItem.status", Arrays.asList("BQ", "BIT")));
+		dataaccess.add(new QueryBean(FilterMatchMode.IN, "o.quoteItem.quote.bizUnit", UserInfo.getUser().getBizUnits()));
+		return dataaccess;
+	}
+	
+	public boolean hasModifiedRecords() {
+		return !bmtPlatformVOs.getCacheModifyDatas().isEmpty() || !cacheUploadFiles.values().isEmpty();
+	}
+
+	
+
+	public void setBmtAttachment(List<Attachment> atts) {
+		this.bmtAttachment = atts;
+	}
+
+	public void removeAttachment(Long objectId, Attachment attachmentfue) {
+		List<Attachment> atts = cacheUploadFiles.get(objectId);
+		atts.remove(attachmentfue);
+		if (atts == null || atts.isEmpty()) {
+			cacheUploadFiles.remove(objectId);
+		}
+		FacesUtil.showInfoMessage(ResourceMB.getText("wq.message.removeAttachment"),ResourceMB.getText("wq.message.successfulSmall")+".");
+	}
+	
+	public void handleTemplateUpload(FileUploadEvent fue) {
+		UploadedFile file = fue.getFile();
+		String message=null;
+		List<QuoteItemDesign> items = new ArrayList<>();
+		try {
+			String fileName = file.getFileName().toString();
+			LOGGER.info("User: "+UserInfo.getUser().getEmployeeId() + " upload template: "+fileName);
+			Workbook xls = null;
+			if(fileName.endsWith("xls") || fileName.endsWith("XLS")){
+				xls = new HSSFWorkbook(file.getInputstream());					
+			}else{
+				xls = new XSSFWorkbook(file.getInputstream());	
+			}			
+			Sheet sheet = xls.getSheetAt(0);
+			for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) {
+				Row row = sheet.getRow(i);
+				try {
+					
+					if(!("BQ").equalsIgnoreCase(row.getCell(5).getStringCellValue())){
+						int errRowNum=row.getRowNum()+1;
+						  message = ResourceMB.getText("wq.message.uploadFailed")+" Row["+errRowNum+
+									"]: the quote number in the excel file is not ‘BQ’";
+							FacesContext.getCurrentInstance().addMessage(null,
+									new FacesMessage(FacesMessage.SEVERITY_ERROR, message,
+											""));
+							break;
+					}
+					items.add(checkingUploadData(row));
+					for(QuoteItemDesign quoteItemDesign:items){
+						//check quoteItem If Quote_item.Stage != ‘Pending’ or Quote_Item.Status != ‘BQ’
+						String stage = quoteItemDesign.getQuoteItem().getStage();
+						if(!stage.equalsIgnoreCase("Pending")){			
+							//FacesUtil.showErrorMessage(ResourceMB.getText("wq.button.uploadTemplate"), ResourceMB.getText("wq.message.atRow")+": "+(row.getRowNum() +1));
+							int errRowNum=row.getRowNum()+1;
+							  message = ResourceMB.getText("wq.message.uploadFailed")+" Row["+errRowNum+
+										"]: This record is currently not in the BMT Working Platform";
+								FacesContext.getCurrentInstance().addMessage(null,
+										new FacesMessage(FacesMessage.SEVERITY_ERROR, message,
+												""));
+							break;
+						//	String errorMessage="This record is currently not in the BMT Working Platform";
+						//	throw new WebQuoteException(ResourceMB.getText("wq.error.90006") + errorMessage);
+							}
+						}
+					
+				} catch (Exception e) {
+					LOGGER.log(Level.SEVERE, "Error occured for User: "+UserInfo.getUser().getEmployeeId()+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+					FacesUtil.showWarnMessage(ResourceMB.getText("wq.button.uploadTemplate"), MessageFormatorUtil.getParameterizedStringFromException(e,resourceMB.getResourceLocale()) +" "+ResourceMB.getText("wq.message.atRow")+": "+(row.getRowNum() +1));
+					return;
+				} 
+			}
+			if(!items.isEmpty()){
+				bmtQuoteSB.batchSave(items);
+				bmtPlatformVOs.clearCachePageSelectDatas();
+				FacesUtil.updateUI("topForm:lazyData");
+				FacesUtil.showInfoMessage(ResourceMB.getText("wq.button.uploadTemplate"), ResourceMB.getText("wq.message.successful")+".");
+			}else{
+				FacesUtil.showWarnMessage(ResourceMB.getText("wq.button.uploadTemplate"), ResourceMB.getText("wq.message.emptyTemplate")+".");
+			}
+		} catch (IOException e) {
+			FacesUtil.showWarnMessage(ResourceMB.getText("wq.button.uploadTemplate"), ResourceMB.getText("wq.message.uploadFileError")+".");
+			LOGGER.log(Level.SEVERE, "Error occured for User Id: "+UserInfo.getUser().getEmployeeId()+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e),e);
+		} catch (Exception e) {
+			FacesUtil.showWarnMessage(ResourceMB.getText("wq.button.uploadTemplate"), ResourceMB.getText("wq.message.dataUploadError")+".");
+			LOGGER.log(Level.SEVERE, "Error occured for User Id: "+UserInfo.getUser().getEmployeeId()+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e),e);
+			
+		}
+	}
+
+	private QuoteItemDesign checkingUploadData(Row row) throws WebQuoteException  {
+		row.getCell(1).setCellType(Cell.CELL_TYPE_STRING);
+		Cell cellQuoteNumber = row.getCell(1);
+		if (cellQuoteNumber.getStringCellValue() == null || "".equals(cellQuoteNumber.getStringCellValue())) {
+			throw new WebQuoteException(ResourceMB.getText("wq.error.90024") + cellQuoteNumber);
+		}
+		// TODO: check api
+		String quoteNumber = cellQuoteNumber.getStringCellValue().trim();
+		LOGGER.info("User: "+UserInfo.getUser().getEmployeeId() + " upload quote#: "+quoteNumber);
+		QuoteItemDesign qid = bmtQuoteSB.findByQuoteNumber(quoteNumber,UserInfo.getUser());
+		
+		
+		
+		
+		
+			String drEffectiveDate1=null;
+		  String drExpiryDate1=null;
+		for(int i=0;i<row.getPhysicalNumberOfCells();i++){
+			
+			if(i==63){
+				  if (HSSFDateUtil.isCellDateFormatted(row.getCell(63))) {
+				        Date date = row.getCell(i).getDateCellValue();
+				        String drEffectiveDate = DateFormatUtils.format(date, "dd-MM-yyyy");
+				        drEffectiveDate1 = drEffectiveDate.toString();
+				    } 
+			}
+			if(i==64){
+				  if (HSSFDateUtil.isCellDateFormatted(row.getCell(64))) {
+				        Date date = row.getCell(i).getDateCellValue();
+				        String drExpiryDate = DateFormatUtils.format(date, "dd-MM-yyyy");
+				        drExpiryDate1 = drExpiryDate.toString();
+				    } 
+				}	
+			if(i!=63||i!=64){
+				row.getCell(i).setCellType(Cell.CELL_TYPE_STRING);
+			}
+		}
+		// check quoteItem If Quote_item.Stage != ‘Pending’ or Quote_Item.Status != ‘BQ’, system should show an error message for that row record:
+		//‘’Row [X]: This record is currently not in the BMT Working Platform”
+		//boolean isError= false;
+		String rfqStatus = row.getCell(5).getStringCellValue();
+		/*if(!rfqStatus.equals("BQ")){
+			//throw new WebQuoteException(ResourceMB.getText("wq.error.90024");
+			int errRowNum=row.getRowNum()+1;
+			 String message = ResourceMB.getText("wq.message.uploadFailed")+" Row["+errRowNum+
+						"]: This record is currently not in the BMT Working Platform";
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_ERROR, message,
+								""));
+		
+				
+		}*/
+		 
+		String designLocation = row.getCell(36).getStringCellValue();
+		String bmtFlagDesc = row.getCell(57).getStringCellValue();
+//		defect 265 
+//			if(BmtFlagEnum.BMT_DR.description().equals(bmtFlagDesc)
+//					&& (row.getCell(58).getStringCellValue().length() == 0
+//					|| row.getCell(59).getStringCellValue().length() == 0
+//					|| row.getCell(60).getStringCellValue().length() == 0)){
+//				throw new Exception("please checking mandatory column,");
+//			}
+			
+		String drMfrNo = row.getCell(58).getStringCellValue();
+		String drCost = row.getCell(59).getStringCellValue();
+		String drResale = row.getCell(60).getStringCellValue();
+		String drMfrQuoteNo = row.getCell(62).getStringCellValue();
+		//Cell cell = row.getCell(63);
+		//Date dateCellValue = cell.getDateCellValue();
+		//String stringCellValue = cell.getStringCellValue();
+		
+		//Date drExpiryDate = row.getCell(64).getDateCellValue();
+		//String drExpiryDate = row.getCell(64).getStringCellValue();
+		//String drEffectiveDate = row.getCell(63).getStringCellValue();
+		String drComments = row.getCell(65).getStringCellValue();
+		String drQuoteQty = row.getCell(66).getStringCellValue();
+		String drCostAltCurrency = row.getCell(67).getStringCellValue();
+		String drResaleAltCurrency = row.getCell(68).getStringCellValue();
+		String drAltCurrency = row.getCell(69).getStringCellValue();
+		String drExchangeRate = row.getCell(70).getStringCellValue();
+		
+		try{
+			//modified by Lenon 2016-09-29
+			Date date = new Date();
+			qid.getQuoteItem().setLastUpdatedBmt(UserInfo.getUser().getEmployeeId());
+			qid.getQuoteItem().setLastBmtUpdateTime(date);
+			qid.getQuoteItem().setLastUpdatedBy(UserInfo.getUser().getEmployeeId());
+			qid.getQuoteItem().setLastUpdatedName(UserInfo.getUser().getName());
+			qid.getQuoteItem().setLastUpdatedOn(date);
+			qid.getQuoteItem().setDesignLocation(designLocation);
+			qid.setLastUpdatedBy(UserInfo.getUser().getEmployeeId());
+			qid.setLastUpdatedTime(date);
+			
+			qid.getBmtFlag().setBmtFlagDesc(bmtFlagDesc);
+			qid.setDrMfrNo(drMfrNo);
+			qid.setDrCost(getCellDecimalValue(drCost));
+			qid.setDrResale(getCellDecimalValue(drResale));
+			qid.setDrMfrQuoteNo(drMfrQuoteNo);
+			SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+			Date drEffectiveDate = sdf.parse(drEffectiveDate1);
+			qid.setDrEffectiveDate(drEffectiveDate);    //63
+			Date drExpiryDate = sdf.parse(drExpiryDate1);
+			qid.setDrExpiryDate(drExpiryDate);     //64
+			//qid.setDrEffectiveDate((drEffectiveDate1 != null && drEffectiveDate1.length() > 0) ? DateUtil.stringToDate(drEffectiveDate1, "dd/MM/yyyy","(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[012])/((19|20)\\d\\d)"):null);
+			//qid.setDrEffectiveDate(drEffectiveDate);
+			//qid.setDrExpiryDate((drExpiryDate != null && drExpiryDate.length() > 0) ? DateUtil.stringToDate(drExpiryDate, "dd/MM/yyyy","(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[012])/((19|20)\\d\\d)"):null);
+			qid.setDrComments(drComments);
+			qid.setDrQuoteQty((drQuoteQty != null && drQuoteQty.length() > 0)?Integer.valueOf(drQuoteQty.replace(",","")):null);
+			qid.setDrCostAltCurrency(getCellDecimalValue(drCostAltCurrency));
+			qid.setDrResaleAltCurrency(getCellDecimalValue(drResaleAltCurrency));
+			qid.setDrAltCurrency(drAltCurrency);
+			qid.setDrExchangeRate(getCellDecimalValue(drExchangeRate));
+		}/*catch(ParseException e){
+			throw new WebQuoteException(ResourceMB.getText("wq.error.20014"));
+		}*/catch(Exception e){
+			throw new WebQuoteException(ResourceMB.getText("wq.error.90006"));
+		}
+		return qid;
+	}
+	
+	private BigDecimal getCellDecimalValue(String cellValue){
+		if (cellValue != null && cellValue.trim().length() == 0){
+			return  null;			
+		}else{
+			return	new BigDecimal(cellValue.replaceAll(",", "")).setScale(5,BigDecimal.ROUND_HALF_UP);
+		}
+	}
+	
+	public void handleFileUpload(FileUploadEvent fue) {
+		Long objectId = Long.valueOf(fue.getComponent().getAttributes().get("currentRecordObjectId").toString());
+		List<Attachment> files = cacheUploadFiles.get(objectId);
+		if (files == null) {
+			files = new ArrayList<>();
+			files.add(getAttachmentByUploadedFile(fue.getFile()));
+			cacheUploadFiles.put(objectId, files);
+		} else {
+			files.add(getAttachmentByUploadedFile(fue.getFile()));
+		}
+		LOGGER.info("User: "+UserInfo.getUser().getEmployeeId() +" Upload file "+fue.getFile().getFileName()+" to : " + objectId);
+		// FacesUtil.updateUI("topForm:SAVE_ALL_BUTTON");
+//		FacesUtil.showInfoMessage("upload attachment", "successful.");
+//		for (Attachment f : cacheUploadFiles.get(objectId)) {
+//			LOGGER.log(Level.INFO, objectId + " " + f.getFileName());
+//		}
+	}
+
+	private Attachment getAttachmentByUploadedFile(UploadedFile file) {
+		Attachment a = new Attachment();
+		a.setFileImage(QuoteUtil.getUploadFileContent(file));
+		a.setFileName(file.getFileName());
+		a.setType(QuoteSBConstant.ATTACHMENT_TYPE_BMT);
+		return a;
+	}
+
+	public HashMap<Long, List<Attachment>> getCacheUploadFiles() {
+		return cacheUploadFiles;
+	}
+
+	public void setCacheUploadFiles(HashMap<Long, List<Attachment>> cacheUploadFiles) {
+		this.cacheUploadFiles = cacheUploadFiles;
+	}
+
+	public List<Attachment> getBmtAttachment() {
+		return bmtAttachment;
+	}
+
+	public LazyEntityDataModel<QuoteItemDesign> getBmtPlatformVOs() {
+
+		return bmtPlatformVOs;
+	}
+
+	public void setBmtPlatformVOs(LazyEntityDataModel<QuoteItemDesign> bmtPlatformVOs) {
+		this.bmtPlatformVOs = bmtPlatformVOs;
+	}
+
+	@Override
+	public void cellChangeListener(String id) {
+//		LOGGER.log(Level.INFO, "call updateFieldListener: {0}", id);
+		bmtPlatformVOs.setCacheModifyData(id);
+		FacesUtil.updateUI("topForm:save_all_Button");
+	}
+
+	public void saveAll(String uiId) {
+		if (!hasModifiedRecords()) {
+			FacesUtil.showWarnMessage(ResourceMB.getText("wq.button.saveAll"), ResourceMB.getText("wq.message.noUpdatedRecord")+".");
+			return;  
+		}
+//		for (QuoteItemDesign qid : bmtPlatformVOs.getCacheModifyDatas()) {
+//			LOGGER.log(Level.INFO, qid.toString());
+//		}
+
+		if (doVerifySaveData()) {
+			boolean successful = bmtQuoteSB.batchSaveBMTObject(UserInfo.getUser().getEmployeeId(),UserInfo.getUser(),bmtPlatformVOs.getCacheModifyDatas(), cacheUploadFiles, ActionEnum.BMT_SAVE);
+			if (successful) {
+				clearModifyDatas();
+				if(currentSelectedQuoteItem != null){
+					currentSelectedQuoteItem = bmtQuoteSB.find(currentSelectedQuoteItem.getId());
+				}
+				FacesUtil.showInfoMessage(ResourceMB.getText("wq.button.saveAll"), ResourceMB.getText("wq.message.successfulSmall")+".");
+				FacesUtil.updateUI(uiId.split(","));
+			} else {
+				FacesUtil.showWarnMessage(ResourceMB.getText("wq.button.saveAll"), ResourceMB.getText("wq.message.updateFailed")+".");
+			}
+		}
+	}
+
+	private void clearModifyDatas() {
+		bmtPlatformVOs.clearCacheModifyDatas();
+		getCacheUploadFiles().clear();
+	}
+
+	private boolean doVerifySaveData() {
+		Set<QuoteItemDesign> datas = bmtPlatformVOs.getCacheModifyDatas();
+		StringBuilder msg = new StringBuilder();
+		StringBuilder rowMsg = new StringBuilder();
+		for (QuoteItemDesign qid : datas) {
+			if(msg.length() > 500){
+				msg.append(ResourceMB.getText("wq.message.andMore"));
+				msg.append("...&nbsp;&nbsp; &nbsp;");
+				break;
+			}
+
+			if (qid.getDrMfrNo() != null && qid.getDrMfrNo().length() > 150) {
+				rowMsg.append("-");
+				rowMsg.append(ResourceMB.getText("wq.message.bmtMfrMaxlength"));
+				rowMsg.append(",<br/>");
+			}
+			if (qid.getDrMfrQuoteNo() != null && qid.getDrMfrQuoteNo().length() > 150) {
+				rowMsg.append("-");
+				rowMsg.append(ResourceMB.getText("wq.message.bmtMfrQuotelength"));
+				rowMsg.append(",<br/> ");
+			}
+
+			if (qid.getDrComments() != null && qid.getDrComments().length() > 1000) {
+				rowMsg.append("-");
+				rowMsg.append(ResourceMB.getText("wq.message.bmtCommentsMaxlength"));
+				rowMsg.append(",<br/>");
+			}
+			if(qid.getBmtFlag() == null || "".equals(qid.getBmtFlag().getBmtFlagCode())){
+				qid.getBmtFlag().setBmtFlagCode(BmtFlagEnum.EMPTY.code());
+			}
+			if (rowMsg.length() > 0) {
+				msg.append(ResourceMB.getText("wq.message.forRowQuote")+"# ").append(qid.getQuoteItem().getQuoteNumber()).append(":<br/>");
+				msg.append(rowMsg).append("<br/>");
+				rowMsg = new StringBuilder();
+			}
+		}
+		if (msg.length() > 0) {
+			FacesUtil.showInfoMessage(ResourceMB.getText("wq.button.saveAll"), msg.append(ResourceMB.getText("wq.message.error")+".").toString());
+			return false;
+		}
+		return true;
+	}
+	
+	private boolean doVerifyBeforeToQcSaveData() {
+		Set<QuoteItemDesign> datas = getCacheSelectionDatas();
+		StringBuilder msg = new StringBuilder();
+		StringBuilder rowMsg = new StringBuilder();
+		for (QuoteItemDesign qid : datas) {
+			if(msg.length() > 500){
+				msg.append(ResourceMB.getText("wq.message.andMore"));  
+				msg.append("...&nbsp;&nbsp; &nbsp;");
+				break;
+			}
+			if (qid.getBmtFlag() != null && StringUtils.equals(BmtFlagEnum.BMT_DR.code(), qid.getBmtFlag().getBmtFlagCode())) {
+				if (QuoteUtil.isEmpty(qid.getDrMfrNo())) {
+					rowMsg.append("-");
+					rowMsg.append(ResourceMB.getText("wq.message.bmtMfrMandatory"));
+					rowMsg.append(",<br/> ");
+				}
+				
+				if (qid.getDrCost() == null || qid.getDrCost().doubleValue() == 0) {
+					rowMsg.append("-");
+					rowMsg.append(ResourceMB.getText("wq.message.bmtCostMandatory"));
+					rowMsg.append(",<br/> ");
+				}
+				if (qid.getDrResale() == null || qid.getDrResale().doubleValue() == 0) {
+					rowMsg.append("-");
+					rowMsg.append(ResourceMB.getText("wq.message.bmtResaleMandatory"));
+					rowMsg.append(",<br/> ");
+				}
+				if(rowMsg.length() > 0){  
+					rowMsg.insert(0, ResourceMB.getText("wq.message.bmtFlageDR")+",<br/>");
+				}
+			}
+			if(qid.getBmtFlag() == null || "99".equals(qid.getBmtFlag().getBmtFlagCode())){
+				rowMsg.append("-");
+				rowMsg.append(ResourceMB.getText("wq.message.bmtFlagNotempty"));
+				rowMsg.append(",<br/> ");
+			}
+			if (qid.getDrMfrNo() != null && qid.getDrMfrNo().length() > 150) {
+				rowMsg.append("-");
+				rowMsg.append(ResourceMB.getText("wq.message.bmtMfrMaxlength"));
+				rowMsg.append(",<br/> ");
+				
+			}
+			if (qid.getDrMfrQuoteNo() != null && qid.getDrMfrQuoteNo().length() > 150) {
+				rowMsg.append("-");
+				rowMsg.append(ResourceMB.getText("wq.message.bmtMfrQuotelength"));
+				rowMsg.append(",<br/> ");
+			}
+			
+			if (qid.getDrComments() != null && qid.getDrComments().length() > 1000) {
+				rowMsg.append("-");
+				rowMsg.append(ResourceMB.getText("wq.message.bmtCommentsMaxlength"));
+				rowMsg.append(",<br/> ");
+			}
+			
+			if (rowMsg.length() > 0) {
+				msg.append(ResourceMB.getText("wq.message.forRowQuote")+"# ").append(qid.getQuoteItem().getQuoteNumber()).append(":<br/>");
+				msg.append(rowMsg).append("<br/>");
+				rowMsg = new StringBuilder();
+			}
+		}
+		if (msg.length() > 0) {
+			FacesUtil.showWarnMessage(ResourceMB.getText("wq.button.TransferToQC"), msg.append(ResourceMB.getText("wq.message.error")+".").toString());
+			return false;  
+		}  
+		return true;
+	}
+
+	/**
+	 * before do transfer to qc logic
+	 */
+	public void transferToQc() {
+		if(getCacheSelectionDatas().isEmpty()){
+			FacesUtil.showWarnMessage(ResourceMB.getText("wq.button.TransferToQC"), ResourceMB.getText("wq.label.selectQuote")+"."); 
+		}else
+		if (doVerifyBeforeToQcSaveData()) {
+			boolean successful = bmtQuoteSB.batchSaveBMTObject(UserInfo.getUser().getEmployeeId(), UserInfo.getUser(),bmtPlatformVOs.getCacheModifyDatas(), cacheUploadFiles,ActionEnum.BMT_SAVE_BEFORE_SEND_TO_QC);
+			if (successful) {
+				clearModifyDatas();
+				currentSelectedQuoteItem = null;
+				FacesUtil.updateUI("topForm:save_all_Button","topForm:lazyData");
+				FacesUtil.executeJS("PF('toQc').show()");
+			} else {
+				FacesUtil.showWarnMessage(ResourceMB.getText("wq.button.TransferToQC"), ResourceMB.getText("wq.message.updateFailed")+".");
+			}
+		}
+	}
+
+	@Override
+	public void onRowSelect(SelectEvent event) {
+		super.onRowSelect(event);
+		updateHistoryCondation((QuoteItemDesign) event.getObject());
+	}
+
+	@Override
+	public void onRowSelectCheckbox(SelectEvent event) {
+		super.onRowSelectCheckbox(event);
+		updateHistoryCondation((QuoteItemDesign) event.getObject());
+	}
+
+	private QuoteItemDesign currentSelectedQuoteItem;
+
+	private void updateHistoryCondation(QuoteItemDesign t) {
+		if(t != null){
+			currentSelectedQuoteItem = t;
+			if(bmtQuotationHistoryMB != null){				
+				bmtQuotationHistoryMB.setMfr(t.getQuoteItem().getRequestedMfr().getName());
+				bmtQuotationHistoryMB.setPn(t.getQuoteItem().getRequestedPartNumber());
+				bmtQuotationHistoryMB.setSoldToName(t.getQuoteItem().getSoldToCustomer().getCustomerFullName());
+			}else{
+				LOGGER.severe("updateHistoryCondation error: bmtQuotationHistoryMB is null");
+			}
+			
+			String ecName = "";
+			if(t.getQuoteItem().getEndCustomer() != null){
+				ecName = t.getQuoteItem().getEndCustomer().getName();
+			}
+			bmtQuotationHistoryMB.setEcName(ecName);
+		}else{
+			LOGGER.severe("updateHistoryCondation error: QuoteItemDesign is null");
+		}
+	}
+
+	@Override
+	protected List<QuoteItemDesign> getCurrentPageDatas() {
+		return bmtPlatformVOs.getCurrentPageDatas();
+	}
+
+	@Override
+	public Set<QuoteItemDesign> getCacheSelectionDatas() {
+		return bmtPlatformVOs.getCachePageSelectDatas();
+	}
+
+	public void setBmtQuotationHistoryMB(BmtQuotationHistoryMB bmtQuotationHistoryMB) {
+		this.bmtQuotationHistoryMB = bmtQuotationHistoryMB;
+	}
+
+	public List<QuoteItemDesign> getTransferToQcList() {
+		transferToQcList = new ArrayList<>(bmtPlatformVOs.getCachePageSelectDatas());
+		for (QuoteItemDesign qid : transferToQcList) {
+			qid.getQuoteItem().setDrmsUpdateFailedDesc("");
+		}
+		return transferToQcList;
+	}
+
+	public void setTransferToQcList(List<QuoteItemDesign> transferToQcList) {
+		this.transferToQcList = transferToQcList;
+	}
+
+	protected LazyEntityDataModel<QuoteItemDesign> getLazyData() {
+		return bmtPlatformVOs;
+	}
+
+	public QuoteItemDesign getCurrentSelectedQuoteItem() {
+		return currentSelectedQuoteItem;
+	}
+
+	public void setCurrentSelectedQuoteItem(QuoteItemDesign currentSelectedQuoteItem) {
+		this.currentSelectedQuoteItem = currentSelectedQuoteItem;
+	}
+	@Override
+	public void onFilter(FilterEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	/**
+	 * Setter for resourceMB
+	 * @param resourceMB ResourceMB
+	 * */
+	public void setResourceMB(final ResourceMB resourceMB) {
+		this.resourceMB = resourceMB;
+	}
+}

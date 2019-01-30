@@ -1,0 +1,104 @@
+package com.avnet.emasia.webquote.reports.ejb.remote.impl;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.ejb.Remote;
+import javax.ejb.Stateless;
+
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import com.avnet.emasia.webquote.entity.ExcelReport;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.poi.ExcelGenerator;
+import com.avnet.emasia.webquote.quote.ejb.CatalogSearchSB;
+import com.avnet.emasia.webquote.quote.ejb.MaterialSB;
+import com.avnet.emasia.webquote.quote.vo.CatalogSearchItemBean;
+import com.avnet.emasia.webquote.quote.vo.CatalogSearchResult;
+import com.avnet.emasia.webquote.reports.constant.ReportConstant;
+import com.avnet.emasia.webquote.reports.ejb.ExcelReportSB;
+import com.avnet.emasia.webquote.reports.ejb.remote.OffLineRemote;
+import com.avnet.emasia.webquote.reports.util.ReportConvertor;
+import com.avnet.emasia.webquote.reports.util.ReportsUtil;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.vo.OfflineReportParam;
+
+@Stateless
+@Remote(OffLineRemote.class)
+public class CatalogResultOffLineReport extends OffLineReport implements OffLineRemote {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private static final Logger LOG = Logger.getLogger(CatalogResultOffLineReport.class.getName());
+
+	@EJB
+	ExcelReportSB excelReportSB;
+	
+	@EJB
+	private transient UserSB userSb;
+	
+	@EJB
+	private transient MaterialSB materialSB;
+	
+	@EJB
+	private transient CatalogSearchSB catalogSearchSB;
+	
+	@EJB
+	private SysConfigSB sysConfigSB;
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override
+	public void sendOffLineReport(OfflineReportParam param) throws Exception {
+		List<CatalogSearchResult> resultList = null;
+		SXSSFWorkbook workbook = null;
+		try {
+			int pageSize = 30000;
+			User user = userSb.findByEmployeeIdLazily(param.getEmployeeId());
+			ExcelReport excelReport = excelReportSB.getExcelReportByReportName(param.getReportName());
+			
+			
+			try {
+				resultList = (List<CatalogSearchResult>) param.getCriteriaBean();
+			}catch (Exception e) {
+				LOG.info("search result count convert exception:" + e.getMessage());
+				resultList = new ArrayList<CatalogSearchResult>();
+			}
+			int totalRecords = resultList.size();
+			LOG.info("search result count:" + totalRecords);
+			int count = totalRecords / pageSize;
+			LOG.info("count:" + count);
+			String templatePath = sysConfigSB.getProperyValue(ReportConstant.TEMPLATE_PATH);
+			String reportFilePath = sysConfigSB.getProperyValue(ReportConstant.OFFLINE_REPORT_PATH);
+			String newfileName = ReportsUtil.generateOfflineReportFileName(user.getEmployeeId(), "xlsx","");
+			//reportFilePath = "C:/david/sharefolder/tempd";
+			 
+			workbook = ExcelGenerator.generateExcelTemplate(excelReport, param.getReportName(), templatePath);
+			workbook = ExcelGenerator.generateExcelFile(workbook, resultList, excelReport);
+				 
+			ExcelGenerator.outputExcelFile(workbook, reportFilePath + File.separator + newfileName);
+			sendOfflineEmail(user,newfileName);
+		} catch (Exception e) {
+			LOG.log(Level.WARNING, "Exception PartMaster sendOffLineReport : "+e.getMessage(), e);
+			if(workbook !=null) {
+				workbook.dispose();
+			}
+			throw e;
+		}finally {
+			if(resultList != null) {
+				resultList.clear();
+				resultList = null;
+			}
+		}
+	}
+
+}

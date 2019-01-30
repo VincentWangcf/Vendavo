@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:cc="http://java.sun.com/jsf/composite"
+      xmlns:p="http://primefaces.org/ui">
+
+    <cc:interface>
+        <cc:attribute name="value" required="true" shortDescription="field"/>
+        <cc:attribute name="style" shortDescription="style"/>
+        <cc:attribute name="styleClass" shortDescription="styleClass"/>
+        <cc:attribute name="maxlength" default="3000" shortDescription="maxlength"/>
+        <cc:attribute name="changelistener" method-signature="com.avnet.emasia.webquote.web.datatable.BaseLazyDataMB cellChangeListener(java.lang.String)" required="true"/>
+    </cc:interface>
+
+    <cc:implementation>
+        <p:inputText value="#{cc.attrs.value}" style="#{cc.attrs.style}" styleClass="#{cc.attrs.styleClass}" maxlength="#{cc.attrs.maxlength}">
+            <p:ajax event="change" listener="#{cc.attrs.changelistener}"/>
+        </p:inputText>
+    </cc:implementation>
+</html>

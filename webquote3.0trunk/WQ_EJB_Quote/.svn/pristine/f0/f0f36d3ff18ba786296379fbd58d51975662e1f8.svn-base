@@ -1,0 +1,667 @@
+package com.avnet.emasia.webquote.edi;
+
+import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.sql.PreparedStatement;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.ejb.Timeout;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
+import javax.mail.MessagingException;
+import javax.mail.internet.AddressException;
+import javax.management.RuntimeErrorException;
+import javax.naming.NamingException;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.ParameterExpression;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
+
+import com.avnet.emasia.webquote.constants.EdiMesgType;
+import com.avnet.emasia.webquote.edi.utils.TIEntityFactory;
+import com.avnet.emasia.webquote.edi.utils.TISearchBean;
+import com.avnet.emasia.webquote.entity.AppProperty;
+import com.avnet.emasia.webquote.entity.Attachment;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.stm.constant.StmConstant;
+import com.avnet.emasia.webquote.stm.dto.ExceptionVo;
+import com.avnet.emasia.webquote.stm.dto.InBoundVo;
+import com.avnet.emasia.webquote.stm.dto.OutBoundVo;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.utilities.schedule.HATimerService;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+
+/**
+ * Session Bean implementation class QuoteSB
+ */
+@Stateless
+@LocalBean
+@TransactionManagement(TransactionManagementType.BEAN)
+public class TIInfoExchangeSB {
+	
+	@Resource
+	public UserTransaction ut;
+	
+	@PersistenceContext(unitName="Server_Source")
+	EntityManager em;
+	
+	@EJB
+	MailUtilsSB mailUtilsSB;
+	
+	@EJB
+	private SysConfigSB sysConfigSB;
+	
+	@EJB
+    SystemCodeMaintenanceSB sysCodeMaintSB;
+	
+	//@ejb
+	//private SysConfigSB sys
+	private static final int AfterMoth = -6;
+	private static final Logger LOG =Logger.getLogger(TIInfoExchangeSB.class.getName());
+	private static final String CostIndicatorTo="B-S&D/DPA";
+	
+	public  void tiCsvToDB(final StringBuilder strBuilder) throws Exception {
+		LOG.info("TI JOB tiCsvToDB BEGIN.");
+		File[] files = TIEntityFactory.GetCsvFileListInBound();
+		if(files==null || files.length<1) {
+			LOG.info("TI JOB tiCsvToDB END. No file in path.");
+			return;
+		}
+		for(File file : files) {
+			if(file.exists()) {
+				MesgLog logEntity = null;
+				try
+				{
+					logEntity = TIEntityFactory.CreateLogForCsv(file);
+					ut.setTransactionTimeout(1000000);
+					ut.begin();
+					em.persist(logEntity);
+					ut.commit();
+					
+					
+					
+					//this part need being included by transaction.
+					ut.setTransactionTimeout(1000000);
+					ut.begin();
+					try
+					{
+						/**/
+						List<ThreeAMesgOne> mesgEntitys = TIEntityFactory.CsvToBeans(file);
+						Map<String,ThreeAMesgOne> map = new HashMap<String,ThreeAMesgOne>();
+						for(ThreeAMesgOne mesgEntity :mesgEntitys) {
+							if(map.containsKey(mesgEntity.getPoNum())) {
+								throw new Exception(MessageFormat.format("[{0}] PO_NUM is existed in file.",
+										 mesgEntity.toString()));
+							}
+							map.put(mesgEntity.getPoNum(), mesgEntity);
+						}
+						map = null;
+						for(ThreeAMesgOne mesgEntity :mesgEntitys) {
+							if(isMesgExistedByPoNum(mesgEntity)) {
+								throw new Exception(MessageFormat.format("[{0}] PO_NUM is existed.",
+										 mesgEntity.toString()));
+							}
+							em.persist(mesgEntity);
+						}
+						
+						logEntity.setStatus(TIEntityFactory.LOG_STATUS_PASS);
+						em.merge(logEntity);
+						TIEntityFactory.Backup(file);//???
+						ut.commit();
+					}catch(Exception ex) {
+						try{
+							ut.rollback();
+						}catch (Exception e){
+							LOG.info(e.toString());
+						}
+						//LOG.info(" rollback SUCCESS.");
+						throw ex; 
+					}
+					
+				}catch(Exception ex) {
+					
+					String fileName = file.getName();
+					if(logEntity !=null) {
+						try {
+							ut.begin();
+							String errorMesg = ex.getMessage();
+							logEntity.setErrorMesg(errorMesg==null?null :
+								(errorMesg.length()<500? errorMesg :errorMesg.substring(0, 500)));
+							em.merge(logEntity);
+							ut.commit();
+						} catch (Exception e) {
+							LOG.severe(fileName +"->TIInfoExchangeSB.tiCsvToDB()::save ErrorMesg fail::" + e.getMessage());
+						}
+					}
+					Exception newEx = new Exception(fileName +"->TIInfoExchangeSB.tiCsvToDB()::" + ex.getMessage()); 
+					newEx.initCause(ex);
+					LOG.severe(newEx.getMessage() + newEx.toString());
+					
+					/*send email when exception**/
+					ExceptionVo exceptionVo = new ExceptionVo();
+					exceptionVo.setAction(StmConstant.ACTION_INBOUND);
+					exceptionVo.setFileName(fileName);
+					exceptionVo.setMessage(newEx.toString());
+					SendException(exceptionVo, file);
+					strBuilder.append( newEx.getMessage() + "<br/>");
+					TIEntityFactory.MoveToExceptionDir(file);
+					file = null;
+				}
+			}
+		}
+		
+		LOG.info("TI JOB tiCsvToDB END.");	
+	}
+	/**AS A JOB RUN IN BACKGROUND;PERSIST THE XML FROM TI TO DATABASE **/
+	//@Timeout
+	public void tiXmlToDB(final StringBuilder strBuilder) throws Exception {
+		LOG.info("TI JOB tiXmlToDB BEGIN.");
+		File[] files = TIEntityFactory.GetXmlFileListInBound();
+		if(files==null || files.length<1) {
+			LOG.info("TI JOB END. No file in path.");
+			return;
+		}
+		for(File file : files) {
+			if(file.exists()) {
+				MesgLog logEntity = null;
+				try
+				{
+					TIEntityFactory.verifyFileNameFormat(file.getName());
+					logEntity = TIEntityFactory.CreateLog(file);
+					ut.setTransactionTimeout(1000000);
+					ut.begin();
+					em.persist(logEntity);
+					ut.commit();
+					
+					
+					
+					//this part need being included by transaction.
+					ut.setTransactionTimeout(1000000);
+					ut.begin();
+					try
+					{
+						
+						/**/
+						Object mesgEntity = TIEntityFactory.XmlToBean(file);
+						if(isMesgExistedByPoNum(mesgEntity)) {
+							throw new Exception(MessageFormat.format("[{0}] PO_NUM is existed.",
+									 mesgEntity.toString()));
+						}
+						em.persist(mesgEntity);
+						
+						if(mesgEntity instanceof DMesgApprove) {
+							this.updateQuoteItem((DMesgApprove)mesgEntity);
+						}
+						logEntity.setStatus(TIEntityFactory.LOG_STATUS_PASS);
+						em.merge(logEntity);
+						TIEntityFactory.Backup(file);//???
+						ut.commit();
+					}catch(Exception ex) {
+						//LOG.info(" inner SUCCESS.");
+						/*if(ut.getStatus() == Status.STATUS_MARKED_ROLLBACK || 
+								ut.getStatus() == Status.STATUS_ROLLEDBACK|| 
+								ut.getStatus() == Status.STATUS_ROLLING_BACK) {
+							ut.rollback();
+						}*/
+						try{
+							ut.rollback();
+						}catch (Exception e){
+							LOG.info(e.toString());
+						}
+						//LOG.info(" rollback SUCCESS.");
+						throw ex; 
+					}
+					
+				}catch(Exception ex) {
+					//TIEntityFactory.MoveToExceptionDir(file);
+					String fileName = file.getName();
+					if(logEntity !=null) {
+						try {
+							ut.begin();
+							String errorMesg = ex.getMessage();
+							logEntity.setErrorMesg(errorMesg==null?null :
+								(errorMesg.length()<500? errorMesg :errorMesg.substring(0, 500)));
+							em.merge(logEntity);
+							ut.commit();
+						} catch (Exception e) {
+							LOG.severe(fileName +"->TIInfoExchangeSB.TiXmlToDB()::save ErrorMesg fail::" + e.getMessage());
+						}
+					}
+					Exception newEx = new Exception(fileName +"->TIInfoExchangeSB.TiXmlToDB()::" + ex.getMessage()); 
+					newEx.initCause(ex);
+					LOG.severe(newEx.getMessage() + newEx.toString());
+					
+					/*send email when exception**/
+					ExceptionVo exceptionVo = new ExceptionVo();
+					exceptionVo.setAction(StmConstant.ACTION_INBOUND);
+					exceptionVo.setFileName(fileName);
+					exceptionVo.setMessage(newEx.toString());
+					SendException(exceptionVo, file);
+					strBuilder.append( newEx.getMessage() + "<br/>");
+					TIEntityFactory.MoveToExceptionDir(file);
+					file = null;
+				}
+			}
+		}
+		LOG.info("TI JOB tiXmlToDB END.");		
+	}
+	
+	/***another job***/
+	public void deleteOverTimeData() {
+		
+		this.deleteOverTimeDataInDB();
+		this.deleteOverTimeFile();
+		
+	}
+	private List<?> findMesg(){
+		StringBuilder sql  = new StringBuilder();
+		sql.append("SELECT m FROM MesgRefuse m ");
+		return em.createQuery(sql.toString()).getResultList();
+		
+	}
+	/***the ti mesg data only be saved for 180 days
+	 * @throws SystemException 
+	 * @throws SecurityException 
+	 * @throws  Exception **/
+	private void deleteOverTimeDataInDB() {
+		Date date =  this.getTimeBefore();
+		/*StringBuilder sql  = new StringBuilder();
+		sql.append("DELETE  FROM TI_AD_Refuse  WHERE CREATED_ON < ?;");
+		sql.append("DELETE  FROM TI_A_Approve  WHERE CREATED_ON < ? ;");
+		sql.append("DELETE  FROM TI_D_Approve  WHERE CREATED_ON < ? ;");
+		*/
+		//PreparedStatement p = em.getEntityManagerFactory().;
+		try {
+			ut.setTransactionTimeout(1000000);
+			ut.begin();
+			em.createQuery("DELETE  FROM ThreeAMesgOne  WHERE createdOn < :createdOn").setParameter("createdOn", date).executeUpdate();
+			em.createQuery("DELETE  FROM DMesgApprove  WHERE createdOn < :createdOn").setParameter("createdOn", date).executeUpdate();
+			em.createQuery("DELETE  FROM AMesgApprove  WHERE createdOn < :createdOn").setParameter("createdOn", date).executeUpdate();
+			em.createQuery("DELETE  FROM MesgLog  WHERE createdOn < :createdOn").setParameter("createdOn", date).executeUpdate();
+			em.createQuery("DELETE  FROM MesgRefuse  WHERE createdOn < :createdOn").setParameter("createdOn", date).executeUpdate();
+			ut.commit();
+		}catch(Exception ex) {
+			LOG.severe("deleteOverTimeDataInDB faild:" +ex.getMessage() + "  " +ex.toString() );
+			//LOG.severe("DeleteOverTimeData faild:" +ex.getMessage());
+			try {
+				ut.rollback();
+			} catch (Exception e) {
+			}
+		}
+	}
+	private Date getTimeBefore() {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(new Date());
+		calendar.add(Calendar.MONTH, AfterMoth);
+		return calendar.getTime();
+	}
+	
+	private void deleteOverTimeFile() {
+		Date date =  this.getTimeBefore();
+		try {
+			TIEntityFactory.DeleteFileByCreatedTime(date);
+		}catch(Exception ex) {
+			LOG.severe("deleteOverTimeFile faild:" +ex.getMessage() + "  " +ex.toString() );
+		}
+	}
+	private List<QuoteItem> selectQuoteItem(DMesgApprove dMesg) {
+		StringBuilder sql  = new StringBuilder();
+		sql.append("SELECT q from QuoteItem q WHERE q.quoteNumber=:quoteNum and "
+				+ "q.stage ='PENDING' AND q.status IN ('QC','RBIT','SQ','RBQ')");
+		return (List<QuoteItem>)em.createQuery(sql.toString()).
+				setParameter("quoteNum", dMesg.getQuoteNum()).getResultList();
+	}
+	
+	//use the DMesgApprove to update quote_item .
+	private void updateQuoteItem(DMesgApprove dMesg) {
+		List<QuoteItem> items = selectQuoteItem(dMesg);
+		if(!items.isEmpty()) {
+			for(QuoteItem item :items) {
+				//item.setVendorDebitNumber(String.valueOf(dMesg.getAuthQty()));
+				
+				if(dMesg.getTiAuthNum() !=null) {
+					item.setVendorDebitNumber(String.valueOf(dMesg.getTiAuthNum()));
+				}else {
+					item.setVendorDebitNumber(null);
+				}
+				
+				if(dMesg.getOfferPricer() !=null) {
+					item.setCost(dMesg.getOfferPricer().doubleValue());
+				}else {
+					item.setCost(null);
+				}
+				
+				if(dMesg.getAuthQty() !=null) {
+					item.setVendorQuoteQty(dMesg.getAuthQty().intValue());
+				}else {
+					item.setVendorQuoteQty(null);
+				}
+				
+				//if(dMesg.getTiQuoteNum() !=null) {
+				item.setVendorQuoteNumber(dMesg.getTiQuoteNum());
+				//}else {
+					//item.setVendorQuoteQty(null);
+				//}
+				item.setCostIndicator(CostIndicatorTo);
+				// append
+				 
+				item.setInternalComment(item.getInternalComment()==null ? dMesg.getTiComment():
+					item.getInternalComment() + ";" + dMesg.getTiComment());
+				item.setPriceValidity(TIEntityFactory.DateToddMMyyy(dMesg.getEndDate()));
+				item.setShipmentValidity(dMesg.getEndDate());
+				//UPDATE  TIME & UPDATE BY
+				item.setLastItUpdateTime(new Date());
+				em.merge(item);
+			}
+		}
+		
+	}
+	
+	private boolean isMesgExistedByPoNum(Object entity) throws Exception {
+		StringBuilder sql = new StringBuilder();
+		Class enClass = entity.getClass();
+		//because AMesgRefuse and DMesgRefuse are stored in the same table (entity MesgRefuse)
+		//if(entity instanceof AMesgRefuse || entity instanceof DMesgRefuse) {
+		if(entity instanceof MesgRefuse){
+			enClass = MesgRefuse.class;
+			return false;//no need check now
+		}
+		sql.append("SELECT m FROM ").append(enClass.getSimpleName()).
+		append(" m WHERE m.poNum =:poNum ");
+		Query query = em.createQuery(sql.toString()).setParameter("poNum", 
+				TIEntityFactory.FindFieldByName("poNum", entity.getClass()).get(entity));
+		
+		return !query.getResultList().isEmpty();
+	}
+	/****/
+	public List<?> findMesg(TISearchBean searchBean) {
+    	
+    	StringBuilder sql = new StringBuilder();
+    	if(EdiMesgType.TARONE.getMesgTypeName().equals(searchBean.getMesgType())) {
+    		sql.append("SELECT m FROM AMesgRefuse m  WHERE 1=1 ");
+    	}else if(EdiMesgType.FDRONE.getMesgTypeName().equals(searchBean.getMesgType())) {
+    		sql.append("SELECT m FROM DMesgRefuse m  WHERE 1=1 ");
+    	}else if(EdiMesgType.TARTWO.getMesgTypeName().equals(searchBean.getMesgType())) {
+    		sql.append("SELECT m,md FROM AMesgApprove m LEFT JOIN DMesgApprove md ON "
+    				+ " m.poNum = md.poNum WHERE 1=1 ");
+    	}else if(EdiMesgType.TAONE.getMesgTypeName().equals(searchBean.getMesgType())){
+    		sql.append(MessageFormat.format("SELECT m FROM {0} m  WHERE 1=1 ", ThreeAMesgOne.class.getSimpleName()));
+    	}
+    	
+    	/*if(searchBean.getCreateDateFrom()!=null && searchBean.getCreateDateTo()!=null) {
+    		sql.append(" AND m.createdOn >= :from AND m.createdOn <= :to ");
+    	}*/
+    	if(searchBean.getCreateDateFrom()!=null) {
+    		sql.append(" AND m.createdOn >= :from ");
+    	}
+    	
+    	if(searchBean.getCreateDateTo()!=null) {
+    		sql.append(" AND m.createdOn < :to ");
+    	}
+    	
+    	if(!QuoteUtil.isEmpty(searchBean.getPoNum())) {
+    		sql.append(" AND UPPER(m.poNum) LIKE :poNum ");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getQuoteNum())) {
+    		sql.append(" AND UPPER(m.quoteNum) LIKE :quoteNum ");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getTiPartNum())) {
+    		sql.append(" AND UPPER(m.tiPartNum) LIKE :tiPartNum ");
+    	}
+    	
+    	/*if(EdiMesgType.TARTWO.getMesgTypeName().equals(searchBean.getMesgType())) {
+    		sql.append(" AND m.poNum = md.poNum ");
+    	}*/
+    	sql.append(" ORDER BY m.createdOn DESC");
+    	Query query = em.createQuery(sql.toString());
+    	query.setFirstResult(searchBean.getStart())
+    		.setMaxResults(TISearchBean.getMax());
+    	
+    	if(!QuoteUtil.isEmpty(searchBean.getPoNum())) {
+    		query.setParameter("poNum", "%" + searchBean.getPoNum().trim().toUpperCase() + "%");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getQuoteNum())) {
+    		query.setParameter("quoteNum", "%" + searchBean.getQuoteNum().trim().toUpperCase() + "%");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getTiPartNum())) {
+    		query.setParameter("tiPartNum", "%" + searchBean.getTiPartNum().trim().toUpperCase() + "%");
+    	}
+    	/*if(searchBean.getCreateDateFrom()!=null && searchBean.getCreateDateTo()!=null) {
+    		query.setParameter("from",searchBean.getCreateDateFrom());
+    		query.setParameter("to",searchBean.getCreateDateTo());
+    	}*/
+    	if(searchBean.getCreateDateFrom()!=null) {
+    		query.setParameter("from",searchBean.getCreateDateFrom());
+    	}
+    	if(searchBean.getCreateDateTo()!=null) {
+    		//add 1 day for to
+    		Calendar calender = Calendar.getInstance();
+    		calender.setTime(searchBean.getCreateDateTo());
+    		calender.add(Calendar.DATE, 1);
+    		query.setParameter("to",calender.getTime());
+    	}
+		return query.getResultList();
+    }
+	
+	private void SendException(ExceptionVo exceptionVo, File file) {
+		
+		List<String> toList = null;
+		try {
+			if(null!=exceptionVo) {
+				MailInfoBean mib = new MailInfoBean();
+				String fileName = QuoteUtil.isEmpty(exceptionVo.getFileName())?"":exceptionVo.getFileName();
+				String subject = "Reminder: "+exceptionVo.getAction() + " file "+fileName+" encounter exception";
+				
+				String jbossNodeName = System.getProperty(HATimerService.JBOSS_NODE_NAME);
+				if(org.apache.commons.lang.StringUtils.isNotBlank(jbossNodeName)) {
+					subject += "(Jboss Node:" + jbossNodeName + ")";
+				}
+				String fromEmailAddr = sysConfigSB.getProperyValue(QuoteSBConstant.ERROR_EMAIL_FROM_ADDRESS);
+				String emailStr = sysConfigSB.getProperyValue(TIEntityFactory.TI_RECIEVER_EMAILS);
+				if(emailStr == null) {
+					throw new Exception("The [TIEntityFactory.TI_RECIEVER_EMAILS] have not be configed in APP_PROPERTY TABLE ");
+				}
+				//emailStr="David.Zheng@AVNET.COM";
+				String[] emailS = emailStr.split(";");
+				toList =new ArrayList<String>();
+				for(String email :emailS) {
+					toList.add(email.trim());
+				}
+				
+				mib.setMailSubject(subject);
+				mib.setMailFrom(fromEmailAddr);
+				mib.setMailTo(toList);
+				
+		        String hostName = System.getProperty("jboss.node.name");
+				
+				String content = "Dear user,<br/>";
+				content += "Please note that process "+exceptionVo.getAction()+" file  encounter exception on Host "+hostName+":<br/>";
+		        content += "Action : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+ exceptionVo.getAction()+" <br/>";
+		        content += "File Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+fileName+" <br/>";
+		        if(null==exceptionVo.getException()) {
+		        	content += "Exception Information :<br/>" +exceptionVo.getMessage()+ "<br/><br/>";
+		        }else {
+		        	Exception ex = exceptionVo.getException();
+		        	StringWriter errors = new StringWriter();
+		        	ex.printStackTrace(new PrintWriter(errors));
+		        	String msg = errors.toString();
+		        	content += "Exception Information :<br/>" +msg+ "<br/><br/>";
+		        }
+				  
+				mib.setMailContent(content);
+				//File.
+				mib.setZipFile(file);
+				mailUtilsSB.sendAttachedMail(mib);
+			}
+		} catch (AddressException e) {
+			LOG.info("Send INBOUND EXCEPTION Email error: --AddressException:" + (null==toList?"empty receiver box":toList.toString()));
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			LOG.info("Send INBOUND EXCEPTION Email error: --IllegalArgumentException:");
+			e.printStackTrace();
+		} catch (NamingException e) {
+			LOG.info("Send INBOUND EXCEPTION Email error: --NamingException:");
+			e.printStackTrace();
+		} catch (MessagingException e) {
+			LOG.info("Send INBOUND EXCEPTION Email error: --MessagingException:");
+			e.printStackTrace();
+		} catch (Exception e) {
+			LOG.info("Send INBOUND EXCEPTION Email error: --:" +e.toString());
+			e.printStackTrace();
+		}
+		
+	}
+	/*    public List<DMesgRefuse> findDMesgRefuse(TISearchBean searchBean) {
+    	
+    	CriteriaBuilder cb = em.getCriteriaBuilder();
+    	CriteriaQuery<DMesgRefuse> c =cb.createQuery(DMesgRefuse.class);
+    	Root<DMesgRefuse> emp = c.from(DMesgRefuse.class);
+    	c.select(emp);
+    	List<Predicate> criteria = new ArrayList<Predicate>();
+    	if(!QuoteUtil.isEmpty(searchBean.getPoNum())) {
+    		ParameterExpression<String> p = cb.parameter(String.class,"poNum");
+    		criteria.add(cb.like(arg0, arg1))
+    	}
+    	StringBuilder sql = new StringBuilder();
+    	sql.append("SELECT m FROM DMesgRefuse m WHERE 1=1 ");
+    	if(!QuoteUtil.isEmpty(searchBean.getPoNum())) {
+    		sql.append(" AND m.poNum LIKE :poNum ");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getQuoteNum())) {
+    		sql.append(" AND m.quoteNum LIKE :quoteNum ");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getTiPartNum())) {
+    		sql.append(" AND m.tiPartNum LIKE :tiPartNum ");
+    	}
+    	if(searchBean.getCreateDateFrom()!=null && searchBean.getCreateDateTo()!=null) {
+    		sql.append(" AND m.createdOn >= :from AND m.createdOn <= :to ");
+    	}
+    	Query query = em.createQuery(sql.toString());
+    	sql.append(" ORDER BY m.createdOn DESC");
+    	query.setFirstResult(searchBean.getStart())
+    		.setMaxResults(TISearchBean.getMax());
+    	
+    	if(!QuoteUtil.isEmpty(searchBean.getPoNum())) {
+    		query.setParameter("poNum", "%" + searchBean.getPoNum().trim() + "%");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getQuoteNum())) {
+    		query.setParameter("quoteNum", "%" + searchBean.getQuoteNum().trim() + "%");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getTiPartNum())) {
+    		query.setParameter("tiPartNum", "%" + searchBean.getTiPartNum().trim() + "%");
+    	}
+    	if(searchBean.getCreateDateFrom()!=null && searchBean.getCreateDateTo()!=null) {
+    		query.setParameter("from",searchBean.getCreateDateFrom());
+    		query.setParameter("to",searchBean.getCreateDateTo());
+    	}
+		return query.getResultList();
+    	
+    }
+    
+    public List<AMesgRefuse> findAMesgRefuse(TISearchBean searchBean) {
+    	
+    	StringBuilder sql = new StringBuilder();
+    	sql.append("SELECT m FROM AMesgRefuse m WHERE 1=1 ");
+    	if(!QuoteUtil.isEmpty(searchBean.getPoNum())) {
+    		sql.append(" AND m.poNum LIKE :poNum ");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getQuoteNum())) {
+    		sql.append(" AND m.quoteNum LIKE :quoteNum ");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getTiPartNum())) {
+    		sql.append(" AND m.tiPartNum LIKE :tiPartNum ");
+    	}
+    	if(searchBean.getCreateDateFrom()!=null && searchBean.getCreateDateTo()!=null) {
+    		sql.append(" AND m.createdOn >= :from AND m.createdOn <= :to ");
+    	}
+    	sql.append(" ORDER BY m.createdOn DESC");
+    	Query query = em.createQuery(sql.toString());
+    	query.setFirstResult(searchBean.getStart())
+    		.setMaxResults(TISearchBean.getMax());
+    	
+    	if(!QuoteUtil.isEmpty(searchBean.getPoNum())) {
+    		query.setParameter("poNum", "%" + searchBean.getPoNum().trim() + "%");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getQuoteNum())) {
+    		query.setParameter("quoteNum", "%" + searchBean.getQuoteNum().trim() + "%");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getTiPartNum())) {
+    		query.setParameter("tiPartNum", "%" + searchBean.getTiPartNum().trim() + "%");
+    	}
+    	if(searchBean.getCreateDateFrom()!=null && searchBean.getCreateDateTo()!=null) {
+    		query.setParameter("from",searchBean.getCreateDateFrom());
+    		query.setParameter("to",searchBean.getCreateDateTo());
+    	}
+		return query.getResultList();
+    }
+    
+    public List<Object[]> findAandDMesgApprove(TISearchBean searchBean) {
+    	
+    	StringBuilder sql = new StringBuilder();
+    	sql.append("SELECT m FROM AMesgRefuse m ,DMesgRefuse md ON WHERE 1=1 ");
+    	if(!QuoteUtil.isEmpty(searchBean.getPoNum())) {
+    		sql.append(" AND m.poNum LIKE :poNum ");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getQuoteNum())) {
+    		sql.append(" AND m.quoteNum LIKE :quoteNum ");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getTiPartNum())) {
+    		sql.append(" AND m.tiPartNum LIKE :tiPartNum ");
+    	}
+    	if(searchBean.getCreateDateFrom()!=null && searchBean.getCreateDateTo()!=null) {
+    		sql.append(" AND m.createdOn >= :from AND m.createdOn <= :to ");
+    	}
+    	sql.append(" AND m.poNum = md.poNum ");
+    	sql.append(" ORDER BY m.createdOn DESC");
+    	Query query = em.createQuery(sql.toString());
+    	query.setFirstResult(searchBean.getStart())
+    		.setMaxResults(TISearchBean.getMax());
+    	
+    	if(!QuoteUtil.isEmpty(searchBean.getPoNum())) {
+    		query.setParameter("poNum", "%" + searchBean.getPoNum().trim() + "%");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getQuoteNum())) {
+    		query.setParameter("quoteNum", "%" + searchBean.getQuoteNum().trim() + "%");
+    	}
+    	if(!QuoteUtil.isEmpty(searchBean.getTiPartNum())) {
+    		query.setParameter("tiPartNum", "%" + searchBean.getTiPartNum().trim() + "%");
+    	}
+    	if(searchBean.getCreateDateFrom()!=null && searchBean.getCreateDateTo()!=null) {
+    		query.setParameter("from",searchBean.getCreateDateFrom());
+    		query.setParameter("to",searchBean.getCreateDateTo());
+    	}
+		return query.getResultList();
+    }*/
+}

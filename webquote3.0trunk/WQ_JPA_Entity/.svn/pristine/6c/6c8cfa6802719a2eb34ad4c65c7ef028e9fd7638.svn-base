@@ -1,0 +1,99 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.math.BigDecimal;
+
+import javax.persistence.Embeddable;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+
+import org.apache.commons.lang.StringUtils;
+
+@Embeddable
+public class Money {
+	
+	@Enumerated(EnumType.STRING)
+	private Currency currency;
+	
+	private BigDecimal amount;
+	
+	public Money() {
+		
+	}
+	
+	
+	public Money(String curr, BigDecimal amount) {
+		if (StringUtils.isEmpty(curr) || amount == null) {
+			throw new IllegalArgumentException();
+		}
+		
+		this.currency = Currency.valueOf(curr);
+		this.amount = amount;
+		
+	}
+	
+	public Money(String curr, String amount) {
+		if (StringUtils.isEmpty(curr) || StringUtils.isEmpty(amount)) {
+			throw new IllegalArgumentException();
+		}
+		
+		this.currency = Currency.valueOf(curr);
+		this.amount = new BigDecimal(amount);
+		
+	}
+	
+	private Money(BigDecimal amount, Currency curr) {
+		this.amount = amount;
+		this.currency = curr;
+	}
+	
+	public static Money of(String amount, String curr) {
+		if (StringUtils.isEmpty(amount) || StringUtils.isEmpty(curr)) {
+			return null;
+		}
+		try {
+			return new Money(new BigDecimal(amount), Currency.valueOf(curr));
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	public static Money of(BigDecimal amount, Currency curr) {
+		if (amount==null || curr==null) {
+			return null;
+		}
+		return new Money(amount, curr);
+	}
+	
+	public static Money of(Double amount, Currency curr) {
+		if (amount==null || curr==null) {
+			return null;
+		}
+		try {
+			return new Money(new BigDecimal(amount), curr);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	public static Money of(Double amount, String curr) {
+		if (amount==null || StringUtils.isEmpty(curr)) {
+			return null;
+		}
+		try {
+			return new Money(new BigDecimal(amount), Currency.valueOf(curr));
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	public Currency getCurrency() {
+		return currency;
+	}
+
+	public BigDecimal getAmount() {
+		return amount;
+	}
+	
+	//no setters allowed
+	
+}

@@ -1,0 +1,122 @@
+package com.avnet.emasia.webquote.utilites.web.schedule;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+
+import org.jboss.as.server.CurrentServiceContainer;
+import org.jboss.msc.service.ServiceController;
+
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.QuoteToSo;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+import com.avnet.emasia.webquote.quote.ejb.QuoteSB;
+import com.avnet.emasia.webquote.quote.ejb.QuoteToSoPendingSB;
+import com.avnet.emasia.webquote.quote.ejb.SAPWebServiceSB;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.utilities.schedule.IScheduleTask;
+import com.avnet.emasia.webquote.web.quote.job.EnvironmentService;
+
+@Stateless
+public class PostQuotationTask implements IScheduleTask, java.io.Serializable {
+
+	private static final long serialVersionUID = -6028215791707231146L;
+	public static final Logger LOGGER = Logger.getLogger(PostQuotationTask.class.getName());
+
+	@EJB
+	public transient QuoteSB quoteSB;
+
+	@EJB
+	private
+	transient UserSB userSB;
+
+	@EJB
+	private
+	transient MailUtilsSB mailUtilsSB;
+
+	@EJB
+	private
+	SysConfigSB sysConfigSB;
+
+	@EJB
+	private
+	transient SAPWebServiceSB sapWebServiceSB;
+
+	@EJB
+	private
+	transient QuoteToSoPendingSB quoteToSoPendingSB;
+	// INC0023876
+	@EJB
+	public transient SystemCodeMaintenanceSB sysMaintSB;
+	
+	@EJB
+	protected EJBCommonSB ejbCommonSB;
+
+	public SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+
+	@Override
+	@Asynchronous
+	public void executeTask(Timer timer) {
+		LOGGER.info("PostQuotationTask job beginning...");
+
+		try {
+			ServiceController<?> service = CurrentServiceContainer.getServiceContainer()
+					.getService(EnvironmentService.SINGLETON_SERVICE_NAME);
+			LOGGER.info("SERVICE " + service);
+			if (service != null) {
+				service.getValue();
+				LOGGER.info("service.getValue(): " + service.getValue());
+				if (ejbCommonSB.isRanOnThisServer((String) service.getValue())) {
+					ejbCommonSB.proceedQuotationEmailSending(this,null,"PostQuotationTask");
+					proceedQuoteToSo();
+				}
+			}
+		} catch (Exception e) {
+
+			LOGGER.log(Level.SEVERE, "Exception in execute task for timer: " + timer.getInfo().toString()
+					+ ", Exception message: " + e.getMessage(), e);
+		}
+
+		LOGGER.info("PostQuotationTask job ended");
+	}
+
+	public void proceedQuoteToSo() throws WebQuoteException {
+		LOGGER.info("start proceedQuoteToSo");
+		Date date = new Date();
+		List<QuoteToSo> quoteToSos = quoteSB.findQuoteToSoList();
+		if (quoteToSos != null) {
+			for (QuoteToSo quoteToSo : quoteToSos) {
+				String quoteItemIds = quoteToSo.getId().getQuoteItemId();
+				if (quoteItemIds != null) {
+					String[] quoteItemIdsArr = quoteItemIds.split(",");
+					List<Long> ids = new ArrayList<Long>();
+					for (String id : quoteItemIdsArr) {
+						if (id.length() > 0) {
+							ids.add(Long.valueOf(id));
+						}
+					}
+					List<QuoteItem> quoteItems = quoteSB.findQuoteItemsByPKs(ids);
+					ejbCommonSB.createQuoteToSo(quoteItems);
+				}
+			}
+			quoteSB.removeQuoteToSoList(sdf.format(date));
+		}
+
+		LOGGER.info("end proceedQuoteToSo");
+
+	}
+
+
+}

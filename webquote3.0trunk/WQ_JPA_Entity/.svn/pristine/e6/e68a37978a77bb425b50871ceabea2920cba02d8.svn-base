@@ -1,0 +1,25 @@
+package mymoney;
+
+import java.math.BigDecimal;
+import java.util.Date;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Currency;
+import com.avnet.emasia.webquote.entity.Customer;
+
+public class DiscardCustomerMoneyConvertStrategy extends MoneyConvertStrategy{
+	
+	private DiscardCustomerMoneyConvertStrategy() {
+	}
+	
+	private static MoneyConvertStrategy s = new DiscardCustomerMoneyConvertStrategy();
+	@Override
+	public BigDecimal[] findExchangeRate(Currency fromCurrency, Currency toCurrency, BizUnit bizUnit, Customer soldToCustomer, Date date) {
+		return super.findExchangeRate(fromCurrency, toCurrency, bizUnit, null, date);
+		
+	}
+	
+	static MoneyConvertStrategy getInstance() {
+		return s;
+	}
+}

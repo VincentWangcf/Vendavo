@@ -1,0 +1,154 @@
+
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+
+		<p:panel header="#{dbResource['wq.header.roleManagement']}">
+			<h:form id="form1">
+
+				<p:dataTable value="#{roleMB.roles}" 
+					var="role" 
+					paginator="true" 
+    				rowsPerPageTemplate="10,20,50"
+					rows="10" 
+					paginatorPosition="bottom"					
+					id="roleTable"
+					emptyMessage="#{dbResource['wq.message.noRecordFound']}."  >
+				
+					<p:column headerText="#{dbResource['wq.label.name']}" filterBy="#{role.name}">
+						<h:outputText value="#{role.name}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.description']}" filterBy="#{role.description}">
+						<h:outputText value="#{role.description}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.active']}" filterBy="#{role.active}">
+						<h:outputText value="#{role.active}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.button.modify']}" styleClass="align_center">
+						<p:commandButton icon="ui-icon-search" title="#{dbResource['wq.button.modify']}" oncomplete="PF('roleDialog').show();" update=":form2">
+							<f:setPropertyActionListener value="#{role}" target="#{roleMB.role}" />
+						</p:commandButton>
+					</p:column>
+					
+					<f:facet name="footer">
+			
+						<p:commandButton value="#{dbResource['wq.label.refresh']}" position="middle" update=":form1" actionListener="#{roleMB.refresh}" rendered="false"/>
+						
+						<p:commandButton value="#{dbResource['wq.button.addRole']}" position="middle" update=":form2" actionListener="#{roleMB.add}" oncomplete="PF('roleDialog').show();"/>
+					
+					</f:facet>
+					
+				</p:dataTable>
+				
+			</h:form>
+
+			<p:dialog header="#{dbResource['wq.label.roleDetail']}" widgetVar="roleDialog"
+				resizable="false" id="roleDlg" >
+
+				<h:form id="form2">
+		
+					<p:messages id="messages" autoUpdate="true" closable="true" showDetail="true"/> 
+					<p:fieldset legend="#{dbResource['wq.header.basicInformation']}">
+						<h:panelGrid columns="3" cellpadding="2" style="width:100%">
+
+							<h:outputText value="#{dbResource['wq.label.roleName']}*:" />
+							<p:inputText value="#{roleMB.role.name}" id="name" required="true" requiredMessage="#{dbResource['wq.label.roleName']} : #{dbResource['wq.message.required']}">
+								<f:validateRequired />
+							</p:inputText>
+							<p:message for="name" display="icon" />
+
+							<h:outputText value="#{dbResource['wq.label.description']}:" id="description"/>
+							<p:inputTextarea cols="30" rows="3" value="#{roleMB.role.description}" />
+							<p:message for="description" display="icon" />
+
+							<h:outputText value="#{dbResource['wq.label.lisActive']}:" />
+							<p:selectBooleanCheckbox  value="#{roleMB.role.active}" id="active"/>
+							<p:message for="active" display="icon" />
+
+						</h:panelGrid>
+					</p:fieldset>
+					<h:panelGrid columns="2">
+					<p:fieldset legend="#{dbResource['wq.label.functionAssigning']}">
+						<p:pickList 
+							value="#{roleMB.appFunctions}"
+							var="appFunction" itemLabel="#{appFunction.name}"
+							itemValue="#{appFunction.id}" filterMatchMode="contains" converter="webquote.user.AppFunction"
+							addLabel="#{dbResource['wq.button.add']}" addAllLabel="#{dbResource['wq.button.addAll']}" removeLabel="#{dbResource['wq.button.remove']}" removeAllLabel="#{dbResource['wq.button.removeAll']}"
+							
+							>
+
+							<f:facet name="sourceCaption">#{dbResource['wq.label.avaiFunc']}</f:facet>
+							<f:facet name="targetCaption">#{dbResource['wq.label.selFunc']}</f:facet>
+						</p:pickList>
+
+					</p:fieldset>
+					
+						<p:fieldset legend="#{dbResource['wq.label.userModifying']}">
+						 <p:orderList value="#{roleMB.users}" var="user" controlsLocation="none"  
+                 			itemValue="#{user.id}" id="userList" converter="webquote.user.User">  
+
+										<p:column style="width:90%">
+											#{user.employeeId} #{user.name}
+										</p:column>
+										
+										<p:column style="width:10%">
+											<p:commandLink id="removeUserBtn" value="#{dbResource['wq.label.d']}" actionListener="#{roleMB.removeUser}" 
+												partialSubmit="true" process="removeUserBtn, userList" update="userList">
+												<f:param name="id" value="#{user.id}"/>
+											</p:commandLink>
+										</p:column>
+            										 
+									  
+							</p:orderList>
+							<p:inputText value="#{roleMB.employeeId}" id="employeeIdTxt"/>
+							<p:commandButton id="addUserBtn" value="#{dbResource['wq.button.add']}"
+								 actionListener="#{roleMB.addUser}" partialSubmit="true" process="employeeIdTxt, addUserBtn" update="userList, employeeIdTxt">
+							</p:commandButton>
+
+
+						</p:fieldset>						
+
+						</h:panelGrid>
+					<h:panelGrid columns="2">
+						<p:commandButton id="cancel" value="#{dbResource['wq.button.cancel']}" position="middle" type="button"
+							onclick="PF('roleDialog').hide();" />
+
+						<p:commandButton id="submit" value="#{dbResource['wq.header.save']}" actionListener="#{roleMB.save}" oncomplete="handleSaveRequest(xhr, status, args)" update=":form1:roleTable :form2" />
+
+						<script type="text/javascript">  
+						    function handleSaveRequest(xhr, status, args) {  
+						        if(args.validationFailed || !args.saved) {  
+						              
+						        } else {  
+						        	PF('roleDialog').hide();
+						              
+						        }  
+						    }  
+					</script>
+
+					</h:panelGrid>
+
+
+				</h:form>
+
+
+			</p:dialog>
+
+		</p:panel>
+
+
+	</ui:define>
+
+
+
+</ui:composition>

@@ -1,0 +1,1445 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:p="http://primefaces.org/ui"
+	xmlns:l="http://java.sun.com/jsf/composite/l" xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:avnet="http://emasia.avnet.com"  xmlns:c="http://java.sun.com/jsp/jstl/core">
+	<h:head>
+		<h:outputStylesheet library="css" name="bmt.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+		<h:outputScript library="javascript" name="common-002.js" />
+		<title>#{dbResource['wq.title.webQuoteVersion']}</title>
+		<f:view locale="#{userMB.user.userLocale}"></f:view>
+	</h:head>
+	<h:body id="bmt_Page" style="margin:0 1px;">
+					<table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-bottom: 0px solid #999999;background-image: url('../resources/images/top.png');background-repeat:no-repeat;background-color:white;" 	>
+					<tr>
+						<td height="16" valign="bottom"  nowrap="nowrap" align="right" style="font-size:1.8em;font-style:italic"></td>
+					</tr>
+					<tr> 
+						<td height="35" align="right" ><b style="font-size:1.2em;font-style:italic">
+						<ui:include src="/menu/languageBar.xhtml" />
+						#{dbResource['wq.header.aventQuoteCentre']} #{userMB.user.name}</b></td>
+					</tr>
+				</table>
+		<ui:include src="/menu/zIncMenubar.xhtml" />
+		<p:growl id="growl" showDetail="true" sticky="#{growlPropertyMB.sticky}" autoUpdate="true" showSummary="#{growlPropertyMB.showSummary}" escape="#{growlPropertyMB.escape}"/>
+		<p:messages id="bmt_messages" showDetail="true" showSummary="true" closable="true" />
+		<h:form id="topForm">
+			<p:panel id="button_group_panel" styleClass="headerStyle">
+				<f:facet name="header">
+                    #{dbResource['wq.title.bmtPlatform']}
+                </f:facet>
+				<p:messages id="bmt_message" showDetail="true" showSummary="true" closable="true" />
+				<p:commandButton style="display:none;"/>
+				<p:commandButton value="#{dbResource['wq.button.TransferToQC']}" actionListener="#{bmtPlatformMB.transferToQc}" 
+				process="@this" update="transferToQcDialog"/>
+				<p:commandLink id="export_Button" ajax="false" onclick="PrimeFaces.monitorDownload(start, stop)" update=":growl">
+					<p:button value="#{dbResource['wq.button.export']}" />
+					<avnet:dataExporter target="lazyData" type="xls" exportOrder="#{bmtPlatformMB.preExportOrder}" fileName="BMT download" postProcessor="#{bmtPlatformMB.postExportExcel}" />
+				</p:commandLink>
+				<p:fileUpload id="uploadFile" label="#{dbResource['wq.button.chooseFile']}"  uploadLabel="#{dbResource['wq.button.upload']}" styleClass="uploadTemplate" allowTypes="/(\.|\/)(xls|XLS|xlsx|XLSX)$/" fileUploadListener="#{bmtPlatformMB.handleTemplateUpload}" invalidFileMessage="#{dbResource['wq.error.invalidFileType']}" update=":growl">
+				</p:fileUpload>
+
+				<p:commandButton id="save_all_Button" title="#{bmtPlatformMB.hasModifiedRecords() ?'found modify data':''}" style="#{bmtPlatformMB.hasModifiedRecords() ?'background:#FFA700;':''}" value="#{dbResource['wq.button.saveAll']}" actionListener="#{bmtPlatformMB.saveAll('topForm:lazyData')}" process="@this" update="@this,:growl,:topForm:history,:topForm:tab:quoteDetails_BMT,:topForm:tab:quoteDetails_Quote,:topForm:tab:quoteDetails_Customer" />
+
+				<p:commandButton id="clear_filter_Button" value="#{dbResource['wq.button.clearFilter']}" actionListener="#{bmtPlatformMB.clearBmtDatasFilter('topForm:lazyData,topForm:quoteDetails')}"
+					process="@this" update=":growl,confirm_panel">
+					<f:setPropertyActionListener target="#{viewScope.showConfirmDialog}" value="true" />
+				</p:commandButton>
+			</p:panel>
+
+			<h:panelGroup id="confirm_panel">
+				<p:confirmDialog widgetVar="confirm_clear" header="#{dbResource['wq.diglog.header.confirm']}:" visible="#{bmtPlatformMB.hasModifiedRecords() and viewScope.showConfirmDialog}"
+					message="#{dbResource['wq.button.clearModifiedRecords']} ?">
+					<p:commandButton id="confirm_clean_cache" onclick="PF('confirm_clear').hide()" value="#{dbResource['wq.button.yes']}" process="@this" actionListener="#{bmtPlatformMB.doClearBmtDatasFilter('topForm:lazyData')}" update=":growl,confirm_panel,save_all_Button">
+						<f:setPropertyActionListener target="#{viewScope.showConfirmDialog}" value="false" />
+					</p:commandButton>
+					<p:commandButton value="#{dbResource['wq.button.no']}" process="@this" update="confirm_panel">
+						<f:setPropertyActionListener target="#{viewScope.showConfirmDialog}" value="false" />
+					</p:commandButton>
+				</p:confirmDialog>
+			</h:panelGroup>
+			<h:panelGroup id="transferToQcDialog">
+				<p:dialog header="#{dbResource['wq.button.TransferToQC']}" widgetVar="toQc" modal="true" draggable="false" resizable="false">
+					<p:dataTable styleClass="transferToQcTable"
+								 scrollable="true" scrollHeight="300"
+								 value="#{bmtPlatformMB.transferToQcList}"
+								 var="vo" rowIndexVar="index"
+								 emptyMessage="#{dbResource['wq.message.noRecordFound']}" >
+						<p:column headerText="#{dbResource['wq.button.no']}">
+							<h:outputText value="#{index+1}" />
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.region']}">
+							<h:outputText value="#{vo.quoteItem.quote.bizUnit.name}" />
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.designLoc']}">
+							<h:outputText value="#{vo.quoteItem.designLocation}" />
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.designRegion']}">
+							<h:outputText value="#{vo.quoteItem.designRegion}" />
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.avnetQuote']}#">
+							<h:outputText value="#{vo.quoteItem.quoteNumber}" />
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.mfr']}">
+							<h:outputText value="#{vo.quoteItem.requestedMfr.name}" />
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.endCust']}">
+							<h:outputText value="#{vo.quoteItem.endCustomerFullName}" />
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.avnetQPN']}">
+							<h:outputText value="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}" />
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.emailMessage']}">
+							<p:inputTextarea value="#{vo.quoteItem.drmsUpdateFailedDesc}" />
+						</p:column>
+					</p:dataTable>
+					<f:facet name="footer">
+						<p:commandButton id="toQcSubmit" value="#{dbResource['wq.button.submit']}" process="transferToQcDialog" 
+						actionListener="#{bmtPlatformMB.doTransferToQc('topForm:lazyData')}" onclick="PF('toQc').hide();start();" oncomplete="stop();" update="transferToQcDialog,:growl" />
+						<p:commandButton value="#{dbResource['wq.button.cancel']}" onclick="PF('toQc').hide();" />
+					</f:facet>
+				</p:dialog>
+			</h:panelGroup>
+
+			<l:attachmentsDialog id="bmtAttathmentsPanel" canDownload="true" attachments="#{bmtPlatformMB.bmtAttachment}" />
+			<p:dataTable id="lazyData" widgetVar="lazyBmtData" styleClass="bmtvodata" value="#{bmtPlatformMB.bmtPlatformVOs}"
+				 var="vo" rowKey="#{vo.id}" lazy="true"
+				 selection="#{bmtPlatformMB.selectionDatas}" rows="10" scrollable="true" scrollHeight="250"
+				 paginator="true" rowsPerPageTemplate="5,10,25,50,100,200" sortField="o.quoteItem.submissionDate" editable="true" editMode="cell" 
+				 sortBy="#{false}" sortOrder="ascending" paginatorPosition="top" rowIndexVar="rowIndex" emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+				<p:ajax event="toggleSelect" listener="#{bmtPlatformMB.onToggleSelect}" />
+				<p:ajax event="rowSelectCheckbox" listener="#{bmtPlatformMB.onRowSelectCheckbox}" update=":topForm:history,:topForm:tab:quoteDetails_BMT,:topForm:tab:quoteDetails_Quote,:topForm:tab:quoteDetails_Customer" />
+				<p:ajax event="rowUnselectCheckbox" listener="#{bmtPlatformMB.onRowUnselectCheckbox}" />
+				<p:ajax event="rowSelect" listener="#{bmtPlatformMB.onRowSelect}" update=":topForm:history,:topForm:tab:quoteDetails_BMT,:topForm:tab:quoteDetails_Quote,:topForm:tab:quoteDetails_Customer" />
+				<p:ajax event="rowUnselect" listener="#{bmtPlatformMB.onRowUnselect}" />
+				<p:column styleClass="multiple_checkbox" selectionMode="multiple" exportable="false" />
+				<p:column styleClass="no" headerText="#{dbResource['wq.label.no']}" exportable="false">
+					<h:outputText value="#{rowIndex+1}" />
+				</p:column> 
+				<p:column styleClass="column_hidden" style="display:none;" headerText="id column">
+					<f:facet name="header">
+                        id column
+                    </f:facet>
+					<p:inputText id="rowKeyCol" value="#{vo.id}" />
+				</p:column>
+				<p:column headerText="QC Region" styleClass="column_region" filterBy="#{vo.o.quoteItem.quote.bizUnit.name}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.quote.bizUnit.name}">
+					<f:facet name="header">
+                        #{dbResource['wq.label.qcRegion']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.quote.bizUnit.name}" />
+				</p:column>
+				<p:column headerText="Form No" styleClass="column_formNumber" filterBy="#{vo.o.quoteItem.quote.formNumber}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.quote.formNumber}">
+					<f:facet name="header">
+                       #{dbResource['wq.header.form']}#
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.quote.formNumber}" />
+				</p:column> 
+				<p:column headerText="Avnet Quote#" styleClass="column_quoteNumber" filterBy="#{vo.o.quoteItem.quoteNumber}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.quoteNumber}">
+					<f:facet name="header">
+                        <h:outputText escape="false" value="#{dbResource['wq.label.avnet']}&lt;br&gt;#{dbResource['wq.label.quote']}#" />
+                    </f:facet>    
+					<h:outputText id="quoteNumber" value="#{vo.quoteItem.quoteNumber}" />
+				</p:column>
+				<p:column headerText="Pending Day" styleClass="column_pendingDay">
+					<f:facet name="header">
+                        <h:outputText escape="false" value="#{dbResource['wq.label.pendingDay']}" />
+                    </f:facet>     
+					<h:outputText value="#{vo.quoteItem.pendingDay}"/>
+				</p:column>		  
+				<p:column headerText="RFQ Status" styleClass="column_rfqStatus" filterBy="#{vo.o.quoteItem.status}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.status}">
+					<f:facet name="header">
+                        <h:outputText escape="false" value="#{dbResource['wq.label.rfq']}&lt;br&gt;#{dbResource['wq.label.status']}" />
+                    </f:facet>      
+					<h:outputText value="#{vo.quoteItem.status}"/>
+				</p:column>		
+				<p:column headerText="MFR" styleClass="column_mfr" filterBy="#{vo.o.quoteItem.requestedMfr.name}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.requestedMfr.name}">
+					<f:facet name="header">
+                        <h:outputText escape="false" value="#{dbResource['wq.label.mfr']}" />
+                    </f:facet>   
+					<h:outputText value="#{vo.quoteItem.requestedMfr.name}"/>
+				</p:column>
+				<p:column headerText="Quote Type" styleClass="column_quoteType"
+				 sortBy="#{vo.o.quoteItem.quoteType}" filterOptions="#{selectItemMB.quoteTypeItem(true)}" filterBy="#{vo.o.quoteItem.quoteType}" filterMatchMode="exact">
+					<f:facet name="header">
+                        <h:outputText escape="false" value="#{dbResource['wq.label.QuoteType']}" />
+                    </f:facet>  
+					<h:outputText value="#{vo.quoteItem.quoteType}" />
+				</p:column>		
+				<p:column headerText="Sold-To-Party" styleClass="column_endCustomerName" filterBy="#{vo.o.quoteItem.quote.soldToCustomerName}" filterMatchMode="contains"
+					sortBy="#{vo.o.quoteItem.quote.soldToCustomerName}">
+					<f:facet name="header">
+                        #{dbResource['wq.label.SoldToParty']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.quote.soldToCustomerName}" title="#{vo.quoteItem.quote.soldToCustomerName}"/>
+				</p:column>		
+				<p:column headerText="End Customer" styleClass="column_endCustomerName" filterBy="#{vo.o.quoteItem.endCustomerName}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.endCustomerName}">
+					<f:facet name="header">
+                         #{dbResource['wq.label.endCust']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.endCustomerName}" title="#{vo.quoteItem.endCustomerName}"/>
+				</p:column>		
+				<p:column headerText="Requested P/N" styleClass="column_fullMfrPart" filterBy="#{vo.o.quoteItem.requestedPartNumber}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.requestedPartNumber}">
+					<f:facet name="header">
+                         #{dbResource['wq.label.reqPN']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.requestedPartNumber}" title="#{vo.quoteItem.requestedPartNumber}"/>
+				</p:column>
+				<p:column headerText="Required Qty" sortBy="#{vo.o.quoteItem.requestedQty}" filterBy="#{vo.o.quoteItem.requestedQty}" filterMatchMode="contains" styleClass="column_requiredQty">
+					<f:facet name="header">
+                         #{dbResource['wq.label.reqQty']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.requestedQty}" />
+				</p:column>				
+				<p:column headerText="EAU" sortBy="#{vo.o.quoteItem.eau}" filterBy="#{vo.o.quoteItem.eau}" filterMatchMode="contains" styleClass="column_eau">
+					<f:facet name="header">
+                       #{dbResource['wq.label.EAU']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.eau}" />
+				</p:column>
+				<p:column headerText="RFQ CUR" sortBy="#{vo.o.quoteItem.rfqCurr}" filterBy="#{vo.o.quoteItem.rfqCurr}" filterMatchMode="contains" styleClass="column_rfqCurr">
+					<f:facet name="header">
+                       #{dbResource['wq.label.rfqcurr']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.rfqCurr}" />
+				</p:column>	
+				<p:column headerText="Target Resale" styleClass="column_targetResale" filterBy="#{vo.o.quoteItem.targetResale}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.targetResale}">
+					<f:facet name="header">
+                        #{dbResource['wq.label.trgResale']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.targetResale}" >
+					<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5"/>
+					</h:outputText>
+				</p:column>
+				<p:column headerText="Target Margin%" styleClass="column_targetPriceMargin" filterBy="#{vo.o.quoteItem.targetMargin}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.targetMargin}">
+					<f:facet name="header">
+                         #{dbResource['wq.label.tpMargin']} %
+                    </f:facet> 
+					<h:outputText value="#{vo.quoteItem.targetMargin}" />
+				</p:column>   
+				<p:column headerText="Avnet Quoted P/N" styleClass="column_fullMfrPart" sortBy="#{vo.o.quoteItem.quotedPartNumber}" filterBy="#{vo.o.quoteItem.quotedPartNumber}" filterMatchMode="contains">
+					<f:facet name="header">
+                         #{dbResource['wq.label.quotedPN']}
+                    </f:facet>
+						<h:outputText value="#{vo.quoteItem.quotedPartNumber}" />
+				</p:column>	  
+				<p:column headerText="SAP Material Number" styleClass="column_fullMfrPart" filterBy="#{vo.o.quoteItem.sapPartNumber}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.sapPartNumber}">
+					<f:facet name="header">
+                        #{dbResource['wq.label.SapPN']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.sapPartNumber}" />
+				</p:column>   
+				<p:column styleClass="column_quotedMargin" headerText="Quoted Margin %" sortBy="#{vo.o.quoteItem.resaleMargin}" filterBy="#{vo.o.quoteItem.resaleMargin}" filterMatchMode="contains" exportable="false">
+					<f:facet name="header">
+                        #{dbResource['wq.label.quotedMargin']} %
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.resaleMargin}#{(vo.quoteItem.resaleMargin != null) ?(vo.quoteItem.resaleMargin == 0 ?'0%':'%'):''}" />
+				</p:column>   
+				<p:column styleClass="column_quotedPrice" headerText="Avnet Quoted Price" sortBy="#{vo.o.quoteItem.quotedPrice}">
+					<f:facet name="header">
+                         #{dbResource['wq.label.qouteResale']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.convertToRfqValueWithDouble(vo.quoteItem.quotedPrice)}" />
+				</p:column>		
+				<p:column styleClass="column_costIndicator" headerText="Cost Indicator" filterBy="#{vo.o.quoteItem.costIndicator}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.costIndicator}">
+					<f:facet name="header">
+                         #{dbResource['wq.label.costIndicator']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.costIndicator}" />
+				</p:column>
+				<p:column styleClass="column_cost" headerText="Cost"  sortBy="#{vo.o.quoteItem.cost}">
+					<f:facet name="header">
+                         #{dbResource['wq.label.cost']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.convertToRfqValueWithDouble(vo.quoteItem.cost)}" />
+				</p:column>																					
+				<p:column headerText="BMT Flag" styleClass="column_bmtFlag field_mandatory" filterBy="#{vo.o.bmtFlag.bmtFlagCode}" filterOptions="#{selectItemMB.bmtFlagItemForFilter()}" filterMatchMode="exact"
+					sortBy="#{vo.o.bmtFlag.bmtFlagCode}">
+					<f:facet name="header">
+                       #{dbResource['wq.label.BmtFlag']}
+                    </f:facet>
+					<p:selectOneMenu value="#{vo.bmtFlag.bmtFlagCode}" style="width:80px;">
+						<f:selectItems value="#{selectItemMB.bmtFlagItem()}" />
+						<p:ajax event="valueChange" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}" />
+					</p:selectOneMenu>
+				</p:column>
+				<p:column headerText="BMT MFR DR#" styleClass="column_mfr_dr field_mandatory" filterBy="#{vo.o.drMfrNo}" filterMatchMode="contains" sortBy="#{vo.o.drMfrNo}">
+					<f:facet name="header">
+                        #{dbResource['wq.label.bmtMFRDR']}#
+                    </f:facet>
+					<p:inputText value="#{vo.drMfrNo}">
+						<p:ajax event="change" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}" />
+					</p:inputText>
+				</p:column>   
+				<p:column headerText="BMT Suggest Cost" styleClass="column_drCost field_mandatory" filterBy="#{vo.o.drCost}" filterMatchMode="contains" sortBy="#{vo.o.drCost}">
+					<f:facet name="header">
+                        <h:outputText escape="false" value="#{dbResource['wq.label.bmt']}&lt;br&gt;#{dbResource['wq.label.suggestCost']}" />
+                    </f:facet>    
+					<p:inputText value="#{vo.drCost}" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" converter="javax.faces.Double" converterMessage="#{dbResource['wq.label.bmtSuggestCostEg']}">
+						<p:ajax event="change" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}" update="@this,:growl" />
+						<p:ajax event="keyup" update="drMargin" />
+						<f:convertNumber pattern="###,##0.0000#"  />
+					</p:inputText>
+				</p:column>     
+				<p:column headerText="BMT Suggest Resale" styleClass="column_drCost field_mandatory" filterBy="#{vo.o.drResale}" filterMatchMode="contains" sortBy="#{vo.o.drResale}">
+					<f:facet name="header">
+                        <h:outputText escape="false" value="#{dbResource['wq.label.bmt']}&lt;br&gt;#{dbResource['wq.label.suggestResale']}" />
+                    </f:facet>
+					<p:inputText value="#{vo.drResale}" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" converter="javax.faces.Double" converterMessage="#{dbResource['wq.label.bmtResaleCostEg']}">
+						<p:ajax event="change" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}" update="@this,:growl" />
+						<p:ajax event="keyup" update="drMargin" />
+						<f:convertNumber pattern="###,##0.0000#" />
+					</p:inputText>
+				</p:column>   
+				<p:column headerText="BMT Suggest Margin" styleClass="column_drCost">
+					<f:facet name="header">
+						<h:outputText escape="false" value="#{dbResource['wq.label.bmt']}&lt;br&gt;#{dbResource['wq.label.suggestMargin']}" />
+                    </f:facet>
+					<h:outputText id="drMargin" value="#{vo.getDrMargin()}" />
+				</p:column>     
+				<p:column headerText="BMT MFR Quote#" styleClass="column_bmt_mfr_quote field_option" filterBy="#{vo.o.drMfrQuoteNo}" filterMatchMode="contains" sortBy="#{vo.o.drMfrQuoteNo}">
+					<f:facet name="header">
+                       #{dbResource['wq.label.bmtMFRQuoted']}#
+                    </f:facet>
+					<p:inputText value="#{vo.drMfrQuoteNo}" maxlength="150">
+						<p:ajax event="change" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}" />
+					</p:inputText>
+				</p:column>            
+				<p:column headerText="BMT SQ Effective Date" styleClass="column_drEffectiveDate field_option" filterBy="#{vo.o.drEffectiveDate}" filterOptions="datestr"
+					sortBy="#{vo.o.drEffectiveDate}">
+					<f:facet name="header">  
+						<h:outputText escape="false" value="#{dbResource['wq.label.bmtSQ']}&lt;br&gt;#{dbResource['wq.label.effectiveDate']}" />
+                    </f:facet> 
+					<p:calendar value="#{vo.drEffectiveDate}" converterMessage="#{dbResource['wq.label.bmtSQEffectiveDateExample']}"  pattern="dd/MM/yyyy" >
+						<p:ajax event="change" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}" update="@parent"/>
+						<p:ajax event="dateSelect" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}" />
+						<f:convertDateTime pattern="dd/MM/yyyy"   timeZone="GMT+8"/>
+					</p:calendar>
+				</p:column>   
+				<p:column headerText="BMT SQ Expiry Date" styleClass="column_drExpiryDate field_option" filterBy="#{vo.o.drExpiryDate}" filterOptions="datestr" filterMatchMode="contains" sortBy="#{vo.o.drExpiryDate}">
+					<f:facet name="header">
+						<h:outputText escape="false" value="#{dbResource['wq.label.bmtSQ']}&lt;br&gt;#{dbResource['wq.label.expDate']}" />
+                    </f:facet>
+					<p:calendar value="#{vo.drExpiryDate}" pattern="dd/MM/yyyy" converterMessage="#{dbResource['wq.label.bmtExpiryError']}">
+						<p:ajax event="change" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}"/>
+						<p:ajax event="dateSelect" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}" />
+						<f:convertDateTime pattern="dd/MM/yyyy"  timeZone="GMT+8"/>
+					</p:calendar>					                     
+				</p:column>   
+				<p:column headerText="BMT Comments" styleClass="column_drComments bmt_comments field_option" filterBy="#{vo.o.drComments}" filterMatchMode="contains" sortBy="#{vo.o.drComments}">
+					<f:facet name="header">
+                       #{dbResource['wq.label.bmtComm']}
+                    </f:facet>
+					<p:inputText value="#{vo.drComments}">
+						<p:ajax event="change" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}" />
+					</p:inputText>
+				</p:column>   
+				<p:column headerText="BMT Attachment" styleClass="column_bmtAttachment">
+					<f:facet name="header">
+                        #{dbResource['wq.label.bmt']}<br/> #{dbResource['wq.label.attachment']}
+                    </f:facet>
+					<p:commandLink process="@this" title="#{dbResource['wq.label.uploadAttachment']}" styleClass="" update=":topForm:upload_atts_panel"
+						oncomplete="PF('upload_Attachment_Dialog').show();">
+						<h:graphicImage url="./../resources/images/icon_upload.png" styleClass="iconLink"/>
+						<f:setPropertyActionListener target="#{viewScope.currentRecordObjectId}" value="#{vo.id}" />
+					</p:commandLink>
+					<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" styleClass="" rendered="#{vo.quoteItem.bmtAttachmentFlag}" update=":topForm:bmtAttathmentsPanel:componentAttData"
+						oncomplete="PF('attachmentDialog').show();" actionListener="#{bmtPlatformMB.setBmtAttachment(vo.quoteItem.getAttachments('BMT Attachment'))}">
+						<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>
+					</p:commandLink>
+					<h:outputText value="#{vo.quoteItem.bmtAttachmentFlag ? 'Yes':'No'}" style="display:none;"/>
+				</p:column>
+				<p:column headerText="BMT Quoted Qty" styleClass="column_drQuoteQty field_option" filterBy="#{vo.o.drQuoteQty}" filterMatchMode="contains" sortBy="#{vo.o.drQuoteQty}">
+					<f:facet name="header">
+                        #{dbResource['wq.label.bmtQuotedQty']}
+                    </f:facet>
+					<p:inputText value="#{vo.drQuoteQty}" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" converter="javax.faces.Integer" converterMessage=" #{dbResource['wq.label.bmtQtyNumError']}.">
+						<p:ajax event="change" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}" update="@this,:growl" />
+						<f:convertNumber pattern="###,###" />
+					</p:inputText>
+				</p:column>  
+				<p:column headerText="BMT Suggest Cost (Non-USD)" styleClass="column_drCostAltCurrency field_option" filterBy="#{vo.o.drCostAltCurrency}" filterMatchMode="contains" sortBy="#{vo.o.drCostAltCurrency}">
+					<f:facet name="header">
+						<h:outputText escape="false" value="#{dbResource['wq.label.bmtSuggCost']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})" />
+					</f:facet>
+					<p:inputText value="#{vo.drCostAltCurrency}" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" converter="javax.faces.Double" converterMessage="#{dbResource['wq.label.bmtSuggstCostExample']}">
+						<f:convertNumber pattern="###,##0.0000#" />
+						<p:ajax event="change" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}" update="@this,:growl" />
+					</p:inputText>
+				</p:column>  
+				<p:column headerText="BMT Suggest Resale (Non-USD)" styleClass="column_drResaleAltCurrency field_option" filterBy="#{vo.o.drResaleAltCurrency}" filterMatchMode="contains" sortBy="#{vo.o.drResaleAltCurrency}">
+					<f:facet name="header">
+						<h:outputText escape="false" value="#{dbResource['wq.label.bmtSuggResale']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})" />
+					</f:facet>
+					<p:inputText value="#{vo.drResaleAltCurrency}" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" converter="javax.faces.Double" converterMessage="#{dbResource['wq.label.bmtSuggstResaleExample']}">
+						<p:ajax event="change" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}" update="@this,:growl" />
+						<f:convertNumber pattern="###,##0.0000#" />
+					</p:inputText>
+				</p:column>  
+				<p:column headerText="BMT Currency" styleClass="column_drAltCurrency bmt_column_currency field_option" filterBy="#{vo.o.drAltCurrency}" filterMatchMode="contains"
+					sortBy="#{vo.o.drAltCurrency}">
+					<f:facet name="header">
+                        #{dbResource['wq.label.bmtCurr']}
+                    </f:facet>					
+					<p:autoComplete
+						value="#{vo.drAltCurrency}"
+						dropdown="true" scrollHeight="200" forceSelection="true" autocomplete="true" minQueryLength="1"
+						completeMethod="#{selectItemMB.completeMethodBMTCurrencyList}" cache="true" >											
+			            <f:ajax event="itemSelect" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}"/>    
+					</p:autoComplete>					
+				</p:column>   
+				<p:column headerText="BMT Exchange Rate (Non-USD)" styleClass="column_drExchangeRate field_option" filterBy="#{vo.o.drExchangeRate}" filterMatchMode="contains" sortBy="#{vo.o.drExchangeRate}">
+					<f:facet name="header">
+						<h:outputText escape="false" value=" #{dbResource['wq.label.bmtExchRate']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})" />
+					</f:facet>
+					<p:inputText value="#{vo.drExchangeRate}" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" converter="javax.faces.Double" converterMessage="#{dbResource['wq.label.bmtExchangeRateExample']}">
+						<p:ajax event="change" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}" update="@this,:growl" />
+						<f:convertNumber pattern="###,##0.0000#" />
+					</p:inputText>
+				</p:column>		
+				<p:column styleClass="column_multiUsage" headerText="Multi-Usage" sortBy="#{vo.o.quoteItem.multiUsageFlag}" filterOptions="#{selectItemMB.booleanItem}" filterBy="#{vo.o.quoteItem.multiUsageFlag}" filterMatchMode="exact">
+					<f:facet name="header">
+						<h:outputText escape="false" value="#{dbResource['wq.message.multiUsage']}" />
+					</f:facet>
+					<h:outputText value="#{vo.quoteItem.multiUsageFlag? 'Yes':'No'}" />
+				</p:column>			
+				<p:column styleClass="column_qcInternalComment bmt_comments" headerText="QC Internal Comment" style="width:400px;" sortBy="#{vo.o.quoteItem.internalComment}" filterBy="#{vo.o.quoteItem.internalComment}" filterMatchMode="contains">
+					<f:facet name="header">
+						<h:outputText escape="false" value="#{dbResource['wq.label.qcInternalComment']}" />
+					</f:facet>
+					<h:outputText value="#{vo.quoteItem.internalComment}" />
+				</p:column>
+				<p:column styleClass="column_qcAttachments" headerText="#{dbResource['wq.label.qcAtt']}" exportable="false">
+					<h:panelGroup>
+						<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" 
+						styleClass="" rendered="#{vo.quoteItem.qcAttachmentFlag}"
+						 update=":topForm:bmtAttathmentsPanel:componentAttData"
+									   oncomplete="PF('attachmentDialog').show();" 
+									   actionListener="#{bmtPlatformMB.setBmtAttachment(vo.quoteItem.getAttachments('QC Attachment'))}">
+							<h:graphicImage library="images" name="icon_magnifier.png" />
+						</p:commandLink>
+					</h:panelGroup>						
+				</p:column>											
+				<p:column styleClass="column_pmComment bmt_comments" headerText="PM Comment" sortBy="#{vo.o.quoteItem.internalTransferComment}" filterBy="#{vo.o.quoteItem.internalTransferComment}" filterMatchMode="contains">
+					<f:facet name="header">
+						<h:outputText escape="false" value="#{dbResource['wq.label.pmComment']}" />
+					</f:facet>
+					<h:outputText value="#{vo.quoteItem.internalTransferComment}" />
+				</p:column>  
+				<p:column headerText="Quotation Effective Date" styleClass="column_quoteEffectiveDate" filterBy="#{vo.o.quoteItem.quotationEffectiveDate}" filterOptions="datestr" filterMatchMode="contains"
+					sortBy="#{vo.o.quoteItem.quotationEffectiveDate}">
+					<f:facet name="header">
+					 	<h:outputText escape="false" value="#{dbResource['wq.label.quotation']}&lt;br&gt;#{dbResource['wq.label.effectiveDate']}" />
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.quotationEffectiveDate}">
+						<f:convertDateTime pattern="dd/MM/yyyy HH:mm"  />
+					</h:outputText>
+				</p:column>				
+				<p:column headerText="Price Validity" styleClass="column_validity" filterBy="#{vo.o.quoteItem.priceValidity}" filterMatchMode="contains"
+					sortBy="#{vo.o.quoteItem.priceValidity}">
+					<f:facet name="header">
+                        #{dbResource['wq.label.priceValidity']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.priceValidity}"/>
+				</p:column>  
+				<p:column headerText="Shipment Validity" styleClass="column_shipmentValidity" filterBy="#{vo.o.quoteItem.shipmentValidity}" filterOptions="datestr" filterMatchMode="contains"
+					sortBy="#{vo.o.quoteItem.shipmentValidity}">
+					<f:facet name="header">
+                        <h:outputText escape="false" value="#{dbResource['wq.label.shipmentVal']}" />
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.shipmentValidity}">
+						<f:convertDateTime pattern="dd/MM/yyyy HH:mm"   />
+					</h:outputText>
+				</p:column>				
+				<p:column headerText="MFR Quote #" styleClass="column_vendorQuoteNumber" filterBy="#{vo.o.quoteItem.vendorQuoteNumber}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.vendorQuoteNumber}">
+					<f:facet name="header">
+                       #{dbResource['wq.label.mfrQoute']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.vendorQuoteNumber}" />
+				</p:column>
+				<p:column headerText="MFR Debit #" styleClass="column_vendorDebitNumber" filterBy="#{vo.o.quoteItem.vendorDebitNumber}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.vendorDebitNumber}">
+					<f:facet name="header">
+                          #{dbResource['wq.label.mfrDebit']}#
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.vendorDebitNumber}" />
+				</p:column>
+				<p:column headerText="MFR Quote Qty" styleClass="column_vendorQuoteQty" filterBy="#{vo.o.quoteItem.vendorQuoteQty}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.vendorQuoteQty}">
+					<f:facet name="header">
+                       #{dbResource['wq.label.mfrQuoteQty']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.vendorQuoteQty}" />
+				</p:column>
+				<p:column headerText="Salesman" styleClass="column_employeeName" sortBy="#{vo.o.quoteItem.quote.sales.name}" filterBy="#{vo.o.quoteItem.quote.sales.name}" filterMatchMode="contains">
+					<f:facet name="header">
+                       #{dbResource['wq.label.salesman']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.quote.sales.name}" />
+				</p:column>		
+				<p:column styleClass="column_team" headerText="Team" sortBy="#{vo.o.quoteItem.quote.team.name}" filterBy="#{vo.o.quoteItem.quote.team.name}" filterMatchMode="contains">
+					<f:facet name="header">
+                        #{dbResource['wq.label.team']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.quote.team.name}" />
+				</p:column>		
+				<p:column styleClass="column_uploadTime" headerText="RFQ Submission Date"  filterMatchMode="contains" filterOptions="datestr"
+					sortBy="#{vo.o.quoteItem.id}" filterBy="#{vo.o.quoteItem.submissionDate}">
+					<f:facet name="header">
+                        #{dbResource['wq.label.rfqSubmissionDate']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.submissionDate}">
+						<f:convertDateTime pattern="dd/MM/yyyy HH:mm"   />
+					</h:outputText>                    
+				</p:column>								
+				<p:column styleClass="column_qcAttachments" headerText="#{dbResource['wq.label.rfqAttachment']}" exportable="false">
+					<h:panelGroup>
+						<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" 
+						styleClass="" rendered="#{vo.quoteItem.quote.formAttachmentFlag}"
+						 update=":topForm:bmtAttathmentsPanel:componentAttData"
+									   oncomplete="PF('attachmentDialog').show();" 
+									   actionListener="#{bmtPlatformMB.setBmtAttachment(vo.quoteItem.quote.attachments)}">
+							<h:graphicImage library="images" name="icon_magnifier.png" />
+						</p:commandLink>
+					</h:panelGroup>						
+				</p:column>				
+				<p:column styleClass="column_qcAttachments" headerText="#{dbResource['wq.label.rfqItems']}" exportable="false">
+					<h:panelGroup>
+						<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" 
+						styleClass="" rendered="#{vo.quoteItem.itemAttachmentFlag}"
+						 update=":topForm:bmtAttathmentsPanel:componentAttData"
+									   oncomplete="PF('attachmentDialog').show();" 
+									   actionListener="#{bmtPlatformMB.setBmtAttachment(vo.quoteItem.getAttachments('RFQ Item Attachment'))}">
+							<h:graphicImage library="images" name="icon_magnifier.png" />
+						</p:commandLink>
+					</h:panelGroup>						
+				</p:column>				
+				<p:column styleClass="column_qcAttachments" headerText="Refresh Attachment">
+					<f:facet name="header">
+                        #{dbResource['wq.header.refreshAttachment']}
+                    </f:facet>
+						<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" 
+						styleClass="" rendered="#{vo.quoteItem.refreshAttachmentFlag}"
+						 update=":topForm:bmtAttathmentsPanel:componentAttData"
+									   oncomplete="PF('attachmentDialog').show();" 
+									   actionListener="#{bmtPlatformMB.setBmtAttachment(vo.quoteItem.getAttachments('Refresh Attachment'))}">
+							<h:graphicImage library="images" name="icon_magnifier.png" />
+						</p:commandLink>
+					<h:outputText value="#{vo.quoteItem.refreshAttachmentFlag ? 'Yes':'No'}" style="display:none;"/>		
+				</p:column>				
+				<p:column headerText="Description" styleClass="column_description" filterBy="#{vo.o.quoteItem.description}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.description}">
+					<f:facet name="header">
+                        #{dbResource['wq.label.description']}
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.description}" />
+				</p:column> 
+				<p:column headerText="Revert Version" styleClass="column_revertVersion" filterBy="#{vo.o.quoteItem.revertVersion}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.revertVersion}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.revert']}&lt;br&gt; #{dbResource['wq.label.version']}" escape="false"/>
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.revertVersion}" />
+				</p:column>
+				<p:column headerText="First RFQ Code" styleClass="column_firstRfqCode" filterBy="#{vo.o.quoteItem.firstRfqCode}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.firstRfqCode}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.first']}&lt;br&gt;#{dbResource['wq.label.rfqCode']}" escape="false"/>
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.firstRfqCode}" />
+				</p:column>
+				<p:column headerText="Ship-To-Code" styleClass="column_shipToCustomerNumber" sortBy="#{vo.o.quoteItem.shipToCustomer.customerNumber}" filterBy="#{vo.o.quoteItem.shipToCustomer.customerNumber}" filterMatchMode="contains">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.ShipToCode']}" escape="false"/>
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.shipToCustomer.customerNumber}" />
+				</p:column>		
+				<p:column styleClass="column_shipToCustomerName" headerText="Ship-To-Party" sortBy="#{vo.o.quoteItem.shipToCustomerName}" filterBy="#{vo.o.quoteItem.shipToCustomerName}" filterMatchMode="contains">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.ShipToParty']}" escape="false"/>
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.shipToCustomerName}" />
+				</p:column>
+				<p:column styleClass="column_endCustomerNumber" headerText="End Customer Code" sortBy="#{vo.o.quoteItem.endCustomer.customerNumber}" filterBy="#{vo.o.quoteItem.endCustomer.customerNumber}" filterMatchMode="contains">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.EndCustomerCode']}" escape="false"/>
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.endCustomer.customerNumber}" />
+				</p:column>									
+				<p:column styleClass="column_yourReference" headerText="Requester Reference" sortBy="#{vo.o.quoteItem.quote.yourReference}" filterBy="#{vo.o.quoteItem.quote.yourReference}" filterMatchMode="contains" exportable="false">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.reqRef']}" escape="false"/>
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.quote.yourReference}" />
+				</p:column>		
+				<p:column styleClass="column_salesEmployeeNumber" headerText="Salesman Employee Code" sortBy="#{vo.o.quoteItem.quote.sales.employeeId}" filterBy="#{vo.o.quoteItem.quote.sales.employeeId}" filterMatchMode="contains">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.salesmanEmployee']} #{dbResource['wq.label.code']}" escape="false"/>
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.quote.sales.employeeId}" />
+				</p:column>		
+				<p:column styleClass="column_soldToCustomerNumber" headerText="Sold-To-Code" sortBy="#{vo.o.quoteItem.soldToCustomer.customerNumber}" filterBy="#{vo.o.quoteItem.soldToCustomer.customerNumber}" filterMatchMode="contains">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.SoldToCode']}" escape="false"/>
+                    </f:facet>					
+					<h:outputText value="#{vo.quoteItem.soldToCustomer.customerNumber}" />
+				</p:column>								
+				<p:column styleClass="column_customerType" headerText="Customer Type" sortBy="#{vo.o.quoteItem.customerType}" filterBy="#{vo.o.quoteItem.customerType}" filterMatchMode="contains">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.custmrType']}" escape="false"/>
+                    </f:facet>					
+					<h:outputText value="#{vo.quoteItem.customerType}" />
+				</p:column>				
+				<p:column styleClass="column_projectName" headerText="Project Name" sortBy="#{vo.o.quoteItem.projectName}" filterBy="#{vo.o.quoteItem.projectName}" filterMatchMode="contains">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.projectName']}" escape="false"/>
+                    </f:facet>					
+					<h:outputText value="#{vo.quoteItem.projectName}" />
+				</p:column>				
+				<p:column styleClass="column_application" headerText="Application" sortBy="#{vo.o.quoteItem.application}" filterBy="#{vo.o.quoteItem.application}" filterMatchMode="contains">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.app']}" escape="false"/>
+                    </f:facet>					
+					<h:outputText value="#{vo.quoteItem.application}" />
+				</p:column>				
+				<p:column styleClass="column_enquirySegment" headerText="Segment" sortBy="#{vo.o.quoteItem.enquirySegment}" filterBy="#{vo.o.quoteItem.enquirySegment}" filterMatchMode="contains">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.segment']}" escape="false"/>
+                    </f:facet>					
+					<h:outputText value="#{vo.quoteItem.enquirySegment}" />
+				</p:column>				
+				<p:column headerText="Design Location" styleClass="column_designLocation bmt_column_designLocation field_option" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.designLocation}" filterBy="#{vo.o.quoteItem.designLocation}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.designLoc']}" escape="false"/>
+                    </f:facet>
+					<p:autoComplete
+						value="#{vo.quoteItem.designLocation}"
+						dropdown="true" scrollHeight="200" autocomplete="true" minQueryLength="1"
+						completeMethod="#{selectItemMB.completeMethodDesignRegionList}" cache="true" >											
+			            <f:attribute name="region" value="#{vo.quoteItem.designRegion}" />            
+			            <f:ajax event="itemSelect" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}"/>    
+			            <f:ajax event="valueChange" listener="#{bmtPlatformMB.cellChangeListener(vo.id)}"/>    
+					</p:autoComplete>					
+				</p:column>
+				<p:column styleClass="column_region" headerText="Design Region" filterBy="#{vo.o.quoteItem.designRegion}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.designRegion}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.designRegion']}" escape="false"/>
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.designRegion}" />
+				</p:column>
+				<p:column headerText="Design In Cat" styleClass="column_designInCat" filterBy="#{vo.o.quoteItem.designInCat}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.designInCat}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.DesignInCat']}" escape="false"/>                       
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.designInCat}" />
+				</p:column>
+				<p:column headerText="DRMS Project ID" styleClass="column_drmsNumber" filterBy="#{vo.o.quoteItem.drmsNumber}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.drmsNumber}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.drmsID']}" escape="false"/>                       
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.drmsNumber}" />
+				</p:column>
+				<p:column headerText="MFR DR #" styleClass="column_supplierDrNumber" filterBy="#{vo.o.quoteItem.supplierDrNumber}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.supplierDrNumber}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.mfrDR']}#" escape="false"/>                       
+                    </f:facet>
+					<h:outputText value="#{vo.quoteItem.supplierDrNumber}" />
+				</p:column>
+				<p:column styleClass="column_drExpiryDate" filterBy="#{vo.o.quoteItem.drExpiryDate}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.drExpiryDate}" exportable="false">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.DRExpiryDate']}" escape="false"/>                       
+                    </f:facet>
+                   	<h:outputText value="#{vo.quoteItem.drExpiryDate}">
+						<f:convertDateTime pattern="dd/MM/yyyy"   />
+					</h:outputText>
+				</p:column>
+				<p:column headerText="Remarks" styleClass="column_remarks" filterBy="#{vo.o.quoteItem.quote.remarks}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.quote.remarks}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.remarks']}" escape="false"/>                       
+                    </f:facet>
+                   	<h:outputText value="#{vo.quoteItem.quote.remarks}"/>
+				</p:column>
+				<p:column headerText="Competitor Information" styleClass="column_competitorInformation" filterBy="#{vo.o.quoteItem.competitorInformation}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.competitorInformation}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.message.comptInfo']}" escape="false"/>                       
+                    </f:facet>
+                   	<h:outputText value="#{vo.quoteItem.competitorInformation}"/>
+				</p:column>
+				<p:column headerText="PP Schedule" styleClass="column_ppSchedule" filterBy="#{vo.o.quoteItem.ppSchedule}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.ppSchedule}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.ppSchedule']}" escape="false"/>                       
+                    </f:facet>
+                   	<h:outputText value="#{vo.quoteItem.ppSchedule}"/>
+				</p:column>
+				<p:column headerText="MP Schedule" styleClass="column_mpSchedule" filterBy="#{vo.o.quoteItem.mpSchedule}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.mpSchedule}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.MpSchedule']}" escape="false"/>                       
+                    </f:facet>
+                   	<h:outputText value="#{vo.quoteItem.mpSchedule}"/>
+				</p:column>
+				<p:column headerText="Item Remarks" styleClass="column_itemRemarks" filterBy="#{vo.o.quoteItem.remarks}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.remarks}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.itmRemark']}" escape="false"/>                       
+                    </f:facet>
+                   	<h:outputText value="#{vo.quoteItem.remarks}"/>
+				</p:column>
+				<p:column  headerText="SPR" styleClass="column_sprFlag" filterBy="#{vo.o.quoteItem.sprFlag}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.sprFlag}" filterOptions="#{selectItemMB.booleanItem}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.spr']}" escape="false"/>                       
+                    </f:facet>
+                   	<h:outputText value="#{vo.quoteItem.sprFlag? 'Yes':'No'}" />
+				</p:column>
+				<p:column headerText="Reason For Refresh" styleClass="column_reasonForRefresh" filterBy="#{vo.o.quoteItem.reasonForRefresh}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.reasonForRefresh}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.reasonRefresh']}" escape="false"/>                       
+                    </f:facet>
+                   	<h:outputText value="#{vo.quoteItem.reasonForRefresh}" />
+				</p:column>
+				<p:column headerText="Created By" styleClass="column_employeeName" filterBy="#{vo.o.quoteItem.quote.createdName}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.quote.createdName}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.createdBy']}" escape="false"/>                       
+                    </f:facet>
+                   	<h:outputText value="#{vo.quoteItem.quote.createdName}" />
+				</p:column>  
+				<p:column headerText="Sold To Party (Chinese)" styleClass="column_soldToCustomerName" filterBy="#{vo.o.quoteItem.quote.soldToCustomerNameChinese}" filterMatchMode="contains" sortBy="#{vo.o.quoteItem.quote.soldToCustomerNameChinese}">
+					<f:facet name="header">
+                        <h:outputText value="#{dbResource['wq.label.SoldToParty']}&lt;br&gt;(#{dbResource['wq.label.chinese']})" escape="false"/>                       
+                    </f:facet>
+                   	<h:outputText value="#{vo.quoteItem.quote.soldToCustomerNameChinese}" />
+				</p:column>
+				<p:column styleClass="column_lastBmtUpdateTime" headerText="#{dbResource['wq.header.lastUpdateBMT']}">
+                   	<h:outputText value="#{vo.quoteItem.lastBmtUpdateTime}">
+                   		<f:convertDateTime pattern="dd/MM/yyyy HH:mm"   />
+                   	</h:outputText>
+				</p:column>
+<!-- 				TODO:RIT from PM to QC attachment (Finalized the caption name later) -->
+			</p:dataTable>
+
+			<p:panel id="quoteDetails" styleClass="quoteDetails" header="#{dbResource['wq.header.selectedDetails']}" toggleable="true" toggleSpeed="500">
+				<p:tabView id="tab" activeIndex="0" cache="true">
+					<p:tab title="#{dbResource['wq.label.bmt']}">
+						<p:panelGrid id="quoteDetails_BMT" columns="6" columnClasses="detailLabel,,detailLabel,,detailLabel,,">
+							<h:outputText value="#{dbResource['wq.label.bmtMFRDR']}#" />
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.drMfrNo}" />
+							<h:outputText value="#{dbResource['wq.label.bmtSuggCost']}" />
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.drCost}" />
+							<h:outputText value="#{dbResource['wq.label.bmtSuggResale']}" />
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.drResale}" />
+
+							<h:outputText value="#{dbResource['wq.label.bmtSuggMargin']}" />
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.getDrMargin()}" />
+							<h:outputText value="#{dbResource['wq.label.bmtMFRQuote']}#" />
+							
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.drMfrQuoteNo}" />
+							<h:outputText value="#{dbResource['wq.label.bmtEffDate']}" />
+							<l:date value="#{bmtPlatformMB.currentSelectedQuoteItem.drEffectiveDate}" />
+
+							<h:outputText value="#{dbResource['wq.label.bmtExpDate']}" />
+							<l:date value="#{bmtPlatformMB.currentSelectedQuoteItem.drExpiryDate}" />
+							<h:outputText value="#{dbResource['wq.label.bmtComm']}" />  
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.drComments}" />
+							<h:outputText value="#{dbResource['wq.label.bmtAtts']}" />
+									<h:panelGroup> 
+										<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" 
+										styleClass="" rendered="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.bmtAttachmentFlag}"
+										 update=":topForm:bmtAttathmentsPanel:componentAttData"
+													   oncomplete="PF('attachmentDialog').show();" 
+													   actionListener="#{bmtPlatformMB.setBmtAttachment(bmtPlatformMB.currentSelectedQuoteItem.quoteItem.getAttachments('BMT Attachment'))}">
+										<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>
+										</p:commandLink>
+									</h:panelGroup>
+
+							<h:outputText value="#{dbResource['wq.label.bmtSuggstCostNUSD']}" />
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.drCostAltCurrency}" />
+							<h:outputText value="#{dbResource['wq.label.bmtSuggstResaleNUSD']}" />
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.drResaleAltCurrency}" />
+							<h:outputText value="#{dbResource['wq.label.bmtCurr']}" />
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.drAltCurrency}" />
+
+							<h:outputText value="#{dbResource['wq.label.BmtExchgRateNonUSD']}" />
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.drExchangeRate}" />
+							<h:outputText value="#{dbResource['wq.label.bmtQuotedQty']}" />
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.drQuoteQty}" />
+							<h:outputText value="#{dbResource['wq.label.BmtFlag']}" />
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.bmtFlag.description}" />
+							<h:outputText value="#{dbResource['wq.header.lastUpdateBMT']}" />
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.lastBmtUpdateTime}">
+								<f:convertDateTime pattern="dd/MM/yyyy HH:mm"   />
+							</h:outputText>
+							<h:outputText/>
+							<h:outputText/>
+							<h:outputText/>
+							<h:outputText/>
+						</p:panelGrid>
+					</p:tab> 
+					<p:tab title="#{dbResource['wq.label.quote']}">
+						<p:accordionPanel id="quoteDetails_Quote" activeIndex="0,1,2">
+							<p:tab title="#{dbResource['wq.label.salesmanInfo']}">
+								<p:panelGrid columns="4" styleClass="details_salesman_info" columnClasses="detailLabel,,detailLabel,,">
+									<h:outputText value="#{dbResource['wq.label.salesmanEmpCode']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quote.sales.employeeId}" />
+									<h:outputText value="#{dbResource['wq.label.salesman']}" /> 
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quote.sales.name}" />
+
+									<h:outputText value="#{dbResource['wq.label.team']}" />   
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quote.team.name}" />
+									<h:outputText value="" />
+									<h:outputText value="" />
+								</p:panelGrid>
+							</p:tab>
+							<p:tab title="#{dbResource['wq.label.quoteInfo']}">  
+								<p:panelGrid columns="6" columnClasses="detailLabel,,detailLabel,,detailLabel,,">
+									<h:outputText value="#{dbResource['wq.header.form']}#" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quote.formNumber}" />
+
+									<h:outputText value="#{dbResource['wq.label.multiUsage']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.multiUsageFlag? 'Yes':'No'}" />
+
+									<h:outputText value="#{dbResource['wq.label.qtyIndicator']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.qtyIndicator}" />
+									<h:outputText value="#{dbResource['wq.label.EAU']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.eau}" />
+
+									<h:outputText value="#{dbResource['wq.label.mfrDebit']} #" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.vendorDebitNumber}" />
+									<h:outputText value="#{dbResource['wq.label.mfrQoute']} #" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.vendorQuoteNumber}" />
+									<h:outputText value="#{dbResource['wq.label.mfrQuoteQty']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.vendorQuoteQty}" />
+									<h:outputText value="#{dbResource['wq.label.QuantityBreak']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem}" converter="webquote.commodity.OqmspInWp" escape="false"/>
+									<h:outputText value="#{dbResource['wq.label.drmsID']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.drmsNumber}" escape="false"/>
+									<h:outputText value="#{dbResource['wq.label.competitorInfo']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.competitorInformation}" escape="false"/>
+									<h:outputText value="#{dbResource['wq.label.description']}" /> 
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.description}" escape="false"/>
+
+									<h:outputText value="#{dbResource['wq.label.resaleIndicator']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.resaleIndicator}" />
+
+									<h:outputText value="#{dbResource['wq.label.leadTimeWKS']}" /> 
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.leadTime}" />
+									<h:outputText value="#{dbResource['wq.label.resaleMIN']} %" />   
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.resaleMin}" />
+									<h:outputText value="#{dbResource['wq.label.resaleMAX']} %" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.resaleMax}" />
+
+									<h:outputText value="#{dbResource['wq.label.mov']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.mov}" />
+									<h:outputText value="#{dbResource['wq.label.PMOQ']}" />   
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.pmoq}" />
+									<h:outputText value="#{dbResource['wq.label.moq']}" />   
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.moq}" />
+
+									<h:outputText value="#{dbResource['wq.label.materialType']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.materialTypeId}" />
+									<h:outputText value="#{dbResource['wq.label.reschedulingWindow']}" />   
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.rescheduleWindow}" />
+									<h:outputText value="#{dbResource['wq.label.cancellationWindow']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.cancellationWindow}" />
+
+									<h:outputText value="#{dbResource['wq.label.proGroup']} 2" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.productGroup2.name}" />
+									<h:outputText value="#{dbResource['wq.label.quotation']} #{dbResource['wq.label.tc']}" />    
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.termsAndConditions}" />
+
+									<h:outputText value="#{dbResource['wq.label.qcInternalComment']}"  /> 
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.internalComment}" />
+									<h:outputText value="#{dbResource['wq.label.pmComment']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.internalTransferComment}" />
+
+									<h:outputText value="#{dbResource['wq.label.reasonRefresh']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.reasonForRefresh}" />
+									<h:outputText value="#{dbResource['wq.label.quotedBy']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.lastUpdatedQcName}" />
+									<h:outputText value="#{dbResource['wq.label.quoteRelDate']}" />
+									<l:date value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.sentOutTime}" />
+
+									<h:outputText value="#{dbResource['wq.label.formAttach']}." />  
+									<h:panelGroup>
+										<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}"   
+										styleClass="" rendered="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quote.formAttachmentFlag}"
+										 update=":topForm:bmtAttathmentsPanel:componentAttData"
+													   oncomplete="PF('attachmentDialog').show();" 
+													   actionListener="#{bmtPlatformMB.setBmtAttachment(bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quote.attachments)}">
+											<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>
+										</p:commandLink>
+									</h:panelGroup>
+									<h:outputText value="#{dbResource['wq.label.itemAttach']}." />  
+									<h:panelGroup>
+										<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" 
+													   styleClass="" rendered="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.itemAttachmentFlag}"
+													   update=":topForm:bmtAttathmentsPanel:componentAttData"
+													   oncomplete="PF('attachmentDialog').show();" 
+													   actionListener="#{bmtPlatformMB.setBmtAttachment(bmtPlatformMB.currentSelectedQuoteItem.quoteItem.getAttachments('RFQ Item Attachment'))}">
+											<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>
+										</p:commandLink>
+									</h:panelGroup>
+									<h:outputText value="#{dbResource['wq.label.pmAttach']}." />  
+									<h:panelGroup>
+										<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" 
+													   styleClass="" rendered="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.pmAttachmentFlag}"
+										 			   update=":topForm:bmtAttathmentsPanel:componentAttData"
+													   oncomplete="PF('attachmentDialog').show();" 
+													   actionListener="#{bmtPlatformMB.setBmtAttachment(bmtPlatformMB.currentSelectedQuoteItem.quoteItem.getAttachments('PM Attachment'))}">
+											<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>
+										</p:commandLink>
+									</h:panelGroup>
+
+									<h:outputText value="#{dbResource['wq.label.qcAtt']}" />  
+									<h:panelGroup>
+										<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" 
+										styleClass="" rendered="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.qcAttachmentFlag}"
+										 update=":topForm:bmtAttathmentsPanel:componentAttData"
+													   oncomplete="PF('attachmentDialog').show();" 
+													   actionListener="#{bmtPlatformMB.setBmtAttachment(bmtPlatformMB.currentSelectedQuoteItem.quoteItem.getAttachments('QC Attachment'))}">
+										<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>
+										</p:commandLink>
+									</h:panelGroup>
+									<h:outputText value="#{dbResource['wq.label.revertVersion']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.revertVersion}" />
+								</p:panelGrid>
+							</p:tab>
+							<p:tab title="#{dbResource['wq.label.rfqDetails']}">  
+								<p:panelGrid columns="6" columnClasses="detailLabel,,detailLabel,,detailLabel,,">
+									<h:outputText value="#{dbResource['wq.label.avnetQuote']}#" />   
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quoteNumber}" />
+									<h:outputText value="#{dbResource['wq.label.mfr']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.requestedMfr.name}" />
+									<h:outputText value="#{dbResource['wq.label.reqPN']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.requestedPartNumber}" />
+									<h:outputText value="#{dbResource['wq.label.rfqStatus']}" /> 
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.status}" />
+									<h:outputText value="#{dbResource['wq.label.quotedPN']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quotedMaterial.fullMfrPartNumber}" />
+									<h:outputText value="#{dbResource['wq.label.trgResale']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.targetResale}" />
+									<h:outputText value="#{dbResource['wq.label.rfqCurr']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.rfqCurr}" />
+									
+									<h:outputText value="#{dbResource['wq.label.qouteResale']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.convertToRfqValueWithDouble(bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quotedPrice)}" />
+									<h:outputText value="#{dbResource['wq.label.costIndicator']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.costIndicator}" />
+									<h:outputText value="#{dbResource['wq.label.cost']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.convertToRfqValueWithDouble(bmtPlatformMB.currentSelectedQuoteItem.quoteItem.cost)}" />
+								
+									<h:outputText value="#{dbResource['wq.label.rfqSubmissionDate']}" />  
+									<l:date value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.submissionDate}" />
+									<h:outputText value="#{dbResource['wq.label.tpMargin']} %" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.targetMargin}" />
+									<h:outputText value="#{dbResource['wq.label.quotedMargin']} %" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.resaleMargin}#{(vo.quoteItem.resaleMargin != null) ?(vo.quoteItem.resaleMargin == 0 ?'0%':'%'):''}" />
+									<h:outputText value="#{dbResource['wq.label.SapPN']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.sapPartNumber}" />
+									<h:outputText value="#{dbResource['wq.label.QuotationEffectiveDate']}" />  
+			                        <h:outputText value="#{searchMaterialDetail.quotationEffectiveDate}">
+							        	<f:convertDateTime pattern="dd/MM/yyyy"   />
+							        </h:outputText>									
+									<h:outputText value="#{dbResource['wq.label.priceValidity']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.priceValidity}" />
+									<h:outputText value="#{dbResource['wq.label.shipmentVal']}" />  
+									<h:outputText value="#{vo.quoteItem.shipmentValidity}">
+										<f:convertDateTime pattern="dd/MM/yyyy HH:mm"   />
+									</h:outputText>
+									<h:outputText value="#{dbResource['wq.label.refreshAttach']}." />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.refreshAttachmentFlag? 'Yes':'No'}" />
+									<h:outputText value="#{dbResource['wq.label.mfrDR']}#" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.supplierDrNumber}" />
+									<h:outputText value="#{dbResource['wq.label.designLoc']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.designLocation}" />
+									<h:outputText value="#{dbResource['wq.label.DRExpiryDate']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.drExpiryDate}" >
+										<f:convertDateTime pattern="dd/MM/yyyy"   />
+									</h:outputText>
+				
+									<h:outputText value="#{dbResource['wq.label.designRegion']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.designRegion}" />
+
+									<h:outputText value="#{dbResource['wq.label.spr']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.sprFlag? 'Yes':'No'}" />
+									<h:outputText value="#{dbResource['wq.label.segment']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.enquirySegment}" />
+									<h:outputText value="#{dbResource['wq.label.projectName']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.projectName}" />
+
+									<h:outputText value="#{dbResource['wq.label.app']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.application}" />
+									<h:outputText value="#{dbResource['wq.label.ppSchedule']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.ppSchedule}" />
+									<h:outputText value="#{dbResource['wq.label.MpSchedule']}" />   
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.mpSchedule}" />
+
+									<h:outputText value="#{dbResource['wq.label.QuoteType']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quoteType}" />
+									<h:outputText value="#{dbResource['wq.label.loa']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.loaFlag? 'Yes':'No'}" />
+									<h:outputText value="#{dbResource['wq.label.DesignInCat']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.designInCat}" />
+
+									<h:outputText value="#{dbResource['wq.label.reqQty']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.requestedQty}" />
+									<h:outputText value="#{dbResource['wq.label.reqRef']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quote.yourReference}" />
+									<h:outputText value="#{dbResource['wq.label.remarks']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quote.remarks}" />
+
+									<h:outputText value="#{dbResource['wq.label.itmRemark']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.remarks}" />
+
+									<h:outputText value="#{dbResource['wq.label.CopyToCS']}" />  
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quote.copyToCS}" />
+									<h:outputText value="#{dbResource['wq.label.rfqCreatedBy']}" />
+									<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quote.createdName}" />
+								</p:panelGrid>
+							</p:tab>  
+						</p:accordionPanel>
+					</p:tab>
+					<p:tab title="#{dbResource['wq.label.cust']}"> 
+						<p:panelGrid id="quoteDetails_Customer" columns="6" columnClasses="detailLabel,,detailLabel,,detailLabel,,">
+							<h:outputText value="#{dbResource['wq.label.SoldToCode']}" />  
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.soldToCustomer.customerNumber}" />
+							<h:outputText value="#{dbResource['wq.label.SoldToParty']}" /> 
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quote.soldToCustomerName}" />
+							<h:outputText value="#{dbResource['wq.label.soldTPartyChinese']}" />  
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quote.soldToCustomerNameChinese}" />
+
+							<h:outputText value="#{dbResource['wq.label.EndCustomerCode']}" />  
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.endCustomer.customerNumber}" />
+							<h:outputText value="#{dbResource['wq.label.endCust']}" />  
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.endCustomerName}" />
+							<h:outputText value="#{dbResource['wq.label.custmrType']}" />  
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.quote.customerType}" />
+
+							<h:outputText value="#{dbResource['wq.label.ShipToCode']}" />  
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.shipToCustomer.customerNumber}" />
+							<h:outputText value="#{dbResource['wq.label.ShipToParty']}" />  
+							<h:outputText value="#{bmtPlatformMB.currentSelectedQuoteItem.quoteItem.shipToCustomerName}" />
+							<h:outputText value="" />
+							<h:outputText value="" />
+						</p:panelGrid>
+					</p:tab>
+				</p:tabView>
+			</p:panel>
+			<h:panelGroup id="upload_atts_panel">
+				<p:dialog widgetVar="upload_Attachment_Dialog" modal="true" header="#{dbResource['wq.label.uploadFile']}">  
+					<p:ajax event="close" update=":growl"/>
+					<p:fileUpload multiple="true" id="uploadAtts" mode="advanced" fileUploadListener="#{bmtPlatformMB.handleFileUpload}" update="uploadedPanel,save_all_Button" sizeLimit="5242880"
+						allowTypes="/(\.|\/)(gif|jpe?g|png|xls|xlsx|zip|doc|docx|msg|pdf|txt|ppt|7z|pptx|XLS|XLSX|ZIP|DOC|DOCX|MSG|PDF|TXT|JPG|PNG|PPT|PPTX|7Z)$/"     
+						cancelLabel="#{dbResource['wq.button.cancel']}" label="#{dbResource['wq.button.choose']}" uploadLabel="#{dbResource['wq.button.upload']}" invalidFileMessage="#{dbResource['wq.error.invalidFileType']}" invalidSizeMessage="#{dbResource['wq.message.invalidFileSize']}" >
+						<f:attribute name="currentRecordObjectId" value="#{viewScope.currentRecordObjectId}" />
+					</p:fileUpload>
+					<p:panelGrid id="uploadedPanel">
+						<c:forEach items="#{bmtPlatformMB.cacheUploadFiles.get(viewScope.currentRecordObjectId)}" var="file">
+							<p:row>
+								<p:column headerText="#{dbResource['wq.label.fileName']}">  
+									<h:outputText value="#{file.fileName}" />
+								</p:column>
+								<p:column>
+									<l:download attachment="#{file}" />
+								</p:column>
+								<p:column>  
+									<p:commandButton value="#{dbResource['wq.label.delete']}" process="@this" update="uploadedPanel,:growl,save_all_Button"
+										actionListener="#{bmtPlatformMB.removeAttachment(viewScope.currentRecordObjectId,file)}" />
+								</p:column>
+							</p:row>
+						</c:forEach>
+					</p:panelGrid>
+				</p:dialog>
+			</h:panelGroup>
+
+			<p:panel id="history" styleClass="historyPanel" toggleable="true" toggleSpeed="500">
+				<f:facet name="header">
+                    #{dbResource['wq.label.quoteHistory']}
+                </f:facet>  
+				<p:panelGrid styleClass="search_panel">
+					<p:row>
+						<p:column colspan="6">
+							<p:outputLabel for="sMFR" value="#{dbResource['wq.label.mfr']}:" />
+							<p:inputText id="sMFR" value="#{bmtQuotationHistoryMB.mfr}" />
+
+							<p:outputLabel for="sPN" value="#{dbResource['wq.label.pn']}:" />  
+							<p:inputText id="sPN" value="#{bmtQuotationHistoryMB.pn}" />
+							<p:outputLabel for="sSoldToName" value="#{dbResource['wq.label.soldToName']}:" />  
+							<p:inputText id="sSoldToName" value="#{bmtQuotationHistoryMB.soldToName}" />
+							<p:outputLabel for="sECName" value="#{dbResource['wq.label.ecName']}:" />  
+							<p:inputText id="sECName" value="#{bmtQuotationHistoryMB.ecName}" />
+						</p:column>
+					</p:row>
+					<p:row>
+						<p:column>
+							<h:panelGrid columns="4">  
+								<p:outputLabel for="sQuoteReleaseDateFrom" value="#{dbResource['wq.label.quoteReleaseDate']}:" />
+								<p:calendar id="sQuoteReleaseDateFrom" styleClass="search_date" value="#{bmtQuotationHistoryMB.quoteReleaseDateFrom}" showOn="button"  />
+
+								<p:outputLabel for="sQuoteReleaseDateTo" value="#{dbResource['wq.header.To']}:" />  
+								<p:calendar id="sQuoteReleaseDateTo" styleClass="search_date" value="#{bmtQuotationHistoryMB.quoteReleaseDateTo}" showOn="button" />
+							</h:panelGrid>
+						</p:column>
+						<p:column>
+							<p:outputLabel for="sStage" value="#{dbResource['wq.label.stage']}" /> 
+						</p:column>
+						<p:column>
+							<p:selectManyCheckbox id="sStage" value="#{bmtQuotationHistoryMB.stage}">
+								<f:selectItems value="#{selectItemMB.quoteStageBMTHisItem}"/>
+							</p:selectManyCheckbox>
+						</p:column>
+
+						<p:column>
+							<p:outputLabel for="sStatus" value="#{dbResource['wq.label.status']}" />
+						</p:column>
+						<p:column>
+							<p:selectManyCheckbox id="sStatus" value="#{bmtQuotationHistoryMB.status}">
+								<f:selectItems value="#{selectItemMB.rfqStatusItem}"/>
+							</p:selectManyCheckbox>
+						</p:column>
+						<p:column>  
+							<p:commandButton id="history_Search_Button" value="#{dbResource['wq.button.search']}" process="history"
+							update="history_datatable" actionListener="#{bmtQuotationHistoryMB.searchHistory}" />
+							<p:commandButton id="clear_hisroty_filter_Button" value="#{dbResource['wq.button.clearFilter']}"   
+							process="@this" update="history" onclick="PF('historyDatatable').clearFilters();"/>
+						</p:column>
+					</p:row>
+				</p:panelGrid>
+				<p:dataTable id="history_datatable" widgetVar="historyDatatable" lazy="true" styleClass="lazyHistory"
+					value="#{bmtQuotationHistoryMB.quotationHistorys}" var="vo" rows="5" rowKey="#{vo.id}" scrollable="true"
+					paginator="true" sortBy="#{vo.o.quoteItem.quoteNumber}"
+					rowsPerPageTemplate="5,10,20" paginatorPosition="top" rowIndexVar="rowIndex" emptyMessage="#{dbResource['wq.message.noRecordFound']}." >
+					<p:column headerText="#{dbResource['wq.label.quoteStage']}" styleClass="column_stage" sortBy="#{vo.o.quoteItem.stage}">
+                        #{vo.quoteItem.stage}
+                    </p:column>    
+					<p:column headerText="#{dbResource['wq.label.rfq']} &lt;br&gt;#{dbResource['wq.label.status']}" styleClass="column_rfqStatus" sortBy="#{vo.o.quoteItem.status}">
+						<h:outputText value="#{vo.quoteItem.status}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.header.form']} #" styleClass="column_formNumber" sortBy="#{vo.o.quoteItem.quote.formNumber}" filterBy="#{vo.o.quoteItem.quote.formNumber}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.quote.formNumber}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.mfr']}" styleClass="column_mfr" sortBy="#{vo.o.quoteItem.requestedMfr.name}">
+						<h:outputText value="#{vo.quoteItem.requestedMfr.name}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.mfrPN']}" styleClass="column_fullMfrPart" sortBy="#{vo.o.quoteItem.requestedPartNumber}">
+						<h:outputText value="#{vo.quoteItem.requestedPartNumber}" />
+					</p:column> 
+					<p:column headerText="#{dbResource['wq.label.avnetQuotePart']}" styleClass="column_fullMfrPart" sortBy="#{vo.o.quoteItem.quotedPartNumber}" filterBy="#{vo.o.quoteItem.quotedPartNumber}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.quotedPartNumber}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.cust']}" styleClass="column_soldToCustomerName" sortBy="#{vo.o.quoteItem.soldToCustomerFullName}">
+						<h:outputText value="#{vo.quoteItem.soldToCustomerFullName}" />
+					</p:column> 
+					<p:column headerText="#{dbResource['wq.label.endCust']}" styleClass="column_endCustomerName"  sortBy="#{vo.o.quoteItem.endCustomerName}">
+						<h:outputText value="#{vo.quoteItem.endCustomerName}" />
+					</p:column>			  		
+					<p:column headerText="#{dbResource['wq.label.reqQty']}" styleClass="column_requestedQty"  sortBy="#{vo.o.quoteItem.requestedQty}" filterBy="#{vo.o.quoteItem.requestedQty}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.requestedQty}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.EAU']}" styleClass="column_eau" sortBy="#{vo.o.quoteItem.eau}" filterBy="#{vo.o.quoteItem.eau}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.eau}" />
+					</p:column>
+					  
+					<p:column headerText="#{dbResource['wq.label.quotedMargin']} %" styleClass="column_targetResale" sortBy="#{vo.o.quoteItem.resaleMargin}" filterBy="#{vo.o.quoteItem.resaleMargin}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.resaleMargin}#{(vo.quoteItem.resaleMargin != null) ?(vo.quoteItem.resaleMargin == 0 ?'0%':'%'):''}" />
+					</p:column>
+					<p:column headerText=" #{dbResource['wq.label.rfqcurr']}" sortBy="#{vo.o.quoteItem.rfqCurr}" filterBy="#{vo.o.quoteItem.rfqCurr}" filterMatchMode="contains" styleClass="column_rfqCurr">
+						<h:outputText value="#{vo.quoteItem.rfqCurr}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.qouteResale']}" styleClass="column_quotedPrice" sortBy="#{vo.o.quoteItem.quotedPrice}">
+						<h:outputText value="#{vo.quoteItem.convertToRfqValueWithDouble(vo.quoteItem.quotedPrice)}" />
+					</p:column> 
+					<p:column headerText="#{dbResource['wq.label.cost']}" styleClass="column_cost" sortBy="#{vo.o.quoteItem.cost}" >
+						<h:outputText value="#{vo.quoteItem.convertToRfqValueWithDouble(vo.quoteItem.cost)}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.costIndicator']}" styleClass="column_costIndicator" sortBy="#{vo.o.quoteItem.status}" filterBy="#{vo.o.quoteItem.status}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.costIndicator}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.trgResale']}" styleClass="column_targetResale" sortBy="#{vo.o.quoteItem.costIndicator}" filterBy="#{vo.o.quoteItem.costIndicator}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.targetResale}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.salesman']}" styleClass="column_employeeName" sortBy="#{vo.o.quoteItem.quote.sales.name}" filterBy="#{vo.o.quoteItem.quote.sales.name}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.quote.sales.name}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.team']}" styleClass="column_team" sortBy="#{vo.o.quoteItem.quote.team.name}" filterBy="#{vo.o.quoteItem.quote.team.name}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.quote.team.name}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.priceValidity']}" styleClass="column_validity" sortBy="#{vo.o.quoteItem.priceValidity}" filterBy="#{vo.o.quoteItem.priceValidity}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.priceValidity}" />
+					</p:column>   
+					<p:column headerText="#{dbResource['wq.label.mfrQoute']} #" styleClass="column_vendorQuoteNumber" sortBy="#{vo.o.quoteItem.vendorQuoteNumber}" filterBy="#{vo.o.quoteItem.vendorQuoteNumber}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.vendorQuoteNumber}" />
+					</p:column> 
+					<p:column headerText="#{dbResource['wq.label.mfrDebit']} #" styleClass="column_vendorDebitNumber" sortBy="#{vo.o.quoteItem.vendorDebitNumber}" filterBy="#{vo.o.quoteItem.vendorDebitNumber}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.vendorDebitNumber}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.qcInternalComment']}" styleClass="column_qcInternalComment bmt_comments" sortBy="#{vo.o.quoteItem.internalComment}" filterBy="#{vo.o.quoteItem.internalComment}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.internalComment}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.QCExternalComment']}" styleClass="column_qcExternalComment bmt_comments" sortBy="#{vo.o.quoteItem.aqcc}" filterBy="#{vo.o.quoteItem.aqcc}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.aqcc}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.PMOQ']}" styleClass="column_mpq" sortBy="#{vo.o.quoteItem.pmoq}" filterBy="#{vo.o.quoteItem.pmoq}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.pmoq}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.MPQ']}" styleClass="column_mpq" sortBy="#{vo.o.quoteItem.mpq}" filterBy="#{vo.o.quoteItem.mpq}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.mpq}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.moq']}" styleClass="column_moq" sortBy="#{vo.o.quoteItem.moq}" filterBy="#{vo.o.quoteItem.moq}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.moq}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.mov']}" styleClass="column_mov" sortBy="#{vo.o.quoteItem.mov}" filterBy="#{vo.o.quoteItem.mov}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.mov}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.lead']} &lt;br&gt;#{dbResource['wq.label.time']}" styleClass="column_leadTime" sortBy="#{vo.o.quoteItem.leadTime}" filterBy="#{vo.o.quoteItem.leadTime}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.leadTime}" />
+					</p:column>    
+					<p:column headerText="#{dbResource['wq.message.multiUsage']}" styleClass="column_multiUsage" sortBy="#{vo.o.quoteItem.multiUsageFlag}"
+					 filterOptions="#{selectItemMB.booleanItem}" filterBy="#{vo.o.quoteItem.multiUsageFlag}" filterMatchMode="exact">
+						<h:outputText value="#{vo.quoteItem.multiUsageFlag? 'Yes':'No'}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.qtyIndicator']}" styleClass="column_qtyIndicator" sortBy="#{vo.o.quoteItem.qtyIndicator}" filterBy="#{vo.o.quoteItem.qtyIndicator}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.qtyIndicator}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.rfqSubmissionDate']}" styleClass="column_uploadTime" sortBy="#{vo.o.quoteItem.submissionDate}" filterBy="#{vo.o.quoteItem.submissionDate}" filterOptions="datestr" filterMatchMode="contains">
+						<l:date value="#{vo.quoteItem.submissionDate}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.quoteRelDate']}" styleClass="column_uploadTime" sortBy="#{vo.o.quoteItem.sentOutTime}">
+						<l:date value="#{vo.quoteItem.sentOutTime}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.targetPriceRegion']}%" styleClass="column_targetPriceMargin" sortBy="#{vo.o.quoteItem.targetMargin}" filterBy="#{vo.o.quoteItem.targetMargin}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.targetMargin}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.quoteRefMargin']}%" styleClass="column_referenceMargin" sortBy="#{vo.o.quoteItem.referenceMargin}" filterBy="#{vo.o.quoteItem.referenceMargin}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.referenceMargin}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.custmrType']}" styleClass="column_customerType" sortBy="#{vo.o.quoteItem.customerType}" filterBy="#{vo.o.quoteItem.customerType}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.customerType}" />
+					</p:column> 
+					<p:column headerText="#{dbResource['wq.label.app']}" styleClass="column_application" sortBy="#{vo.o.quoteItem.application}" filterBy="#{vo.o.quoteItem.application}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.application}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.designLoc']}" styleClass="column_designLocation" sortBy="#{vo.o.quoteItem.designLocation}" filterBy="#{vo.o.quoteItem.designLocation}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.designLocation}" />
+					</p:column> 
+					<p:column headerText="#{dbResource['wq.label.reschedule']} &lt;br&gt;#{dbResource['wq.button.window']}" styleClass="column_reschedulingWindow" sortBy="#{vo.o.quoteItem.rescheduleWindow}" filterBy="#{vo.o.quoteItem.rescheduleWindow}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.rescheduleWindow}" />
+					</p:column>    
+					<p:column headerText="#{dbResource['wq.label.cancellation']} &lt;br&gt;#{dbResource['wq.button.window']}" styleClass="column_cancellationWindow" sortBy="#{vo.o.quoteItem.cancellationWindow}" filterBy="#{vo.o.quoteItem.cancellationWindow}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.cancellationWindow}" />
+					</p:column>   
+					<p:column styleClass="column_termsAndConditions" sortBy="#{vo.o.quoteItem.termsAndConditions}" filterBy="#{vo.o.quoteItem.termsAndConditions}" filterMatchMode="contains">
+						<f:facet name="header">
+							<h:outputText value="#{dbResource['wq.label.quotation']} #{dbResource['wq.label.tc']}" escape="false" />
+						</f:facet>   
+						<h:outputText value="#{vo.quoteItem.termsAndConditions}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.QuoteType']}" styleClass="column_quoteType" 
+					 sortBy="#{vo.o.quoteItem.quoteType}" filterOptions="#{selectItemMB.quoteTypeItem(true)}" filterBy="#{vo.o.quoteItem.quoteType}" filterMatchMode="exact">
+						<h:outputText value="#{vo.quoteItem.quoteType}" />
+					</p:column>    
+					<p:column headerText="#{dbResource['wq.label.formAttach']}." styleClass="column_qcAttachments" >
+						<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" rendered="#{vo.quoteItem.quote.formAttachmentFlag}" update=":topForm:bmtAttathmentsPanel:componentAttData"
+							oncomplete="PF('attachmentDialog').show();" actionListener="#{bmtPlatformMB.setBmtAttachment(vo.quoteItem.quote.attachments)}">
+							<h:graphicImage library="images" name="icon_magnifier.png" />
+						</p:commandLink>
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.itemAttach']}." styleClass="column_qcAttachments" >
+						<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" rendered="#{vo.quoteItem.hasAnyAttachment}" update=":topForm:bmtAttathmentsPanel:componentAttData"
+							oncomplete="PF('attachmentDialog').show();" actionListener="#{bmtPlatformMB.setBmtAttachment(vo.quoteItem.attachments)}">
+							<h:graphicImage library="images" name="icon_magnifier.png" />
+						</p:commandLink>
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.refreshAttach']}." styleClass="column_qcAttachments" >
+						<h:outputText value="#{vo.quoteItem.refreshAttachmentFlag? 'Yes':'No'}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.pmAttach']}." styleClass="column_qcAttachments" >
+						<h:outputText value="#{vo.quoteItem.pmAttachmentFlag? 'Yes':'No'}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.remark']}" styleClass="column_remarks" sortBy="#{vo.o.quoteItem.quote.remarks}" filterBy="#{vo.o.quoteItem.quote.remarks}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.quote.remarks}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.itemRemark']}" styleClass="column_remarks" sortBy="#{vo.o.quoteItem.remarks}" filterBy="#{vo.o.quoteItem.remarks}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.remarks}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.message.comptInfo']}" styleClass="column_competitorInformation" sortBy="#{vo.o.quoteItem.competitorInformation}" filterBy="#{vo.o.quoteItem.competitorInformation}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.competitorInformation}" />
+					</p:column> 
+					<p:column headerText="#{dbResource['wq.label.DesignInCat']}" styleClass="column_designInCat" sortBy="#{vo.o.quoteItem.designInCat}" filterBy="#{vo.o.quoteItem.designInCat}" filterOptions="#{selectItemMB.designInCatItem(true)}" filterMatchMode="exact">
+						<h:outputText value="#{vo.quoteItem.designInCat}" />
+					</p:column> 
+					<p:column headerText="#{dbResource['wq.label.drmsID']}" styleClass="column_drmsNumber" sortBy="#{vo.o.quoteItem.drmsNumber}" filterBy="#{vo.o.quoteItem.drmsNumber}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.drmsNumber}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.mfrDR']}#" styleClass="column_mfr_dr" sortBy="#{vo.o.drMfrNo}" filterBy="#{vo.o.drMfrNo}" filterMatchMode="contains">
+						<h:outputText value="#{vo.drMfrNo}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.DRExpiryDate']}" styleClass="column_drExpiryDate" sortBy="#{vo.o.drExpiryDate}" filterBy="#{vo.o.drExpiryDate}" filterMatchMode="contains">
+						<l:date value="#{vo.drExpiryDate}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.authGP']}" styleClass="column_authorizedGP" sortBy="#{vo.o.quoteItem.authGp}" filterBy="#{vo.o.quoteItem.authGp}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.authGp}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.reasonForChangesAuthGP']}" styleClass="column_reasonForAuthorizedGPChange" sortBy="#{vo.o.quoteItem.authGpReasonDesc}" filterBy="#{vo.o.quoteItem.authGpReasonDesc}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.authGpReasonDesc}" />
+					</p:column> 
+					<p:column headerText="#{dbResource['wq.label.remarksReason']}" styleClass="column_remarkForReason" sortBy="#{vo.o.quoteItem.authGpRemark}" filterBy="#{vo.o.quoteItem.authGpRemark}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.authGpRemark}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.ppSchedule']}" styleClass="column_ppSchedule" sortBy="#{vo.o.quoteItem.ppSchedule}" filterBy="#{vo.o.quoteItem.ppSchedule}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.ppSchedule}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.POExpiryDate']}" styleClass="column_poExpiryDate" sortBy="#{vo.o.quoteItem.poExpiryDate}" filterBy="#{vo.o.quoteItem.poExpiryDate}" filterOptions="datestr" filterMatchMode="contains">
+						<l:date value="#{vo.quoteItem.poExpiryDate}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.avnetQuoted']}&lt;br&gt; #{dbResource['wq.label.Qty']}" styleClass="column_quotedQty" sortBy="#{vo.o.quoteItem.quotedQty}" filterBy="#{vo.o.quoteItem.quotedQty}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.quotedQty}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.reqRef']}" styleClass="column_yourReference" sortBy="#{vo.o.quoteItem.quote.yourReference}" filterBy="#{vo.o.quoteItem.quote.yourReference}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.quote.yourReference}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.salesman']} #{dbResource['wq.label.lcode']}" styleClass="column_salesEmployeeNumber" sortBy="#{vo.o.quoteItem.quote.sales.employeeId}" filterBy="#{vo.o.quoteItem.quote.sales.employeeId}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.quote.sales.employeeId}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.loa']}" styleClass="column_loa" 
+					 sortBy="#{vo.o.quoteItem.loaFlag}" filterBy="#{vo.o.quoteItem.loaFlag}" filterOptions="#{selectItemMB.booleanItem}" filterMatchMode="exact">
+						<h:outputText value="#{vo.quoteItem.loaFlag? 'Yes':'No'}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.resale']}&lt;br&gt; #{dbResource['wq.label.indicator']}" styleClass="column_resalesIndicator" sortBy="#{vo.o.quoteItem.status}" filterBy="#{vo.o.quoteItem.status}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.resaleIndicator}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.allocations']}" styleClass="column_allocationFlag" sortBy="#{vo.o.quoteItem.allocationFlag}"
+							  filterBy="#{vo.o.quoteItem.allocationFlag}" filterOptions="#{selectItemMB.booleanItem}" filterMatchMode="exact">
+						<h:outputText value="#{vo.quoteItem.allocationFlag? 'Yes':'No'}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.revert']} &lt;br&gt;#{dbResource['wq.label.version']}" styleClass="column_revertVersion" sortBy="#{vo.o.quoteItem.revertVersion}" filterBy="#{vo.o.quoteItem.revertVersion}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.revertVersion}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.first']} &lt;br&gt;#{dbResource['wq.label.rfqCode']}" styleClass="column_firstRfqCode" sortBy="#{vo.o.quoteItem.firstRfqCode}" filterBy="#{vo.o.quoteItem.firstRfqCode}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.firstRfqCode}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.segment']}" styleClass="column_enquirySegment" 
+					 sortBy="#{vo.o.quoteItem.enquirySegment}" 
+					 filterBy="#{vo.o.quoteItem.enquirySegment}" filterOptions="#{selectItemMB.enquirySegmentItem(true)}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.enquirySegment}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtBiz']}" styleClass="column_allocationFlag" sortBy="#{vo.o.quoteItem.bmtCheckedFlag}" filterBy="#{vo.o.quoteItem.bmtCheckedFlag}" filterOptions="#{selectItemMB.booleanItem}" filterMatchMode="exact">
+						<h:outputText value="#{vo.quoteItem.bmtCheckedFlag? 'Yes':'No'}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.reasonRefresh']}" styleClass="column_reasonForRefresh" sortBy="#{vo.o.quoteItem.reasonForRefresh}" filterBy="#{vo.o.quoteItem.reasonForRefresh}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.reasonForRefresh}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.CopyToCS']}" styleClass="column_copyToCs" sortBy="#{vo.o.quoteItem.quote.copyToCS}" filterBy="#{vo.o.quoteItem.quote.copyToCS}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.quote.copyToCS}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.proGroup']} 2" styleClass="column_productGroup" sortBy="#{vo.o.quoteItem.productGroup2.name}" filterBy="#{vo.o.quoteItem.productGroup2.name}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.productGroup2.name}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bizProgType']}" styleClass="column_programType" sortBy="#{vo.o.quoteItem.programType}" filterBy="#{vo.o.quoteItem.programType}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.programType}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.SoldToCode']}" styleClass="column_shipToCustomerNumber" sortBy="#{vo.o.quoteItem.soldToCustomer.customerNumber}" filterBy="#{vo.o.quoteItem.soldToCustomer.customerNumber}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.soldToCustomer.customerNumber}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.ShipToCode']}" styleClass="column_shipToCustomerNumber" sortBy="#{vo.o.quoteItem.shipToCustomer.customerNumber}" filterBy="#{vo.o.quoteItem.shipToCustomer.customerNumber}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.shipToCustomer.customerNumber}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.ShipToParty']}" styleClass="column_shipToCustomerName" sortBy="#{vo.o.quoteItem.shipToCustomerName}" filterBy="#{vo.o.quoteItem.shipToCustomerName}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.shipToCustomerName}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.EndCustomerCode']}" styleClass="column_shipToCustomerNumber" sortBy="#{vo.o.quoteItem.endCustomer.customerNumber}" filterBy="#{vo.o.quoteItem.endCustomer.customerNumber}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.endCustomer.customerNumber}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.SapPN']}" styleClass="column_fullMfrPart" sortBy="#{vo.o.quoteItem.sapPartNumber}" filterBy="#{vo.o.quoteItem.sapPartNumber}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.sapPartNumber}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.spr']}" styleClass="column_sprFlag" sortBy="#{vo.o.quoteItem.sprFlag}" filterBy="#{vo.o.quoteItem.sprFlag}" filterOptions="#{selectItemMB.booleanItem}" filterMatchMode="exact">
+						<h:outputText value="#{vo.quoteItem.sprFlag? 'Yes':'No'}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.quotedBy']}" styleClass="column_employeeName" sortBy="#{vo.o.quoteItem.status}" filterBy="#{vo.o.quoteItem.status}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.quote.createdName}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.SoldToParty']} (#{dbResource['wq.label.chinese']})" styleClass="column_soldToCustomerChineseName" sortBy="#{vo.o.quoteItem.quote.soldToCustomerNameChinese}" filterBy="#{vo.o.quoteItem.quote.soldToCustomerNameChinese}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.quote.soldToCustomerNameChinese}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.qcRegion']}" styleClass="column_region" sortBy="#{vo.o.quoteItem.quote.bizUnit.name}" filterBy="#{vo.o.quoteItem.quote.bizUnit.name}" filterMatchMode="contains">
+						<h:outputText value="#{vo.quoteItem.quote.bizUnit.name}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.designRegion']}" styleClass="column_region" sortBy="#{vo.o.quoteItem.designRegion}" filterBy="#{vo.o.quoteItem.designRegion}" filterOptions="#{selectItemMB.designRegionItem(true)}" filterMatchMode="exact">
+						<h:outputText value="#{vo.quoteItem.designRegion}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.BmtFlag']}" styleClass="column_bmtFlag" sortBy="#{vo.o.bmtFlag.bmtFlagCode}" filterBy="#{vo.o.bmtFlag.bmtFlagCode}" filterOptions="#{selectItemMB.bmtFlagItemForFilter()}" filterMatchMode="exact">
+						<h:outputText value="#{vo.bmtFlag.description}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtMFRDR']}#" styleClass="column_mfr_dr" sortBy="#{vo.o.drMfrNo}" filterBy="#{vo.o.drMfrNo}" filterMatchMode="contains">
+						<h:outputText value="#{vo.drMfrNo}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmt']} &lt;br&gt;#{dbResource['wq.label.suggestCost']}" styleClass="column_drCost" sortBy="#{vo.o.drCost}" filterBy="#{vo.o.drCost}" filterMatchMode="contains">
+						<h:outputText value="#{vo.drCost}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmt']} &lt;br&gt;#{dbResource['wq.label.suggestResale']}" styleClass="column_drCost" sortBy="#{vo.o.drResale}" filterBy="#{vo.o.drResale}" filterMatchMode="contains">
+						<h:outputText value="#{vo.drResale}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmt']} &lt;br&gt;#{dbResource['wq.header.suggestedMargin']}" styleClass="column_drCost" >
+						<h:outputText value="#{vo.getDrMargin()}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtMFRQuote']}#" styleClass="column_bmt_mfr_quote" sortBy="#{vo.o.drMfrQuoteNo}" filterBy="#{vo.o.drMfrQuoteNo}" filterMatchMode="contains">
+						<h:outputText value="#{vo.drMfrQuoteNo}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtSQ']} &lt;br&gt;#{dbResource['wq.label.effectiveDate']}" styleClass="column_drEffectiveDate" sortBy="#{vo.o.drEffectiveDate}" filterBy="#{vo.o.drEffectiveDate}" filterOptions="datestr" filterMatchMode="contains">
+						<l:date value="#{vo.drEffectiveDate}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtSQ']} &lt;br&gt;#{dbResource['wq.label.expDate']}" styleClass="column_drExpiryDate" sortBy="#{vo.o.drExpiryDate}" filterBy="#{vo.o.drExpiryDate}" filterOptions="datestr"  filterMatchMode="contains">
+						<l:date value="#{vo.drExpiryDate}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtComm']}" styleClass="column_bmt_comments bmt_comments" sortBy="#{vo.o.drComments}" filterBy="#{vo.o.drComments}" filterMatchMode="contains">
+						<h:outputText value="#{vo.drComments}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtAtts']}" styleClass="column_bmtAttachment" >
+						<h:panelGroup>
+							<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" 
+							styleClass="" rendered="#{vo.quoteItem.bmtAttachmentFlag}"
+							 update=":topForm:bmtAttathmentsPanel:componentAttData"
+										   oncomplete="PF('attachmentDialog').show();" 
+										   actionListener="#{bmtPlatformMB.setBmtAttachment(vo.quoteItem.getAttachments('BMT Attachment'))}">
+										   <h:graphicImage library="images" name="icon_magnifier.png" />
+							</p:commandLink>
+						</h:panelGroup>												
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtQuotedQty']}" styleClass="column_drQuoteQty" sortBy="#{vo.o.drQuoteQty}" filterBy="#{vo.o.drQuoteQty}" filterMatchMode="contains">
+						<h:outputText value="#{vo.drQuoteQty}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtSuggCost']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})" styleClass="column_drCostAltCurrency"  sortBy="#{vo.o.drCostAltCurrency}" filterBy="#{vo.o.drCostAltCurrency}" filterMatchMode="contains">
+						<f:facet name="header">
+							<h:outputText escape="false" value="#{dbResource['wq.label.bmtSuggCost']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})" />
+						</f:facet>
+						<h:outputText value="#{vo.drCostAltCurrency}" />
+					</p:column>  
+					<p:column headerText="#{dbResource['wq.label.bmtSuggResale']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})" styleClass="column_drResaleAltCurrency" sortBy="#{vo.o.drResaleAltCurrency}" filterBy="#{vo.o.drResaleAltCurrency}" filterMatchMode="contains">
+						<f:facet name="header">
+							<h:outputText escape="false" value="#{dbResource['wq.label.bmtResaleCost']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})" />
+						</f:facet> 
+						<h:outputText value="#{vo.drResaleAltCurrency}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtCurr']}" styleClass="column_drAltCurrency" sortBy="#{vo.o.drAltCurrency}" filterBy="#{vo.o.drAltCurrency}" filterMatchMode="contains">
+						<h:outputText value="#{vo.drAltCurrency}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtExchRate']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})" styleClass="column_drExchangeRate" sortBy="#{vo.o.drExchangeRate}" filterBy="#{vo.o.drExchangeRate}" filterMatchMode="contains">
+						<f:facet name="header">
+							<h:outputText escape="false" value="#{dbResource['wq.label.bmtExchRate']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})" />
+						</f:facet>						
+						<h:outputText value="#{vo.drExchangeRate}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.qcAtt']}" styleClass="column_qcAttachments">
+						<h:panelGroup>
+							<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" 
+							styleClass="" rendered="#{vo.quoteItem.qcAttachmentFlag}"
+							 update=":topForm:bmtAttathmentsPanel:componentAttData"
+										   oncomplete="PF('attachmentDialog').show();" 
+										   actionListener="#{bmtPlatformMB.setBmtAttachment(vo.quoteItem.getAttachments('QC Attachment'))}">
+								<h:graphicImage library="images" name="icon_magnifier.png" />
+							</p:commandLink>
+						</h:panelGroup>						
+					</p:column>
+				</p:dataTable>
+			</p:panel>
+		</h:form>
+
+		<p:blockUI block="bmt_Page" widgetVar="blockUI"
+			trigger=":topForm:toQcSubmit,:topForm:confirm_clean_cache,:topForm:save_all_Button,:topForm:clear_filter_Button,:topForm:history_Search_Button,:topForm:clear_hisroty_filter_Button,:topForm:uploadAtts,:topForm:uploadFile">
+           <h:outputText value="#{dbResource['wq.message.processingWait']}"/>
+        </p:blockUI>
+        <h:outputScript library="javascript" name="bmt.js"></h:outputScript>
+	</h:body>
+</ui:composition>

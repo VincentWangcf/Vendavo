@@ -1,0 +1,134 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	
+	<ui:define name="wndwTtl">
+		#{dbResource['wq.header.recipientsMaintenance']}
+	</ui:define>
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>	
+	
+		<h2>#{dbResource['wq.header.recipientsMaintenance']}</h2>
+		<h:form id="frm">
+			<p:growl id="messageGrowl" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" showDetail="false" />
+			<p:dataTable 
+				value="#{recipientMaintenanceMB.pModel}" 
+				var="item"
+				paginator="true" 
+				rows="10" 
+				rowIndexVar="rowIndex" 
+				id="rptist_dataTable" 
+				editable="true"
+				selection="#{recipientMaintenanceMB.selectedRecipient}"
+				emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+				<p:ajax event="rowEditCancel" listener="#{recipientMaintenanceMB.onCancel}" />
+				<p:column selectionMode="multiple" width="5" />
+				<p:column headerText="#{dbResource['wq.label.no']}" id="rowNumber" width="60">
+					#{rowIndex+1}
+				</p:column>
+				<p:column headerText="#{dbResource['wq.header.reportType']}" style="width:30%">
+					<p:cellEditor>
+						<f:facet name="output">
+							<h:outputText value="#{item.reportType}" />
+						</f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{item.reportType}" style="width:100%" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.header.bizUnit']}" style="width:10%">
+					<p:cellEditor>
+						<f:facet name="output">
+							<h:outputText value="#{item.bzUnit.name}" />
+						</f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{item.bzUnit.name}" style="width:100%" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.userName']}">
+					<p:cellEditor>
+						<f:facet name="output">
+							<h:outputText value="#{item.user.name}" />
+						</f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{item.user.name}" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.userID']}">
+					<p:cellEditor>
+						<f:facet name="output">
+							<h:outputText value="#{item.user.employeeId}" />
+						</f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{item.user.employeeId}" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<ui:remove><p:column style="width:20%">
+					<p:rowEditor />
+				</p:column>
+				</ui:remove>
+			</p:dataTable>
+			<p:commandButton value="#{dbResource['wq.button.add']}" onclick="PF('recipient_dialog_widgetVar').show();" type="button" ajax="false"/>
+			<p:commandButton value="#{dbResource['wq.label.delete']}" update=":frm:messageGrowl" action="#{recipientMaintenanceMB.deleteRecipient()}"/>
+		</h:form>		
+			
+		<p:dialog id="add_recipient_dialog" header="#{dbResource['wq.header.addRecipient']}" widgetVar="recipient_dialog_widgetVar" height="350" resizable="true" appendToBody="true">
+			<h:form id="add_recipient_form" enctype="multipart/form-data" acceptcharset="UTF-8">							
+				<p:panel header="#{dbResource['wq.header.searchAndAdd']}" id="userSearch_panel" style="font-size:12pt">
+				
+				<p:messages for="userDialogMsgId" escape="false" closable="true" autoUpdate="true"/> 		
+					<h:panelGrid columns="1" cellpadding="0" style="padding:4px 10px 4px 10px;">
+					    <p:panel>						
+							<h:outputText value="#{dbResource['wq.header.reportType']}" style="padding:0px 0px 0px 3px"/>
+							<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+							<h:outputText value=":" style="padding:0px 3px 0px 0px"/>
+							<h:selectOneMenu id="basicDetails_customerType" value="#{recipientMaintenanceMB.newRecipient.reportType}">
+								<f:selectItems value="#{recipientMaintenanceMB.reportTypeSelectList}"/>
+							</h:selectOneMenu>							
+						</p:panel>
+						<p:panel>
+							<h:outputText value="#{dbResource['wq.label.userName']}:" />
+							<p:inputText id="urName" value="#{recipientMaintenanceMB.userNameStr}" />			
+						 	<p:commandButton id="user_searchButton_recipient_id" value="#{dbResource['wq.button.search']}" update=":add_recipient_form:datatable_search_user" action="#{recipientMaintenanceMB.searchUserByName()}"></p:commandButton>					 	
+						</p:panel>																			
+					</h:panelGrid>
+					
+				    <p:dataTable	var="search_user"
+				    				value="#{recipientMaintenanceMB.searchUserLst}"
+				    				selection="#{recipientMaintenanceMB.selectedUser}"
+				    				rowKey="#{search_user.id}" 		
+				    				rowIndexVar="search_user_rowIndex"
+				                 	id="datatable_search_user"
+				    				paginator="true" 
+				    				rows="5"
+				    				rowsPerPageTemplate="5,10,20"
+				                 	paginatorPosition="top"						    										                 	
+				                 	style="margin:5px 0px 0px 0px;"
+				                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">		             		 
+				        <p:column headerText="#{dbResource['wq.label.no']}">
+					        #{search_user_rowIndex + 1}
+				        </p:column>						      				       
+								
+						<p:column selectionMode="multiple" styleClass="column_icon" /> 
+				        
+				        <p:column headerText="#{dbResource['wq.label.userName']}">
+					        #{search_user.name}
+				        </p:column>						        
+				        <p:column headerText="#{dbResource['wq.header.userEmployeeId']}">
+					        #{search_user.employeeId}
+				        </p:column>
+				    </p:dataTable>
+				</p:panel>
+				<p:commandButton id="add_id" value="#{dbResource['wq.button.add']}" update=":frm:rptist_dataTable" action="#{recipientMaintenanceMB.addUserToRecipient()}"></p:commandButton>
+				<p:commandButton id="cancel_id" value="#{dbResource['wq.button.cancel']}" action="#{recipientMaintenanceMB.cancelAdd()}"></p:commandButton>
+			</h:form>				
+		</p:dialog>		
+	</ui:define>
+</ui:composition>

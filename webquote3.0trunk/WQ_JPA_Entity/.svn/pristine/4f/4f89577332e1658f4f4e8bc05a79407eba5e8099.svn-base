@@ -1,0 +1,384 @@
+	package com.avnet.emasia.webquote.entity;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Transient;
+
+import org.apache.commons.lang.StringUtils;
+
+
+
+/**
+ * The persistent class for the CUSTOMER database table.
+ * 
+ */
+@Entity
+@Table(name="CUSTOMER")
+public class Customer implements Serializable {
+	private static final long serialVersionUID = 1L;
+	static Logger logger = Logger.getLogger("Customer");
+	public static final String SOLD_TO_CUSTOMER="";
+	public static final String SHIP_TO_CUSTOMER="";
+	public static final String END_CUSTOMER="";
+	
+	//cannot make the field static, which may cause error in JSF page
+	@Transient
+	private final Map<String, String> accountGroupDesc = new HashMap<String, String>();
+	{
+		accountGroupDesc.put("0001", "Sold-to party");
+		accountGroupDesc.put("0002", "Ship-to party");
+		accountGroupDesc.put("0005", "Prospective Customer");
+		accountGroupDesc.put("Z004", "End Customer");
+	}
+
+	@Id
+	@Column(name="CUSTOMER_NUMBER", unique=true, nullable=false, length=10)
+	private String customerNumber;
+
+	@Column(name="ADDRESS_NUMBER", unique=true, length=10)
+	private String addressNumber;
+
+	@Column(length=35)
+	private String city;
+
+	@Column(nullable=false, length=3)
+	private String country;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="CREATED_ON", nullable=false)
+	private Date createdOn;
+
+	@Column(name="CUSTOMER_NAME1", nullable=false, length=35)
+	private String customerName1;
+
+	@Column(name="CUSTOMER_NAME2", length=35)
+	private String customerName2;
+	
+	@Column(name="CUSTOMER_NAME3", length=35)
+	private String customerName3;
+
+	@Column(name="CUSTOMER_NAME4", length=35)
+	private String customerName4;
+
+	@Column(name="CUSTOMER_TYPE", length=4)
+	private String customerType;
+
+	@Column(length=31)
+	private String fax;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="LAST_UPDATED_ON")
+	private Date lastUpdatedOn;
+
+	@Column(name="NEW_CUSTOMER_FLAG", nullable=false, length=1)
+	private Boolean newCustomerFlag;
+
+	@Column(name="POLL_COUNTER")
+	private Integer pollCounter;
+
+	@Column(name="REGION_CODE", length=3)
+	private String regionCode;
+
+	@Column(length=16)
+	private String telephone;
+
+	@Column(name="VAT_REGISTRATION_NUMBER", length=30)
+	private String vatRegistrationNumber;
+	
+	@Column(name="ACCOUNT_GROUP", length=4)
+	private String accountGroup;
+	
+	@Column(name="DELETE_FLAG", length=1)
+	private Boolean deleteFlag;
+
+
+	@Column(name="BLOCK_FLAG", length=2)
+	private String blockFlag;
+
+	//bi-directional many-to-one association to CustomerSales
+	@OneToMany(mappedBy="customer", cascade=CascadeType.ALL)
+	private List<CustomerSale> customerSales;
+	
+	@OneToMany(mappedBy="customer")
+	private List<CustomerAddress> customerAddresss;
+	
+	public Customer() {
+	}
+
+	public List<CustomerAddress> getCustomerAddresss() {
+		return customerAddresss;
+	}
+
+	public void setCustomerAddresss(List<CustomerAddress> customerAddresss) {
+		this.customerAddresss = customerAddresss;
+	}
+
+	public String getCustomerNumber() {
+		return this.customerNumber;
+	}
+
+	public void setCustomerNumber(String customerNumber) {
+		this.customerNumber = customerNumber;
+	}
+
+	public String getAddressNumber() {
+		return this.addressNumber;
+	}
+
+	public void setAddressNumber(String addressNumber) {
+		this.addressNumber = addressNumber;
+	}
+
+	public String getCity() {
+		return this.city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getCountry() {
+		return this.country;
+	}
+
+	public void setCountry(String country) {
+		this.country = country;
+	}
+
+	public Date getCreatedOn() {
+		return this.createdOn;
+	}
+
+	public void setCreatedOn(Date createdOn) {
+		this.createdOn = createdOn;
+	}
+
+	public String getCustomerName1() {
+		return this.customerName1;
+	}
+
+	public void setCustomerName1(String customerName1) {
+		this.customerName1 = customerName1;
+	}
+
+	public String getCustomerName2() {
+		return this.customerName2;
+	}
+
+	public void setCustomerName2(String customerName2) {
+		this.customerName2 = customerName2;
+	}
+	
+	public String getCustomerName3() {
+		return customerName3;
+	}
+
+	public void setCustomerName3(String customerName3) {
+		this.customerName3 = customerName3;
+	}
+
+	public String getCustomerName4() {
+		return customerName4;
+	}
+
+	public void setCustomerName4(String customerName4) {
+		this.customerName4 = customerName4;
+	}
+
+	public String getCustomerType() {
+		return this.customerType;
+	}
+
+	public void setCustomerType(String customerType) {
+		this.customerType = customerType;
+	}
+
+	public String getFax() {
+		return this.fax;
+	}
+
+	public void setFax(String fax) {
+		this.fax = fax;
+	}
+
+	public Date getLastUpdatedOn() {
+		return this.lastUpdatedOn;
+	}
+
+	public void setLastUpdatedOn(Date lastUpdatedOn) {
+		this.lastUpdatedOn = lastUpdatedOn;
+	}
+
+	public Boolean getNewCustomerFlag() {
+		return this.newCustomerFlag;
+	}
+
+	public void setNewCustomerFlag(Boolean newCustomerFlag) {
+		this.newCustomerFlag = newCustomerFlag;
+	}
+
+	public Integer getPollCounter() {
+		return this.pollCounter;
+	}
+
+	public void setPollCounter(Integer pollCounter) {
+		this.pollCounter = pollCounter;
+	}
+
+	public String getRegionCode() {
+		return this.regionCode;
+	}
+
+	public void setRegionCode(String regionCode) {
+		this.regionCode = regionCode;
+	}
+
+	public String getTelephone() {
+		return this.telephone;
+	}
+
+	public void setTelephone(String telephone) {
+		this.telephone = telephone;
+	}
+
+	public String getVatRegistrationNumber() {
+		return this.vatRegistrationNumber;
+	}
+
+	public void setVatRegistrationNumber(String vatRegistrationNumber) {
+		this.vatRegistrationNumber = vatRegistrationNumber;
+	}
+
+	public String getAccountGroup() {
+		return accountGroup;
+	}
+
+	public void setAccountGroup(String accountGroup) {
+		this.accountGroup = accountGroup;
+	}
+	
+
+	public Boolean getDeleteFlag() {
+		return deleteFlag;
+	}
+
+	public void setDeleteFlag(Boolean deleteFlag) {
+		this.deleteFlag = deleteFlag;
+	}
+
+	public String getBlockFlag() {
+		return blockFlag;
+	}
+
+	public void setBlockFlag(String blockFlag) {
+		this.blockFlag = blockFlag;
+	}
+
+	public List<CustomerSale> getCustomerSales() {
+		return customerSales;
+	}
+
+	public void setCustomerSales(List<CustomerSale> customerSales) {
+		this.customerSales = customerSales;
+	}
+
+	public Object deepClone() throws IOException,ClassNotFoundException
+	{    
+
+		ByteArrayOutputStream bo=new ByteArrayOutputStream();    
+		ObjectOutputStream oo=new ObjectOutputStream(bo);    
+		oo.writeObject(this);    
+
+		ByteArrayInputStream bi=new ByteArrayInputStream(bo.toByteArray());    
+		ObjectInputStream oi=new ObjectInputStream(bi);    
+		return(oi.readObject());    
+		
+	}
+
+	@Override
+	public String toString() {
+		return "Customer [customerNumber=" + customerNumber+" customerName1="+customerName1+" ]";
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((customerName1 == null) ? 0 : customerName1.hashCode());
+		result = prime * result
+				+ ((customerNumber == null) ? 0 : customerNumber.hashCode());
+		return result;
+	}
+
+	public String getAccountGroupDesc(){
+		return accountGroupDesc.get(accountGroup);
+	}
+
+	public String getName(){
+	 return getCustomerFullName();
+	}
+	
+	public int getCustomerNumberInt(){
+		if(this.customerNumber != null){
+			try {
+				return Integer.parseInt(this.customerNumber);
+			} catch (Exception ex){
+				logger.log(Level.SEVERE, "exception in parsing integer"+this.customerNumber+" , Exception message : "+ex.getMessage(), ex);
+			}
+		}
+		return 999999999;
+	}
+	
+	//updated by Damon@20160602 for GTS
+	@Transient
+	public String getCustomerFullName(){
+		String customerFullName = getCustomerName1();
+		String customerName2 = getCustomerName2();
+		String customerName3 = getCustomerName3();
+		String customerName4 = getCustomerName4();
+		if(StringUtils.isNotBlank(customerName2)){
+			customerFullName +=" "+customerName2;
+		}
+		if(StringUtils.isNotBlank(customerName3)){
+			customerFullName +=" "+customerName3;
+		}
+		if(StringUtils.isNotBlank(customerName4)){
+			customerFullName +=" "+customerName4;
+		}
+		return customerFullName;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		 if (obj == null) {
+			 return false;
+		 }
+		if (! (obj instanceof Customer)) {
+			return false;
+		}
+		Customer customer = (Customer) obj;
+		return customer.customerNumber.equals(customerNumber);
+	}
+	
+	
+}

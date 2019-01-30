@@ -1,0 +1,233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+        <h:head>
+            <f:facet name="first">
+                <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+                <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+			<meta http-equiv="Cache-Control" Content="no-cache"/>
+			<meta http-equiv="Pragma" Content="no-cache"/>
+			<meta http-equiv="Expires" Content="0"/>                   
+                <title>#{dbResource['wq.label.posHistoryPage']}</title>
+            </f:facet>
+                     
+        </h:head>
+<h:body>
+	<h:form id="form_freeStock">
+	    <p:panel header="#{dbResource['wq.label.freeStockInformation']}" style="padding:0px 0px 0px 0px;">			
+		    <p:dataTable	widgetVar="datatable_freeStock_var"
+		    				var="freeStock"
+		    				value="#{workingPlatformMB.freeStockList}" 
+		    				rowKey="#{freeStock.id.materialPrefix}#{freeStock.id.sapPartNumber}#{freeStock.id.plant}" 		
+		    				rowIndexVar="rowIndex"
+		                 	id="datatable_freeStockList"
+ 							paginator="true"
+							paginatorPosition="top"
+							rows="5"
+							rowsPerPageTemplate="5,10,15"
+		                 	scrollable="true"
+		                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">	                 	      				
+	          								
+				<p:column headerText="#{dbResource['wq.label.mfr']}" filterMatchMode="contains" filterBy="#{freeStock.id.materialPrefix}">
+				#{freeStock.id.materialPrefix}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.sapPNumber']}" filterMatchMode="contains" filterBy="#{freeStock.id.sapPartNumber}">
+				#{freeStock.id.sapPartNumber}
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.plant']}" filterMatchMode="contains" filterBy="#{freeStock.id.plant}">
+				#{freeStock.id.plant}
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.Qty']}" filterMatchMode="contains" filterBy="#{freeStock.freeStock}">
+				#{workingPlatformMB.convertNumber(freeStock.freeStock)}
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.avgCost']}" filterMatchMode="contains" filterBy="#{freeStock.averageCost/1000}">
+				#{freeStock.averageCost/1000}
+				</p:column>
+														
+		    </p:dataTable> 			
+			<f:facet name="actions">
+				<div style="float: right;">
+					<h:panelGrid id="freeStockSearch" columns="9" cellpadding="0"
+						style="padding:0px 2px 0px 2px;">
+						<h:outputText value="#{dbResource['wq.label.mfr']}: " />
+						<p:inputText value="#{workingPlatformMB.freeStockMfrSearch}"
+							styleClass="input_text_half" style="padding:0px 0px 0px 0px;" />
+						<h:outputText value="#{dbResource['wq.label.pn']}: " />
+						<p:inputText
+							value="#{workingPlatformMB.freeStockPartNumberSearch}"
+							styleClass="input_text" style="padding:0px 0px 0px 0px;" />
+						<p:commandButton global="false" onstart="start();"
+							oncomplete="stop();" onerror="stopWithError();" value="#{dbResource['wq.button.search']}"
+							icon="ui-icon-circle-check"
+							update="datatable_freeStockList,:form_pendinglist:workingPlatformGrowl"
+							actionListener="#{workingPlatformMB.searchFreeStock}" />
+					</h:panelGrid>
+				</div>
+			</f:facet>				
+		</p:panel>	
+	</h:form>
+	<h:form id="form_pos">
+	    <p:panel header="#{dbResource['wq.label.posHistory']}" style="padding:0px 0px 0px 0px;">		
+		    <p:dataTable	widgetVar="datatable_posHistory_var"
+		    				var="posHistory"
+		    				value="#{workingPlatformMB.posSummary}" 
+		    				rowKey="#{posHistory.id}" 		
+		    				rowIndexVar="rowIndex"
+		                 	id="datatable_posHistoryList"
+ 							paginator="true"
+							paginatorPosition="top"
+							rows="5"
+							rowsPerPageTemplate="5,10,15"
+		                 	scrollable="true"
+		                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">	                 	      				
+	          								
+				<p:column headerText="#{dbResource['wq.label.mfr']}" styleClass="column_mfrCode">
+				#{posHistory.id.mfr}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.part']}#" styleClass="column_fullMfrPart">
+				#{posHistory.id.partNumber}
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.cust']}" filterMatchMode="contains" filterBy="#{posHistory.id.customerName}" styleClass="column_soldToCustomerName">
+				#{posHistory.id.customerName}
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.last12Month']}&lt;br/&gt;#{dbResource['wq.label.salesQty']}" styleClass="column_salesQty">
+				#{workingPlatformMB.convertNumber(posHistory.last12MonthQty)}
+				</p:column>
+										
+				<p:column headerText="#{workingPlatformMB.currentQuarter}&lt;br/&gt;#{dbResource['wq.label.min']}" styleClass="column_min tdmandatoryvalue">
+					<h:outputText value="#{posHistory.last0Min}" rendered="#{posHistory.last0Min gt 0}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5"  />	
+					</h:outputText>
+				</p:column>	
+				
+				<p:column headerText="#{workingPlatformMB.currentQuarter}&lt;br/&gt;#{dbResource['wq.label.mean']}" styleClass="column_mean tdmandatoryvalue">
+					<h:outputText value="#{posHistory.last0Mean}" rendered="#{posHistory.last0Mean gt 0}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5"   />	
+					</h:outputText>
+				</p:column>	
+	
+				<p:column headerText="#{workingPlatformMB.currentQuarter}&lt;br/&gt;#{dbResource['wq.label.max']}" styleClass="column_max tdmandatoryvalue">
+					<h:outputText value="#{posHistory.last0Max}" rendered="#{posHistory.last0Max gt 0}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5"   />	
+					</h:outputText>
+				</p:column>	
+	
+				<p:column headerText="#{workingPlatformMB.currentQuarter}&lt;br/&gt;#{dbResource['wq.label.salesQty']}" styleClass="column_salesQty tdmandatoryvalue">
+					<h:outputText value="#{workingPlatformMB.convertNumber(posHistory.last0Qty)}" rendered="#{posHistory.last0Qty gt 0}">
+					</h:outputText>
+				</p:column>	
+					
+				<p:column headerText="#{workingPlatformMB.last1Quarter}&lt;br/&gt;#{dbResource['wq.label.min']}" styleClass="column_min">
+					<h:outputText value="#{posHistory.last1Min}" rendered="#{posHistory.last1Min gt 0}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5"   />	
+					</h:outputText>
+				</p:column>	
+				
+				<p:column headerText="#{workingPlatformMB.last1Quarter}&lt;br/&gt;#{dbResource['wq.label.mean']}" styleClass="column_mean">
+					<h:outputText value="#{posHistory.last1Mean}" rendered="#{posHistory.last1Mean gt 0}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5"  />	
+					</h:outputText>
+				</p:column>	
+	
+				<p:column headerText="#{workingPlatformMB.last1Quarter}&lt;br/&gt;#{dbResource['wq.label.max']}" styleClass="column_max">
+					<h:outputText value="#{posHistory.last1Max}" rendered="#{posHistory.last1Max gt 0}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5" />	
+					</h:outputText>
+				</p:column>	
+	
+				<p:column headerText="#{workingPlatformMB.last1Quarter}&lt;br/&gt;#{dbResource['wq.label.salesQty']}" styleClass="column_salesQty">
+					<h:outputText value="#{workingPlatformMB.convertNumber(posHistory.last1Qty)}" rendered="#{posHistory.last1Qty gt 0}">
+					</h:outputText>
+				</p:column>	
+				
+				<p:column headerText="#{workingPlatformMB.last2Quarter}&lt;br/&gt;#{dbResource['wq.label.min']}" styleClass="column_min tdmandatoryvalue">
+					<h:outputText value="#{posHistory.last2Min}" rendered="#{posHistory.last2Min gt 0}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5"  />	
+					</h:outputText>
+				</p:column>	
+				
+				<p:column headerText="#{workingPlatformMB.last2Quarter}&lt;br/&gt;#{dbResource['wq.label.mean']}" styleClass="column_mean tdmandatoryvalue">
+					<h:outputText value="#{posHistory.last2Mean}" rendered="#{posHistory.last2Mean gt 0}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5" />	
+					</h:outputText>
+				</p:column>	
+	
+				<p:column headerText="#{workingPlatformMB.last2Quarter}&lt;br/&gt;#{dbResource['wq.label.max']}" styleClass="column_max tdmandatoryvalue">
+					<h:outputText value="#{posHistory.last2Max}" rendered="#{posHistory.last2Max gt 0}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5" />	
+					</h:outputText>
+				</p:column>	
+	
+				<p:column headerText="#{workingPlatformMB.last2Quarter}&lt;br/&gt;#{dbResource['wq.label.salesQty']}" styleClass="column_salesQty tdmandatoryvalue">
+					<h:outputText value="#{workingPlatformMB.convertNumber(posHistory.last2Qty)}" rendered="#{posHistory.last2Qty gt 0}">
+					</h:outputText>
+				</p:column>						
+				
+				<p:column headerText="#{workingPlatformMB.last3Quarter}&lt;br/&gt;#{dbResource['wq.label.min']}" styleClass="column_min">
+					<h:outputText value="#{posHistory.last3Min}" rendered="#{posHistory.last3Min gt 0}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5"  />	
+					</h:outputText>
+				</p:column>	
+				
+				<p:column headerText="#{workingPlatformMB.last3Quarter}&lt;br/&gt;#{dbResource['wq.label.mean']}" styleClass="column_mean">
+					<h:outputText value="#{posHistory.last3Mean}" rendered="#{posHistory.last3Mean gt 0}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5"  />	
+					</h:outputText>
+				</p:column>
+	
+				<p:column headerText="#{workingPlatformMB.last3Quarter}&lt;br/&gt;#{dbResource['wq.label.max']}" styleClass="column_max">
+					<h:outputText value="#{posHistory.last3Max}" rendered="#{posHistory.last3Max gt 0}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5" />	
+					</h:outputText>
+				</p:column>
+	
+				<p:column headerText="#{workingPlatformMB.last3Quarter}&lt;br/&gt;#{dbResource['wq.label.salesQty']}" styleClass="column_salesQty">
+					<h:outputText value="#{workingPlatformMB.convertNumber(posHistory.last3Qty)}" rendered="#{posHistory.last3Qty gt 0}">
+					</h:outputText>
+				</p:column>				
+					
+		                               
+		    </p:dataTable> 
+		    
+			<f:facet name="actions">
+				<div style="float: right;">
+					<h:panelGrid id="posHistorySearch" columns="9" cellpadding="0"
+						style="padding:0px 2px 0px 2px;">
+						<h:outputText value="#{dbResource['wq.label.mfr']}: " />
+						<p:inputText value="#{workingPlatformMB.posHistoryMfrSearch}"
+							styleClass="input_text_half" style="padding:0px 0px 0px 0px;" />
+						<h:outputText value="#{dbResource['wq.label.pn']}: " />
+						<p:inputText
+							value="#{workingPlatformMB.posHistoryPartNumberSearch}"
+							styleClass="input_text" style="padding:0px 0px 0px 0px;" />
+						<h:outputText value="#{dbResource['wq.label.custmrName']}: " />
+						<p:inputText
+							value="#{workingPlatformMB.posHistorySoldToCustomerNameSearch}"
+							styleClass="input_text" style="padding:0px 0px 0px 0px;" />
+						<p:commandButton global="false" onstart="start();"
+							oncomplete="stop();PF('datatable_posHistory_var').clearFilters();" onerror="stopWithError();" value="#{dbResource['wq.button.search']}"
+							icon="ui-icon-circle-check"
+							update="datatable_posHistoryList,:form_pendinglist:workingPlatformGrowl"
+							actionListener="#{workingPlatformMB.searchPosHistory}" />
+						| <p:commandButton global="false" onstart="start();"
+							oncomplete="stop();PF('datatable_posHistory_var').clearFilters();" onerror="stopWithError();"
+							value="#{dbResource['wq.button.clearFilter']}" update="datatable_posHistoryList"
+							onclick="PF('datatable_posHistory_var').clearFilters();"></p:commandButton>
+					</h:panelGrid>
+				</div>
+			</f:facet>		    
+	    </p:panel>
+     </h:form>               
+</h:body>
+</html>
+	  

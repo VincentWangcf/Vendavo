@@ -1,0 +1,4 @@
+1) Fix ticket INC0347308 , Lenon 2016/2/25
+2) Fix StandardJob.java not singleton in jboss cluster, Jason 2016/02/29
+3) Fix INC0355469, Jason 2016/02/29
+4) Fix INC0352418, tough

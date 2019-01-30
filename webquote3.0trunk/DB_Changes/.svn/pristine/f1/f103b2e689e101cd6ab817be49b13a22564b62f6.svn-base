@@ -1,0 +1,1 @@
+Insert into SYSTEM_CODE_MAINTENANCE (ID,CATEGORY,VALUE,DESCRIPTION,CREATED,CREATED_BY,UPDATED_BY,LAST_UPDATED,VERSION,REGION) values ((select max(id) + 1 from SYSTEM_CODE_MAINTENANCE),'AVNET QUOTE CENTRE COMMENT','Pending over 3 working days for  (sales/PM/FAE) to provide further information',null,sysdate,1,1,sysdate,1,null);

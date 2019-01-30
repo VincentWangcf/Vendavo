@@ -1,0 +1,4 @@
+1)WorkingPlatForm performance enhancement(add search criterial) -- Lenon
+2)RFQ Submission --add Form Number in the email subject for Auto-IT  -- Lenon
+3)End Customer for special customer is not blocked when user enters the End Customer Code in the text boxes ---demon chen
+4)Prevent user to enter the End Customer freely as this will result in missing EC code in WQ. ----demon chen

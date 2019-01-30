@@ -1,0 +1,210 @@
+package com.avnet.emasia.webquote.web.stm;
+
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.primefaces.model.UploadedFile;
+
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.entity.VendorBpmCustomer;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.stm.dto.BpmSearchCriteria;
+import com.avnet.emasia.webquote.stm.ejb.BpmMaintainSB;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.web.maintenance.UploadStrategy;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+@ManagedBean
+@SessionScoped
+public class BpmMaintainMB implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7559014052207983346L;
+	private static final Logger LOG = Logger.getLogger(BpmMaintainMB.class.getName());
+	
+	@EJB
+	private BpmMaintainSB bpmMaintainSB;
+	@EJB
+	private UserSB userSB;
+	
+	@EJB
+	private SystemCodeMaintenanceSB systemCodeMaintenanceSB;
+	
+	private transient Method lastSearchMethod = null;
+	private User user = null;
+	private BpmSearchCriteria criteria;
+	private List<VendorBpmCustomer> bpmCustomers = new ArrayList<VendorBpmCustomer>();
+	private boolean recordsExceedMaxAllowed = false;
+	private transient UploadedFile uploadFile;
+	private String uploadFileName;
+	private UploadStrategy uploadStrategy = null;
+	private final static String TEMPLATE_NAME = "BmpUploadTemplate.xlsx";
+	private final static int COLUMN_OF_LENGTH = 7;
+	private String exportFileName;
+	
+	@EJB
+	protected EJBCommonSB ejbCommonSB;
+	
+	
+	@PostConstruct
+	public void postContruct() {
+		user = UserInfo.getUser();
+		criteria = new BpmSearchCriteria();
+		uploadStrategy = new BmpCustomerUploadStrategy();
+		uploadStrategy.setUser(user);
+	}
+	
+	public void search() {
+		
+		bpmCustomers = bpmMaintainSB.search(criteria);
+		lastSearchMethod = getlastSearchMethod();
+	}
+	
+	public void postProcessXLS(Object document)
+	{
+		String[] columns = { "Distribute Code", "Distribute Name", "BPM Code", "Short Name",
+				"BPM Name (1)", "Name (2)", "CTRY" };
+		HSSFWorkbook wb = (HSSFWorkbook) document;
+		HSSFSheet sheet = wb.getSheetAt(0);
+		HSSFRow header = sheet.getRow(0);
+		int i = 0;
+		for (String column : columns)
+		{
+			header.getCell(i++).setCellValue(column);
+		}
+	}
+
+	private Method getlastSearchMethod() {
+		Method method = null;
+		try {
+			method = this.getClass().getDeclaredMethod("search",null);
+		} catch (Exception e) {
+			LOG.log(Level.SEVERE,"Error occured when get search Method with reflection in search() with BMP Code: "+criteria.getBmpCode()+" ,Short name: "+criteria.getShortName()+", Reson for failed: "+MessageFormatorUtil.getParameterizedStringFromException(e),e);
+		}
+		return method;
+	}
+	
+	public void removeAllAndUpload() {
+		LOG.info("begin Upload ........");
+		
+		if(null==uploadFile){
+			FacesContext.getCurrentInstance().addMessage("msgId",
+					new FacesMessage(FacesMessage.SEVERITY_WARN, ResourceMB.getText("wq.message.pleaseSelectFile")+".", ""));
+			return;
+		}
+		
+		long uploadfileSizeLimit = systemCodeMaintenanceSB.getUploadFileSizeLimit();
+		
+		if(uploadFile.getSize() > uploadfileSizeLimit){
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_WARN, ResourceMB.getParameterizedString("wq.error.fileSizeError", Long.toString(uploadfileSizeLimit))+".", ""));
+			return;
+		}
+		long start = System.currentTimeMillis();
+		boolean isUploadFile = uploadStrategy.isValidateUpload(uploadFile);
+		boolean isExcelFile = uploadStrategy.isExcelFile(uploadFile);
+		boolean isUploadFileORExcelFile = ejbCommonSB.removeAllAndUpload(isUploadFile, isExcelFile);
+		if(!isUploadFileORExcelFile){
+			return;
+		}
+		uploadFileName = uploadFile.getFileName();
+		Sheet sheet =  uploadStrategy.getSheet(uploadFile);
+		boolean isRequiredFile =  uploadStrategy.isValidateFileColumn(sheet ,0 ,TEMPLATE_NAME, COLUMN_OF_LENGTH);
+		if(!isRequiredFile){
+			FacesContext.getCurrentInstance().addMessage(
+					"msgId",new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.excelFileFormat")+".",""));
+			return;
+		}
+		List<VendorBpmCustomer> beans = uploadStrategy.excel2Beans(sheet);
+		String errMsg = uploadStrategy.verifyFields(beans);
+		if (!errMsg.equals("")&&!errMsg.equals("[]")) {
+			FacesContext.getCurrentInstance().addMessage(
+					"msgId",new FacesMessage(FacesMessage.SEVERITY_ERROR, errMsg.substring(1,errMsg.length()-1).replace(',', ' '),""));
+			return;
+		}else {
+			boolean saveSuccessful = bpmMaintainSB.deleteAndSaveBpmToDB(beans);
+			if(saveSuccessful){
+				FacesContext.getCurrentInstance().addMessage("msgId",
+						new FacesMessage(FacesMessage.SEVERITY_INFO, uploadFileName + ResourceMB.getText("wq.message.uploadSuccess")+".",""));
+			}else{
+				FacesContext.getCurrentInstance().addMessage("msgId",
+						new FacesMessage(FacesMessage.SEVERITY_ERROR, uploadFileName + ResourceMB.getText("wq.message.uploadError")+".",""));	
+			}
+		}
+		
+		long end = System.currentTimeMillis();
+		LOG.info("End upload BMP Customer,takes " + (end - start) + " ms");	
+	
+	}
+
+	public BpmSearchCriteria getCriteria() {
+		return criteria;
+	}
+
+	public void setCriteria(BpmSearchCriteria criteria) {
+		this.criteria = criteria;
+	}
+
+	public boolean isRecordsExceedMaxAllowed() {
+		return recordsExceedMaxAllowed;
+	}
+
+	public void setRecordsExceedMaxAllowed(boolean recordsExceedMaxAllowed) {
+		this.recordsExceedMaxAllowed = recordsExceedMaxAllowed;
+	}
+
+	public List<VendorBpmCustomer> getBpmCustomers() {
+		return bpmCustomers;
+	}
+
+	public void setBpmCustomers(List<VendorBpmCustomer> bpmCustomers) {
+		this.bpmCustomers = bpmCustomers;
+	}
+
+	public UploadedFile getUploadFile() {
+		return uploadFile;
+	}
+
+	public void setUploadFile(UploadedFile uploadFile) {
+		this.uploadFile = uploadFile;
+	}
+
+	public String getUploadFileName() {
+		return uploadFileName;
+	}
+
+	public void setUploadFileName(String uploadFileName) {
+		this.uploadFileName = uploadFileName;
+	}
+
+	public String getExportFileName() {
+		//Date time = new Date();
+		return "Vendor BPM Customer List";
+	}
+
+	public void setExportFileName(String exportFileName) {
+		this.exportFileName = exportFileName;
+	}
+
+	
+}

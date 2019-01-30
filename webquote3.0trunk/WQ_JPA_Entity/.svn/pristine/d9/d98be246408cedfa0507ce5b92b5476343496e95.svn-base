@@ -1,0 +1,31 @@
+package com.avnet.emasia.webquote.cache;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+
+import com.avnet.emasia.webquote.entity.DesignLocation;
+import com.avnet.emasia.webquote.entity.ExchangeRate;
+
+
+public interface ICacheUtil {
+
+	List<ExchangeRate> getExchangeRates();
+
+	List<String> getDesignRegionList();
+
+	String getDesignRegion(String designRegion);
+
+	Map<String,String> getDesignLocationMap();
+
+	List<DesignLocation> getDesignLocationList();
+
+	List<String> getLocationByRegion(String region);
+
+	DesignLocation getDesignLocation(String designLocation);
+
+}

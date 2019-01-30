@@ -1,0 +1,8 @@
+insert into app_messages(id, locale_id, message_code, message) values ((select max(id) + 1 from app_messages), 'en', 'wq.message.selectRegionCouldNotDownload', 'select Region do not allow Download Exchange Rate Template.'); 
+COMMIT;
+
+INSERT INTO EXCEL_REPORT_COLUMN (ID,HEADER_NAME, BEAN_PROPERTY,cell_data_type)VALUES ((select max(id) + 1 from EXCEL_REPORT_COLUMN),'BUY CUR','buyCurrency',2);
+INSERT INTO EXCEL_REPORT_SEQ (ID, REPORT_ID, COLUMN_ID, SEQ_NO) 
+VALUES ((select max(id)+1 from EXCEL_REPORT_SEQ), (SELECT ID FROM EXCEL_REPORT WHERE REPORT_NAME='CATALOG_MAINTENANCE'), 
+    (SELECT MAX(ID) FROM EXCEL_REPORT_COLUMN WHERE HEADER_NAME='BUY CUR'), '75');
+   

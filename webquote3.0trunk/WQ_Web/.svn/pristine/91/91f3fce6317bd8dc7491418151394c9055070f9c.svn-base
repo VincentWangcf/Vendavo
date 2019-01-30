@@ -1,0 +1,132 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="myquote-004.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+
+	<h:form id="form" onkeypress="if(window.event.keyCode==13) return false;">
+
+	<p:panel header="#{dbResource['wq.header.revFinalQuotePrice']}" style="font-size:12pt">
+		<p:messages id="messages" showDetail="true" autoUpdate="true" escape="false"/>
+
+
+	    <p:dataTable	var="vo"
+	    				value="#{reviseFinalQuotedPriceMB.quoteItemVos}" 
+	    				rowKey="#{vo.quoteItem.id}" 
+	    				rowIndexVar="rowIndex"
+	                 	selection="#{reviseFinalQuotedPriceMB.selectedQuoteItemVos}"
+	                 	filteredValue="#{reviseFinalQuotedPriceMB.filteredQuoteItemVos}" 
+	                 	id="datatable_revisequotepricelist"                 
+	                 	editable="true"
+	                 	editMode="cell"
+	                 	cellEditEvent="click"     
+	                 	scrollable="true"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}." >	                   	              
+		           		 
+			<p:column selectionMode="multiple" styleClass="column_icon"/> 
+					
+			<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quote']}#" sortBy="#{vo.quoteItem.quoteNumber}" filterBy="#{vo.quoteItem.quoteNumber}" styleClass="myquote_column_quoteNumber readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quoteNumber}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.custmrName']}&lt;br/&gt;(#{dbResource['wq.label.SoldToParty']})" sortBy="#{vo.quoteItem.soldToCustomer.customerFullName}" filterBy="#{vo.quoteItem.soldToCustomer.customerFullName}" styleClass="myquote_column_soldToCustomerName readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.soldToCustomer.customerFullName}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{vo.quoteItem.quotedMaterial.manufacturer.name}" filterBy="#{vo.quoteItem.quotedMaterial.manufacturer.name}" styleClass="myquote_column_mfr readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quotedMaterial.manufacturer.name}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.avnetQPN']}" sortBy="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}" filterBy="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}" styleClass="myquote_column_quotedPartNumber readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.target']}&lt;br/&gt;#{dbResource['wq.label.resale']}" sortBy="#{vo.quoteItem.targetResale}" filterBy="#{vo.quoteItem.targetResale}" filterMatchMode="contains" styleClass="myquote_column_targetResale align_right readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.targetResale}">
+				<f:convertNumber    pattern="#,##0.00000"  minFractionDigits="5"/>
+			</h:outputText>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quoted']} #{dbResource['wq.label.price']}" sortBy="#{vo.quoteItem.quotedPrice}" filterBy="#{vo.quoteItem.quotedPrice}" filterMatchMode="contains" styleClass="myquote_column_quotedPrice align_right readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quotedPrice}">
+				<f:convertNumber   pattern="#,##0.00000"  minFractionDigits="5"/>
+			</h:outputText>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.final']}&lt;br/&gt;#{dbResource['wq.label.quotationPrice']}*"  sortBy="#{reviseQuote.rfqItem.finalQuotedPrice}" filterBy="#{vo.quoteItem.finalQuotationPrice}" styleClass="myquote_column_quotedPrice align_right editCell">
+						<p:inputText value="#{vo.quoteItem.finalQuotationPrice}" id="txt_final_quoted_price_in" readonly="#{reviseFinalQuotedPriceMB.finished}" onkeyup="updateDecimal(#{rowIndex}, 'form', 'txt_final_quoted_price', 'datatable_revisequotepricelist');" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.resale']}&lt;br/&gt;#{dbResource['wq.label.indicator']}" sortBy="#{vo.quoteItem.resaleIndicator}" filterBy="#{vo.quoteItem.resaleIndicator}" filterMatchMode="contains" styleClass="myquote_column_resaleIndicator readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.resaleIndicator}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}" sortBy="#{vo.quoteItem.requestedQty}" filterBy="#{vo.quoteItem.requestedQty}" filterMatchMode="contains" styleClass="myquote_column_requestedQty align_right readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.requestedQty}">
+				<f:convertNumber   pattern="#,###"  />
+			</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.PMOQ']}" sortBy="#{vo.quoteItem.pmoq}" filterBy="#{vo.quoteItem.pmoq}" id="pmoq" filterMatchMode="contains" styleClass="myquote_column_pmoq readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.pmoq}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.MPQ']}" sortBy="#{vo.quoteItem.mpq}" filterBy="#{vo.quoteItem.mpq}" filterMatchMode="contains" styleClass="myquote_column_mpq align_right readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.mpq}">
+				<f:convertNumber   pattern="#,###"  />
+			</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.moq']}" sortBy="#{vo.quoteItem.moq}" filterBy="#{vo.quoteItem.moq}" filterMatchMode="contains" styleClass="myquote_column_moq align_right readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.moq}">
+				<f:convertNumber   pattern="#,###"  />
+			</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.QuoteExpiry']}&lt;br/&gt;#{dbResource['wq.label.date']}" sortBy="#{vo.quoteItem.quoteExpiryDate}" filterBy="#{vo.quoteItem.quoteExpiryDate}" filterMatchMode="contains" styleClass="myquote_column_quoteExpiryDate readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quoteExpiryDate}">
+				<f:convertDateTime pattern="dd/MM/yyyy" />
+			</h:outputText>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.reqRef']}" sortBy="#{vo.quoteItem.quote.yourReference}" filterBy="#{vo.quoteItem.quote.yourReference}" filterMatchMode="contains" styleClass="myquote_column_yourReference readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quote.yourReference}"/>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.QuoteType']}" sortBy="#{vo.quoteItem.quoteType}" filterBy="#{vo.quoteItem.quoteType}" filterMatchMode="contains" styleClass="myquote_column_orderOnHandFlag readOnlyCell">
+				<h:outputText value="#{vo.quoteItem.quoteType}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.salesmanEmployee']}&lt;br/&gt;#{dbResource['wq.label.code']}" sortBy="#{vo.quoteItem.quote.sales.employeeId}" filterBy="#{vo.quoteItem.quote.sales.employeeId}" filterMatchMode="contains" styleClass="myquote_column_employeeNumber readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quote.sales.employeeId}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.salesman']}&lt;br/&gt;#{dbResource['wq.label.name']}" sortBy="#{vo.quoteItem.quote.sales.name}" filterBy="#{vo.quoteItem.quote.sales.name}" filterMatchMode="contains" styleClass="myquote_column_employeeName readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quote.sales.name}"/>
+			</p:column>
+			 	      
+			<f:facet name="footer">     
+	        	<p:commandButton value="#{dbResource['wq.button.confirmReviseFinal']}" update="@form" actionListener="#{reviseFinalQuotedPriceMB.revise}" rendered="#{! reviseFinalQuotedPriceMB.finished}" icon="ui-icon ui-icon-circle-arrow-n"/>  
+	        	<p:commandButton value="#{dbResource['wq.button.BackMyQuoteSearch']}" icon="ui-icon ui-icon-circle-arrow-w" action="#{myQuoteSearchMB.getMyQuotePage}" ajax="false"/>
+	        </f:facet>  			 	                                
+	    </p:dataTable>
+	    	
+
+		</p:panel>
+			
+	<h:outputScript library="javascript" name="disableRowSelection.js" />	    
+	         	
+	</h:form>
+		
+	</ui:define>
+</ui:composition>

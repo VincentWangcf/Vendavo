@@ -1,0 +1,418 @@
+package com.avnet.emasia.webquote.stm.ejb;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import org.apache.cxf.common.util.StringUtils;
+
+import com.avnet.emasia.webquote.constants.ActionEnum;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.MfrFeedbackInfo;
+import com.avnet.emasia.webquote.entity.MfrRequestInfo;
+import com.avnet.emasia.webquote.entity.Quote;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.VendorBpmCustomer;
+import com.avnet.emasia.webquote.entity.VendorReport;
+import com.avnet.emasia.webquote.quote.ejb.QuoteNumberSB;
+import com.avnet.emasia.webquote.quote.ejb.QuoteSB;
+import com.avnet.emasia.webquote.quote.ejb.VendorReportSB;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.stm.constant.B2bStatusEnum;
+import com.avnet.emasia.webquote.stm.constant.StmConstant;
+import com.avnet.emasia.webquote.stm.constant.StmQuoteTypeEnum;
+import com.avnet.emasia.webquote.stm.dto.InBoundVo;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+
+@Stateless
+public class StmDataSyncSB {
+	private static final Logger LOGGER = Logger.getLogger(StmDataSyncSB.class.getName());
+	
+	@PersistenceContext(unitName = "Server_Source")
+	private EntityManager em;
+	
+	@EJB
+	private QuoteSB quoteSB;
+	@EJB
+	private BizUnitSB bizUnitSB;
+	@EJB
+	private VendorReportSB vendorReportSB;
+	@EJB
+	private MfrRequestInfoSB mfrRequestInfoSB;
+	@EJB
+	private BpmMaintainSB bpmMaintainSB;
+	@EJB
+	private VendorQuotationSB vendorQuotationSB;
+	
+	@EJB
+	private QuoteNumberSB quoteNumberSB;
+	
+	
+	public boolean receiveDate2Db(InBoundVo vo) {
+		String bizUnitName = getRegionByPrefixAvnetQuoteNumber(vo.getRfqCode());
+		if(StringUtils.isEmpty(bizUnitName)) {
+			LOGGER.warning("biz Unit Name:" + bizUnitName + " ,it cannot find in webquote system....");
+			return false;
+		} 
+		
+		BizUnit bizUnit = bizUnitSB.findByPk(bizUnitName);
+		boolean receiveDate = true;
+		LOGGER.info("call receiveDate2Db method");
+		MfrFeedbackInfo rvq = new MfrFeedbackInfo();
+		rvq.setAuthQty(QuoteUtil.strToInt(vo.getAuthQty()));
+		rvq.setAvnetQuoteNumber(vo.getRfqCode());
+		rvq.setBuyer(vo.getCustCode());
+		rvq.setContactEmail(vo.getContactChannel());
+		rvq.setContactName(vo.getContactName());
+		rvq.setCost(convertStringToDouble(vo.getVendorCost()));
+		rvq.setCurrency(StmConstant.CURRENCY);
+		rvq.setCustomer(vo.getCustCode());
+		rvq.setStatus(vo.getSqStatus());
+		rvq.setBizUnit(bizUnit);
+		try {
+			rvq.setDebitCreateDate(QuoteUtil.convertStringToDate(vo.getCreatedAt(), StmConstant.YYYYMMDD));
+			rvq.setDebitExpiryDate(QuoteUtil.convertStringToDate(vo.getDebitExpiryAt(),StmConstant.YYYYMMDD));
+		} catch (ParseException e) {
+			LOGGER.log(Level.SEVERE, "Exception occured for Avnet Quote No.: "+rvq.getAvnetQuoteNumber()+", "
+					+ "Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e),e);
+		}
+		
+		rvq.setDebitNumber(vo.getVendorDebit());
+		rvq.setEndCustomer(vo.getEcBpmCode());
+		rvq.setMfr(vo.getMfr());
+		rvq.setPartNumber(vo.getQuotedMPN());
+		rvq.setShipTo(vo.getShipToCode());
+		rvq.setSqNumber(vo.getSqCode());
+		rvq.setStatus(vo.getSqStatus());
+		rvq.setSuggestedResale(convertStringToDouble(vo.getVendorResale()));
+		rvq.setType(vo.getQuoteType());
+		rvq.setVendorRemarks(vo.getItemRemark());
+		
+		try {
+			em.persist(rvq);
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Exception occured for Avnet Quote No.: "+rvq.getAvnetQuoteNumber()+", "
+					+ "Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e),e);
+			receiveDate = false;
+		}
+		
+		return receiveDate;
+	}
+
+	public boolean autoLinkToQuoteItem(InBoundVo vo) {
+		boolean autoLink = true;
+		boolean validationFlag = true;
+		String quoteNumber = vo.getRfqCode();
+		QuoteItem quoteItem = quoteSB.findQuoteItemByQuoteNumber(quoteNumber);
+		
+		if (quoteItem != null) {
+			/***1.	RFQ is in Pending stage */
+			if(!quoteItem.getStage().equalsIgnoreCase(QuoteSBConstant.QUOTE_STAGE_PENDING)){
+				validationFlag = false;
+				LOGGER.warning("RFQ the stage is not pending,can't anto link:"+vo.toString());
+				return autoLink;
+			}
+			/***2.	ii.	RFQ have matched MFR & MFR P/N */
+			if(!isMatchedMfrAndMfrPN(quoteItem,vo.getMfr(),vo.getQuotedMPN())){
+				validationFlag = false;
+				LOGGER.warning("RFQ no match MFR & MFR P/N,can't anto link:"+vo.toString());
+				return autoLink;
+			}
+			
+			MfrRequestInfo mfrRequestInfo = mfrRequestInfoSB.findMfrRequestInfobyQuoteItem(quoteItem);
+			if(mfrRequestInfo==null){
+				LOGGER.warning("this RFQ no outbound record,can't anto link:"+vo.toString());
+				return autoLink;
+			}
+					
+			if(validationFlag){
+				mfrRequestInfo.setStatus(B2bStatusEnum.Linked.name());
+			}
+
+			em.merge(mfrRequestInfo);
+			if(validationFlag){
+				quoteItem = linkToRfq(quoteItem,vo);
+				quoteItem.setAction(ActionEnum.VENDOR_QUOTE_RECEIVE.name());
+				em.merge(quoteItem);
+			}
+			
+		}
+		return autoLink;
+	}
+	
+	private QuoteItem linkToRfq(QuoteItem quoteItem, InBoundVo vo) {
+		String quoteType = vo.getQuoteType();
+		if(quoteType!=null&&quoteType.equalsIgnoreCase(StmQuoteTypeEnum.SGA.name())){
+			quoteItem.setVendorQuoteNumber(vo.getSqCode());
+			if(QuoteUtil.isEmpty(quoteItem.getInternalComment())){
+				quoteItem.setInternalComment("Vendor EDI updated: [" + vo.getSqStatus() + "]");
+			}else{
+				quoteItem.setInternalComment(quoteItem.getInternalComment()+";Vendor EDI updated: ["+vo.getSqStatus()+"]");
+			}
+			if(!QuoteUtil.isEmpty(vo.getVendorResale())){
+				quoteItem.setQuotedPrice(convertStringToDouble(vo.getVendorResale()));
+			}
+			if(!QuoteUtil.isEmpty(vo.getVendorCost())){
+				quoteItem.setCost(convertStringToDouble(vo.getVendorCost()));
+			}
+			
+			if(!QuoteUtil.isEmpty(vo.getDebitExpiryAt())){
+				quoteItem.setPriceValidity(convertStringToDate(vo.getDebitExpiryAt(),StmConstant.YYYYMMDD));
+			}
+			if(vo.getSqStatus().equalsIgnoreCase(StmConstant.CLOSED_WON)){
+				quoteItem.setCostIndicator("A-Special Cost");
+			}
+			
+		}else{
+			quoteItem.setVendorQuoteNumber(vo.getSqCode());
+			quoteItem.setVendorDebitNumber(vo.getSqCode());
+			if(QuoteUtil.isEmpty(quoteItem.getInternalComment())){
+				quoteItem.setInternalComment("Vendor EDI updated: [" + vo.getSqStatus() + "]");
+			}else{
+				quoteItem.setInternalComment(quoteItem.getInternalComment()+";Vendor EDI updated: ["+vo.getSqStatus()+"]");
+			}
+			if(!QuoteUtil.isEmpty(vo.getAuthQty())){
+				quoteItem.setVendorQuoteQty((QuoteUtil.strToInt(vo.getAuthQty())));
+			}
+			if(!QuoteUtil.isEmpty(vo.getVendorResale())){
+				quoteItem.setQuotedPrice(convertStringToDouble(vo.getVendorResale()));
+			}
+			if(!QuoteUtil.isEmpty(vo.getVendorCost())){
+				quoteItem.setCost(convertStringToDouble(vo.getVendorCost()));
+			}
+
+			if(!QuoteUtil.isEmpty(vo.getDebitExpiryAt())){
+				String priceValidity = getPriceValidity(vo.getDebitExpiryAt());
+				quoteItem.setPriceValidity(priceValidity);
+				Date shipmentValidity = this.getShipmentValidity(vo.getDebitExpiryAt());
+				quoteItem.setShipmentValidity(shipmentValidity);
+			}
+			if(vo.getSqStatus().equalsIgnoreCase(StmConstant.CLOSED_WON)){
+				quoteItem.setCostIndicator("B-S&D/DPA");
+			}
+		}
+		
+//		Fix ticket INC0236134
+		quoteItem.setResaleMargin(QuoteUtil.calculateResalesMargin(quoteItem.getCost(),quoteItem.getQuotedPrice()));
+		quoteItem.setTargetMargin(QuoteUtil.calculateTargetMargin(quoteItem.getCost(),quoteItem.getQuotedPrice()));
+		
+
+		return quoteItem;
+	}
+
+	/**
+	 * sada:Price Validity = Debit Expiration Date �C 1 month
+	 * Shipment Validity = Debit  Expiration Date �C 1 month
+	 * (SADA only)
+	 * @return
+	 */
+	private String getPriceValidity(String debitExpirationDate){
+		 Date date = null;
+		try {
+			date = QuoteUtil.convertStringToDate(debitExpirationDate, StmConstant.YYYYMMDD);
+		} catch (ParseException e) {
+			LOGGER.log(Level.SEVERE, "Exception occured for Debit Expiration Date: "+debitExpirationDate+", "
+					+ "Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e),e);
+		}
+		Calendar c = Calendar.getInstance();
+		 c.setTime(date);
+		 c.add(Calendar.MONTH, -1);
+		 c.set(Calendar.DATE, c.getActualMaximum(Calendar.DATE));
+		 if(date==null){
+			 return "";
+		 }else{
+			 return QuoteUtil.dateToDateString(c.getTime(), QuoteUtil.VALIDITY_STR_FORMAT);
+		 }
+	}
+	
+	/**
+	 * sada:Price Validity = Debit Expiration Date �C 1 month
+	 * Shipment Validity = Debit  Expiration Date �C 1 month
+	 * (SADA only)
+	 * @return
+	 */
+	private Date getShipmentValidity(String debitExpirationDate){
+		 Date date = null;
+		try {
+			date = QuoteUtil.convertStringToDate(debitExpirationDate, StmConstant.YYYYMMDD);
+		} catch (ParseException e) {
+			LOGGER.log(Level.SEVERE, "Exception occured for Debit Expiration Date: "+debitExpirationDate+", "
+					+ "Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e),e);
+		}
+		if(date==null){
+			return null;
+		}else{
+			Calendar c = Calendar.getInstance();
+			c.setTime(date);
+			c.add(Calendar.MONTH, -1);	
+			return c.getTime();
+		}
+	}
+	
+	
+	private boolean isMatchedMfrAndMfrPN(QuoteItem quoteItem, String mfr, String quotedMPN) {
+		String requestMfrName ="";
+		if(quoteItem.getRequestedMfr()!=null){
+			requestMfrName = quoteItem.getRequestedMfr().getName();
+		}
+		if(!QuoteUtil.isEmpty(mfr)&&!QuoteUtil.isEmpty(quotedMPN)&&
+				!QuoteUtil.isEmpty(requestMfrName)&&!QuoteUtil.isEmpty(quoteItem.getQuotedPartNumber())){
+			if(mfr.equalsIgnoreCase(requestMfrName)&&quotedMPN.equalsIgnoreCase(quoteItem.getQuotedPartNumber())){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean autoLinkToVendorReport(InBoundVo vo) {
+		boolean isPersistSuccess = true;
+		String bizUnitName = getRegionByPrefixAvnetQuoteNumber(vo.getRfqCode());
+		if(StringUtils.isEmpty(bizUnitName)) {
+			LOGGER.warning("biz Unit Name:" + bizUnitName + " ,it cannot find in webquote system....");
+			return false;
+		} 
+		
+		BizUnit bizUnit = bizUnitSB.findByPk(bizUnitName);
+		if(bizUnit==null) return false;
+		
+		String bpmCode = vo.getBpmCode();
+		String bpmCustomer = vo.getBpmName();
+		
+		if(! QuoteUtil.isEmpty(bpmCode)){
+			VendorBpmCustomer vendorBpmCustomer = bpmMaintainSB.findByBpmCode(bpmCode);
+			if(vendorBpmCustomer != null){
+				bpmCustomer = vendorBpmCustomer.getBpmName1();
+			}else{
+				LOGGER.warning("Cannot find VendorBpmCustomer for BPM code:" + bpmCode);
+			}
+		}
+		
+		VendorReport vendorReport = vendorReportSB.findVendorReportByUK(
+				vo.getMfr(),vo.getSqCode(), vo.getQuotedMPN(), bpmCustomer, bizUnit);
+		if(vendorReport!=null) {
+			LOGGER.warning("VendorReport("+vo.getRfqCode()+") is Exist,can't auto Link To VendorReport");
+			return true;
+		}
+		
+		vendorReport = new VendorReport();
+		vendorReport.setBizUnit(bizUnit);
+		vendorReport.setMfr(vo.getMfr());
+		vendorReport.setSqNumber(vo.getSqCode());
+		vendorReport.setDebitNumber(vo.getVendorDebit());
+		vendorReport.setStatus(vo.getSqStatus());	
+		vendorReport.setFullMfrPartNumber(vo.getQuotedMPN());
+		vendorReport.setCustomer(bpmCustomer);
+		vendorReport.setCustomerCountry(vo.getEcBpmCode());
+		vendorReport.setEndCustomer(vo.getEcBpmCode());
+		vendorReport.setEndCustomerCountry(vo.getEcBPMCntCode());
+		vendorReport.setCurrency(vo.getCurrency());
+		vendorReport.setAuthQty(vo.getAuthQty());
+		vendorReport.setResale(vo.getVendorResale());
+		vendorReport.setCost(vo.getVendorCost());
+		
+		String quoteType = vo.getQuoteType();
+		if(quoteType!=null && quoteType.equalsIgnoreCase(StmQuoteTypeEnum.SADA.name())){
+			vendorReport.setDebitExpireDate(convertStringToDate2(vo.getDebitExpiryAt(),"yyyyMMdd"));
+		}
+		
+		vendorReport.setQuoteCreateDate(convertStringToDate2(vo.getCreatedAt(),"yyyyMMdd"));
+		vendorReport.setQuoteExpireDate(convertStringToDate2(vo.getQuoteExpiryAt(),"yyyyMMdd"));
+		
+		String rfqCode = vo.getRfqCode();
+		if(! QuoteUtil.isEmpty(rfqCode)){
+			
+			
+			List<MfrRequestInfo> mfrRequestInfos = vendorQuotationSB.searchMfrRequestInfoByRfq(rfqCode);
+			if(mfrRequestInfos.size()!=0){
+				MfrRequestInfo mfrRequestInfo = mfrRequestInfos.get(0);
+				vendorReport.setSqRemark1("Submitted Target Cost: " + String.valueOf(mfrRequestInfo.getTgtCost()));
+			}else{
+				LOGGER.warning("Invalid RFQ code in inbound message " + vo.getFileName());
+			}
+		}else{
+			LOGGER.warning("RFQ code is empty in inbound message " + vo.getFileName());
+		}
+			
+		vendorReport.setSqRemark2(vo.getSqCode());
+		vendorReport.setSqRemark3(vo.getItemRemark());
+		
+		try {
+			em.persist(vendorReport);
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Exception occured for MFR: "+vo.getMfr()+", Quoted MPN: "+vo.getQuotedMPN()+","
+					+ "Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e),e);
+			isPersistSuccess = false;
+		}
+
+		return isPersistSuccess;
+	}
+	
+	/**
+	 *  When take inbound file, WebQuote will decide which region this quotation file belong to,
+	 *   based on pre-fix of Avnet Quote#. 
+	 *  Prefix	Region
+	 *  	WR	AEMC
+	 *  	SG	ASEAN
+	 *  	IN	INDIA
+	 *  	TW	TW
+	 */
+	public String getRegionByPrefixAvnetQuoteNumber(String avnetQuoteNumber){
+		String regionName = null;
+		if(org.apache.commons.lang.StringUtils.isBlank(avnetQuoteNumber)) {
+			return regionName;
+		}
+		QuoteItem item = quoteSB.findQuoteItemByQuoteNumber(avnetQuoteNumber);
+		if(item != null) {
+			Quote quote = item.getQuote();
+			if(quote != null) {
+				regionName = quote.getBizUnit().getName();
+			}
+		}
+		return regionName;
+	}
+	
+	private Double convertStringToDouble(String value){
+		if(value != null){
+			try {
+				return Double.parseDouble(value);
+			} catch (Exception ex) {
+				LOGGER.log(Level.SEVERE, "Exception occured for string: "+value+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(ex), ex);
+				return null;
+			}
+			
+		}
+		return null;
+	}
+	
+	public static String convertStringToDate(String date, String fotmat) {
+		try {
+			Date d = new SimpleDateFormat(fotmat).parse(date);
+			return new SimpleDateFormat("dd/MM/yyyy").format(d);
+		} catch (ParseException e) {
+			LOGGER.log(Level.SEVERE, "Exception occured for Date: "+date+", Format: "+fotmat+", Reason for failure: "+e.getMessage(),e);
+		}
+		return null;
+	}
+	
+	public static String convertStringToDate2(String date, String format) {
+		try {
+			Date d = new SimpleDateFormat(format).parse(date);
+			return new SimpleDateFormat("MM/dd/yy").format(d);
+		} catch (ParseException e) {
+			LOGGER.log(Level.SEVERE, "Exception occured for Date: "+date+", Format: "+format+", Reason for failure: "+e.getMessage(),e);		
+		}
+		return null;
+	}	
+	
+}

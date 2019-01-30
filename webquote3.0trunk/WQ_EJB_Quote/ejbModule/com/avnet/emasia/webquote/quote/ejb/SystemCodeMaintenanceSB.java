@@ -1,0 +1,397 @@
+package com.avnet.emasia.webquote.quote.ejb;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.entity.SystemCodeMaintenance;
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+
+@Stateless
+@LocalBean
+public class SystemCodeMaintenanceSB {
+
+	@PersistenceContext(unitName = "Server_Source")
+	EntityManager em;
+
+	private static final Logger LOG = Logger.getLogger(SystemCodeMaintenanceSB.class.getName());
+
+	public List<String> findTermsAndConditions() {
+		List<String> applications = em
+				.createQuery("select c.value from SystemCodeMaintenance c where c.category='TERMS AND CONDITIONS'")
+				.getResultList();
+		return applications;
+	}
+
+	public List<String> findTermsAndConditions(String bizUnit) {
+		List<String> applications = em
+				.createQuery(
+						"select c.value from SystemCodeMaintenance c where c.category='TERMS AND CONDITIONS' and c.region= :bizUnit")
+				.setParameter("bizUnit", bizUnit).getResultList();
+		return applications;
+	}
+
+	public List<String> findQuantityIndicator() {
+		List<String> applications = em
+				.createQuery("select c.value from SystemCodeMaintenance c where c.category='QTY INDICATOR'")
+				.getResultList();
+		return applications;
+	}
+
+	public List<String> findCountry() {
+		List<String> applications = em
+				.createQuery("select c.value from SystemCodeMaintenance c where c.category='COUNTRY'").getResultList();
+		return applications;
+	}
+
+	public List<String> findCostIndicator() {
+		List<String> applications = em
+				.createQuery("select c.value from SystemCodeMaintenance c where c.category='COST INDICATOR'")
+				.getResultList();
+		return applications;
+	}
+
+	public List<String> findEnquirySegment() {
+		List<String> applications = em
+				.createQuery("select c.value from SystemCodeMaintenance c where c.category='ENQUIRY SEGMENT'")
+				.getResultList();
+		return applications;
+	}
+
+	public List<String> findAvnetQuoteCentreComment() {
+		List<String> applications = em
+				.createQuery(
+						"select c.value from SystemCodeMaintenance c where c.category='AVNET QUOTE CENTRE COMMENT'")
+				.getResultList();
+		return applications;
+	}
+
+	public List<String> findCustomerType() {
+		List<String> applications = em
+				.createQuery("select c.value from SystemCodeMaintenance c where c.category='CUSTOMER TYPE'")
+				.getResultList();
+		return applications;
+	}
+
+	public List<String> findApplication() {
+		List<String> applications = em
+				.createQuery("select c.value from SystemCodeMaintenance c where c.category='APPLICATION'")
+				.getResultList();
+		return applications;
+	}
+
+	public List<String> findDesignLocation() {
+		List<String> applications = em
+				.createQuery("select c.value from SystemCodeMaintenance c where c.category='DESIGN LOCATION'")
+				.getResultList();
+		return applications;
+	}
+
+	public List<String> findTeam() {
+		List<String> applications = em
+				.createQuery("select c.value from SystemCodeMaintenance c where c.category='TEAM'").getResultList();
+		return applications;
+	}
+
+	public List<String> findCurrency() {
+		List<String> applications = em
+				.createQuery(
+						"select distinct(c.value) from SystemCodeMaintenance c where c.category='CURRENCY' order by c.value asc")
+				.getResultList();
+		return applications;
+	}
+
+	public long getUploadFileSizeLimit() {
+		List sizes = em
+				.createQuery("select c.value from SystemCodeMaintenance c where c.category='UPLOAD_FILE_SIZE_LIMIT'")
+				.getResultList();
+
+		if (sizes.size() != 1) {
+			LOG.severe("UPLOAD_FILE_SIZE_LIMIT is not set correctly in SystemCodeMaintenance");
+			return 0;
+		}
+
+		return Long.parseLong((String) sizes.get(0));
+	}
+
+	public String getPricerUploadOfflinePath() {
+		List sizes = em
+				.createQuery("select c.value from SystemCodeMaintenance c where c.category='PRICER_UPLOAD_OFFLINE'")
+				.getResultList();
+
+		if (sizes.size() != 1) {
+			LOG.severe("PRICER_UPLOAD_OFFLINE is not set correctly in SystemCodeMaintenance");
+			return null;
+		}
+
+		return (String) sizes.get(0);
+	}
+
+	public List<String> findQuoteType() {
+		List<String> applications = em
+				.createQuery("select c.value from SystemCodeMaintenance c where c.category='QUOTE TYPE'")
+				.getResultList();
+		return applications;
+	}
+
+	public List<String> findDesignInCat() {
+		List<String> applications = em
+				.createQuery("select c.value from SystemCodeMaintenance c where c.category='DESIGN IN CAT'")
+				.getResultList();
+		return applications;
+	}
+
+	public String getBuzinessProperty(String category, String bizUnit) {
+		Query query = em.createQuery(
+				"select c.value from SystemCodeMaintenance c where c.category=:category and c.region=:bizUnit");
+		query.setParameter("category", category);
+		query.setParameter("bizUnit", bizUnit);
+		List<String> codeList = (List<String>) query.getResultList();
+		if (codeList != null && codeList.size() > 0) {
+			String scm = (String) codeList.get(0);
+			return scm;
+		}
+		return null;
+	}
+
+	public String getEDIReceivePath() {
+		List sizes = em.createQuery("select c.value from SystemCodeMaintenance c where c.category='EDI_RECEIVE_PATH'")
+				.getResultList();
+
+		if (sizes.size() != 1) {
+			LOG.severe("EDI_RECEIVE_PATH is not set correctly in SystemCodeMaintenance");
+			return null;
+		}
+
+		return (String) sizes.get(0);
+	}
+
+	public String getStmExceptionPath() {
+		List sizes = em.createQuery("select c.value from SystemCodeMaintenance c where c.category='STM_EXCEPTION_PATH'")
+				.getResultList();
+
+		if (sizes.size() != 1) {
+			LOG.severe("STM_EXCEPTION_PATH is not set correctly in SystemCodeMaintenance");
+			return null;
+		}
+
+		return (String) sizes.get(0);
+	}
+
+	public String getStmReceivePath() {
+		List sizes = em.createQuery("select c.value from SystemCodeMaintenance c where c.category='STM_RECEIVE_PATH'")
+				.getResultList();
+
+		if (sizes.size() != 1) {
+			LOG.severe("STM_RECEIVE_PATH is not set correctly in SystemCodeMaintenance");
+			return null;
+		}
+
+		return (String) sizes.get(0);
+	}
+
+	public String getStmSendPath() {
+		List sizes = em.createQuery("select c.value from SystemCodeMaintenance c where c.category='STM_SEND_PATH'")
+				.getResultList();
+
+		if (sizes.size() != 1) {
+			LOG.severe("STM_SEND_PATH is not set correctly in SystemCodeMaintenance");
+			return null;
+		}
+
+		return (String) sizes.get(0);
+	}
+
+	public String getStmEdiFtpConfig() {
+		List sizes = em.createQuery("select c.value from SystemCodeMaintenance c where c.category='STM_EDI_FTP_CONFIG'")
+				.getResultList();
+
+		if (sizes.size() != 1) {
+			LOG.severe("STM_EDI_FTP_CONFIG is not set correctly in SystemCodeMaintenance");
+			return null;
+		}
+
+		return (String) sizes.get(0);
+	}
+
+	public String getSTMReminderCCList(String bizUnit) {
+		Query query = em.createQuery(
+				"select c.value from SystemCodeMaintenance c where c.category='STM_REMINDER_CC_LIST' and c.region=:bizUnit");
+		query.setParameter("bizUnit", bizUnit);
+		List<String> codeList = (List<String>) query.getResultList();
+		if (codeList != null && codeList.size() > 0) {
+			String scm = (String) codeList.get(0);
+			return scm;
+		}
+		return null;
+	}
+
+	public String getStmFileBackupPath() {
+		List sizes = em.createQuery("select c.value from SystemCodeMaintenance c where c.category='STM_FILE_BACKUP'")
+				.getResultList();
+
+		if (sizes.size() != 1) {
+			LOG.severe("STM_FILE_BACKUP is not set correctly in SystemCodeMaintenance");
+			return null;
+		}
+
+		return (String) sizes.get(0);
+	}
+
+	public String getStmContactName() {
+		List sizes = em.createQuery("select c.value from SystemCodeMaintenance c where c.category='STM_ContactName'")
+				.getResultList();
+
+		if (sizes.size() != 1) {
+			LOG.severe("STM_ContactName is not set correctly in SystemCodeMaintenance");
+			return null;
+		}
+
+		return (String) sizes.get(0);
+	}
+
+	public String getStmContactChannel() {
+		List sizes = em.createQuery("select c.value from SystemCodeMaintenance c where c.category='STM_ContactChannel'")
+				.getResultList();
+
+		if (sizes.size() != 1) {
+			LOG.severe("STM_ContactChannel is not set correctly in SystemCodeMaintenance");
+			return null;
+		}
+
+		return (String) sizes.get(0);
+	}
+
+	public String getEmailHotLine(String bizUnit) {
+		return getBuzinessProperty(QuoteSBConstant.EMAIL_SIGNATURE_HOTLINE, bizUnit);
+	}
+
+	public String getEmailSignName(String bizUnit) {
+		return getBuzinessProperty(QuoteSBConstant.EMAIL_SIGNATURE_NAME, bizUnit);
+	}
+
+	public String getEmailSignContent(String bizUnit) {
+		return getBuzinessProperty(QuoteSBConstant.EMAIL_SIGNATURE_CONTENT, bizUnit);
+	}
+
+	public String getEmailAddress(String bizUnit) {
+		return getBuzinessProperty(QuoteSBConstant.EMAIL_SIGNATURE_EMAIL_ADDRESS, bizUnit);
+	}
+
+	public String getCommidityEmailAddress(String bizUnit) {
+		return getBuzinessProperty(QuoteSBConstant.PROGRAM_SIGNATURE_EMAIL_ADDRESS, bizUnit);
+	}
+
+	public String getQuotationTemplate(String bizUnit) {
+		return getBuzinessProperty(QuoteSBConstant.QUOTATION_TEMPLATE_TYPE, bizUnit);
+	}
+
+	public String getRFQSubmissionTemplate(String bizUnit) {
+		return getBuzinessProperty(QuoteSBConstant.RFQ_SUBMISSION_TEMPLATE, bizUnit);
+	}
+
+	public int getFunturePriceBatchQueryNumber() {
+		Query query = em.createQuery("select c.value from SystemCodeMaintenance c where c.category=:category");
+		query.setParameter("category", "FUNTUREPRICERBATCHNUMBER");
+		List<String> codeList = (List<String>) query.getResultList();
+		if (codeList != null && codeList.size() > 0) {
+			String scm = (String) codeList.get(0);
+			return Integer.valueOf(scm);
+		}
+		return 100;
+	}
+
+	public Object getConfig(String key) throws WebQuoteException {
+		if (key == null || key.length() == 0) {
+			LOG.fine("get config has empty key ");
+			throw new WebQuoteException(CommonConstants.COMMON_GET_CONFIG_HAS_EMPTY_KEY);
+		}
+		try {
+			Query query = em.createQuery("select c.value from SystemCodeMaintenance c where c.category=:category");
+			query.setParameter("category", key);
+			return query.getSingleResult();
+		} catch (Exception e) {
+			LOG.fine("get config error with key: " + key + " Message: " + e.getMessage());
+			throw new WebQuoteException(e);
+		}
+	}
+
+	public List<String> getCofigByCategory(String category) throws WebQuoteException {
+		List<SystemCodeMaintenance> configList = getAllCofigByCategory(category);
+		List<String> valueList = null;
+		if (configList != null && configList.size() > 0) {
+			valueList = new ArrayList<String>();
+			for (SystemCodeMaintenance config : configList) {
+				valueList.add(config.getValue());
+			}
+		}
+		return valueList;
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<SystemCodeMaintenance> getAllCofigByCategory(String category) throws WebQuoteException {
+		if (StringUtils.isBlank(category)) {
+			LOG.fine("get config has empty category ");
+			throw new WebQuoteException(CommonConstants.COMMON_GET_CONFIG_HAS_EMPTY_KEY);
+		}
+		try {
+			Query query = em.createQuery("select c from SystemCodeMaintenance c where c.category = :category");
+			query.setParameter("category", category);
+			return (List<SystemCodeMaintenance>) query.getResultList();
+		} catch (Exception e) {
+			
+			WebQuoteException we = new WebQuoteException(e);
+			we.setMessage("get config error with category: " + category + " Message: " + e.getMessage());
+			throw we;
+		}
+	}
+
+	public int getIntConfig(String key) {
+		try {
+			return Integer.valueOf((String) getConfig(key));
+		} catch (NumberFormatException e) {
+			LOG.log(Level.SEVERE, "NumberFormatException with key: " + key+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+		} catch (Exception e) {
+			LOG.log(Level.SEVERE, "NumberFormatException with key: " + key+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+		}
+		return 1;
+	}
+	
+	//Bryan Start
+	public String getSapSftpConfig() {
+		List sizes = em.createQuery("select c.value from SystemCodeMaintenance c where c.category='SAP_SFTP_CONFIG'")
+				.getResultList();
+
+		if (sizes.size() != 1) {
+			LOG.severe("SAP_SFTP_CONFIG is not set correctly in SystemCodeMaintenance");
+			return null;
+		}
+
+		return (String) sizes.get(0);
+	}
+	
+	public String getSapSftpDestinationPath() {
+		List sizes = em.createQuery("select c.value from SystemCodeMaintenance c where c.category='SAP_SFTP_DESTINATION_PATH'")
+				.getResultList();
+
+		if (sizes.size() != 1) {
+			LOG.severe("SAP_SFTP_DESTINATION_PATH is not set correctly in SystemCodeMaintenance");
+			return null;
+		}
+
+		return (String) sizes.get(0);
+	}
+	//Bryan End
+}

@@ -1,0 +1,151 @@
+package com.avnet.emasia.webquote.reports.ejb.remote.impl;
+
+
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.ejb.Remote;
+import javax.ejb.Stateless;
+
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
+import com.avnet.emasia.webquote.entity.ExcelReport;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.poi.ExcelGenerator;
+import com.avnet.emasia.webquote.quote.ejb.BalanceUnconsumedQtySB;
+import com.avnet.emasia.webquote.quote.ejb.MyQuoteSearchSB;
+import com.avnet.emasia.webquote.quote.vo.MyQuoteSearchCriteria;
+import com.avnet.emasia.webquote.quote.vo.QuoteItemVo;
+import com.avnet.emasia.webquote.reports.constant.ReportConstant;
+import com.avnet.emasia.webquote.reports.ejb.ExcelReportSB;
+import com.avnet.emasia.webquote.reports.ejb.remote.OffLineRemote;
+import com.avnet.emasia.webquote.reports.util.ReportConvertor;
+import com.avnet.emasia.webquote.reports.util.ReportsUtil;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.vo.OfflineReportParam;
+
+@Stateless
+@Remote(OffLineRemote.class)
+public class MyQuoteOffLineReport extends OffLineReport implements OffLineRemote {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private static final Logger LOG = Logger.getLogger(MyQuoteOffLineReport.class.getName());
+	
+	
+	@EJB
+	MyQuoteSearchSB myQuoteSearchSB;
+	
+	@EJB
+	BalanceUnconsumedQtySB balanceUnconsumedQtySB;
+	
+	@EJB
+	ExcelReportSB excelReportSB;
+	
+	@EJB
+	private transient UserSB userSb;
+	
+	@EJB
+	private transient MailUtilsSB mailUtilsSB;
+	
+	@EJB
+	private SysConfigSB sysConfigSB;
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	//added by DamonChen
+	@TransactionTimeout(value = 36000, unit = TimeUnit.SECONDS)
+	public void sendOffLineReport(OfflineReportParam param) throws Exception {
+		
+		List<QuoteItemVo> resultList = null;
+		SXSSFWorkbook workbook =new SXSSFWorkbook();
+		try {
+			int pageSize = 10000;
+			User user = userSb.findByEmployeeIdLazily(param.getEmployeeId());
+			ExcelReport excelReport = excelReportSB.getExcelReportByReportName(param.getReportName());
+			MyQuoteSearchCriteria criteria = (MyQuoteSearchCriteria) param.getCriteriaBean();
+			int totalRecords = myQuoteSearchSB.searchCount(criteria).intValue();
+			LOG.info("search result count:" + totalRecords);
+			int count = totalRecords / pageSize;
+			LOG.info("count:" + count);
+			String templatePath = sysConfigSB.getProperyValue(ReportConstant.TEMPLATE_PATH);
+			String reportFilePath = sysConfigSB.getProperyValue(ReportConstant.OFFLINE_REPORT_PATH);
+			String newfileName = ReportsUtil.generateOfflineReportFileName(user.getEmployeeId(), "xlsx",param.getReportName());
+		   // templatePath="C:/temp";
+		   //reportFilePath = "C:/temp";
+			 workbook = ExcelGenerator.generateExcelTemplate(excelReport, param.getReportName(), templatePath);
+			for (int i = 0; i <= count; i++) {
+				LOG.info("the loop number of user["+user.getEmployeeId()+"] is: " + i);
+				criteria.setStart(i * pageSize);
+				if (pageSize > (totalRecords - (i * pageSize))) {
+					criteria.setEnd(totalRecords - (i * pageSize));
+				} else {
+					criteria.setEnd(pageSize);
+				}
+
+				resultList = new ArrayList<QuoteItemVo>();
+				resultList = myQuoteSearchSB.search(criteria, Locale.ENGLISH);
+				if(ReportConstant.MYQUOTE_QC.equals(param.getReportName()) || ReportConstant.MYQUOTE_MM.equals(param.getReportName())){
+					if(resultList != null){
+					addbalanceUnconsumedQtyInquoteItemVo(resultList,user);
+					}
+				}
+				List newList = ReportConvertor.convert2ResultBean(resultList);
+				if(ReportConstant.MYQUOTE_CS.equals(param.getReportName()) ||ReportConstant.MYQUOTE_SALE.equals(param.getReportName())){
+					newList = ReportConvertor.noFinishQuoteHandling(newList);
+				}
+				workbook = ExcelGenerator.generateExcelFile(workbook, newList, excelReport);
+				resultList.clear();
+				resultList = null;
+			}
+			LOG.info("out the loop");
+			ExcelGenerator.outputExcelFile(workbook, reportFilePath + File.separator + newfileName);
+			sendOfflineEmail(user,newfileName);
+			workbook.dispose();
+		} catch (Exception e) {
+			workbook.dispose();
+			LOG.log(Level.WARNING, "Exception MyQuote sendOffLineReport : "+e.getMessage(), e);
+			throw e;
+		}finally {
+			if(resultList != null) {
+				resultList.clear();
+				resultList = null;
+			}
+		}
+	
+	}
+
+
+	private void addbalanceUnconsumedQtyInquoteItemVo(
+			List<QuoteItemVo> quoteItemVos ,User currentUser) {
+		String bizUnitName = currentUser.getDefaultBizUnit().getName();
+		for (QuoteItemVo vo : quoteItemVos) {
+			QuoteItem quoteItem = vo.getQuoteItem();
+			if (quoteItem == null) {
+				vo.setBalanceUnconsumedQty(null);
+			} else {
+				if (quoteItem.getQuotedMfr() != null) {
+					Integer balanceUnconsumedQty = balanceUnconsumedQtySB.getBalUnconsumedQtyByCriteria(quoteItem.getQuotedMfr().getName(),
+							quoteItem.getQuoteNumber(), quoteItem.getQuotedPartNumber(), quoteItem.getVendorQuoteNumber(), bizUnitName);
+					vo.setBalanceUnconsumedQty(balanceUnconsumedQty);
+				}
+			}
+		}
+	}
+	
+
+}

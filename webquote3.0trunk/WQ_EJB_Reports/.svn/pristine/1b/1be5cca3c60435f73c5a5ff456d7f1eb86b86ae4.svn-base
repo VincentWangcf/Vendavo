@@ -1,0 +1,10 @@
+package com.avnet.emasia.webquote.reports.constant;
+
+public class ReportConstant {
+	public final static String TEMPLATE_PATH = "TEMPLATE_PATH";
+	public final static String OFFLINE_REPORT_PATH = "OFFLINE_REPORT_PATH";
+	public static final String WEBQUOTE2_DOMAIN ="WEBQUOTE2_DOMAIN";
+	public final static String UNDERLINE_SIGN="-";
+	public final static String DOT_SIGN=".";
+
+}

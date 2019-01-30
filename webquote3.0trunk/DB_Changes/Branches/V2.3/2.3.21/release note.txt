@@ -1,0 +1,4 @@
+1)SR for removing the validity check during DRMS Matching at RFQ Submission - modified by Lenon 2016/03/31
+2)Fix ticket INC0378628 ----June Guo 2016/04/11
+3) Upload quote error at Mass Quote Rate Request - fixed by Lenon 2016/04/11
+4)rollback SR for removing the validity check during DRMS Matching at RFQ Submission  - by Lenon 2016/04/12

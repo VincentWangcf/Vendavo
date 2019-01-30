@@ -1,0 +1,11 @@
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'QuoteBuilder'), (select id from role where name ='ROLE_QC_OPERATION' ));
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'QuoteBuilder'), (select id from role where name ='ROLE_PM' ));
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'QuoteBuilder'), (select id from role where name ='ROLE_QCO_MANAGER' ));
+
+insert into APP_FUNCTION_ROLE_MAPPING
+values ((select id from app_function where name = 'QuoteBuilder'), (select id from role where name ='ROLE_QC_Director' ));

@@ -1,0 +1,59 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+
+import com.avnet.emasia.webquote.constants.BmtFlagEnum;
+import com.avnet.emasia.webquote.exception.CommonConstants;
+
+@Embeddable
+public class BmtFlag implements Serializable{
+	 
+	private static final long serialVersionUID = 8943788517053803326L;
+	@Column(name="BMT_FLAG_CODE")
+	private String bmtFlagCode;
+	
+	public String getBmtFlagCode() {
+		return bmtFlagCode;
+	}
+
+	public void setBmtFlagCode(String bmtFlagCode) {
+		this.bmtFlagCode = bmtFlagCode;
+	}
+	
+	public void setBmtFlagDesc(String bmtFlagDesc) {
+		boolean found = false; 
+		if(bmtFlagDesc == null || "".equals(bmtFlagDesc)){
+			this.bmtFlagCode = BmtFlagEnum.EMPTY.code();
+		}else{			
+			for(BmtFlagEnum bmtFlagEnum: BmtFlagEnum.values()){
+				if(bmtFlagDesc.equals(bmtFlagEnum.description())){
+					found = true;
+					this.bmtFlagCode = bmtFlagEnum.code();
+					break;
+				}
+			}
+			if(found == false){
+				throw new IllegalArgumentException(CommonConstants.COMMON_INCORRECT_BMT_FLAG_DESC + bmtFlagDesc);
+			}
+		}
+		
+	}
+
+	public String getDescription(){
+		
+		if(bmtFlagCode == null){
+			return null;
+		}
+		
+		for(BmtFlagEnum bmtFlagEnum: BmtFlagEnum.values()){
+			if(bmtFlagCode.equals(bmtFlagEnum.code())){
+				return bmtFlagEnum.description();
+			}
+		}
+		
+		return null;
+	}
+}

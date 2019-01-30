@@ -1,0 +1,5 @@
+001.sql   ------added by June Guo  on 2016/07/12
+   removing email signature setting from table app_property and remove ��JMS_QUEUE_NAME�� config from app_property  according to the email Mon 7/11/2016 6:20 PM from Tough
+   
+003.sql -- add By Lenon.Yang(043044) 2016/07/13
+THIS CONFIG VALUE NOTE ENVIRONMENT OF WEBQUOTE SUCH AS DEV,TEST,STAGE,PROD

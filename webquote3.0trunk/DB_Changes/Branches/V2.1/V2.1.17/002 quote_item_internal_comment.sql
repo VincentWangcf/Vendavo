@@ -1,0 +1,1 @@
+alter table quote_item modify (internal_comment varchar2(1000));

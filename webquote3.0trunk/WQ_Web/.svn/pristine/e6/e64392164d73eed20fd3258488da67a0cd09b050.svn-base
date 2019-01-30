@@ -1,0 +1,26 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	
+	<ui:define name="css">
+	 	<style type="text/css">
+            .errorRow {
+                background-color: #6CE26C !important;
+                color: red !important;
+            }
+        </style>
+	</ui:define>
+	
+	<ui:define name="content">
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+        	<div class="baseWidth">
+        	
+        	    <h:outputText value="#{vendorReportMB.initialize}"/>      	          	        
+				<ui:include src="/PricerUpload/VendorReportUpload.xhtml" />
+			</div>
+	</ui:define>
+</ui:composition>

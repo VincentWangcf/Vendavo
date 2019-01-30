@@ -1,0 +1,40 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+		<style type="text/css">
+.errorRow {
+	background-color: #6CE26C !important;
+	color: red !important;
+}
+</style>
+	</ui:define>
+
+	<ui:define name="content">
+		<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/> 
+		<h2>#{dbResource['wq.message.unconsumedQtyUpload']}</h2>
+		<h:form id="uploadProgramItem" enctype="multipart/form-data">
+		<p:messages id="msgId" escape="false" closable="true" autoUpdate="true"/>
+			<p:panel id="uploadPanel" header="#{dbResource['wq.button.upload']}" style="font-size:12pt">
+				<h:panelGrid columns="4" cellpadding="0">
+					<p:fileUpload value="#{balanceUnconsumedQtyMB.uploadFile}" 
+					allowTypes="/(\.|\/)(xls|xlsx|XLS|XLSX)$/" mode="simple" />
+					<p:commandButton id="uploadButton" value="#{dbResource['wq.button.upload']}" icon="ui-icon-circle-check"
+					actionListener="#{balanceUnconsumedQtyMB.uploadBalanceUnconsumedQty}"
+					oncomplete="PrimeFaces.monitorDownload(start, stop)" ajax="false" update="@uploadProgramItem">
+					</p:commandButton>
+					<p:commandButton value="#{dbResource['wq.button.BackMyQuoteSearch']}" icon="ui-icon ui-icon-circle-arrow-w" action="#{myQuoteSearchMB.getMyQuotePage}" ajax="false"/>
+
+				</h:panelGrid>
+			</p:panel>
+
+		</h:form>
+
+	</ui:define>
+</ui:composition>

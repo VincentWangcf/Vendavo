@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<!DOCTYPE facelet-taglib PUBLIC "-//Sun Microsystems, Inc.//DTD Facelet Taglib 1.0//EN" "http://java.sun.com/dtd/facelet-taglib_1_0.dtd">
+<facelet-taglib>
+	<namespace>http://emasia.avnet.com</namespace>
+	<tag>
+		<tag-name>filterEnhancedDataTable</tag-name>
+		<component>
+			<component-type>com.avnet.emasia.FilterEnhancedDataTable</component-type>
+			<renderer-type>com.avnet.emasia.FilterEnhancedDataTable</renderer-type>
+		</component>
+	</tag>
+	
+	<tag>
+		<tag-name>dataExporter</tag-name>
+		<handler-class>
+			com.avnet.emasia.webquote.web.datatable.export.ExtDataExporterTagHandler
+		</handler-class>
+        <attribute>
+			<description>Server side id of the datatable whose data would be exported.</description>
+			<name>target</name>
+			<required>true</required>
+			<type>java.lang.String</type>
+		</attribute>
+        <attribute>
+			<description>export order, a method name in manager bean, must be return String[]</description>
+			<name>exportOrder</name>
+			<required>false</required>
+			<type>java.lang.String</type>
+		</attribute>
+        <attribute>
+			<description>Export type: "xlsx".</description>
+			<name>type</name>
+			<required>true</required>
+			<type>java.lang.String</type>
+		</attribute>
+        <attribute>
+			<description>Filename of the generated export file, defaults to datatable server side id.</description>
+			<name>fileName</name>
+			<required>false</required>
+			<type>java.lang.String</type>
+		</attribute>
+        <attribute>
+			<description>Exports only current page instead of whole dataset.</description>
+			<name>pageOnly</name>
+			<required>false</required>
+			<type>java.lang.Boolean</type>
+		</attribute>
+        <attribute>
+			<description>PreProcessor for the exported document.</description>
+			<name>preProcessor</name>
+			<required>false</required>
+			<type>javax.el.MethodExpression</type>
+		</attribute>
+        <attribute>
+			<description>PostProcessor for the exported document.</description>
+			<name>postProcessor</name>
+			<required>false</required>
+			<type>javax.el.MethodExpression</type>
+		</attribute>
+        <attribute>
+			<description>Character encoding to use.</description>
+			<name>encoding</name>
+			<required>false</required>
+			<type>java.lang.String</type>
+		</attribute>
+        <attribute>
+			<description>When enabled, only selection would be exported.</description>
+			<name>selectionOnly</name>
+			<required>false</required>
+			<type>java.lang.Boolean</type>
+		</attribute>
+	</tag>
+	<tag>
+        <description>
+            Register a BreakListConverter instance on the UIComponent associated
+            with the closest parent UIComponent custom action.
+        </description>
+        <tag-name>convertBreakList</tag-name>
+        <converter>
+        	<converter-id>javax.faces.BreakList</converter-id>
+        	<handler-class>com.avnet.emasia.webquote.extend.tag.BreakListConverterHandle</handler-class>
+        </converter>
+        <body-content>empty</body-content>
+        <attribute>
+            <description>
+            Valid values as below:
+		        CVT_BREAKINT,  order qty rows in single colum
+				CVT_NORMSELL,  normal sell rows in single colum
+				CVT_SALESCOST,  Sales cost rows in single colum
+				CVT_SUGGESTSALE, Suggests Sale rows in single colum.
+            </description>
+            <name>targetField</name>
+            <deferred-value>
+                <type>java.lang.String</type>
+            </deferred-value>
+        </attribute>
+    </tag>	
+</facelet-taglib>

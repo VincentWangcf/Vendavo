@@ -1,0 +1,618 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.math.BigDecimal;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.cache.ICacheUtil;
+import com.avnet.emasia.webquote.constants.Constants;
+import com.avnet.emasia.webquote.strategy.MoneyConvertStrategy;
+import com.avnet.emasia.webquote.strategy.StrategyFactory;
+
+
+public class Money implements Comparable<Money> {
+	
+	static final Logger logger = Logger.getLogger(Money.class.getName());
+	
+	private Currency currency;
+
+	private BigDecimal amount;
+	
+	private static ICacheUtil cacheUtil;
+
+	static {
+		try {
+			Context context = new InitialContext();
+			setCacheUtil((ICacheUtil) context.lookup("java:app/WQ_JPA_Entity/CacheUtil!com.avnet.emasia.webquote.cache.ICacheUtil"));
+		} catch (NamingException e) {
+			logger.log(Level.SEVERE, "This shoud not happen" , e);
+		}			
+		
+	}
+
+	private Money(BigDecimal amount, Currency curr) {
+		this.amount = amount;
+		this.currency = curr;
+	}
+
+	public static Money of(String amount, String curr) {
+		if (StringUtils.isEmpty(amount) || StringUtils.isEmpty(curr)) {
+			return null;
+		}
+		try {
+			return new Money(new BigDecimal(amount), Currency.valueOf(curr));
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	public static Money of(BigDecimal amount, Currency curr) {
+		if (amount == null || curr == null) {
+			return null;
+		}
+		return new Money(amount, curr);
+	}
+
+	public static Money of(Double amount, Currency curr) {
+		if (amount == null || curr == null) {
+			return null;
+		}
+		try {
+			return new Money(BigDecimal.valueOf(amount), curr);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	public static Money of(Double amount, String curr) {
+		if (amount == null || StringUtils.isEmpty(curr)) {
+			return null;
+		}
+		try {
+			return new Money(BigDecimal.valueOf(amount), Currency.valueOf(curr));
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	public Currency getCurrency() {
+		return currency;
+	}
+
+	public BigDecimal getAmount() {
+		return amount;
+	}
+
+	static void setCacheUtil(ICacheUtil cacheUtil) {
+		Money.cacheUtil = cacheUtil;
+	}
+
+	
+	
+	// no setters allowed
+
+	
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((amount == null) ? 0 : amount.hashCode());
+		result = prime * result + ((currency == null) ? 0 : currency.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Money other = (Money) obj;
+		if (amount == null) {
+			if (other.amount != null)
+				return false;
+		} else if (!amount.equals(other.amount))
+			return false;
+		if (currency != other.currency)
+			return false;
+		return true;
+	}
+	
+	
+
+	@Override
+	public String toString() {
+		return "Money [currency=" + currency.name() + ", amount=" + amount + "]";
+	}
+	
+	/**to rfqCurr money and to buyCurr money are different, 
+	 * handling add cost when toRfq , but reverse when toBuy.  
+	 * @param toCurrency 
+	 * @param bizUnit
+	 * @param soldToCustomer
+	 * @param date
+	 * @param scale
+	 * @return a money which include toCurrency and corresponding value 
+	 */
+	public Money convertToRfq(Currency toCurrency, BizUnit bizUnit, Customer soldToCustomer, Date date, int ... scale) {
+		
+		return convertTo(toCurrency,bizUnit,soldToCustomer, date, true, scale);
+	}
+	
+	public Money convertToBuy(Currency toCurrency, BizUnit bizUnit, Customer soldToCustomer, Date date, int ... scale) {
+		return convertTo(toCurrency,bizUnit,soldToCustomer, date, false, scale);
+	}
+	
+	/**
+	 * called by convertToRfq and convertToBuy.
+	 * now for JAPAN (bizunit include the region value) and not dlink:
+	 * it do not use 'soldToCustomer' param, that say that only use company Rate.
+	 * for ASIA:
+	 * it need to use 'soldToCustomer' param. 
+	 * 	1. use customer rate preferentially.
+	 * 	2. if no found customer rate will use company rate.
+	 *Above this is diplayed by findExchangeRateStrategy,findExchangeRateFromCache
+	 * we use strage to handle this.
+	 * @param toCurrency
+	 * @param bizUnit
+	 * @param soldToCustomer
+	 * @param date
+	 * @param toRfq 
+	 * 	a flag inicator 'from Buy Currency to Rfq Currency' or
+	 *  'from Rfq Currency to Buy Currency'
+	 * @param scale
+	 * @return
+	 */
+	private Money convertTo(Currency toCurrency, BizUnit bizUnit, Customer soldToCustomer, Date date, boolean toRfq, int ... scale) {
+		
+		if(toCurrency == this.currency) {
+			Money.of(BigDecimal.valueOf(this.amount.doubleValue()), this.currency);
+		}
+		
+		if (toCurrency == null || bizUnit == null || date == null) {
+			throw new IllegalArgumentException();
+		}
+		List<ExchangeRate> exchangeRates = cacheUtil.getExchangeRates();
+		ExchangeRate[] rates = findExchangeRateStrategy(this.currency,toCurrency, bizUnit, soldToCustomer, date, exchangeRates);
+		
+		if (rates[0] == null || rates[1] == null) {
+			return null;
+		} else {
+			BigDecimal exTo = rates[1].getExRateTo();
+			BigDecimal exFrom = rates[0].getExRateTo();
+			BigDecimal handling = rates[0].getHandling().multiply(rates[1].getHandling());
+			BigDecimal valueFrom = this.getAmount();
+			BigDecimal valueTo = calculatorAsToCurrencyAmount(valueFrom, exFrom, exTo, handling, toRfq, scale);
+			return Money.of(valueTo, toCurrency);
+		}
+	}
+	
+	private static BigDecimal calculatorAsToCurrencyAmount(BigDecimal valueFrom, BigDecimal exFrom, BigDecimal exTo, BigDecimal handling, boolean toRfq, int ... scale) {
+		int i = scale.length == 0 ? Constants.SCALE : scale[0];
+		BigDecimal valueTo;
+		if(toRfq) {
+			valueTo= valueFrom.multiply(exTo).multiply(handling).divide(exFrom, i , Constants.ROUNDING_MODE);
+		} else {
+			valueTo= valueFrom.multiply(exTo).divide(exFrom.multiply(handling), i , Constants.ROUNDING_MODE);
+		}
+		return valueTo;
+	}
+	
+	private static BigDecimal calculatorAsToCurrencyAmountForDlink(BigDecimal valueFrom, BigDecimal exFrom, BigDecimal exTo, Integer scale, Integer roundType) {
+		int i = scale == null ? Constants.SCALE : scale;
+		int rType = roundType == null ? Constants.ROUNDING_MODE : roundType;
+		BigDecimal valueTo= valueFrom.multiply(exTo).divide(exFrom, i, rType);
+		return valueTo;
+	}
+	
+	/**
+	 * Dlink use this
+	 * Dlink is a function of JAPAN.
+	 * For this, 
+	 * 1. it only reference or say that convert Money of BUY currency to 
+	 * 	  Money of RFQ currency.
+	 * 2. it only use customer rate .
+	 * 3. it use scale and roundType from exRate item to calculator money convert.
+	 * for handling this and so many special SR, we directly use new function .
+	 * @param toCurrency
+	 * @param bizUnit
+	 * @param soldToCustomer
+	 * @param date 
+	 * @return
+	 */
+	public Money convertToForDlink(Currency toCurrency, BizUnit bizUnit, Customer soldToCustomer, Date date) {
+		
+		if(toCurrency == this.currency) {
+			Money.of(BigDecimal.valueOf(this.amount.doubleValue()), this.currency);
+		}
+		if (toCurrency == null || bizUnit == null || date == null) {
+			throw new IllegalArgumentException();
+		}
+		
+		ExchangeRate[] rates = getExchangeRateForDlink(this.currency,toCurrency, bizUnit, soldToCustomer, date);
+		if (rates[0] == null || rates[1] == null) {
+			return null;
+		} else {
+			BigDecimal exTo = rates[1].getExRateTo();
+			BigDecimal exFrom = rates[0].getExRateTo();
+			BigDecimal valueFrom = this.getAmount();
+			BigDecimal valueTo = calculatorAsToCurrencyAmountForDlink(valueFrom, exFrom, exTo, rates[1].getScale(), rates[1].getRoundType()); 
+			return Money.of(valueTo, toCurrency);
+		}
+	}
+	/***
+	 * Like the name , use strategy to find exRates.
+	 * @param fromCurr
+	 * @param toCurr
+	 * @param bizUnit
+	 * @param soldToCustomer
+	 * @param date
+	 * @param exchangeRates
+	 * @return
+	 */
+	private static ExchangeRate[] findExchangeRateStrategy(Currency fromCurr, Currency toCurr, BizUnit bizUnit, Customer soldToCustomer, Date date, List<ExchangeRate> exchangeRates) {
+		MoneyConvertStrategy strategy = (MoneyConvertStrategy)StrategyFactory.getSingletonFactory().getStrategy(MoneyConvertStrategy.class, bizUnit.getName());
+		logger.config(() -> strategy.getClass().getName() + " used.");
+		return strategy.findExchangeRate(fromCurr, toCurr, bizUnit, soldToCustomer, date, exchangeRates);
+		
+	}
+	
+	/***
+	 * it is called by strategy function.
+	 * Do not suggest to call this directly by other place although it's visibility is public.
+	 * @param fromCurr
+	 * @param toCurr
+	 * @param bizUnit
+	 * @param soldToCustomer
+	 * @param date
+	 * @param exchangeRates
+	 * @param forDLink
+	 * @return
+	 */
+	public static ExchangeRate[] findExchangeRate(Currency fromCurr, Currency toCurr, BizUnit bizUnit, Customer soldToCustomer,
+			Date date, List<ExchangeRate> exchangeRates, boolean...forDLink) {
+		if (toCurr == Currency.USD && fromCurr == toCurr) {
+			return new ExchangeRate[] {ExchangeRate.getExchangeRateOne(), ExchangeRate.getExchangeRateOne()};	
+		}
+		
+		ExchangeRate exchRateFrom = null;
+		ExchangeRate exchRateTo = null;
+		List<ExchangeRate> fromRates = null;
+		List<ExchangeRate> toRates = null;
+
+		//exchRateFrom is based on this.currency and USD
+		if (fromCurr == Currency.USD) {
+			exchRateFrom = ExchangeRate.getExchangeRateOne();
+		} else {
+			fromRates = findExchangeRateFromCache(fromCurr, bizUnit, soldToCustomer, date, exchangeRates, forDLink);
+		}
+
+		//exchRateTo is based on toCurrency and USD
+		if (toCurr == Currency.USD) {
+			exchRateTo = ExchangeRate.getExchangeRateOne();
+		} else {
+			toRates = findExchangeRateFromCache(toCurr, bizUnit, soldToCustomer, date, exchangeRates, forDLink);
+		}
+		
+		if (exchRateFrom == null ^ exchRateTo == null) { // if only exchRateFrom or exchRateTo is null, no need match customer  
+			if (exchRateFrom == null && ! fromRates.isEmpty()) {
+				exchRateFrom =  fromRates.get(0);
+			}
+			if (exchRateTo == null && ! toRates.isEmpty()) {
+				exchRateTo =  toRates.get(0);
+			}
+			
+		}  else { // if both exchRateFrom and exchRateTo are null, need consider customer when matching
+			for(ExchangeRate fromRate : fromRates) {
+				boolean hasCustomerRate =  StringUtils.isNotEmpty(fromRate.getSoldToCode());
+				for(ExchangeRate toRate : toRates) {
+					if (hasCustomerRate ==  StringUtils.isNotEmpty(toRate.getSoldToCode())) {
+						exchRateFrom = fromRate;
+						exchRateTo = toRate;
+					}
+				}
+			}
+		}
+		if (fromCurr == toCurr) {
+			// 1.set two ExchangeRates' handling = 1, let no cost when
+			// transform between the same currency.
+			// 2.use deepCopy to avoid influence these cached ExchangeRate Object.
+			if(exchRateFrom != null) {
+				exchRateFrom = exchRateFrom.deepCopy();
+				exchRateFrom.setHandling(BigDecimal.ONE);
+			}
+			if(exchRateTo != null) {
+				exchRateTo = exchRateTo.deepCopy();
+				exchRateTo.setHandling(BigDecimal.ONE);
+			}
+		}
+		return new ExchangeRate[] {exchRateFrom, exchRateTo};
+		
+	}
+	
+
+	/***
+	 *for JAPAN (bizunit include the region value) and not dlink:
+	 * it do not use 'soldToCustomer' param, that say that 
+	 * 	no Dlink:	
+	 *   1. only use company Rate.
+	 *  Dlink:
+	 *   1. only use customer Rate.
+	 * for ASIA:
+	 * it need to use 'soldToCustomer' param. 
+	 * 	1. use customer rate preferentially.
+	 * 	2. if no found customer rate will use company rate.
+	 * 
+	 * Handle idea:
+	 * 	1. noDlink logic for asia and japan, filter soldToCustomer by strategy function. 
+	 *  2. Dlink : Invoke this function directly (not to filter @param soldToCustomer), use @param forDLink 
+	 *     to indicator.
+	 * @param toCurrency
+	 * @param bizUnit
+	 * @param soldToCustomer it will 
+	 * @param date
+	 * @param exchangeRates
+	 * @param forDLink   
+	 * @return
+	 */
+	private static List<ExchangeRate> findExchangeRateFromCache(Currency toCurrency, BizUnit bizUnit, 
+			Customer soldToCustomer, Date date, List<ExchangeRate> exchangeRates, boolean...forDLink) {
+		if(toCurrency == null || bizUnit == null || date == null || exchangeRates == null) 
+		{
+			/*logger.severe(MessageFormat.format("findExchangeRateFromCache meet null pagram data . toCurrency:[{0}],bizUnit:[{1}], date:[{2}],handling:[{3}], exchangeRates counts:[{3}] ", 
+					toCurrency, bizUnit, date, exchangeRates.size()));*/
+			 throw new NullPointerException(MessageFormat.format("findExchangeRateFromCache meet null parameter data . toCurrency:[{0}],bizUnit:[{1}], date:[{2}],handling:[{3}], exchangeRates counts:[{3}] ", 
+						toCurrency, bizUnit, date, exchangeRates.size()));
+		}
+		List<ExchangeRate> rates1 = null;
+		if (soldToCustomer != null ) {
+			//find from exchangeRates with customer matched
+			rates1 = exchangeRates.stream().filter(
+					rate -> rate.getCurrFrom().equals(Currency.USD.name())
+					&& rate.getCurrTo().equals(toCurrency.name()) 
+					&& rate.getBizUnit().equals(bizUnit.getName())
+					&& (StringUtils.isNotEmpty(rate.getSoldToCode()) && rate.getSoldToCode().equals(soldToCustomer.getCustomerNumber()))
+					&& rate.getValidFrom().before(date)
+					&& rate.getValidTo().after(date)).
+					collect(Collectors.toList());
+		}
+		// DLink call this directly , no filter @param soldToCustomer
+		if(forDLink !=null && forDLink.length==1 && forDLink[0]) {
+			return rates1==null? Collections.emptyList() : rates1;
+		}
+		//find from exchangeRates without customer
+		List<ExchangeRate> rates2 = exchangeRates.stream().filter(rate -> 
+			rate.getCurrFrom().equals(Currency.USD.name())
+			&& rate.getCurrTo().equals(toCurrency.name()) 
+			&& rate.getBizUnit().equals(bizUnit.getName())
+			&& rate.getValidFrom().before(date) 
+			&& rate.getValidTo().after(date)
+			&& StringUtils.isEmpty(rate.getSoldToCode()))
+		.collect(Collectors.toList());
+
+		//combine the 2 list. Exchange rates with customer matched have high priority.   
+		if (rates1 != null) {
+			rates1.addAll(rates2);
+		} else {
+			rates1 = rates2;
+		}
+		return rates1;
+	}
+	
+	public void print() {
+		cacheUtil.getExchangeRates().stream().forEach(System.out::println);
+	
+	}
+
+	@Override
+	public int compareTo(Money obj) {
+		// only has the same currency then can compare ;
+		if(this.currency != obj.currency) {
+			throw new IllegalArgumentException("Money must be compared in same currency"); 
+		}
+		return this.amount.compareTo(obj.amount);
+	}
+	
+	/***
+	 * get ExchangeRates , used by outbound. not for Dlink
+	 * @param fromCurr
+	 * @param toCurr
+	 * @param bizUnit
+	 * @param soldToCustomer
+	 * @param date
+	 * @return
+	 */
+	public static ExchangeRate[] getExchangeRate(Currency fromCurr, Currency toCurr, BizUnit bizUnit, 
+			Customer soldToCustomer, Date date) {
+		List<ExchangeRate> exchangeRates = cacheUtil.getExchangeRates();
+		return findExchangeRateStrategy(fromCurr, toCurr, bizUnit, soldToCustomer, date, exchangeRates);
+	}
+	
+	//see above.
+	public static ExchangeRate[] getExchangeRate(String fromCurr, String toCurr, String bizUnit, 
+			Customer soldToCustomer, Date date) {
+		 
+		if(fromCurr==null || toCurr==null || bizUnit==null || date ==null) {
+			logger.severe(MessageFormat.format("getExchangeRate(String,String....) meet null parameters data. "
+					+ "fromCurr:[{0}], toCurr:[{1}], bizUnit:[{2}], date:[{3}] ", 
+					fromCurr, toCurr, bizUnit, date));
+			 return null;
+		 }
+		return getExchangeRate(Currency.valueOf(fromCurr), Currency.valueOf(toCurr), new BizUnit(bizUnit), soldToCustomer, date);
+	}
+	
+	/**
+	 * get ExchangeRates , used by outbound.  for Dlink
+	 * @param fromCurr
+	 * @param toCurr
+	 * @param bizUnit
+	 * @param soldToCustomer
+	 * @param date
+	 * @return
+	 */
+	public static ExchangeRate[] getExchangeRateForDlink(Currency fromCurr, Currency toCurr, BizUnit bizUnit, Customer soldToCustomer, Date date) {
+		List<ExchangeRate> exchangeRates = cacheUtil.getExchangeRates();
+		return findExchangeRate(fromCurr, toCurr, bizUnit, soldToCustomer, date, exchangeRates, true);
+	}
+	
+	/***
+	 * When u have known that exRateFrom and exRateTo and so on,
+	 * Can use this function to convert 
+	 * 'value of buy or rfq currency' to 
+	 * 'value of rfq of buy currency' , use 'isFromCurrToRfqCurr' param to indicator convert path.
+	 * @param valueFrom
+	 * @param exRateFrom
+	 * @param exRateTo
+	 * @param handling
+	 * @param isFromCurrToRfqCurr
+	 * @return
+	 */
+	public static BigDecimal convertAsToCurrAmtWithExrates(BigDecimal valueFrom, BigDecimal exRateFrom, BigDecimal exRateTo, BigDecimal handling, boolean isFromCurrToRfqCurr) {
+		if(valueFrom == null || exRateFrom == null || exRateTo == null || handling == null) {
+			logger.info(() -> MessageFormat.format("valueFrom:[{0}],exRateFrom:[{1}], exRateTo:[{2}],handling:[{3}] ", 
+					valueFrom, exRateFrom, exRateTo, handling));
+			return null;
+		}
+		if(exRateFrom.equals(BigDecimal.ZERO)) {
+			logger.severe("Can not use 0 to divide , handle it as null");
+			return null;
+		}
+		return calculatorAsToCurrencyAmount(valueFrom, exRateFrom, exRateTo, handling, isFromCurrToRfqCurr);
+	}
+	
+	//see above
+	public static Double convertAsToCurrAmtWithExrates(Double valueFrom, BigDecimal exRateFrom, BigDecimal exRateTo, BigDecimal handling, boolean isFromCurrToRfqCurr) {
+		if(valueFrom == null)  {
+			logger.info(() -> MessageFormat.format("valueFrom:[{0}]", valueFrom));
+			return null;
+		}
+		BigDecimal v = convertAsToCurrAmtWithExrates(BigDecimal.valueOf(valueFrom), exRateFrom, exRateTo, handling, isFromCurrToRfqCurr);
+		return v == null? null : v.doubleValue();
+	}
+	
+	/***
+	  * When u have known that exRateFrom and exRateTo and so on,
+	 * Can use this function to convert 
+	 * 'value list of buy or rfq currency' to 
+	 * 'value list of rfq of buy currency' , use 'toRfq' param to indicator convert path.
+	 * @param qts
+	 * @param exRateFrom
+	 * @param exRateTo
+	 * @param handling
+	 * @param isFromCurrToRfqCurr
+	 * @return
+	 */
+	public static List<QuantityBreakPrice> convertAsToCurrAmtWithExrates(List<QuantityBreakPrice> qts, BigDecimal exRateFrom, BigDecimal exRateTo, BigDecimal handling, boolean isFromCurrToRfqCurr) {
+		if(qts == null || qts.isEmpty()) {
+			logger.warning("qts is null or empty");
+			return qts;
+		}
+		
+		qts.stream().forEach(q -> {
+			q.setQuantityBreakPrice(convertAsToCurrAmtWithExrates(q.getQuantityBreakPrice(), exRateFrom, exRateTo, handling, isFromCurrToRfqCurr));
+			q.setSalesCost(convertAsToCurrAmtWithExrates(q.getSalesCost(), exRateFrom, exRateTo, handling, isFromCurrToRfqCurr));
+			q.setSuggestedResale(convertAsToCurrAmtWithExrates(q.getSuggestedResale(), exRateFrom, exRateTo, handling, isFromCurrToRfqCurr));
+		});
+		
+		return qts;
+	}
+	
+	/***
+	 * When u have not known that exRateFrom and exRateTo,
+	 * so it will find exRate.
+	 * Can use this function to convert 
+	 * 'value list of buy or rfq currency' to 
+	 * 'value list of rfq of buy currency' , use 'toCurr.equals(rfqCurrency)' to indicator convert path.
+	 * @param qts
+	 * @param fromCurr
+	 * @param toCurr
+	 * @param bizUnit
+	 * @param soldToCustomer
+	 * @param date
+	 * @param rfqCurrency
+	 * @return
+	 */
+	public static List<QuantityBreakPrice> convertAsToCurrAmtWithExrates(List<QuantityBreakPrice> qts, Currency fromCurr, Currency toCurr, BizUnit bizUnit, Customer soldToCustomer, Date date, Currency rfqCurrency) {
+		if(fromCurr == toCurr) {
+			return qts;
+		}
+		if(qts == null || qts.isEmpty()) {
+			logger.warning("qts is null or empty");
+			return qts;
+		}
+		if(fromCurr==null || toCurr==null || bizUnit==null || date ==null) {
+			 logger.warning(() -> MessageFormat.format("convertAsToCurrAmtWithExrates, fromCurr[{0}],toCurr[{1}],bizUnit[{2}],date[{3}]", fromCurr, toCurr, bizUnit, date));
+			 return null;
+		}
+		
+		ExchangeRate[] rates = getExchangeRate(fromCurr, toCurr, bizUnit, soldToCustomer, date);
+		//null or has any null or length mismatch. return ;
+		if(rates == null || rates.length != 2 || Arrays.stream(rates).anyMatch(r -> null == r)) {
+			logger.severe("The rates are " + Arrays.toString(rates));
+		}
+		BigDecimal exTo=null;
+		BigDecimal exFrom=null;
+		BigDecimal handling=null;
+		if(rates[0] != null)  exFrom = rates[0].getExRateTo();
+		if(rates[1] != null)  exTo = rates[1].getExRateTo();
+		if(rates[0] != null && rates[1] != null) {
+			handling = rates[0].getHandling().multiply(rates[1].getHandling());
+		}
+		return convertAsToCurrAmtWithExrates(qts, exFrom, exTo, handling, toCurr.equals(rfqCurrency));
+	}
+	
+	
+	/***
+	 * When u have not known that exRateFrom and exRateTo,
+	 * so it will find exRate.
+	 * Can use this function to convert 
+	 * 'value of buy or rfq currency' to 
+	 * 'value of rfq of buy currency' , use 'toCurr.equals(rfqCurrency)' to indicator convert path.
+	 * @param qts
+	 * @param fromCurr
+	 * @param toCurr
+	 * @param bizUnit
+	 * @param soldToCustomer
+	 * @param date
+	 * @param rfqCurrency
+	 * @return
+	 */
+	public static Double convertAsToCurrAmt(Double valueFrom, Currency fromCurr, Currency toCurr, BizUnit bizUnit, Customer soldToCustomer, Date date, Currency rfqCurr) {
+		if(fromCurr == toCurr || valueFrom == null) {
+			return valueFrom;
+		}
+		if(fromCurr==null || toCurr==null || bizUnit==null || date ==null) {
+			 logger.warning(() -> MessageFormat.format("convertAsToCurrAmt, fromCurr[{0}],toCurr[{1}],bizUnit[{2}],date[{3}]",
+					 fromCurr, toCurr, bizUnit, date));
+			 return null;
+		}
+		Money money = Money.of(valueFrom, fromCurr);
+		if(money != null) {
+			Money moneyTo;
+			if(toCurr.equals(rfqCurr)) {
+				moneyTo = money.convertToRfq(toCurr, bizUnit, soldToCustomer, date);
+			} else {
+				moneyTo = money.convertToBuy(toCurr, bizUnit, soldToCustomer, date);
+			}
+			if(moneyTo != null) {
+				return moneyTo.getAmount().doubleValue();
+			}
+		}
+		return null;
+	}
+}

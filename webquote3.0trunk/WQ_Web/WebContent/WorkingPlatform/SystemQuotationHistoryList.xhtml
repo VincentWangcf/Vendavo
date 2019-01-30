@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+        <h:head>
+            <f:facet name="first">
+                <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+                <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+			<meta http-equiv="Cache-Control" Content="no-cache"/>
+			<meta http-equiv="Pragma" Content="no-cache"/>
+			<meta http-equiv="Expires" Content="0"/>                   
+                <title>#{dbResource['wq.label.vendorQuotationHistory']}</title>
+            </f:facet>              
+        </h:head>
+<h:body>
+	<h:form id="form_systemQuotation" enctype="multipart/form-data">
+		<p:panel header="#{dbResource['wq.label.vendorQuotationHistory']}" style="padding:0px 0px 0px 0px;">
+		    <p:dataTable	widgetVar="datatable_systemQuotationHistory_var"
+		    				var="vendorHistory"
+		    				value="#{workingPlatformMB.vendorQuotationHistorys}" 
+		    				rowKey="#{vendorHistory.mfr}#{vendorHistory.sqNumber}#{vendorHistory.fullMfrPartNumber}#{vendorHistory.customer}" 
+		    				rowIndexVar="rowIndex"	    				
+		                 	id="datatable_systemQuotationHistoryList"
+		                 	filteredValue="#{workingPlatformMB.filteredVendorQuotationHistorys}"
+ 							paginator="true"
+							paginatorPosition="top"
+							rows="5"
+							rowsPerPageTemplate="5,10,15"                 	
+		                 	scrollable="true"
+		                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">	
+	
+				<p:column styleClass="column_icon">
+		        	<p:commandLink>
+		        		<h:graphicImage url="./../resources/images/icon_copy.jpg" styleClass="iconLink"/>				        	
+		        	</p:commandLink>  	
+				</p:column>
+			        
+				<p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{vendorHistory.mfr}" filterMatchMode="contains" filterBy="#{vendorHistory.mfr}" styleClass="column_mfr tdmandatoryvalue">
+				#{vendorHistory.mfr}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.SQ']}#" sortBy="#{vendorHistory.sqNumber}" filterMatchMode="contains" filterBy="#{vendorHistory.sqNumber}" styleClass="column_vendorQuoteNumber tdmandatoryvalue">
+				#{vendorHistory.sqNumber}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.debit']}#" sortBy="#{vendorHistory.debitNumber}" filterMatchMode="contains" filterBy="#{vendorHistory.debitNumber}" styleClass="column_vendorDebitNumber editCell">
+				#{vendorHistory.debitNumber}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.status']}" sortBy="#{vendorHistory.status}" filterMatchMode="contains" filterBy="#{vendorHistory.status}" styleClass="column_rfqStatus">
+				#{vendorHistory.status}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.pn']}" sortBy="#{vendorHistory.fullMfrPartNumber}" filterMatchMode="contains" filterBy="#{vendorHistory.fullMfrPartNumber}" styleClass="column_fullMfrPart tdmandatoryvalue">
+				#{vendorHistory.fullMfrPartNumber}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.productCat']}." sortBy="#{vendorHistory.productCategory}" filterMatchMode="contains" filterBy="#{vendorHistory.productCategory}" styleClass="column_productCategory">
+				#{vendorHistory.productCategory}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.ctm']}" sortBy="#{vendorHistory.customer}" filterMatchMode="contains" filterBy="#{vendorHistory.customer}" styleClass="column_soldToCustomerName editCell">
+				#{vendorHistory.customer}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.endCTM']}" sortBy="#{vendorHistory.endCustomer}" filterMatchMode="contains" filterBy="#{vendorHistory.endCustomer}" styleClass="column_endCustomerName">
+				#{vendorHistory.endCustomer}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.curr']}" sortBy="#{vendorHistory.currency}" filterMatchMode="contains" filterBy="#{vendorHistory.currency}" styleClass="column_currency">
+				#{vendorHistory.currency}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.header.uCost']}" sortBy="#{vendorHistory.cost}" filterMatchMode="contains" filterBy="#{vendorHistory.cost}" styleClass="column_cost editCell">
+				#{vendorHistory.cost}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.rs']}" sortBy="#{vendorHistory.resale}" filterMatchMode="contains" filterBy="#{vendorHistory.resale}" styleClass="column_quotedPrice tdmandatoryvalue">
+				#{vendorHistory.resale}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.header.uDebitCreate']}&lt;br/&gt;#{dbResource['wq.header.uDate']}" sortBy="#{vendorHistory.debitCreateDate}" filterMatchMode="contains" filterBy="#{vendorHistory.debitCreateDate}" styleClass="column_debitCreateDate">
+				#{vendorHistory.debitCreateDate}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.header.uDebitExpiry']}&lt;br/&gt;#{dbResource['wq.header.uDate']}" sortBy="#{vendorHistory.debitExpireDate}" filterMatchMode="contains" filterBy="#{vendorHistory.debitExpireDate}" styleClass="column_debitExpireDate editCell">
+				#{vendorHistory.debitExpireDate}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.header.uQuoteCreate']}&lt;br/&gt;#{dbResource['wq.header.uDate']}" sortBy="#{vendorHistory.quoteCreateDate}" filterMatchMode="contains" filterBy="#{vendorHistory.quoteCreateDate}" styleClass="column_quoteCreateDate">
+				#{vendorHistory.quoteCreateDate}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.header.QuoteExpiry']}&lt;br/&gt;#{dbResource['wq.header.uDate']}" sortBy="#{vendorHistory.quoteExpireDate}" filterMatchMode="contains" filterBy="#{vendorHistory.quoteExpireDate}" styleClass="column_quoteExpireDate tdmandatoryvalue">
+				#{vendorHistory.quoteExpireDate}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.header.uSoldTo']}" sortBy="#{vendorHistory.soldToCustomerNumber}" filterMatchMode="contains" filterBy="#{vendorHistory.soldToCustomerNumber}" styleClass="column_soldToCustomerNumber">
+				#{vendorHistory.soldToCustomerNumber}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.header.uShipTo']}" sortBy="#{vendorHistory.shipToCustomerNumber}" filterMatchMode="contains" filterBy="#{vendorHistory.shipToCustomerNumber}" styleClass="column_shipToCustomerNumber">
+				#{vendorHistory.shipToCustomerNumber}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.header.uAuthQty']}" sortBy="#{vendorHistory.authQty}" filterMatchMode="contains" filterBy="#{vendorHistory.authQty}" styleClass="column_requiredQty">
+				#{vendorHistory.authQty}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.consumedQty']}" sortBy="#{vendorHistory.consumedQty}" filterMatchMode="contains" filterBy="#{vendorHistory.consumedQty}" styleClass="column_requiredQty">
+				#{vendorHistory.consumedQty}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.openQty']}" sortBy="#{vendorHistory.openQtyInt}" filterMatchMode="contains" filterBy="#{vendorHistory.openQty}" styleClass="column_requiredQty tdmandatoryvalue">
+				#{vendorHistory.openQty}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.ctmCity']}" sortBy="#{vendorHistory.customerCity}" filterMatchMode="contains" filterBy="#{vendorHistory.customerCity}" styleClass="column_place">
+				#{vendorHistory.customerCity}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.ctmCountry']}" sortBy="#{vendorHistory.customerCountry}" filterMatchMode="contains" filterBy="#{vendorHistory.customerCountry}" styleClass="column_place">
+				#{vendorHistory.customerCountry}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.endCTMCity']}" sortBy="#{vendorHistory.endCustomerCity}" filterMatchMode="contains" filterBy="#{vendorHistory.endCustomerCity}" styleClass="column_place">
+				#{vendorHistory.endCustomerCity}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.endCTMCountry']}" sortBy="#{vendorHistory.endCustomerCountry}" filterMatchMode="contains" filterBy="#{vendorHistory.endCustomerCountry}" styleClass="column_place">
+				#{vendorHistory.endCustomerCountry}
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.sqRemark']} 1" sortBy="#{vendorHistory.sqRemark1}" filterMatchMode="contains" filterBy="#{vendorHistory.sqRemark1}" id="sqRemark1"  styleClass="column_remarks">
+				#{vendorHistory.sqRemark1}
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.sqRemark']} 2" sortBy="#{vendorHistory.sqRemark2}" filterMatchMode="contains" filterBy="#{vendorHistory.sqRemark2}" id="sqRemark2"  styleClass="column_remarks">
+				#{vendorHistory.sqRemark2}
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.sqRemark']} 3" sortBy="#{vendorHistory.sqRemark3}" filterMatchMode="contains" filterBy="#{vendorHistory.sqRemark3}" id="sqRemark3"  styleClass="column_remarks">
+				#{vendorHistory.sqRemark3}
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.sqRemark']} 4" sortBy="#{vendorHistory.sqRemark4}" filterMatchMode="contains" filterBy="#{vendorHistory.sqRemark4}" id="sqRemark4"  styleClass="column_remarks">
+				#{vendorHistory.sqRemark4}
+				</p:column>
+
+	
+		    </p:dataTable>   
+		    
+			<f:facet name="actions">  
+	        	<div style="float:right;">
+					<h:panelGrid  id="vendorQuoteHistorySearch" columns="9" cellpadding="0" style="padding:0px 2px 0px 2px;">	  	        	
+		        		<h:outputText value="#{dbResource['wq.label.mfr']}: " />
+		        		<p:inputText value="#{workingPlatformMB.vendorQuoteHistoryMfrSearch}" styleClass="input_text_half" style="padding:0px 0px 0px 0px;"/> 
+		        		<h:outputText value="#{dbResource['wq.label.pn']}: " />
+		        		<p:inputText value="#{workingPlatformMB.vendorQuoteHistoryPartNumberSearch}" styleClass="input_text" style="padding:0px 0px 0px 0px;"/> 
+		        		<h:outputText value="#{dbResource['wq.label.custmrName']}: " />
+		        		<p:inputText value="#{workingPlatformMB.vendorQuoteHistorySoldToCustomerNameSearch}" styleClass="input_text" style="padding:0px 0px 0px 0px;"/> 
+						<p:commandButton global="false" onstart="start();" oncomplete="stop();PF('datatable_systemQuotationHistory_var').clearFilters();" onerror="stopWithError();" value="#{dbResource['wq.button.search']}" icon="ui-icon-circle-check" update="datatable_systemQuotationHistoryList,:form_pendinglist:workingPlatformGrowl" actionListener="#{workingPlatformMB.searchVendorQuoteHistory}" />
+						| <p:commandButton global="false" onstart="start();" oncomplete="stop();" onerror="stopWithError();" value="#{dbResource['wq.button.clearFilter']}" update="datatable_systemQuotationHistoryList" onclick="PF('datatable_systemQuotationHistory_var').clearFilters();"></p:commandButton>							
+
+					</h:panelGrid>
+	        	</div>
+	        </f:facet> 	      
+		</p:panel>
+	</h:form>
+</h:body>
+</html>
+	  

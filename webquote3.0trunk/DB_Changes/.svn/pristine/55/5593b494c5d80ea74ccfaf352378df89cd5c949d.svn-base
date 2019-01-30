@@ -1,0 +1,24 @@
+/** Tonmy Li 2015-04-13  comment ********************************************************************************************/
+the change reason:
+Divided future pricer query into multiple for RIP module.
+
+
+Tonmy Li 2015-04-13 
+fixed defect 402
+
+Tough 2015-4-15 ( reverted, not include in 2.2.2, will include in 2.2.3)
+fixed defect 408 and 409
+
+June Guo 2015-04-13 
+the change reason:
+Fix enhancement  348 and 357.
+
+
+Tonmy Li 2015-04-13 
+fixed defect 399
+
+Tonmy Li 2015-04-13 
+fixed defect 395
+
+Jason Chen 2015-04-22
+fixed defect 430

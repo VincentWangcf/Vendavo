@@ -1,0 +1,2 @@
+1)001.sql add one column to validate the password when user login from login.jsp --add by Lenon 2016/07/14
+2)002.sql add action field in quote_item and quote_item_his table

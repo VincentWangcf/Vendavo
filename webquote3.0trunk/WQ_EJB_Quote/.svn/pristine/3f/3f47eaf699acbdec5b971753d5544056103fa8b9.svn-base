@@ -1,0 +1,207 @@
+package com.avnet.emasia.webquote.quote.vo;
+
+import java.io.Serializable;
+
+import com.avnet.emasia.webquote.rowdata.ABigDecimalConverter;
+import com.avnet.emasia.webquote.rowdata.AStringConverter;
+import com.avnet.emasia.webquote.rowdata.Column;
+import com.avnet.emasia.webquote.rowdata.DefaultBean;
+import com.avnet.emasia.webquote.rowdata.Transient;
+
+public class ExchangeRateVo extends DefaultBean implements Serializable {
+
+	/**
+	 * 
+	 */
+//	@Transient
+//	private static final long serialVersionUID = 112284754154758965L;
+	@Transient
+	private int seq;
+	
+	@Transient
+	private String exchangeRateFrom;
+	@ABigDecimalConverter
+	@Column(value = "Ex Rate To")
+	private String exchangeRateTo;
+	@AStringConverter 
+	@Column(value = "VAT")
+	@javax.validation.constraints.NotNull
+	private String vat;
+	@ABigDecimalConverter
+	@Column(value = "Handling")
+	private String handling;
+	@AStringConverter 
+	@Column(value = "Exchange Rate Type")
+	private String exchangeRateType;
+	// add vfor mul
+	
+	@Transient
+	private String errorMessage;
+	
+	@Transient
+	@Column(value = "Region")
+	@javax.validation.constraints.NotNull
+	private String bizUnit;
+	@AStringConverter
+	@Column(value = "Rounding")
+	private String rounding;
+	@AStringConverter
+	@Column(value = "Decimal Point")
+	private String decimalPoint;
+	@AStringConverter
+	@Column(value = "Rate Remark")
+	private String rateRemark;
+	@AStringConverter
+	@Column(value = "Currency From")
+	private String currencyFrom;
+	@AStringConverter
+	@Column(value = "Currency To")
+	private String currencyTo;
+	@AStringConverter
+	@Column(value = "Sold To Code")
+	private String soldToCode;
+	@Transient
+	private boolean error;
+	
+	public String getCurrencyFrom() {
+		return currencyFrom;
+	}
+
+	public void setCurrencyFrom(String currencyFrom) {
+		this.currencyFrom = currencyFrom;
+	}
+
+	public String getCurrencyTo() {
+		return currencyTo;
+	}
+
+	public void setCurrencyTo(String currencyTo) {
+		this.currencyTo = currencyTo;
+	}
+
+	public String getSoldToCode() {
+		return soldToCode;
+	}
+
+	public void setSoldToCode(String soldToCode) {
+		this.soldToCode = soldToCode;
+	}
+
+	
+
+	public String getExchangeRateType() {
+		return exchangeRateType;
+	}
+
+	public void setExchangeRateType(String exchangeRateType) {
+		this.exchangeRateType = exchangeRateType;
+	}
+
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+
+	public void setErrorMessage(String errorMessage) {
+		this.errorMessage = errorMessage;
+	}
+
+	public String getRounding() {
+		return rounding;
+	}
+
+	public void setRounding(String rounding) {
+		this.rounding = rounding;
+	}
+
+	public String getDecimalPoint() {
+		return decimalPoint;
+	}
+
+	public void setDecimalPoint(String decimalPoint) {
+		this.decimalPoint = decimalPoint;
+	}
+
+	public String getRateRemark() {
+		return rateRemark;
+	}
+
+	public void setRateRemark(String rateRemark) {
+		this.rateRemark = rateRemark;
+	}
+
+	public String getBizUnit() {
+		return bizUnit;
+	}
+
+	public void setBizUnit(String bizUnit) {
+		this.bizUnit = bizUnit;
+	}
+
+	
+
+	public ExchangeRateVo() {
+	}
+
+	public String getKey() {
+		// Key:Region + From_Currency + To_Currency + Sold_To_Code
+		// String key = this.getCurrencyFrom() + this.getCurrencyTo() + "|";
+		//
+		// String soldToCode = this.getSoldToCode();
+		// if(soldToCode != null && ! soldToCode.equals("")){
+		// key = key + soldToCode;
+		// }
+		//
+		// return key;
+		String key = this.getBizUnit() + this.getCurrencyFrom() + this.getCurrencyTo() + this.getSoldToCode();
+		return key;
+	}
+
+	public int getSeq() {
+		return seq;
+	}
+
+	public void setSeq(int seq) {
+		this.seq = seq;
+	}
+
+	public String getExchangeRateFrom() {
+		return exchangeRateFrom;
+	}
+
+	public void setExchangeRateFrom(String exchangeRateFrom) {
+		this.exchangeRateFrom = exchangeRateFrom;
+	}
+
+	public String getExchangeRateTo() {
+		return exchangeRateTo;
+	}
+
+	public void setExchangeRateTo(String exchangeRateTo) {
+		this.exchangeRateTo = exchangeRateTo;
+	}
+
+	public String getVat() {
+		return vat;
+	}
+
+	public void setVat(String vat) {
+		this.vat = vat;
+	}
+
+	public String getHandling() {
+		return handling;
+	}
+
+	public void setHandling(String handling) {
+		this.handling = handling;
+	}
+
+	public boolean isError() {
+		return error;
+	}
+
+	public void setError(boolean error) {
+		this.error = error;
+	}
+
+}

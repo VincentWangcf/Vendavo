@@ -1,0 +1,4 @@
+1.Fix ticket INC0118038 Tonmy Li 2015/03/23
+2.Fix the requested p/n mandatory field checking at instant price check did not work. 
+3.Fix ticket INC0123390 June Guo 2015/03/23
+4.Fix ticket INC0087548 Tonmy Li 2015/04/04

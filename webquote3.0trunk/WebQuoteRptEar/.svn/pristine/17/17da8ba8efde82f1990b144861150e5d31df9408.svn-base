@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/application_6.xsd" id="Application_ID" version="6">
+  <display-name>WebQuoteRptEar</display-name>
+  <module>
+    <ejb>WQ_EJB_UserAndAuthor.jar</ejb>
+  </module>
+  <module>
+    <ejb>WQ_EJB_Quote.jar</ejb>
+  </module>
+  <module>
+    <ejb>WQ_EJB_Utility.jar</ejb>
+  </module>
+  <module>
+    <ejb>WQ_RPT_EJB_Reports.jar</ejb>
+  </module>
+</application>

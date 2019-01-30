@@ -1,0 +1,649 @@
+package com.avnet.emasia.webquote.web.maintenance;
+
+import java.io.Serializable;
+import com.avnet.emasia.webquote.utilities.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.model.SelectItem;
+
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.event.UnselectEvent;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.ManufacturerDetail;
+import com.avnet.emasia.webquote.entity.ProductCategory;
+import com.avnet.emasia.webquote.entity.ProductGroup;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.ManufacturerSB;
+import com.avnet.emasia.webquote.quote.ejb.MaterialSB;
+import com.avnet.emasia.webquote.quote.ejb.QuoteSB;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.user.ejb.ProductGroupSB;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+@ManagedBean
+@SessionScoped
+public class MfrDetailsMB implements Serializable {
+
+	private static final SimpleDateFormat SDF = new SimpleDateFormat("dd/MM/yyyy");
+	private static final long serialVersionUID = -3705122712201855188L;
+	private static final Logger LOG = Logger.getLogger(MfrDetailsMB.class
+			.getName());
+
+	@EJB
+	private ManufacturerSB manufacturerSB;
+
+	@EJB
+	private ProductGroupSB productGroupSB;
+
+	@EJB
+	private MaterialSB materialSB;
+
+	@EJB
+	private UserSB userSB;
+
+	@EJB
+	private QuoteSB quoteSB;
+
+	@EJB
+	private MailUtilsSB mailUtilsSB;
+	
+	//Bryan Start
+	@EJB
+	private BizUnitSB bizUnitSB;
+	//Bryan End
+
+	private User user;
+
+	//MFR Detail
+	private List<ManufacturerDetail> manufacturerDetails;
+	private List<ManufacturerDetail> selectedManufacturerDetails;
+	private List<Manufacturer> allManufacturers;
+	private String mfrKeyword;
+	private String productGroup2Keyword;
+	private String mfr;
+	private String productGroup2;
+	private String productCategory;
+	private String reschedulingWindow;
+	private String cancellationWindow;
+	private String truncatedCharacters;
+	private String resaleIndicator;
+	private String qtyIndicator;
+	private String errorMessage;
+	private boolean updateSuccess;
+	private boolean multiUsage;
+	//Bryan Start
+	private SelectItem[] regionList;
+	private String region;
+	//Bryan End
+
+
+	public String getMfrKeyword() {
+		return mfrKeyword;
+	}
+
+	public void setMfrKeyword(String mfrKeyword) {
+		this.mfrKeyword = mfrKeyword;
+	}
+
+	public String getProductGroup2Keyword() {
+		return productGroup2Keyword;
+	}
+
+	public void setProductGroup2Keyword(String productGroup2Keyword) {
+		this.productGroup2Keyword = productGroup2Keyword;
+	}
+
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+
+	public void setErrorMessage(String errorMessage) {
+		this.errorMessage = errorMessage;
+	}
+
+	public boolean isUpdateSuccess() {
+		return updateSuccess;
+	}
+
+	public void setUpdateSuccess(boolean updateSuccess) {
+		this.updateSuccess = updateSuccess;
+	}
+
+	public List<ManufacturerDetail> getSelectedManufacturerDetails() {
+		return selectedManufacturerDetails;
+	}
+
+	public void setSelectedManufacturerDetails(
+			List<ManufacturerDetail> selectedManufacturerDetails) {
+		this.selectedManufacturerDetails = selectedManufacturerDetails;
+	}
+
+	public List<ManufacturerDetail> getManufacturerDetails() {
+		return manufacturerDetails;
+	}
+
+	public void setManufacturerDetails(List<ManufacturerDetail> manufacturerDetails) {
+		this.manufacturerDetails = manufacturerDetails;
+	}
+
+	public String getProductCategory() {
+		return productCategory;
+	}
+
+	public void setProductCategory(String productCategory) {
+		this.productCategory = productCategory;
+	}
+
+	public String getReschedulingWindow() {
+		return reschedulingWindow;
+	}
+
+	public void setReschedulingWindow(String reschedulingWindow) {
+		this.reschedulingWindow = reschedulingWindow;
+	}
+
+	public String getCancellationWindow() {
+		return cancellationWindow;
+	}
+
+	public boolean isMultiUsage() {
+		return multiUsage;
+	}
+
+	public void setMultiUsage(boolean multiUsage) {
+		this.multiUsage = multiUsage;
+	}
+
+	public void setCancellationWindow(String cancellationWindow) {
+		this.cancellationWindow = cancellationWindow;
+	}
+
+	public String getTruncatedCharacters() {
+		return truncatedCharacters;
+	}
+
+	public void setTruncatedCharacters(String truncatedCharacters) {
+		this.truncatedCharacters = truncatedCharacters;
+	}
+
+	public String getResaleIndicator() {
+		return resaleIndicator;
+	}
+
+	public void setResaleIndicator(String resaleIndicator) {
+		this.resaleIndicator = resaleIndicator;
+	}
+
+	public String getQtyIndicator() {
+		return qtyIndicator;
+	}
+
+	public void setQtyIndicator(String qtyIndicator) {
+		this.qtyIndicator = qtyIndicator;
+	}
+
+	public String getMfr() {
+		return mfr;
+	}
+
+	public void setMfr(String mfr) {
+		this.mfr = mfr;
+	}
+
+	public String getProductGroup2() {
+		return productGroup2;
+	}
+
+	public void setProductGroup2(String productGroup2) {
+		this.productGroup2 = productGroup2;
+	}
+
+	@PostConstruct
+	public void init() {
+		user = UserInfo.getUser();
+		multiUsage = true;
+		truncatedCharacters = "0";
+		qtyIndicator = "MOQ";
+		updateSuccess = false;
+		errorMessage = "";
+		manufacturerDetails = new ArrayList<ManufacturerDetail>();
+		selectedManufacturerDetails = new ArrayList<ManufacturerDetail>();
+		
+		//Bryan Start
+		this.regionList = QuoteUtil.getUserRegionDownListByOrder(user.getAllBizUnits(), bizUnitSB.getAllBizUnitsByOrder());
+		this.region = user.getDefaultBizUnit().getName();
+		//Bryan End
+	}
+
+	public void mfrSearch()
+	{
+		LOG.info("Searching manufacturer details with the following keywords: MFR["+mfrKeyword+"], ProductGroup["+productGroup2Keyword+"]");
+		//Bryan Start
+		//manufacturerDetails = manufacturerSB.findManufacturerDetailsByNameAndProductGroup(mfrKeyword, productGroup2Keyword, user.getDefaultBizUnit());
+		
+		BizUnit bizUnit = new BizUnit();
+		bizUnit.setName(this.region);
+		manufacturerDetails = manufacturerSB.findManufacturerDetailsByNameAndProductGroup(mfrKeyword, productGroup2Keyword, bizUnit);
+		//Bryan End
+	}
+
+	public void onRowSelect(SelectEvent event) 
+	{
+	}
+
+	public void onRowUnselect(UnselectEvent event) 
+	{
+	}
+
+	public void batchEditMfrDetail()
+	{
+
+		//Check product category 
+		ProductCategory productCategoryObj = null;
+		if(productCategory == null || productCategory.length()==0){
+			
+			updateSuccess = false;
+			
+			FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,ResourceMB.getText("wq.message.prodCategory"), ""));
+			return;
+		}else {
+
+			productCategoryObj = materialSB.findProductCategoryByName(productCategory);
+			if(productCategoryObj==null)
+			{
+				updateSuccess = false;
+				FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,ResourceMB.getText("wq.message.categoryExist"), ""));
+				return;
+			}
+		}
+
+		if(reschedulingWindow == null || reschedulingWindow.length()==0)
+		{
+			/*
+					updateSuccess = false;
+					errorMessage = "Please enter Rescheduling Window";
+					return;
+			 */
+		}
+		else
+		{
+			try
+			{
+				Integer.parseInt(reschedulingWindow);
+			}
+			catch(Exception e)
+			{
+				LOG.log(Level.SEVERE, "Exception in rescheduling the window for MFR : "+mfr+", Exception message: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+				updateSuccess = false;
+				errorMessage = ResourceMB.getText("wq.label.reschedulingWindowNumericField");
+				return;
+			}
+		}
+
+		//Check cancellation window
+		if(cancellationWindow == null || cancellationWindow.length()==0)
+		{
+			/*
+					updateSuccess = false;
+					errorMessage = "Please enter Cancellation Window";
+					return;
+			 */
+		}
+		else
+		{
+			try
+			{
+				Integer.parseInt(cancellationWindow);
+			}
+			catch(Exception e)
+			{
+				LOG.log(Level.SEVERE, "Exception in cancellation the window for MFR : "+mfr+", Exception message: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+				updateSuccess = false;
+				FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,ResourceMB.getText("wq.message.cancellationWindowNumericField"), ""));
+				return;
+			}
+		}
+		
+		try
+		{
+			for(int i = 0 ; i < selectedManufacturerDetails.size() ; i++)
+			{
+				//Processing MFR Detail
+				ManufacturerDetail manufacturerDetail = selectedManufacturerDetails.get(i);
+				manufacturerDetail = populateManufacturerDetail(manufacturerDetail,productCategoryObj);
+				LOG.info("Updating manufacturer detail: " + manufacturerDetail.getId());
+				manufacturerSB.editManufacturerDetail(manufacturerDetail);
+				LOG.info("Updated");
+
+				updateSuccess = true;					
+			}
+			clearMBData();
+			errorMessage = ResourceMB.getText("wq.message.editMFRsucc");
+		}
+		catch (Exception e)
+		{
+			errorMessage =  ResourceMB.getText("wq.message.editMFRfail");
+			LOG.log(Level.SEVERE, "Batch Edit MFR Detail operation failed! Wxception message: " + MessageFormatorUtil.getParameterizedStringFromException(e),e);
+		}
+		
+		FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,errorMessage, ""));
+	}
+
+	private ManufacturerDetail populateManufacturerDetail(ManufacturerDetail manufacturerDetail,ProductCategory productCategoryObj) {
+		manufacturerDetail.setBizUnit(user.getDefaultBizUnit());
+		manufacturerDetail.setCharsTruncated(Integer.parseInt(truncatedCharacters));
+		manufacturerDetail.setMultiUsage(multiUsage);
+		manufacturerDetail.setQuantityIndicator(qtyIndicator);
+
+		if(cancellationWindow!= null && cancellationWindow.length()!=0)
+			manufacturerDetail.setCancellationWindow(Integer.parseInt(cancellationWindow));
+
+		if(productCategory!= null && productCategory.length()!=0)
+			manufacturerDetail.setProductCategory(productCategoryObj);
+
+		if(resaleIndicator!= null && resaleIndicator.length()!=0)
+			manufacturerDetail.setResaleIndicator(resaleIndicator.toUpperCase());
+
+		if(reschedulingWindow!= null && reschedulingWindow.length()!=0)
+			manufacturerDetail.setReschedulingWindow(Integer.parseInt(reschedulingWindow));
+		
+		return manufacturerDetail;
+		
+	}
+
+	public void addMfrDetail()
+	{
+
+		//Check mfr
+		Manufacturer manufacturer = null;
+		if(mfr == null || mfr.length()==0)
+		{
+			updateSuccess = false;
+			errorMessage =  ResourceMB.getText("wq.message.mfrName");
+			FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,errorMessage, ""));
+			return;
+		}
+		else
+		{
+			//Bryan Start	
+			//Check if this mfr actually exists in the database
+			//List<Manufacturer> manufacturers = manufacturerSB.mFindManufacturerByName(mfr, user.getBizUnits());
+			
+			BizUnit bizUnit = new BizUnit();
+			bizUnit.setName(this.region);
+			List<Manufacturer> manufacturers = manufacturerSB.findManufacturerLIstByName(mfr, bizUnit);
+			//Bryan End
+			
+			if(manufacturers == null || manufacturers.size()==0){
+				updateSuccess = false;
+				errorMessage =  ResourceMB.getText("wq.message.mfrMessage");
+				FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,errorMessage, ""));
+				return;
+			}
+			else
+			{
+				manufacturer = manufacturers.get(0);
+			}
+		
+		}
+
+		//Check product group 2
+		ProductGroup productGroupObj = null;
+		if(productGroup2 == null || productGroup2.length()==0)
+		{
+			updateSuccess = false;
+			errorMessage = ResourceMB.getText("wq.message.prodGroup");
+			FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,errorMessage, ""));
+			return;
+		}
+		else
+		{
+			productGroupObj = productGroupSB.findProductGroupByName(productGroup2);
+			if(productGroupObj==null)
+			{
+				updateSuccess = false;
+				errorMessage = ResourceMB.getText("wq.message.proGroupExist");
+				FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,errorMessage, ""));
+				return;
+			}
+		}
+
+		//Check product category 
+		ProductCategory productCategoryObj = null;
+		if(productCategory == null || productCategory.length()==0)
+		{
+			
+			updateSuccess = false;
+			errorMessage =ResourceMB.getText("wq.message.prodCategory");
+			FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,errorMessage, ""));
+			return;
+
+		}
+		else
+		{
+
+			productCategoryObj = materialSB.findProductCategoryByName(productCategory);
+			if(productCategoryObj==null)
+			{
+				updateSuccess = false;
+				errorMessage = ResourceMB.getText("wq.message.categoryExist");
+				FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,errorMessage, ""));
+				return;
+			}
+		}
+
+		//Check rescheduling window
+		if(reschedulingWindow == null || reschedulingWindow.length()==0)
+		{
+			/*
+			updateSuccess = false;
+			errorMessage = "Please enter Rescheduling Window";
+			return;
+			 */
+		}
+		else
+		{
+			try
+			{
+				Integer.parseInt(reschedulingWindow);
+			}
+			catch(Exception e)
+			{
+				LOG.log(Level.SEVERE, "Exception in rescheduling the window for MFR : "+mfr+", Exception message: "+e.getMessage(), e);
+				updateSuccess = false;
+				errorMessage = ResourceMB.getText("wq.label.reschedulingWindowNumericField");
+				FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,errorMessage, ""));
+				return;
+			}
+		}
+
+		//Check cancellation window
+		if(cancellationWindow == null || cancellationWindow.length()==0)
+		{
+			/*
+			updateSuccess = false;
+			errorMessage = "Please enter Cancellation Window";
+			return;
+			 */
+		}
+		else
+		{
+			try
+			{
+				Integer.parseInt(cancellationWindow);
+			}
+			catch(Exception e)
+			{
+				updateSuccess = false;
+				LOG.log(Level.SEVERE, "Exception in rescheduling the window for MFR : "+mfr+", Exception message: "+e.getMessage(), e);
+				errorMessage = ResourceMB.getText("wq.message.cancellationWindowNumericField");
+				FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,errorMessage, ""));
+				return;
+			}
+		}
+
+		//Processing MFR Detail
+		ManufacturerDetail manufacturerDetail = new ManufacturerDetail();
+		//Bryan Start
+		//manufacturerDetail.setBizUnit(user.getDefaultBizUnit());
+		BizUnit bizUnit = new BizUnit();
+		bizUnit.setName(this.region);
+		manufacturerDetail.setBizUnit(bizUnit);
+		//Bryan End
+		manufacturerDetail.setCharsTruncated(Integer.parseInt(truncatedCharacters));
+		manufacturerDetail.setManufacturer(manufacturer);
+		manufacturerDetail.setMultiUsage(multiUsage);
+		manufacturerDetail.setQuantityIndicator(qtyIndicator);
+		manufacturerDetail.setProductGroup(productGroupObj);
+
+		if(cancellationWindow!= null && cancellationWindow.length()!=0)
+			manufacturerDetail.setCancellationWindow(Integer.parseInt(cancellationWindow));
+
+		if(productCategory!= null && productCategory.length()!=0)
+			manufacturerDetail.setProductCategory(productCategoryObj);
+
+		if(resaleIndicator!= null && resaleIndicator.length()!=0)
+			manufacturerDetail.setResaleIndicator(resaleIndicator.toUpperCase());
+
+		if(reschedulingWindow!= null && reschedulingWindow.length()!=0)
+			manufacturerDetail.setReschedulingWindow(Integer.parseInt(reschedulingWindow));
+		try {
+			LOG.info("Adding a new manufacturer detail");
+			manufacturerSB.saveManufacturerDetail(manufacturerDetail);
+			LOG.info("Added");
+
+			updateSuccess = true;
+			clearMBData();
+			errorMessage = ResourceMB.getText("wq.message.addMfrDetail");
+			FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, errorMessage, ""));
+		} catch (Exception e) {
+			updateSuccess = false;
+			LOG.log(Level.SEVERE, "Save Manufacturer Detail failed. , Exception Message  : "+e.getMessage(), e);
+			Object[] objArr = {manufacturerDetail.getManufacturer().getName(),manufacturerDetail.getProductGroup().getName(),manufacturerDetail.getProductCategory().getCategoryCode()};
+			errorMessage = ResourceMB.getParameterizedString("wq.message.addMfrDetailExists",objArr);
+			FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, errorMessage, ""));
+		}
+		
+	}
+
+	public List<String> autoCompleteForManufacturer(String key){
+
+		User user = UserInfo.getUser();
+
+		List<Manufacturer> mfrs = manufacturerSB.mFindManufacturerByName(key, user.getBizUnits());
+
+		List<String> result = new ArrayList<String>();
+
+		int i = 1;
+		for(Manufacturer mfr : mfrs){
+			result.add(mfr.getName());
+			if(i == 30){
+				break;
+			}
+			i++;
+		}
+
+		return result;
+
+	}
+
+
+	public List<String> autoCompleteForProductGroup2(String key){
+
+		List<ProductGroup> productGroup2s = productGroupSB.mFindProductGroupByName(key);
+
+		List<String> result = new ArrayList<String>();
+
+		int i = 1;
+		for(ProductGroup productGroup : productGroup2s){
+			result.add(productGroup.getName());
+			if(i == 30){
+				break;
+			}
+			i++;
+		}
+		return result;
+
+	}
+
+	public List<String> autoCompleteForProductCategory(String key){
+
+		List<ProductCategory> productCategories = materialSB.mFindProductCategoryByName(key);
+
+		List<String> result = new ArrayList<String>();
+
+		int i = 1;
+		for(ProductCategory productGroup : productCategories){
+			result.add(productGroup.getCategoryCode());
+			if(i == 30){
+				break;
+			}
+			i++;
+		}
+		return result;
+
+	}
+
+	public void checkSelectedManufacturerDetailsBatchEditMfrDetails()
+	{
+		if(selectedManufacturerDetails == null || selectedManufacturerDetails.size()==0)
+		{
+			errorMessage = ResourceMB.getText("wq.message.selManufacturerDetail");
+			FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR,errorMessage, ""));
+		}
+		else
+		{
+			RequestContext.getCurrentInstance().execute("PF('dialogBatchEditMfrDetailWidget').show()");
+		}
+	}
+	
+	private void clearMBData()
+	{
+		mfr = null;
+		productGroup2 = null;
+		productCategory = null;
+		reschedulingWindow = null;
+		cancellationWindow = null;
+		resaleIndicator = null;
+		errorMessage = null;
+	}
+
+	//Bryan Start
+	public SelectItem[] getRegionList() {
+		return regionList;
+	}
+
+	public void setRegionList(SelectItem[] regionList) {
+		this.regionList = regionList;
+	}
+	
+	public String getRegion() {
+		return region;
+	}
+
+	public void setRegion(String region) {
+		this.region = region;
+	}
+	
+	public void regionChanged(){
+
+	}
+	//Bryan End
+}

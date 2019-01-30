@@ -1,0 +1,256 @@
+<ui:composition template="/templates/MasterLayout.xhtml" xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html" xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:l="http://java.sun.com/jsf/composite/l" xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="windowTitle">
+		#{dbResource['wq.header.taskList']}
+	</ui:define>
+	<ui:define name="content">
+		<p:growl id="growl" showDetail="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" />
+		<style>
+		.timers .ui-datatable-tablewrapper,.scrolling-div .ui-datatable-tablewrapper
+		{
+			overflow: auto;
+			width: 100%;
+			padding-bottom: 5px;
+		}
+		.timers input
+		{
+			width: 100%!important;
+		}
+		.timers td
+		{ 
+			text-align: left;
+		}
+		
+		</style>
+		<h:form id="taskForm">
+			<p:outputPanel id="taskDialogPanel">
+				<p:dialog visible="#{requestScope.showNewTaskDialog}" header="#{dbResource['wq.label.newTask']}">
+					<h:panelGrid columns="2" bgcolor="#eff5fa" id="addTaskInfo">
+						<h:outputText value="#{dbResource['wq.label.enableTask']} :" />
+						<p:selectBooleanButton offLabel="No" onLabel="Yes" id="enableTask" value="#{taskInfoMB.taskInfo.enable}" />
+						<h:outputText value="#{dbResource['wq.label.onAllNode']} :" />
+						<p:selectBooleanButton offLabel="No" onLabel="Yes" id="enableallNode" value="#{taskInfoMB.taskInfo.allNode}" />
+						<h:outputText value="#{dbResource['wq.label.taskName']}:" />
+						<h:inputText id="taskName" value="#{taskInfoMB.taskInfo.taskName}" required="true" />
+						<h:outputText value="#{dbResource['wq.label.taskEJBJndi']}:" />
+						<h:inputText id="taskClass" value="#{taskInfoMB.taskInfo.taskClassName}" required="true" />
+						<h:outputText value="#{dbResource['wq.label.startTime']}:" />
+						<p:calendar id="startDate" value="#{taskInfoMB.taskInfo.startTime}" navigator="true" pattern="yyyy/MM/dd HH:mm" />
+						<h:outputText value="#{dbResource['wq.label.endTime']}:" />
+						<p:calendar id="endDate" value="#{taskInfoMB.taskInfo.endTime}" navigator="true" pattern="yyyy/MM/dd HH:mm" />
+						<h:outputText value="#{dbResource['wq.label.second']}:" />
+						<h:inputText id="second" value="#{taskInfoMB.taskInfo.second}" />
+						<h:outputText value="#{dbResource['wq.label.minute']}:" />
+						<h:inputText id="minute" value="#{taskInfoMB.taskInfo.minute}" />
+						<h:outputText value="#{dbResource['wq.label.hour']}:" />
+						<h:inputText id="hour" value="#{taskInfoMB.taskInfo.hour}" />
+						<h:outputText value="#{dbResource['wq.label.dayOfMonth']}:" />
+						<h:inputText id="dayOfMonth" value="#{taskInfoMB.taskInfo.dayOfMonth}" />
+						<h:outputText value="#{dbResource['wq.label.month']}:" />
+						<h:inputText id="month" value="#{taskInfoMB.taskInfo.month}" />
+						<h:outputText value="#{dbResource['wq.label.year']}:" />
+						<h:inputText id="year" value="#{taskInfoMB.taskInfo.year}" />
+						<h:outputText value="#{dbResource['wq.label.dayOfWeek']}:" />
+						<h:inputText id="dayOfWeek" value="#{taskInfoMB.taskInfo.dayOfWeek}" />
+						<h:outputText value="#{dbResource['wq.label.taskDescription']}:" />
+						<h:inputTextarea cols="40" rows="2" id="description" value="#{taskInfoMB.taskInfo.description}" />
+					</h:panelGrid>
+					<f:facet name="footer">
+						<p:commandButton value="#{dbResource['wq.button.cancel']}" process="@this" update="taskDialogPanel">
+							<f:setPropertyActionListener target="#{taskInfoMB.taskInfo}" value="#{null}" />
+							<f:setPropertyActionListener target="#{requestScope.showNewTaskDialog}" value="false" />
+						</p:commandButton>
+						<p:spacer width="10" height="10" />
+						<p:commandButton id="create" value="#{dbResource['wq.label.create']}" process="taskDialogPanel" actionListener="#{taskInfoMB.create}" update="addTaskInfo,timers">
+							<f:setPropertyActionListener target="#{requestScope.showNewTaskDialog}" value="true" />
+						</p:commandButton>
+						<p:spacer width="10" height="10" />
+						<h:outputLink id="help" value="http://docs.oracle.com/javaee/6/api/javax/ejb/ScheduleExpression.html" target="help">#{dbResource['wq.button.help']}</h:outputLink>
+					</f:facet>
+				</p:dialog>
+			</p:outputPanel>
+			<p:remoteCommand name="refreshDatas" update="timers" process="timers" />
+			<p:dataTable id="timers" styleClass="timers" value="#{taskInfoMB.taskInfos}" var='entity' rows="10"
+			 			 lazy="true" editMode="cell" editable="true" rowIndexVar="index" rowKey="#{entity.id}"
+				 		 paginator="true"  tableStyle="width:auto"
+				 		 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+				  		 paginatorPosition="top">
+				<f:facet name="header">
+					<p:commandButton style="float:left;" actionListener="#{taskInfoMB.updateHATimer()}" process="@this" update=":growl" oncomplete="refreshDatas()" value="#{dbResource['wq.message.updateHATimer']}" />
+					<p:commandButton style="float:left;" id="addButton" value="#{dbResource['wq.label.addNewTimer']}" process="@this" update=":taskForm:taskDialogPanel,:growl">
+						<f:setPropertyActionListener target="#{taskInfoMB.taskInfo}" value="#{null}" />
+						<f:setPropertyActionListener target="#{requestScope.showNewTaskDialog}" value="true" />
+					</p:commandButton>
+					<div style="height:30px;">					
+					</div>
+				</f:facet>
+				<p:ajax event="cellEdit" listener="#{taskInfoMB.onCellEdit}" update=":growl" oncomplete="refreshDatas()" />
+				<p:column>
+                    #{index+1}
+                </p:column>
+				<p:column headerText="#{dbResource['wq.label.node']}">
+                    #{entity.node}
+                </p:column>
+				<p:column headerText="#{dbResource['wq.label.status']}">
+                    #{entity.status}
+                </p:column>
+				<p:column id="taskName" headerText="#{dbResource['wq.label.name']}">
+					<p:cellEditor>
+						<f:facet name="output">
+                            #{entity.taskName}
+                        </f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{entity.taskName}" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column id="taskClassName" headerText="#{dbResource['wq.label.className']}">
+					<p:cellEditor>
+						<f:facet name="output">
+                            #{entity.taskClassName}
+                        </f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{entity.taskClassName}" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column id="year" headerText="#{dbResource['wq.label.year']}">
+					<p:cellEditor>
+						<f:facet name="output">
+                            #{entity.year}
+                        </f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{entity.year}" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column id="month" headerText="#{dbResource['wq.label.month']}">
+					<p:cellEditor>
+						<f:facet name="output">
+                            #{entity.month}
+                        </f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{entity.month}" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column id="dayOfMonth" headerText="#{dbResource['wq.label.dayOfMonth']}">
+					<p:cellEditor>
+						<f:facet name="output">
+                            #{entity.dayOfMonth}
+                        </f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{entity.dayOfMonth}" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column id="dayOfWeek" headerText="#{dbResource['wq.label.dayOfWeek']}">
+					<p:cellEditor>
+						<f:facet name="output">
+                            #{entity.dayOfWeek}
+                        </f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{entity.dayOfWeek}" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column id="hour" headerText="#{dbResource['wq.label.hour']}">
+					<p:cellEditor>
+						<f:facet name="output">
+                            #{entity.hour}
+                        </f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{entity.hour}" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column id="minute" headerText="#{dbResource['wq.label.minute']}">
+					<p:cellEditor>
+						<f:facet name="output">
+                            #{entity.minute}
+                        </f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{entity.minute}" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column id="second" headerText="Sec">
+					<p:cellEditor>
+						<f:facet name="output">
+                            #{entity.second}
+                        </f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{entity.second}" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+
+				<p:column id="startTime" headerText="#{dbResource['wq.label.startTime']}">
+					<p:cellEditor>
+						<f:facet name="output">
+							<l:date value="#{entity.startTime}" />
+						</f:facet>
+						<f:facet name="input">
+							<p:calendar value="#{entity.startTime}" pagedate="true" pattern="yyyy/MM/dd HH:mm" timeZone="GMT+8"/>
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column id="endTime" headerText="#{dbResource['wq.label.endTime']}">
+					<p:cellEditor>
+						<f:facet name="output">
+							<l:date value="#{entity.endTime}" />
+						</f:facet>
+						<f:facet name="input">
+							<p:calendar value="#{entity.endTime}" pagedate="true" pattern="yyyy/MM/dd HH:mm" timeZone="GMT+8"/>
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column id="lastRunStatus" headerText="#{dbResource['wq.label.lastRunStatus']}">
+                    #{entity.lastRunStatus}
+                </p:column>
+				<p:column id="nextTimeout" headerText="#{dbResource['wq.label.nextTimeout']}">
+					<l:date value="#{entity.nextTimeout}" pattern="yyyy/MM/dd HH:mm:ss"/>
+				</p:column>
+				<p:column id="enable" headerText="#{dbResource['wq.button.enable']}">
+					<p:cellEditor>
+						<f:facet name="output">
+							<h:selectBooleanCheckbox value="#{entity.enable}" readonly="true" />
+						</f:facet>
+						<f:facet name="input">
+							<h:inputHidden value="#{entity.enable}" />
+							<h:selectBooleanCheckbox value="#{entity.enable}" onclick="$(this).prev().val(this.checked)" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column id="allNode" headerText="#{dbResource['wq.label.onAllNode']}">
+					<p:cellEditor>
+						<f:facet name="output">
+							<h:selectBooleanCheckbox value="#{entity.allNode}" readonly="true" />
+						</f:facet>
+						<f:facet name="input">
+							<h:inputHidden value="#{entity.allNode}" />
+							<h:selectBooleanCheckbox value="#{entity.enable}" onclick="$(this).prev().val(this.checked)" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.v']}">
+					<h:outputText value="#{entity.version}" />
+				</p:column>
+				<p:column id="description" headerText="description">
+					<p:cellEditor>
+						<f:facet name="output">
+                            #{entity.description}
+                        </f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{entity.description}" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column>
+					<p:commandButton value="#{dbResource['wq.label.delete']}" process="@this" update="timers,:growl" actionListener="#{taskInfoMB.remove(entity)}" />
+				</p:column>
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

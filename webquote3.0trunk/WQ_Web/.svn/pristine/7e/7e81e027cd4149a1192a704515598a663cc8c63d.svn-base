@@ -1,0 +1,98 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+		<h:form id="quoteDlyOptForm">
+			<p:growl id="growl" for="growl" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" showDetail="true" />
+				
+			<p:messages id="mgId" escape="false" closable="true" autoUpdate="true"/>
+			<p:accordionPanel>
+				<p:tab title="#{dbResource['wq.message.dailySearchCriteria']}">
+					<h:panelGrid cellpadding="0" style="width:100%;" columns="6">										
+						<h:outputText value="#{dbResource['wq.label.usr']}"  escape="false" />
+						<p:autoComplete value="#{quoteDailyOptReportMB.reportCriteria.userPmName}" completeMethod="#{quoteDailyOptReportMB.autoCompletePM}" minQueryLength="3" style="width:80%;" >
+						<p:ajax event="query" global="false"/>
+						</p:autoComplete>
+												
+						<h:outputText value="#{dbResource['wq.message.sendOutFrom']}:"  escape="false" />
+						<p:calendar value="#{quoteDailyOptReportMB.reportCriteria.sentOutFrom}" showOn="button" pattern="dd/MM/yyyy" />
+						
+						<h:outputText value="#{dbResource['wq.message.sendOutTo']}:"  escape="false" />
+						<p:calendar value="#{quoteDailyOptReportMB.reportCriteria.sentOutTo}" showOn="button"  pattern="dd/MM/yyyy" />
+						<h:outputText value="#{dbResource['wq.label.quoteStage']}:" />
+						<p:selectManyCheckbox value="#{quoteDailyOptReportMB.reportCriteria.stage}" label="stage">
+							<f:selectItems itemValue="#{stage}" itemLabel="#{stage}"  value="#{quoteDailyOptReportMB.reportCriteria.pageStage}" var="stage" />
+						</p:selectManyCheckbox>
+					</h:panelGrid>
+					
+					<h:panelGrid columns="3" cellpadding="0" >
+						<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search" actionListener="#{quoteDailyOptReportMB.searchCriteriaForReport}" update=":quoteDlyOptForm:quoteDetailReport_dataTable"/>
+						<p:commandButton value="#{dbResource['wq.label.reset']}"  icon="ui-icon-triangle-1-w" actionListener="#{quoteDailyOptReportMB.resetCriteria}" update=":quoteDlyOptForm" />
+					</h:panelGrid>
+				</p:tab>
+			</p:accordionPanel>
+			<p:panel header="#{dbResource['wq.label.dailyQuoteReport']}" style="font-size:12pt">
+				<h:panelGrid columns="11" cellpadding="0">
+					<p:commandButton value="#{dbResource['wq.button.xlsDownload']}" ajax="false">
+						<p:dataExporter type="xls" target="quoteDetailReport_dataTable"
+							fileName="#{quoteDailyOptReportMB.exportFileName}"
+							postProcessor="#{quoteDailyOptReportMB.postProcessXLS}" />
+					</p:commandButton>
+				</h:panelGrid>
+			</p:panel>
+			 <p:dataTable	var="vo"
+	    				value="#{quoteDailyOptReportMB.quoteDailyReportVos}" 
+	    				paginator="false" 
+	    				rowIndexVar="rowIndex"  
+	                 	filteredValue="#{quoteDailyOptReportMB.filteredQuoteDailyReportVos}"
+	                 	id="quoteDetailReport_dataTable" 
+	                 	paginatorPosition="top"
+	                 	scrollable="true"
+	                 	scrollHeight="100%"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+				<p:column headerText="#{dbResource['wq.label.no']}" style="width:10%">
+					<h:outputText value="#{rowIndex+1}" />
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.quotedBy']}" sortBy="#{vo.qcPricer}" filterBy="#{vo.qcPricer}" filterMatchMode="contains" style="width:20%">
+					<h:outputText value="#{vo.qcPricer}" />
+				</p:column>	
+				<p:column headerText="#{quoteDailyOptReportMB.col1}" sortBy="#{vo.col1}" filterBy="#{vo.col1}" filterMatchMode="contains" style="width:10%">
+					<h:outputText value="#{vo.col1}" />
+				</p:column>	
+				<p:column headerText="#{quoteDailyOptReportMB.col2}" sortBy="#{vo.col2}" filterBy="#{vo.col2}" filterMatchMode="contains" style="width:10%">
+					<h:outputText value="#{vo.col2}" />
+				</p:column>	
+				<p:column headerText="#{quoteDailyOptReportMB.col3}" sortBy="#{vo.col3}" filterBy="#{vo.col3}" filterMatchMode="contains" style="width:10%">
+					<h:outputText value="#{vo.col3}" />
+				</p:column>	
+				<p:column headerText="#{quoteDailyOptReportMB.col4}" sortBy="#{vo.col4}" filterBy="#{vo.col4}" filterMatchMode="contains" style="width:10%">
+					<h:outputText value="#{vo.col4}" />
+				</p:column>	
+				<p:column headerText="#{quoteDailyOptReportMB.col5}" sortBy="#{vo.col5}" filterBy="#{vo.col5}" filterMatchMode="contains" style="width:10%">
+					<h:outputText value="#{vo.col5}" />
+				</p:column>	
+				<p:column headerText="#{quoteDailyOptReportMB.col6}" sortBy="#{vo.col6}" filterBy="#{vo.col6}" filterMatchMode="contains" style="width:10%">
+					<h:outputText value="#{vo.col6}" />
+				</p:column>	
+				<p:column headerText="#{quoteDailyOptReportMB.col7}" sortBy="#{vo.col7}" filterBy="#{vo.col7}" filterMatchMode="contains" style="width:10%">
+					<h:outputText value="#{vo.col7}" />
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.total']}" sortBy="#{vo.total}" filterBy="#{vo.total}" filterMatchMode="contains" style="width:10%">
+					<h:outputText value="#{vo.total}" />
+				</p:column>	
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

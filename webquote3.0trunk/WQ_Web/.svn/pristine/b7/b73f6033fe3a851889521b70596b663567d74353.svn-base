@@ -1,0 +1,308 @@
+package com.avnet.emasia.webquote.web.pricerupload;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.faces.bean.ManagedProperty;
+
+import org.jboss.logmanager.Level;
+
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadParametersBean;
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadTemplateBean;
+import com.avnet.emasia.webquote.commodity.bean.ProgramItemUploadCounterBean;
+import com.avnet.emasia.webquote.commodity.constant.PRICER_TYPE;
+import com.avnet.emasia.webquote.commodity.constant.UPLOAD_ACTION;
+import com.avnet.emasia.webquote.commodity.dao.PricerUploadCommonSB;
+import com.avnet.emasia.webquote.commodity.ejb.ContractPriceUploadSB;
+import com.avnet.emasia.webquote.commodity.ejb.NormalProgramPartMasterUploadSB;
+import com.avnet.emasia.webquote.commodity.ejb.PricerUploadVerifySB;
+import com.avnet.emasia.webquote.commodity.util.PricerUtils;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.PgMasterMapping;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.PricerUploadHelper;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+
+public class PricerUploadCommonMB  implements Serializable{
+
+	private static final long serialVersionUID = -8762554542544186096L;
+	private static final Logger LOG =Logger.getLogger(PricerUploadCommonMB.class.getName());
+	@EJB
+	private PricerUploadVerifySB pricerUploadVerifySB;
+	
+	@EJB
+	PricerUploadCommonSB pricerUploadCommonSB;
+	@EJB
+	NormalProgramPartMasterUploadSB normalProgramPartMasterUploadSB;
+	@EJB
+	ContractPriceUploadSB contractPriceUploadSB;
+
+	@EJB
+	MailUtilsSB mailUtilsSB;
+	
+	/** The resource MB. */
+	@ManagedProperty(value="#{resourceMB}")
+	/** To Inject ResourceMB instance  */
+	private ResourceMB resourceMB;
+	
+	
+	
+	/**
+	 * @param resourceMB the resourceMB to set
+	 */
+	public void setResourceMB(ResourceMB resourceMB) {
+		this.resourceMB = resourceMB;
+	}
+
+
+	public void sendEmail(Date createOn,String fileName, User user,String errMsg,ProgramItemUploadCounterBean countBean,String fromEmailAddr) {
+
+		LOG.info("call a pricer upload sendEmail process");
+
+		MailInfoBean mib = PricerUploadHelper.generateUploadPricerEmailContent( createOn,fileName,  user, errMsg, countBean, fromEmailAddr) ;
+
+		try {
+			mailUtilsSB.sendAttachedMail(mib);
+		} catch (Exception e) {
+			LOG.log(Level.SEVERE, "Send email failed!" +e.getMessage(), e);
+		}
+
+		LOG.info("call sendEmail end");
+	}
+	
+
+	public  void sendSystemEmail(Date createOn,String fileName, User user, String message,String fromEmailAddr) {
+		LOG.info("call a pricer upload sendEmail process");
+
+		MailInfoBean mib = new MailInfoBean();
+		List<String> toList = new ArrayList<String>();
+
+		toList.add(user.getEmailAddress());
+		String content = "";
+		if (toList.size() > 0) {
+	
+			String subject  ="price upload";
+			mib.setMailSubject(subject);
+			mib.setMailTo(toList);
+			
+			if(!QuoteUtil.isEmpty(message)){
+				content = "File Name: "+fileName+" Uploaded By: "+user.getName()+"  Uploaded by user at: "+PricerUtils.convertFormat2Time(createOn)+" Proceeded by system at: "+PricerUtils.convertFormat2Time(new Date())+" <br/>";
+				content = content + "System error, please contact your administrator"+"<br/>";
+				content = content + message +"<br/>";
+			}
+			
+			content += "Best Regards," + "<br/>";
+			content += fromEmailAddr + "<br/>";
+		}
+		mib.setMailContent(content);
+		mib.setMailFrom(fromEmailAddr);
+		
+		try {
+			mailUtilsSB.sendAttachedMail(mib);
+		} catch (Exception e) {
+			LOG.log(Level.SEVERE, "Send email failed for create date: "+createOn.toString()+", file name: "+fileName+", "
+					+ "message: "+message+", send from email address: "+fromEmailAddr+", Exception message: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+		}
+
+		LOG.info("call sendEmail end");
+		
+	}
+	
+	public ProgramItemUploadCounterBean beansToDataBase(ProgramItemUploadCounterBean countBean,String action, String pricerType,List<PricerUploadTemplateBean> beans,
+			User user,PricerUploadParametersBean puBean,List<Manufacturer> manufacturerLst ) {
+
+		if (UPLOAD_ACTION.ADD_UPDATE.getName().equals(action)) {	
+			if(PRICER_TYPE.NORMAL.getName().equalsIgnoreCase(pricerType)){
+				List<PricerUploadTemplateBean> haveABookCost = PricerUploadHelper.getHaveABookCostBean(beans);
+				if(haveABookCost!=null&&haveABookCost.size()>0){
+					ProgramItemUploadCounterBean haveABookCostCountBean=null;
+					try {
+						haveABookCostCountBean = normalProgramPartMasterUploadSB.insertUploadPricer(pricerType,haveABookCost, user, manufacturerLst, puBean);
+					} catch (Exception e) {
+						LOG.log(Level.SEVERE, "Exception in saving bean to database for action: "+action+", pricer type : "+pricerType+",Exception message "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+					}
+					countBean.setAddedNormalCount(countBean.getAddedNormalCount()+haveABookCostCountBean.getAddedNormalCount());
+					countBean.setUpdatedNormalCount(countBean.getUpdatedNormalCount()+haveABookCostCountBean.getUpdatedNormalCount());
+				}
+				
+				List<PricerUploadTemplateBean> noHaveABookCost = PricerUploadHelper.getNoHaveABookCostBean(beans);
+				if(noHaveABookCost!=null&&noHaveABookCost.size()>0){
+					ProgramItemUploadCounterBean noHaveABookCostCountBean  = 
+						normalProgramPartMasterUploadSB.insertUploadPricer(pricerType,noHaveABookCost, user, manufacturerLst, puBean);
+					countBean.setAddedNormalCount(countBean.getAddedNormalCount()+noHaveABookCostCountBean.getAddedNormalCount());
+					countBean.setUpdatedNormalCount(countBean.getUpdatedNormalCount()+noHaveABookCostCountBean.getUpdatedNormalCount());
+				}
+			}else if(PRICER_TYPE.PROGRAM.getName().equalsIgnoreCase(pricerType)){
+				ProgramItemUploadCounterBean returncountBean  = normalProgramPartMasterUploadSB.insertUploadPricer(pricerType,beans, user, manufacturerLst, puBean);
+				countBean.setAddedProgramCount(countBean.getAddedProgramCount()+returncountBean.getAddedProgramCount());
+				countBean.setUpdatedProgramCount(countBean.getUpdatedProgramCount()+returncountBean.getUpdatedProgramCount());
+			}else if(PRICER_TYPE.CONTRACT.getName().equalsIgnoreCase(pricerType)){
+				ProgramItemUploadCounterBean returncountBean  = contractPriceUploadSB.insertUploadPricer(pricerType, beans, user, manufacturerLst, puBean);
+				countBean.setAddedContractPriceCount(countBean.getAddedContractPriceCount()+returncountBean.getAddedContractPriceCount());
+				countBean.setUpdatedContractPriceCount(countBean.getUpdatedContractPriceCount()+returncountBean.getUpdatedContractPriceCount());
+			}else if(PRICER_TYPE.PARTMASTER.getName().equalsIgnoreCase(pricerType)){
+				ProgramItemUploadCounterBean returncountBean   = normalProgramPartMasterUploadSB.insertUploadPricer(pricerType,beans, user, manufacturerLst, puBean);
+				countBean.setAddedPartCount(countBean.getAddedPartCount()+returncountBean.getAddedPartCount());
+				countBean.setUpdatedPartCount(countBean.getUpdatedPartCount()+returncountBean.getUpdatedPartCount());											
+			}
+		} else if (UPLOAD_ACTION.REMOVE_PRICER_ONLY.getName().equals(action)) {
+			if(PRICER_TYPE.NORMAL.getName().equalsIgnoreCase(pricerType)){
+				ProgramItemUploadCounterBean returncountBean = normalProgramPartMasterUploadSB.removeOnlyPricer(pricerType, beans, user);
+				countBean.setRemovedNormalCount(countBean.getRemovedNormalCount()+returncountBean.getRemovedNormalCount());							
+			}else if(PRICER_TYPE.PROGRAM.getName().equalsIgnoreCase(pricerType)){
+				ProgramItemUploadCounterBean returncountBean = normalProgramPartMasterUploadSB.removeOnlyPricer(pricerType,beans, user);
+				countBean.setRemovedProgramCount(countBean.getRemovedProgramCount()+returncountBean.getRemovedProgramCount());							
+			}else if(PRICER_TYPE.CONTRACT.getName().equalsIgnoreCase(pricerType)){
+				ProgramItemUploadCounterBean returncountBean = contractPriceUploadSB.removeOnlyPricer(pricerType, beans, user);
+				countBean.setRemovedContractPriceCount(countBean.getRemovedContractPriceCount()+returncountBean.getRemovedContractPriceCount());						
+				
+			}else if(PRICER_TYPE.PARTMASTER.getName().equalsIgnoreCase(pricerType)){
+				//Remove (Pricer Only) cannot be applied to Part Master type file
+			}
+		} else if (UPLOAD_ACTION.REMOVE_PART_AND_ITS_PRICERS.getName().equals(action)) {
+			//not implemented
+		} else if (UPLOAD_ACTION.REMOVE_ALL_PRICER.getName().equals(action)) {
+			ProgramItemUploadCounterBean returncountBean = pricerUploadCommonSB.removeAllPricer(beans, user);
+			countBean.setRemovedNormalCount(countBean.getRemovedNormalCount() + returncountBean.getRemovedNormalCount());
+			countBean.setRemovedProgramCount(countBean.getRemovedProgramCount() + returncountBean.getRemovedProgramCount());
+			countBean.setRemovedContractPriceCount(countBean.getRemovedContractPriceCount() + returncountBean.getRemovedContractPriceCount());
+			
+		}
+
+		return countBean;
+	}
+	
+	public String verifyInDBForRemove(String pricerType, List<PricerUploadTemplateBean> beans, User user,List<Manufacturer> manufacturerLst){
+		StringBuffer sb = new StringBuffer("");
+		sb.append(pricerUploadVerifySB.pricerMatchingInDB(pricerType, beans, user,manufacturerLst));
+		return sb.toString();
+	}
+	
+	public String verifyInDBForAddUpdate(String pricerType, List<PricerUploadTemplateBean> beans, User user,
+			PricerUploadParametersBean puBean,List<Manufacturer> manufacturerLst) {
+		StringBuffer sb = new StringBuffer("");
+		String language = resourceMB.getDefaultLocaleAsString();
+		user.setUserLocale(language);
+		
+		if (PRICER_TYPE.NORMAL.getName().equalsIgnoreCase(pricerType)) {
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyMFRInDB(beans, new Locale(language)));
+			}
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyProductCatInDB(beans, new Locale(language)));
+			}
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyCstIdctInDB(beans, user, puBean));
+			}
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyABookCostIndicator(beans, user, manufacturerLst, puBean));
+			}
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.batchVerifyEffectiveDateInDB(pricerType, beans, user,manufacturerLst));
+			}
+		} else if (PRICER_TYPE.PROGRAM.getName().equalsIgnoreCase(pricerType)) {
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyMFRInDB(beans,new Locale(language)));
+			}
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyCstIdctInDB(beans, user, puBean));
+			}
+	/*		if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyProgramInDB(beans));
+			}*/
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyComponedKeyInMtlDtl(beans, user));
+			}
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.batchVerifyEffectiveDateInDB(pricerType, beans, user,manufacturerLst));
+			}
+		} else if (PRICER_TYPE.CONTRACT.getName().equalsIgnoreCase(pricerType)) {
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyMFRInDB(beans,new Locale(language)));
+			}
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyComponedKeyInMtlDtl(beans, user));
+			}
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyCstIdctInDB(beans, user, puBean));
+			}
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.checkCustomerNumber(beans, new Locale(language)));
+			}
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyEffectiveDateForContract(beans, user,manufacturerLst));
+			}
+		} else if (PRICER_TYPE.PARTMASTER.getName().equalsIgnoreCase(pricerType)) {
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyMFRInDB(beans, new Locale(language)));
+			}
+			if(PricerUtils.isAllowAppend(sb.length())){
+				sb.append(pricerUploadVerifySB.verifyProductCatInDB(beans, new Locale(language)));
+			}
+		}
+		return sb.toString();
+	}
+	
+	public void savePricerUploadSummary2Db(ProgramItemUploadCounterBean countBean,String fileName,User user){
+		normalProgramPartMasterUploadSB.savePricerUploadSummary2Db(countBean, fileName, user);
+	}
+	
+	/**
+	 * merge from branch 2.1.12
+	 * @param beans2
+	 * @param user2
+	 * @param manufacturerLst2
+	 * @return
+	 */
+	protected String verifyUpdatePG2(List<PricerUploadTemplateBean> beans2,User user2, List<Manufacturer> manufacturerLst2,List<String> comparedMfrs) {
+		String bizUnitName = user2.getDefaultBizUnit().getName();
+		List<PgMasterMapping> pgMasterMappings = pricerUploadCommonSB.getPgMasterMapping(manufacturerLst2);
+		
+		StringBuffer sb = new StringBuffer();
+		
+		for(PricerUploadTemplateBean bean: beans2){
+			//if(null==comparedMfrs || !comparedMfrs.contains(bean.getMfr()))  {
+				//comparedMfrs.add(bean.getMfr()); // added to this list that means this mfr has been compared 
+				String bizUnitNameInMapping  = getBUByMFR(bean.getMfr(),pgMasterMappings);
+				if(bizUnitNameInMapping!=null&&bizUnitNameInMapping.equalsIgnoreCase(bizUnitName)){//
+					bean.setCanUpdatePG2(true);
+				}else {
+					bean.setCanUpdatePG2(false);
+					//��The master of <MFR> is <REGION>. The product group 2 is not uploaded during pricer upload
+					Object[] objArr = { bean.getMfr(),bizUnitNameInMapping};
+					String message=ResourceMB.getParameterizedString("wq.message.masterOf",objArr);
+					String msg = message+". "+ResourceMB.getText("wq.message.pricerUploadError")+".";
+					if(sb.indexOf(msg)==-1){
+						sb.append(msg ).append("</br>");
+					}
+				//}
+			}
+
+		}
+		return sb.toString();
+	}
+	
+	/**
+	 * merger from branch 2.1.12
+	 * @param mfrInBean
+	 * @param pgMasterMappings
+	 * @return
+	 */
+	private String getBUByMFR(String mfrInBean,List<PgMasterMapping> pgMasterMappings){
+		for(PgMasterMapping pg: pgMasterMappings){
+			if(mfrInBean.equalsIgnoreCase(pg.getManufacturer().getName())){
+				return pg.getBizUnit();
+			}
+		}
+		return null;
+	}
+}

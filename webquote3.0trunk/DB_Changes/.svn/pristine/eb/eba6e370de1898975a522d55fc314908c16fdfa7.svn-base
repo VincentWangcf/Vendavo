@@ -1,0 +1,49 @@
+--if exists(select * from user_tables where table_name = 'COST_INDICATOR2') drop table COST_INDICATOR2
+
+create table  COST_INDICATOR2 as  
+select t.name,
+t.status,
+t.DESCRIPTION,
+ MOQ ,
+ MPQ,
+ MOV ,
+ LEAD_TIME,
+ MPQ_VALUE,
+MOQ_VALUE ,
+MOV_VALUE ,
+PRICE_VALIDITY ,
+SHIPMENT_VALIDITY ,
+PART_DESCRIPTION,
+PRICE_LIST_REMARKS
+ from cost_indicator t 
+ left join COST_INDICATOR_RULE t2 on t.name = t2.COST_INDICATOR ;
+
+
+
+ ALTER TABLE cost_indicator RENAME TO cost_indicator_old;
+
+ ALTER TABLE cost_indicator2 RENAME TO cost_indicator;
+
+ alter table cost_indicator add constraint cost_indicator_pkey primary key(name);
+
+ UPDATE COST_INDICATOR SET MOQ = 3 WHERE LEAD_TIME IS NULL; 
+ UPDATE COST_INDICATOR SET MPQ = 3 WHERE LEAD_TIME IS NULL; 
+ UPDATE COST_INDICATOR SET MOV = 3 WHERE LEAD_TIME IS NULL; 
+ UPDATE COST_INDICATOR SET LEAD_TIME = 3 WHERE LEAD_TIME IS NULL; 
+ alter table COST_INDICATOR modify MOQ not null;
+ alter table COST_INDICATOR modify MPQ not null;
+ alter table COST_INDICATOR modify MOV not null;
+ alter table COST_INDICATOR modify LEAD_TIME not null;
+
+ ALTER TABLE PRICER ADD FOREIGN KEY (COST_INDICATOR) REFERENCES COST_INDICATOR(NAME);
+
+
+
+
+ update pricer set version=1 where version is null;--(merge need)
+
+ALTER TABLE QUANTITY_BREAK_PRICE DROP CONSTRAINT QUANTITY_BREAK_PRICE_MATE_FK1;--break the foregin key
+
+ALTER TABLE QUANTITY_BREAK_PRICE CONSTRAINT QUANTITY_BREAK_PRICE_MATE_FK1;
+
+ALTER TABLE QUANTITY_BREAK_PRICE ADD FOREIGN KEY (MATERIAL_DETAIL_ID) REFERENCES Pricer(ID);--REBUILD

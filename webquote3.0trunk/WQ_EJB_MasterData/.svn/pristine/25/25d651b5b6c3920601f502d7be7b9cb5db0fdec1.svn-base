@@ -1,0 +1,281 @@
+package com.avnet.emasia.webquote.masterData.dao.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Remote;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
+
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
+import com.avnet.emasia.webquote.entity.DataSyncError;
+import com.avnet.emasia.webquote.entity.PricerDeleted;
+
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.masterData.util.StringUtils;
+import com.avnet.emasia.webquote.masterData.dao.PricerDeletedDAO;
+
+import com.avnet.emasia.webquote.masterData.dto.Config;
+import com.avnet.emasia.webquote.masterData.dto.FileContext;
+//import com.avnet.emasia.webquote.masterData.dto.SapInterfacePricer;
+
+import com.avnet.emasia.webquote.masterData.ejb.DataSyncErrorSB;
+import com.avnet.emasia.webquote.masterData.ejb.MasterDataSB;
+
+import com.avnet.emasia.webquote.masterData.ejb.ScheduleConfigSB;
+import com.avnet.emasia.webquote.masterData.ejb.StandardJob;
+import com.avnet.emasia.webquote.masterData.ejb.remote.PosRemote;
+import com.avnet.emasia.webquote.masterData.exception.CheckedException;
+import com.avnet.emasia.webquote.masterData.util.Constants;
+import com.avnet.emasia.webquote.masterData.util.FunctionUtils;
+import com.avnet.emasia.webquote.masterData.util.ResourceLoader;
+import com.avnet.emasia.webquote.quote.ejb.PosSB;
+import com.avnet.emasia.webquote.utilities.DateUtils;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+
+
+@Stateless
+@TransactionManagement(TransactionManagementType.BEAN)
+public class PricerDeletedDAOImpl implements PricerDeletedDAO {
+	@Resource
+	UserTransaction ut;
+
+	@PersistenceContext(unitName = "Server_Source")
+	private EntityManager em;
+
+	@EJB
+	private DataSyncErrorSB errorSB;
+
+	
+	private static Logger logger = Logger.getLogger(MasterDataSB.class.getName());
+
+	private final static int SESSION_TIME_OUT = 36000;
+	private final static String MATERIAL_TYPE_NORMAL = "NORMAL";
+
+
+	private long rowLimit = 100000;
+
+	public long getRowLimit() {
+		return rowLimit;
+	}
+
+	public void setRowLimit(long rowLimit) {
+		this.rowLimit = rowLimit;
+	}
+
+	//@Override
+	public void batchStartUpdate() throws IllegalStateException, SecurityException, SystemException {
+		// TODO Auto-generated method stub
+		logger.info("PricerDeletedDAOImpl.batchStartUpdate: Begin");
+		try {
+			long prcID = this.getMaxIDByRowLimit();
+			String sJPQL = "";
+			
+			if (prcID>0) sJPQL = "UPDATE PricerDeleted v set v.deletedBatchStatus = v.deletedBatchStatus + 10 where v.deletedBatchStatus >= 0 AND v.deletedBatchStatus < 10 AND v.material.sapPartNumber != null AND v.deletedId<" + prcID;
+			else sJPQL = "UPDATE PricerDeleted v set v.deletedBatchStatus = v.deletedBatchStatus + 10 where v.deletedBatchStatus >= 0 AND v.deletedBatchStatus < 10 AND v.material.sapPartNumber != null";
+			
+			ut.setTransactionTimeout(SESSION_TIME_OUT);
+			ut.begin();
+			
+	    	Query q1 = em.createQuery(sJPQL);
+	    	//Query q1 = em.createQuery("UPDATE PricerDeleted v set v.deletedBatchStatus = v.deletedBatchStatus + 10 where v.deletedBatchStatus >= 0 AND v.deletedBatchStatus < 10");
+
+			q1.executeUpdate();
+	    	em.flush();
+        	em.clear();
+			ut.commit();				
+		} catch (Exception ex){
+			ex.printStackTrace();
+			//logger.log(Level.SEVERE, "batchStartUpdate", ex);
+			
+	    	//em.flush();
+        	//em.clear();
+        	ut.rollback();
+        	/*try {
+        		ut.commit();
+        	} catch (Exception e){
+        		LOG.log(Level.SEVERE, "update ActiveSession logout time failed!");
+        	}			*/
+		}
+
+		logger.info("PricerDeletedDAOImpl.batchStartUpdate: End");
+	}
+
+	//@Override
+	public void batchEndUpdate() throws IllegalStateException, SecurityException, SystemException {
+		// TODO Auto-generated method stub
+		logger.info("PricerDeletedDAOImpl.batchEndUpdate: Begin");
+
+		try {
+			ut.setTransactionTimeout(SESSION_TIME_OUT);
+			ut.begin();
+	    	Query q1 = em.createQuery("UPDATE PricerDeleted v set v.deletedBatchStatus = v.deletedBatchStatus + 10 where v.deletedBatchStatus >= 10 AND v.deletedBatchStatus < 20");
+			q1.executeUpdate();
+	    	em.flush();
+        	em.clear();
+			ut.commit();				
+		} catch (Exception ex){
+			ex.printStackTrace();
+			//logger.log(Level.SEVERE, "batchStartUpdate", ex);
+			
+	    	//em.flush();
+        	//em.clear();
+			ut.rollback();
+			
+        	/*try {
+        		ut.commit();
+        	} catch (Exception e){
+        		LOG.log(Level.SEVERE, "update ActiveSession logout time failed!");
+        	}			*/
+		}
+
+		logger.info("PricerDeletedDAOImpl.batchEndUpdate: End");
+		
+	}
+
+	public List<PricerDeleted> getProcessingData() {
+		logger.info("PricerDeletedDAOImpl.getProcessingData: Begin");
+		List<PricerDeleted> mrLst = null;
+		
+		//ut.setTransactionTimeout(SESSION_TIME_OUT);
+		//ut.begin();
+		TypedQuery<PricerDeleted> queryMr = em
+				.createQuery("SELECT a FROM PricerDeleted a where a.deletedBatchStatus >= 10 AND a.deletedBatchStatus < 20 AND a.batchStatus<>0 AND a.batchStatus<>-100", PricerDeleted.class);
+		//.createQuery("SELECT a FROM Pricer a where a.batchStatus >= 10 AND a.batchStatus < 20", Pricer.class);
+		mrLst = queryMr.getResultList();
+
+		logger.info("PricerDeletedDAOImpl.getProcessingData: End");
+		return mrLst;			
+	}
+
+	public void bulkInsertFromPricer(String deletedBy, String nativeSQLWhereCondition) throws IllegalStateException, SecurityException, SystemException {
+		logger.info("PricerDeletedDAOImpl.bulkInsertFromPricer: Begin");
+		try {
+			ut.setTransactionTimeout(SESSION_TIME_OUT);
+			ut.begin();
+
+//	    	Query q = em.createQuery("Select deletedId From PricerDeleted " +
+//						"SELECT PRICER_DELETED_SEQ.nextval deleteId, :delBy deletedBy, CURRENT_TIMESTAMP, 0, d " +
+//						"FROM SalesCostPricer d " + jpaWhereCondition);
+/*
+SELECT PRICER_DELETED_SEQ.nextVal DELETE_ID, 'P02810' DELETED_BY, CURRENT_TIMESTAMP, 0, pr.*
+FROM PRICER pr
+INNER JOIN MATERIAL mt
+ON mt.ID = pr.MATERIAL_ID
+ */
+			
+//	    	Query q1 = em.createQuery("INSERT INTO PricerDeleted " +
+//						"SELECT default deleteId, :delBy deletedBy, CURRENT_TIMESTAMP deletedOn, 0 deletedBatchStatus, d " +
+//						"FROM SalesCostPricer d " + jpaWhereCondition);
+
+	    	Query q1 = em.createNativeQuery("INSERT INTO PRICER_DELETED " +
+						"SELECT PRICER_DELETED_SEQ.nextVal DELETE_ID, '" + deletedBy + "' DELETED_BY, CURRENT_TIMESTAMP, 0, p.* " +
+						"FROM PRICER p " + nativeSQLWhereCondition);
+
+	    	
+	    	//q1.setParameter("delBy", deletedBy);
+	    	
+			q1.executeUpdate();
+	    	em.flush();
+        	em.clear();
+			ut.commit();				
+		} catch (Exception ex){
+			ex.printStackTrace();
+			//logger.log(Level.SEVERE, "batchStartUpdate", ex);
+			
+	    	//em.flush();
+        	//em.clear();
+        	ut.rollback();
+        	/*try {
+        		ut.commit();
+        	} catch (Exception e){
+        		LOG.log(Level.SEVERE, "update ActiveSession logout time failed!");
+        	}			*/
+		}
+
+		logger.info("PricerDeletedDAOImpl.bulkInsertFromPricer: End");		
+	}
+
+	public long getMaxIDByRowLimit(){
+		logger.info("PricerDeletedDAOImpl.getMaxIDByRowLimit: Begin > " + getRowLimit());
+		long prcID=0;
+		
+		if (getRowLimit()>0) {
+			if (getRowCount()>getRowLimit()) {
+			    List l = em.createNativeQuery(
+			            "SELECT NVL(CAST(MAX(prc.DELETE_ID) as VARCHAR2(38)),'0') FROM ( "
+			            + "SELECT prc.DELETE_ID FROM PRICER_DELETED prc "
+			            + "INNER JOIN MATERIAL mat ON mat.ID = prc.MATERIAL_ID "
+			            + "INNER JOIN MANUFACTURER man ON man.ID = mat.MANUFACTURER_ID "
+			            + "WHERE prc.PRICER_TYPE='SalesCostPricer' AND mat.SAP_PART_NUMBER IS NOT null "
+			            + "AND prc.DELETED_BATCH_STATUS>=0 AND prc.DELETED_BATCH_STATUS<20 "
+			            + "ORDER BY prc.DELETE_ID ASC) prc "
+			            + "WHERE ROWNUM<='" + Long.toString(getRowLimit() + 1) + "' "
+			            )
+			            .getResultList();
+			    
+			    prcID = Long.parseLong((String)l.get(0));
+			}
+		}
+
+		logger.info("PricerDeletedDAOImpl.getMaxIDByRowLimit: End > " + prcID);
+
+//        + "INNER JOIN QUANTITY_BREAK_PRICE qbp ON qbp.MATERIAL_DETAIL_ID = prc.ID "
+
+/*		SELECT CAST(MAX(prc.DELETE_ID) as VARCHAR2(38)) FROM ( 
+				SELECT prc.DELETE_ID FROM PRICER_DELETED prc 
+				INNER JOIN MATERIAL mat ON mat.ID = prc.MATERIAL_ID 
+				INNER JOIN MANUFACTURER man ON man.ID = mat.MANUFACTURER_ID 
+				INNER JOIN QUANTITY_BREAK_PRICE qbp ON qbp.MATERIAL_DETAIL_ID = prc.ID 
+				--WHERE prc.PRICER_TYPE='SalesCostPricer' AND mat.SAP_PART_NUMBER IS NOT null 
+				WHERE mat.SAP_PART_NUMBER IS NOT null 
+				AND 
+				prc.DELETED_BATCH_STATUS>=0 AND prc.DELETED_BATCH_STATUS<10 
+				ORDER BY prc.DELETE_ID ASC) prc 
+				WHERE ROWNUM<=100001		
+*/		
+		return prcID;
+	}
+
+	public long getRowCount(){
+		logger.info("PricerDeletedDAOImpl.getRowCount: Begin");
+		long rCount=0;
+		
+	    List l = em.createNativeQuery(
+	            "SELECT CAST(count(*) as VARCHAR2(38)) rCount FROM PRICER_DELETED prc "
+	            + "INNER JOIN MATERIAL mat ON mat.ID = prc.MATERIAL_ID "
+	            + "INNER JOIN MANUFACTURER man ON man.ID = mat.MANUFACTURER_ID "
+	            + "WHERE prc.PRICER_TYPE='SalesCostPricer' AND mat.SAP_PART_NUMBER IS NOT null "
+	            + "AND prc.DELETED_BATCH_STATUS>=0 AND prc.DELETED_BATCH_STATUS<20 "
+	            )
+	            .getResultList();
+	    
+	    rCount = Long.parseLong((String)l.get(0));
+
+		logger.info("PricerDeletedDAOImpl.getRowCount: End > " + rCount);
+
+  
+		return rCount;
+	}
+	
+}

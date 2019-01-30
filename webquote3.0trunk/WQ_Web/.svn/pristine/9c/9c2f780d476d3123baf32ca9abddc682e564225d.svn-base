@@ -1,0 +1,211 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.CostExtractSB;
+import com.avnet.emasia.webquote.quote.vo.CostExtractSearchCriterial;
+import com.avnet.emasia.webquote.reports.ejb.ExcelReportSB;
+import com.avnet.emasia.webquote.reports.ejb.OfflineReportSB;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.vo.CostCompareVO;
+import com.avnet.emasia.webquote.vo.CostInfoVO;
+import com.avnet.emasia.webquote.vo.OfflineReportParam;
+import com.avnet.emasia.webquote.web.quote.cache.CostIndicatorCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.MfrCacheManager;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.security.WQUserDetails;
+
+@ManagedBean
+@SessionScoped
+public class CostExtractMB implements Serializable{
+	
+	private static final Logger LOG = Logger.getLogger(CostExtractMB.class.getName());
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	@EJB
+	CostExtractSB costExtractSB;
+	
+	@EJB
+	ExcelReportSB excelReportSB;
+	
+	@EJB
+	OfflineReportSB offlineReportSB;
+	
+	@EJB
+	BizUnitSB bizUnitSB;
+	
+	private List<CostInfoVO> costInfoVOs;
+	
+	private List<CostCompareVO> costCompareVOs;
+	
+	private CostExtractSearchCriterial costExtractSearchCriterial;
+	
+	private List<String> regionList;
+	
+	private List<String> costSourceList;
+	
+	private List<String> salesCostPartList;
+	
+	private List<String> mfrList;
+	
+	private List<String> costIndicatorList;
+	
+	private User user;
+	
+	@PostConstruct
+	public void postContruct(){
+		costExtractSearchCriterial = new CostExtractSearchCriterial();
+		user =((WQUserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUser();
+		initSearchCriterialItem();
+		
+		
+	}
+	
+	private void initSearchCriterialItem() {
+		regionList = new ArrayList<String>();
+		mfrList = new ArrayList<String>();
+		salesCostPartList = new ArrayList<String>();
+		costSourceList = new ArrayList<String>();
+		for(String costSource : QuoteConstant.COST_SOURCE) {
+			costSourceList.add(costSource);
+		}
+		
+		for(String saleCostPart : QuoteConstant.SALES_COST_PART) {
+			salesCostPartList.add(saleCostPart);
+		}
+		
+		costIndicatorList = removeDuplicateItem(CostIndicatorCacheManager.getCostIndicator());
+		
+		List<BizUnit> userRegions = user.getBizUnits();
+		for(BizUnit bizUnit : userRegions) {
+			regionList.add(bizUnit.getName());
+			List<Manufacturer> manufacturers = MfrCacheManager.getMfrListByBizUnit(bizUnit.getName());
+			for(Manufacturer mfr : manufacturers) {
+				if(!mfrList.contains(mfr.getName())) {
+					mfrList.add(mfr.getName());
+				}
+			}
+		}
+	}
+	
+	
+	public void search() {
+		costExtractSB.search(costExtractSearchCriterial);
+	}
+	
+	private List<String> removeDuplicateItem(List<String> stringItems) {
+		List<String> stringList = new ArrayList<String>();
+		if(stringItems != null && stringItems.size() > 0) {
+			for(String itemText : stringItems) {
+				if(!stringList.contains(itemText)) {
+					stringList.add(itemText);
+				}
+			}
+		}
+		return stringList;
+	}
+	
+	
+	public void sendCostInfoReport() {
+		OfflineReportParam param = new OfflineReportParam();
+		offlineReportSB.sendOffLineReportRemote(param);
+	}
+	
+	public void sendCostCompareReport() {
+		OfflineReportParam param = new OfflineReportParam();
+		offlineReportSB.sendOffLineReportRemote(param);
+	}
+	
+	public List<CostInfoVO> getCostInfoVOs() {
+		return costInfoVOs;
+	}
+
+	public void setCostInfoVOs(List<CostInfoVO> costInfoVOs) {
+		this.costInfoVOs = costInfoVOs;
+	}
+
+	public List<CostCompareVO> getCostCompareVOs() {
+		return costCompareVOs;
+	}
+
+	public void setCostCompareVOs(List<CostCompareVO> costCompareVOs) {
+		this.costCompareVOs = costCompareVOs;
+	}
+
+	public CostExtractSearchCriterial getCostExtractSearchCriterial() {
+		return costExtractSearchCriterial;
+	}
+
+	public void setCostExtractSearchCriterial(CostExtractSearchCriterial costExtractSearchCriterial) {
+		this.costExtractSearchCriterial = costExtractSearchCriterial;
+	}
+	
+
+	public List<String> getRegionList() {
+		return regionList;
+	}
+
+	public void setRegionList(List<String> regionList) {
+		this.regionList = regionList;
+	}
+
+	public List<String> getCostSourceList() {
+		return costSourceList;
+	}
+
+	public void setCostSourceList(List<String> costSourceList) {
+		this.costSourceList = costSourceList;
+	}
+
+	public List<String> getMfrList() {
+		return mfrList;
+	}
+
+	public void setMfrList(List<String> mfrList) {
+		this.mfrList = mfrList;
+	}
+	
+
+	public List<String> getSalesCostPartList() {
+		return salesCostPartList;
+	}
+
+	public void setSalesCostPartList(List<String> salesCostPartList) {
+		this.salesCostPartList = salesCostPartList;
+	}
+	
+
+	public List<String> getCostIndicatorList() {
+		return costIndicatorList;
+	}
+
+	public void setCostIndicatorList(List<String> costIndicatorList) {
+		this.costIndicatorList = costIndicatorList;
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+	
+}

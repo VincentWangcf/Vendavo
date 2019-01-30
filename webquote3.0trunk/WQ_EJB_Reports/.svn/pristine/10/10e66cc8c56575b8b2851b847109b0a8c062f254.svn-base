@@ -1,0 +1,100 @@
+/**
+ * @Package: com.avnet.emasia.webquote.reports.ejb.remote.impl 
+ * @author: 042659   
+ * @date: Aug 31, 2017 3:22:21 PM 
+ */
+package com.avnet.emasia.webquote.reports.ejb.remote.impl;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.reports.constant.ReportConstant;
+import com.avnet.emasia.webquote.reports.util.ReportsUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+
+/**
+ * @author 042659
+ *
+ */
+public class OffLineReport implements Serializable {
+
+	@EJB
+	protected
+    MailUtilsSB mailUtilsSB;
+	@EJB
+	SysConfigSB sysConfigSB;
+	@EJB
+	private transient SystemCodeMaintenanceSB sysCodeMaintSB;
+	
+	
+	
+	private static final long serialVersionUID = -7091193775024042444L;
+	private static Logger logger = Logger.getLogger(ReportsUtil.class
+			.getName());
+	public void sendOfflineEmail(User user, String fileName) throws WebQuoteException
+	{
+		logger.info("call offline report sendEmail");
+		//File xlsFile = null;
+		//File zipFile = null;
+		//FileOutputStream fileOut = null;
+		//String tempPath offlineReportPath = sysConfigSB.getProperyValue(OfflineReportConstants.TEMP_DIR);
+		try
+		{
+			
+	   // String OFFLINE_REPORT_PATH = "OFFLINE_REPORT_PATH";
+		String urlPath = sysConfigSB.getProperyValue(ReportConstant.WEBQUOTE2_DOMAIN);
+		StringBuilder mailBody = new StringBuilder();
+		String urlShow=urlPath + "/Report/DownLoadOfflineReport.jsf?fileName=" + fileName;
+		mailBody.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\"><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\"><title>PCN Email</title>");
+		mailBody.append("</head><body><p>Dear "+user.getName()+":</p>");
+	
+		mailBody.append("<p>Please click the URL link to download the report.</p>");
+		mailBody.append("<p><a target='_blank' href='" + urlPath + "/Report/DownLoadOfflineReport.jsf?fileName=" + fileName+">" + urlShow + "</p>");
+		mailBody.append("</body></html>");
+		String content = "Best Regards," + "<br/>";
+		content += sysCodeMaintSB.getEmailSignName(user.getDefaultBizUnit().getName())  
+				+ "<br/>" + sysCodeMaintSB.getEmailHotLine(user.getDefaultBizUnit().getName())
+				+ "<br/>" + "Email Box: " + sysCodeMaintSB.getEmailSignContent(user.getDefaultBizUnit().getName()); 
+		mailBody.append(content);
+		
+			MailInfoBean mib = new MailInfoBean();
+			String createTime = ReportsUtil.extractDateFromFileName(fileName).toString();
+			List<String> toList = new ArrayList<String>();
+			toList.add(user.getEmailAddress());
+
+			String subject = "WebQuote (" + user.getDefaultBizUnit().getName()
+					+ ") Offline Report ( Requestd at: " + createTime + " )";
+
+			mib.setMailSubject(subject);
+			mib.setMailContent(mailBody.toString());
+			mib.setMailTo(toList);
+			mib.setMailFrom(sysCodeMaintSB.getBuzinessProperty(
+					"OFFLINE_REPORT_FROM", user.getDefaultBizUnit().getName()));
+			
+			//mailUtilsSB.sendTextMail(mib);
+			mailUtilsSB.sendHtmlMail(mib);
+			//sendAttachedMail(mib);
+			}
+			catch (Exception e)
+			{
+				logger.log(Level.SEVERE,"Send email failed!, Exception message" + e.getMessage(),e);
+			    throw new WebQuoteException(e);
+			}
+
+			logger.log(Level.WARNING,"call sendEmail end");
+
+	}
+}

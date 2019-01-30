@@ -1,0 +1,353 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+<f:view contentType="text/html">
+	<h:head>
+		<f:facet name="first">
+			<meta http-equiv="X-UA-Compatible"  content="IE=edge"/>
+			<meta content='text/html; charset=UTF-8' http-equiv="Content-Type" />
+			<meta http-equiv="Cache-Control" Content="no-cache"/>
+			<meta http-equiv="Pragma" Content="no-cache"/>
+			<meta http-equiv="Expires" Content="0"/>   			
+			<title>#{dbResource['wq.header.rfqSubmission']}</title>
+		</f:facet>
+	</h:head>  
+<!-- 
+the logic flow is that
+case 1. enter sold to code -> auto show the customer name and customer type -> the past end customer auto display in selection box -> the past project auto display -> the past application auto display
+case 2. enter the customer name -> auto show the sold to code and customer type. if not find, prompt the message (is it a new customer ?) under the input box of customer name. When the sales click the "next" check :
+	2.a. if sold to code cannot be found, the checkbox of "new customer" must be checked
+
+ -->
+	<h:body>	
+		<h:form id="form_rfqSubmission"> 
+			<p:growl id="RfqSubmissionGrowlResult" sticky="true" showDetail="true"/> 				
+			<p:panel header="#{dbResource['wq.label.resultRFQSubmision']}" style="font-size:12pt; margin-top:8px; padding:0px 3px 0px 3px;">
+				<p:messages for="message_invalid_rfq_submit" showDetail="true" autoUpdate="true" closable="true" />			
+				<h2 style="padding:0px 0px 0px 6px">#{dbResource['wq.header.rfqSubmission']} : #{dbResource['wq.label.autoQuote']}: <h:outputText value="#{rfqSubmissionMB.aqQuoteCount}" /> records.</h2>
+				<h2 style="padding:0px 0px 0px 6px">#{dbResource['wq.header.rfqSubmission']} : #{dbResource['wq.label.pendingQuote']}: <h:outputText value="#{rfqSubmissionMB.qcQuoteCount}" /> records.</h2>
+				<h2 style="padding:0px 0px 0px 6px">#{dbResource['wq.header.rfqSubmission']} : #{dbResource['wq.label.autoTrnsfrPMQuote']}: <h:outputText value="#{rfqSubmissionMB.itQuoteCount}" /> records.</h2>
+				<h2 style="padding:0px 0px 0px 6px">#{dbResource['wq.header.rfqSubmission']} : #{dbResource['wq.label.draftQuote']}: <h:outputText value="#{rfqSubmissionMB.draftQuoteCount}" /> records.</h2>
+			</p:panel> 
+			<p:panel header="#{dbResource['wq.label.submtRFQDetails']}" style="font-size:12pt">
+				<p:messages for="message_mandatory_is_empty" showDetail="true" autoUpdate="true" closable="true" />										
+				<h:panelGrid columns="18" cellpadding="0" style="padding:0px 3px 0px 3px;">
+						
+					<h:outputText value="#{dbResource['wq.label.salesmanEmpCode']}" style="padding:0px 0px 0px 3px"/>
+					<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+					<h:outputText value=":" style="padding:0px 3px 0px 0px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.salesEmployeeNumber)}</h3>										
+	
+					<h:outputText value="#{dbResource['wq.label.salesman']}" style="padding:0px 0px 0px 3px"/>
+					<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+					<h:outputText value=":" style="padding:0px 3px 0px 0px"/>							
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.salesEmployeeName)}</h3>										
+
+					<h:outputText value="#{dbResource['wq.label.team']}: " style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.team)}</h3>										
+				
+					<h:outputText value="#{dbResource['wq.label.segment']}" style="padding:0px 0px 0px 3px"/>
+					<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+					<h:outputText value=":" style="padding:0px 3px 0px 0px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.enquirySegment)}</h3>									
+										
+				</h:panelGrid>			
+				<h:panelGrid columns="12" cellpadding="0" style="padding:0px 3px 0px 3px;">
+												
+					<h:outputText value="#{dbResource['wq.label.SoldToCode']}:" style="padding:0px 3px 0px 3px"/>											
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.soldToCustomerNumber)}</h3>				
+                          							
+					<h:outputText value="#{dbResource['wq.label.SoldToParty']}" style="padding:0px 0px 0px 3px"/>
+					<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+					<h:outputText value=":" style="padding:0px 3px 0px 0px"/>							
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.soldToCustomerName)}</h3>				
+																						
+					<h:outputText value="#{dbResource['wq.label.chineseCustName']}:" style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.chineseSoldToCustomerName)}</h3>				
+				
+					<h:outputText value="#{dbResource['wq.label.custmrType']}" style="padding:0px 0px 0px 3px"/>
+					<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+					<h:outputText value=":" style="padding:0px 3px 0px 0px"/>							
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.customerType)}</h3>				
+					
+				</h:panelGrid>			
+				<h:panelGrid columns="8" cellpadding="0" style="padding:0px 3px 0px 3px;">
+
+					<h:outputText value="#{dbResource['wq.label.ShipToCode']}:" style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.shipToCustomerNumber)}</h3>																		
+					
+					<h:outputText value="#{dbResource['wq.label.ShipToParty']}:" style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.shipToCustomerName)}</h3>	
+																						
+					<h:outputText value="#{dbResource['wq.label.EndCustomerCode']}:" style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.endCustomerNumber)}</h3>	
+					                            																												
+					<h:outputText value="#{dbResource['wq.label.endCust']}:" style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.endCustomerName)}</h3>	
+					                            					
+                      </h:panelGrid>			
+				<h:panelGrid columns="4" cellpadding="0" style="padding:0px 3px 0px 3px;">
+				
+					<h:outputText value="#{dbResource['wq.label.projectName']}:" style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.projectName)}</h3>																
+																										
+					<h:outputText value="#{dbResource['wq.label.app']}:" style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.application)}</h3>																
+
+				</h:panelGrid>	
+											
+				<h:panelGrid columns="10" cellpadding="0" style="padding:0px 3px 0px 3px;">
+				
+				<h:outputText value="#{dbResource['wq.label.designRegion']}:" style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.designRegion)}</h3>
+
+					<h:outputText value="#{dbResource['wq.label.designLoc']}:" style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.designLocation)}</h3>													
+					
+					<h:outputText value="#{dbResource['wq.label.MpSchedule']}:" style="padding:0px 3px 0px 3px"/>							
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.mpSchedule)}</h3>		
+												
+					<h:outputText value="#{dbResource['wq.label.ppSchedule']}:" style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.ppSchedule)}</h3>							
+					
+					<h:outputText value="#{dbResource['wq.label.reqRef']}:" style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.yourReference)}</h3>				
+					
+					
+					<h:outputText value="#{dbResource['wq.label.CopyToCS']}:" style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.copyToCs)}</h3>										
+
+				</h:panelGrid>			
+				<h:panelGrid columns="2" cellpadding="0" style="padding:0px 3px 0px 3px;">							
+
+					<h:outputText value="#{dbResource['wq.label.remark']}:" style="padding:0px 3px 0px 3px"/>
+					<h3 class="confirmData">#{rfqSubmissionMB.rfqHeader.remarks}</h3>	
+
+				</h:panelGrid>			
+				<h:panelGrid columns="8" cellpadding="0" style="padding:0px 3px 0px 3px;">							
+				
+					<h:outputText value="#{dbResource['wq.label.DesignInCat']}" style="padding:0px 0px 0px 3px"/>
+					<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+					<h:outputText value=":" style="padding:0px 3px 0px 0px"/>	
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.designInCat)}</h3>	
+					
+					<h:outputText value="#{dbResource['wq.label.QuoteType']}" style="padding:0px 0px 0px 3px"/>
+					<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+					<h:outputText value=":" style="padding:0px 3px 0px 0px"/>	
+					<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.quoteType)}</h3>							
+												
+				</h:panelGrid>
+											
+			</p:panel>					
+		
+			<p:panel header="#{dbResource['wq.label.submtRFQItems']}">							
+				<p:messages for="message_invalid_rfq_exist" showDetail="true" autoUpdate="true" closable="true" />
+				<p:messages for="message_rfq_mandatory_is_empty" showDetail="true" autoUpdate="true" closable="true" />
+				
+		        <p:commandLink value="#{dbResource['wq.button.xlsDownload']}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">  
+		        	<p:fileDownload value="#{rfqSubmissionMB.rfqSubmissionResultReport}" />  	        
+		        </p:commandLink>				
+			    <p:dataTable	var="confirmation_quoteItem"
+			    				value="#{rfqSubmissionMB.resultQuoteItems}" 		
+			    				rowIndexVar="rowIndex"
+  								rowKey="#{confirmation_quoteItem.quoteNumber}" 				    				
+			                 	id="datatable_confirmation_rfqSubmission"                 	
+			    				paginator="true" 
+			    				rows="5"
+			    				rowsPerPageTemplate="5,10,15"
+			                 	paginatorPosition="top"						    				
+				                scrollable="true"
+				                emptyMessage="#{dbResource['wq.message.noRecordFound']}." >								
+
+			        <p:column headerText="#{dbResource['wq.label.no']}" id="rowNumber" styleClass="column_icon">
+				        #{rowIndex + 1}
+			        </p:column>
+			        
+			        <p:column headerText="#{dbResource['wq.header.form']} #" sortBy="#{confirmation_quoteItem.quote.formNumber}" filterBy="#{confirmation_quoteItem.quote.formNumber}" id="confirmation_formNumber"  styleClass="column_formNumber readOnlyCell">
+						<h:outputText value="#{confirmation_quoteItem.quote}" converter="webquote.rfq.FormNumber" escape="false" />	
+			        </p:column>				        						        
+
+			        <p:column headerText="#{dbResource['wq.label.avnetQuote']} #" sortBy="#{confirmation_quoteItem.quoteNumber}" filterBy="#{confirmation_quoteItem.quoteNumber}" id="confirmation_rfqCode"  styleClass="column_rfqCode readOnlyCell">
+						<h:outputText value="#{confirmation_quoteItem.quoteNumber}" rendered="#{confirmation_quoteItem.status == 'AQ' || rfqSubmissionMB.qco}" />			        
+			        </p:column>	
+			        
+			     <!--    <p:column headerText="First RFQ Code #" sortBy="#{confirmation_quoteItem.firstRfqCode}" filterBy="#{confirmation_quoteItem.firstRfqCode}" id="confirmation_firstRfqCode"  styleClass="column_rfqCode readOnlyCell">
+						<h:outputText value="#{confirmation_quoteItem.firstRfqCode}"  />			        
+			        </p:column>		 -->		        						        
+									
+			        <p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{confirmation_quoteItem.requestedMfr.name}" filterBy="#{confirmation_quoteItem.requestedMfr.name}" id="confirmation_mfr"  styleClass="column_mfr readOnlyCell">
+						<h:outputText value="#{confirmation_quoteItem.requestedMfr.name}" rendered="#{confirmation_quoteItem.requestedMfr != null}" />
+						<h:outputText value="#{confirmation_quoteItem.invalidMfr}" rendered="#{confirmation_quoteItem.requestedMfr == null}" />
+			        </p:column>
+						
+			        <p:column headerText="#{dbResource['wq.label.requested']}&lt;br/&gt;#{dbResource['wq.label.pn']}" sortBy="#{confirmation_quoteItem.requestedPartNumber}" filterBy="#{confirmation_quoteItem.requestedPartNumber}" id="confirmation_requiredPartNumber" styleClass="column_fullMfrPart readOnlyCell">
+						<h:outputText value="#{confirmation_quoteItem.requestedPartNumber}" rendered="#{confirmation_quoteItem.requestedPartNumber != null}" />
+						<h:outputText value="#{confirmation_quoteItem.invalidPartNumber}" rendered="#{confirmation_quoteItem.requestedPartNumber == null}" />
+			        </p:column>
+
+			        <p:column headerText="#{dbResource['wq.label.avnetQuoted']}&lt;br/&gt;#{dbResource['wq.label.pn']}" sortBy="#{confirmation_quoteItem.quotedMaterial.fullMfrPartNumber}" filterBy="#{confirmation_quoteItem.quotedMaterial.fullMfrPartNumber}" id="confirmation_quotedPartNumber" styleClass="column_fullMfrPart readOnlyCell">
+						<h:outputText value="#{confirmation_quoteItem.quotedMaterial.fullMfrPartNumber}" rendered="#{confirmation_quoteItem.status == 'AQ'}" />			        				                
+			        </p:column>
+			        		  		        
+			        <p:column headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}" sortBy="#{confirmation_quoteItem.requestedQty}" filterBy="#{confirmation_quoteItem.requestedQty}" id="confirmation_requiredQty" styleClass="column_requiredQty readOnlyCell">
+						#{rfqSubmissionMB.convertNumber(confirmation_quoteItem.requestedQty)} 
+			        </p:column>
+			
+			        <p:column headerText="#{dbResource['wq.label.EAU']}" sortBy="#{confirmation_quoteItem.eau}" filterBy="#{confirmation_quoteItem.eau}" id="confirmation_eau" styleClass="column_eau readOnlyCell">
+						#{rfqSubmissionMB.convertNumber(confirmation_quoteItem.eau)}
+			        </p:column>
+			        <p:column headerText="#{dbResource['wq.label.salesCostPart']}" sortBy="#{confirmation_quoteItem.salesCostFlag}" filterBy="#{confirmation_quoteItem.salesCostFlag}" id="confirmation_salesCostFlag" styleClass="column_eau readOnlyCell">
+						#{confirmation_quoteItem.eau == '1'?'Yes':'No'}
+			        </p:column>
+			          <p:column headerText="#{dbResource['wq.label.salesCost']}" sortBy="#{confirmation_quoteItem.salesCost}" filterBy="#{confirmation_quoteItem.salesCost}" id="confirmation_salescost" styleClass="column_targetResale readOnlyCell">
+			            <h:outputText value="#{rfqSubmissionMB.convertDoubleToString(confirmation_quoteItem.salesCost)}" rendered="#{confirmation_quoteItem.salesCost gt 0}"/>
+			        </p:column>				          						        						        						        
+			        <p:column headerText="#{dbResource['wq.label.trgResale']}&lt;br/&gt;(#{dbResource['wq.label.unitPrice']})" sortBy="#{confirmation_quoteItem.targetResale}" filterBy="#{confirmation_quoteItem.targetResale}" id="confirmation_targetResale" styleClass="column_targetResale readOnlyCell">
+			            <h:outputText value="#{rfqSubmissionMB.convertDoubleToString(confirmation_quoteItem.targetResale)}" rendered="#{confirmation_quoteItem.targetResale gt 0}"/>
+			        </p:column>
+      
+           <p:column headerText="#{dbResource['wq.label.suggestedResale']}" sortBy="#{confirmation_quoteItem.suggestedResale}" filterBy="#{confirmation_quoteItem.suggestedResale}" id="confirmation_suggestedResale" styleClass="column_targetResale readOnlyCell">
+			            <h:outputText value="#{rfqSubmissionMB.convertDoubleToString(confirmation_quoteItem.suggestedResale)}" rendered="#{confirmation_quoteItem.suggestedResale gt 0}"/>
+			        </p:column>
+      
+			        <p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quoted']}&lt;br/&gt;#{dbResource['wq.label.price']}" sortBy="#{confirmation_quoteItem.quotedPrice}" filterBy="#{confirmation_quoteItem.quotedPrice}" id="confirmation_quotedPrice" styleClass="column_quotedPrice readOnlyCell">
+			        	<h:outputText value="#{rfqSubmissionMB.convertDoubleToString(confirmation_quoteItem.quotedPrice)}" rendered="#{confirmation_quoteItem.status == 'AQ'}"/>
+			        </p:column>
+
+			        <p:column headerText="#{dbResource['wq.label.status']}" sortBy="#{confirmation_quoteItem.status}" filterBy="#{confirmation_quoteItem.status}" id="confirmation_rfqStatus"  styleClass="column_rfqStatus readOnlyCell">
+						<h:outputText value="#{confirmation_quoteItem.status}" rendered="#{confirmation_quoteItem.status != 'DQ'}" />
+			        </p:column>	
+			        	        		
+			        <p:column headerText="#{dbResource['wq.label.spr']}" sortBy="#{confirmation_quoteItem.sprFlag}" filterBy="#{confirmation_quoteItem.sprFlag}" id="confirmation_specialPriceIndicator" styleClass="column_specialPriceIndicator">
+						<h:graphicImage url="./../resources/images/icon_tick.png" styleClass="iconLink" rendered="#{confirmation_quoteItem.sprFlag}" />  
+						<h:graphicImage url="./../resources/images/icon_cross.png" styleClass="iconLink" rendered="#{!confirmation_quoteItem.sprFlag}" />					        
+			        </p:column>					
+
+			        <p:column headerText="#{dbResource['wq.label.quoteStage']}" sortBy="#{confirmation_quoteItem.stage}" filterBy="#{confirmation_quoteItem.stage}" id="confirmation_stage"  styleClass="column_stage readOnlyCell">
+						#{confirmation_quoteItem.stage}  
+			        </p:column>	
+			        
+			        <p:column headerText="#{dbResource['wq.label.bmtAQ']}" sortBy="#{confirmation_quoteItem.bmtCheckedFlag}" filterBy="#{confirmation_quoteItem.bmtCheckedFlag}" id="confirmation_bmtCheckedFlag" styleClass="column_specialPriceIndicator">
+						<h:graphicImage url="./../resources/images/icon_tick.png" styleClass="iconLink" rendered="#{confirmation_quoteItem.bmtDescCode=='1'}" />  
+						<h:graphicImage url="./../resources/images/icon_cross.png" styleClass="iconLink" rendered="#{confirmation_quoteItem.bmtDescCode=='0'}" />					        
+			        </p:column>					
+			        
+			        	        		        						        
+			    </p:dataTable>
+			</p:panel>				
+			<p:panel header="#{dbResource['wq.label.listWidSameProjID']}" style="font-size:12pt">
+				
+		        <p:commandLink value="#{dbResource['wq.button.xlsDownload']}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">  
+		        	<p:fileDownload value="#{rfqSubmissionMB.drmsResultReport}" />  	        
+		        </p:commandLink>						        					
+			    <p:dataTable	var="restOfDrProject"
+				    				value="#{rfqSubmissionMB.restOfDrProjects}"
+				    				rowIndexVar="restOfDrProjects_rowIndex"
+				                 	id="datatable_drms_report"
+				                 	style="margin:0px 0px 0px 0px;"
+				                 	scrollable="true"
+				                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}." >		
+	        							                 		 
+				        <p:column headerText="#{dbResource['wq.label.no']}" id="restOfDrProject_rowNumber" styleClass="column_icon">
+					        #{restOfDrProjects_rowIndex + 1}
+				        </p:column>
+			       		
+				        <p:column headerText="#{dbResource['wq.label.salsOrg']}" id="drms_popup_salesOrg" styleClass="column_salesOrg">
+							#{restOfDrProject.drNedaItem.drNedaHeader.drProjectHeader.salesOrgBean.name}
+				        </p:column>		
+				        							  	
+				        <p:column headerText="#{dbResource['wq.label.supplier']}&lt;br/&gt;#{dbResource['wq.label.DR']}#" id="drms_popup_supplierDrNumber" styleClass="column_supplierDrNumber">
+							#{restOfDrProject.drNedaItem.drNumber}
+				        </p:column>
+	    
+				        <p:column headerText="#{dbResource['wq.label.project']}&lt;br/&gt;#{dbResource['wq.label.name']}" id="drms_popup_projectName" styleClass="column_projectName">
+							#{restOfDrProject.drNedaItem.drNedaHeader.drProjectHeader.projectName}
+				        </p:column>
+ 
+				        <p:column headerText="#{dbResource['wq.label.description']}" id="drms_popup_projectDescription" styleClass="column_description">
+							#{restOfDrProject.drNedaItem.drNedaHeader.drProjectHeader.projectDescription}
+				        </p:column>
+				         
+				        <p:column headerText="#{dbResource['wq.label.part']}&lt;br/&gt;#{dbResource['wq.label.mask']}" id="drms_popup_partMask" styleClass="column_partMask">
+					        #{restOfDrProject.drNedaItem.partMask}
+				        </p:column>		
+				        
+				        <p:column headerText="#{dbResource['wq.label.projectID']}" id="drms_popup_projectId" styleClass="column_projectId">
+					        #{restOfDrProject.drNedaItem.drNedaHeader.drProjectHeader.projectId}
+				        </p:column>							        
+
+				        <p:column headerText="#{dbResource['wq.label.nedaID']}" id="drms_popup_nedaId" styleClass="column_nedaId">
+                            #{restOfDrProject.drNedaItem.id.nedaId}
+				        </p:column>	
+				          
+				        <p:column headerText="#{dbResource['wq.label.design']}&lt;br/&gt;#{dbResource['wq.label.stage']}" id="drms_popup_nedaDesignStage2" width="60">
+					        #{restOfDrProject.drNedaItem.drNedaHeader.nedaDesignStage}
+				        </p:column>		
+   
+				        <p:column headerText="#{dbResource['wq.label.creation']}&lt;br/&gt;#{dbResource['wq.label.date']}" id="drms_popup_creationDate" styleClass="column_creationDate">
+							#{rfqSubmissionMB.convertDateToString(restOfDrProject.drNedaItem.createdOn)}
+				        </p:column>							        										      
+				       
+				        <p:column headerText="#{dbResource['wq.label.FAE']}" id="drms_popup_faeName" styleClass="column_fae">
+							#{restOfDrProject.drNedaItem.faeName}
+				        </p:column>							        	
+			
+				        <p:column headerText="#{dbResource['wq.label.group']}&lt;br/&gt;#{dbResource['wq.label.projectID']}" id="drms_popup_groupProjectId" styleClass="column_projectId">
+					        #{restOfDrProject.drNedaItem.drNedaHeader.drProjectHeader.groupProjectId}
+				        </p:column>		
+		
+				        <p:column headerText="#{dbResource['wq.label.supplier']}&lt;br/&gt;#{dbResource['wq.label.name']}" id="drms_popup_supplierName" styleClass="column_supplierName">
+					        #{restOfDrProject.drNedaItem.supplierName}
+				        </p:column>		
+				        								
+				        <p:column headerText="#{dbResource['wq.label.coreID']}" id="drms_popup_coreId" styleClass="column_coreId">
+					        #{restOfDrProject.drNedaItem.coreId}
+				        </p:column>	
+				        						        						        							        			
+				        <p:column headerText="#{dbResource['wq.label.drPrice']}" id="drms_popup_drPrice" styleClass="column_drPrice">
+							#{restOfDrProject.drNedaItem.suggestedPrice}
+				        </p:column>
+					        		
+				        <p:column headerText="#{dbResource['wq.label.Qty']}&lt;br/&gt;#{dbResource['wq.label.perBoard']}" id="drms_popup_qtyPerBoard" styleClass="column_qtyPerBoard">
+							#{rfqSubmissionMB.convertNumber(restOfDrProject.drNedaItem.qtyPerBoard)}
+				        </p:column>
+				            
+				        <p:column headerText="#{dbResource['wq.label.production']}&lt;br/&gt;#{dbResource['wq.label.date']}" id="drms_popup_productionDate" styleClass="column_productionDate">
+							#{rfqSubmissionMB.convertDateToString(restOfDrProject.drNedaItem.drNedaHeader.productionDate)}
+				        </p:column>								        
+				        				  		        							        												
+				        <p:column headerText="#{dbResource['wq.label.assembly']}&lt;br/&gt;#{dbResource['wq.label.Qty']}" id="drms_popup_assemblyQty" styleClass="column_assemblyQty">
+					        #{rfqSubmissionMB.convertNumber(restOfDrProject.drNedaItem.drNedaHeader.assemblyQty)}
+				        </p:column>	
+
+				        <p:column headerText="#{dbResource['wq.header.din']}$" id="drms_popup_dinCost" styleClass="column_drPrice">
+				        10.0
+				        </p:column>								       		        				        					        					        					        
+		        							        					
+				       <!--  <p:column headerText="Additional&lt;br/&gt;Info 3" id="drms_popup_additionalInfo3" styleClass="column_description">
+							#{restOfDrProject.drNedaItem.additionalInfo3}
+				        </p:column>							      							      -->
+				    </p:dataTable>  					
+			</p:panel>
+		</h:form>		 
+		<p:dialog modal="true" widgetVar="statusDialog" header="#{dbResource['wq.message.plsWait']} ..." draggable="false" closable="false" resizable="false">
+		    <p:graphicImage value="./../resources/images/ajaxloadingbar.gif" />
+		</p:dialog>		
+	</h:body>
+</f:view>
+
+<script type="text/javascript">  
+function start() {   
+	PF('statusDialog').show();   
+}   
+ 
+function stop() {   
+	PF('statusDialog').hide();   
+}   
+</script>
+
+</html>

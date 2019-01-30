@@ -1,0 +1,346 @@
+package com.avnet.emasia.webquote.quote.ejb;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.mail.MessagingException;
+import javax.naming.NamingException;
+import javax.persistence.NoResultException;
+import javax.persistence.OptimisticLockException;
+import javax.persistence.TypedQuery;
+
+import org.apache.commons.lang.StringUtils;
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
+import com.avnet.emasia.webquote.constants.ActionEnum;
+import com.avnet.emasia.webquote.constants.BmtFlagEnum;
+import com.avnet.emasia.webquote.constants.StatusEnum;
+import com.avnet.emasia.webquote.entity.Attachment;
+import com.avnet.emasia.webquote.entity.BmtFlag;
+import com.avnet.emasia.webquote.entity.DataAccess;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.QuoteItemDesign;
+import com.avnet.emasia.webquote.entity.Role;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.user.ejb.MaterialTypeSB;
+import com.avnet.emasia.webquote.user.ejb.ProgramTypeSB;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.common.BaseSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.webquote.quote.ejb.utility.EJBQuoteUtility;
+
+/**
+ * 
+ * @author 041863
+ */
+@Stateless
+public class BmtQuoteSB extends BaseSB<QuoteItemDesign> implements Serializable{
+
+	private static final long serialVersionUID = 1L;
+	@EJB
+	private UserSB userSB;
+	@EJB
+	private MaterialTypeSB materialTypeSB;
+	@EJB
+	private ProgramTypeSB programTypeSB;
+
+	@Override
+	protected String defaultLazyDataQuery() {
+		return "select o FROM " + QuoteItemDesign.class.getSimpleName() + " o where 1=1 ";
+	}
+
+	public String getDataAccess(User user) {
+		List<DataAccess> das = userSB.findAllDataAccesses(user);
+		if(das == null || das.isEmpty()){
+			return " and 1 = 2 ";
+		}
+		StringBuilder finalSql = new StringBuilder();
+		
+		StringBuilder tempSql = new StringBuilder();
+		List<StringBuilder> allSql = new ArrayList<StringBuilder>();
+		for (DataAccess da : das) {
+			if (da.getManufacturer() != null) {
+				tempSql.append(" and o.quoteItem.requestedMfr.id = ").append(da.getManufacturer().getId());
+			}
+			if (da.getMaterialType() != null) {
+				tempSql.append(tempSql.length() > 0 ? " and ":"").append(" o.quoteItem.materialTypeId = '").append(da.getMaterialType().getName()).append("'");
+			}
+			if (da.getProductGroup() != null) {
+				tempSql.append(tempSql.length() > 0 ? " and ":"").append(" o.quoteItem.productGroup2.id = ").append(da.getProductGroup().getId());
+			}
+			if (da.getProgramType() != null) {
+				tempSql.append(tempSql.length() > 0 ? " and ":"").append(" o.quoteItem.programType = '").append(da.getProgramType().getName()).append("'");
+			}
+			if (da.getTeam() != null) {
+				tempSql.append(tempSql.length() > 0 ? " and ":"").append(" o.quoteItem.quote.team.name = '").append(da.getTeam().getName()).append("'");
+			}
+			
+			if(tempSql.length() > 0){
+				allSql.add(tempSql);
+				tempSql = new StringBuilder();
+			}
+		}
+		
+		if(!allSql.isEmpty()){
+			finalSql.append(" and (");
+			for(StringBuilder sb : allSql){
+				finalSql.append("( 1=1 ").append(sb).append(") or ");
+			}
+			if(finalSql.toString().endsWith("or ")){
+				finalSql.replace(finalSql.length() - 3, finalSql.length(), "");
+			}
+			finalSql.append(")");
+		} 
+		
+		return finalSql.toString();
+	}
+
+	public boolean batchSaveBMTObject(String employeeId,User user, Set<QuoteItemDesign> quoteItemDesigns, HashMap<Long, List<Attachment>> atts,ActionEnum action) {
+		LOGGER.info("["+employeeId+"] " + " batchSaveBMTObject,Action:"+action.name());
+		try {
+			if (quoteItemDesigns != null && !quoteItemDesigns.isEmpty()) {
+				LOGGER.info("["+employeeId+"] " + "the length of Quote Item Design is:"+quoteItemDesigns.size());
+				for (QuoteItemDesign qid : quoteItemDesigns) {
+					LOGGER.info("["+employeeId+"] " + "the Quote Item Design Id is:"+qid.getId());
+					if(qid.getQuoteItem() !=null){
+						LOGGER.info("["+employeeId+"] " + "the Quote Number getting from Quote Item Design Id is:"+qid.getQuoteItem().getQuoteNumber());
+					}else{
+						LOGGER.info("["+employeeId+"] " + "the Quote item  getting from Quote Item Design Id is null");
+					}
+					qid.getQuoteItem().setLastUpdatedBmt(employeeId);
+					qid.getQuoteItem().setLastUpdatedBy(employeeId);
+					qid.getQuoteItem().setLastUpdatedName(user.getName());
+					qid.getQuoteItem().setLastUpdatedOn(new Date());
+					qid.getQuoteItem().setLastBmtUpdateTime(new Date());
+					qid.getQuoteItem().setAction(action.name());
+					qid.setLastUpdatedTime(new Date());
+					qid.setLastUpdatedBy(employeeId);
+					
+					if (atts != null) {
+						List<Attachment> ats = atts.get(qid.getId());
+						if (ats != null) {
+							for (Attachment att : ats) {
+								att.setQuoteItem(qid.getQuoteItem());
+							}
+							qid.getQuoteItem().getAttachments().addAll(ats);
+						}
+					}
+					if(qid.getBmtFlag() == null){
+						BmtFlag bmtFlag = new BmtFlag();
+						bmtFlag.setBmtFlagCode(BmtFlagEnum.EMPTY.code());
+						qid.setBmtFlag(bmtFlag);
+					}
+					em.merge(qid);
+				}
+				em.flush();
+			} else if (atts != null && !atts.isEmpty() && !atts.values().isEmpty()) {
+				LOGGER.info("["+employeeId+"] " + "Program jump in the else if part...");
+				LOGGER.info("["+employeeId+"] " + "the length of Attachment is:"+atts.size());
+				for (Long qidId : atts.keySet()) {
+					if (atts.get(qidId) != null) {
+						QuoteItemDesign qid = find(qidId);
+						if (qid != null) {
+							qid.setLastUpdatedTime(new Date());
+							qid.setLastUpdatedBy(employeeId);
+							qid.getQuoteItem().setLastUpdatedOn(new Date());
+							qid.getQuoteItem().setLastUpdatedBmt(employeeId);
+							qid.getQuoteItem().setLastUpdatedBy(employeeId);
+							qid.getQuoteItem().setLastUpdatedName(user.getName());
+							qid.getQuoteItem().setLastBmtUpdateTime(new Date());
+							
+							LOGGER.info("["+employeeId+"] " + "the Quote Item Design Id is:"+qid.getId());
+							if(qid.getQuoteItem() !=null){
+								LOGGER.info("["+employeeId+"] " + "the Quote Number getting from Quote Item Design Id is:"+qid.getQuoteItem().getQuoteNumber());
+							}else{
+								LOGGER.info("["+employeeId+"] " + "the Quote item  getting from Quote Item Design Id is null");
+							}
+							List<Attachment> ats = atts.get(qid.getId());
+							for (Attachment att : ats) {
+								att.setQuoteItem(qid.getQuoteItem());
+							}
+							qid.getQuoteItem().getAttachments().addAll(ats);
+							if(qid.getBmtFlag() == null){
+								BmtFlag bmtFlag = new BmtFlag();
+								bmtFlag.setBmtFlagCode(BmtFlagEnum.EMPTY.code());
+								qid.setBmtFlag(bmtFlag);
+							}
+							em.merge(qid);
+						}
+					}
+				}
+				em.flush();
+			}
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Error occured for employee id: "+employeeId+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);;
+			
+			return false;
+		}
+
+		return true;
+	}
+
+	@EJB
+	private MailUtilsSB mailUtilsSB;
+
+	public boolean doTransferToQc(List<QuoteItemDesign> transferToQcList, User defaultBizUnit) throws MessagingException, WebQuoteException{
+		LOGGER.info("Call function doTransferToQc Begin.....");
+		try {
+			for (QuoteItemDesign qid : transferToQcList) {
+				LOGGER.info(defaultBizUnit.getEmployeeId() + " BMT Transfer To QC, Quote#: "+qid.getQuoteItem().getQuoteNumber());
+				QuoteItem item = findNoCache(QuoteItem.class, qid.getQuoteItem().getId());
+				item.setLastUpdatedOn(new Date());
+				item.setLastUpdatedBy(defaultBizUnit.getEmployeeId());
+				item.setLastUpdatedName(defaultBizUnit.getName());
+				item.setLastUpdatedBmt(defaultBizUnit.getEmployeeId());
+				item.setLastBmtUpdateTime(new Date());
+				if (item.getStatus().equals(StatusEnum.BQ.name())) {
+					item.setStatus(StatusEnum.RBQ.name());
+				} else if (item.getStatus().equals(StatusEnum.BIT.name())) {
+					item.setStatus(StatusEnum.RBIT.name());
+				}
+				//added parameter ActionEnum for BMT WorkingPlatform by damon@20160818
+				item.setAction(ActionEnum.BMT_SEND_TO_QC.name());
+				em.merge(item);
+			}
+			LOGGER.info("Call function doTransferToQc end, and return ture.....");			
+			return true;
+		} catch (Exception e) {
+			throw new WebQuoteException(CommonConstants.COMMON_TRANSFER_TO_QC_FAILED);
+		}
+	}
+    
+	@Asynchronous
+    @TransactionTimeout(value = 30000, unit = TimeUnit.SECONDS) 
+	public  void transferToQcSendEmail(final List<QuoteItemDesign> transferToQcList, User user){
+		List<String> to = new ArrayList<>();
+		try{
+		for (QuoteItemDesign qid : transferToQcList) {
+			List<User> receivers = findReceivers(qid);
+			
+			for (User receiver : receivers) {
+				to.add(receiver.getEmailAddress());
+			}
+			StringBuilder sb = new StringBuilder("");
+			MailInfoBean mail = new MailInfoBean();
+			mail.setMailFrom(user.getEmailAddress());
+			
+			mail.setMailSubject(qid.getQuoteItem().getRequestedMfr().getName() + " - " + qid.getQuoteItem().getQuote().getFormNumber()
+					+ " - Need Yr Action: BMT respond to IT to QC");
+				mail.setMailTo(to);
+
+
+				sb.append("Dear QC, ");
+				sb.append("\n\n\n");
+				sb.append("Remarks from BMT: ").append(qid.getQuoteItem().getDrmsUpdateFailedDesc());
+				sb.append("\n\n\n");
+				sb.append("This is a Response to Internal Transfer RFQs from BMT.");
+				sb.append("\n\n\n");
+				sb.append("Form Number: ").append(qid.getQuoteItem().getQuote().getFormNumber());
+				sb.append("\n\n");
+				sb.append("Quote Number: ").append(qid.getQuoteItem().getQuoteNumber());
+				sb.append("\n\n");
+				sb.append("End Customer: ").append(qid.getQuoteItem().getEndCustomerFullName());
+				sb.append("\n\n");
+				sb.append("Quoted Part Number: ").append(qid.getQuoteItem().getRequestedPartNumber());
+				sb.append("\n\n");
+				sb.append("BMT Flag: ").append(qid.getBmtFlag() != null ? qid.getBmtFlag().getDescription() : "");
+
+				sb.append("\n\n\n");
+				sb.append("Regards\n\n");
+				sb.append("BMT");
+
+				mail.setMailContent(sb.toString());
+//				LOGGER.log(Level.INFO, "email content: \n" + sb.toString());
+
+				mailUtilsSB.sendTextMail(mail);
+				to = new ArrayList<String>();
+			}
+		LOGGER.info("Sending emails for user["+user.getEmployeeId()+"] TranferToQC action, End");
+		}catch(Exception e){
+			try{
+				mailUtilsSB.sendErrorEmail("Wrong email address: "+ StringUtils.join(to,','), "Transfer to QC error on BMT working platform page");
+			}catch (Exception e2) {
+				LOGGER.severe("Sending email failed ,from: " + user.getName() + " " + user.getEmailAddress() +" to: " + StringUtils.join(to,','));
+				 LOGGER.log(Level.SEVERE, "Sending email failed ,from: " + user.getName() + " " + user.getEmailAddress() +" to: " + StringUtils.join(to,',')+", "
+				 		+ "Reason for failure: "+e2.getMessage(), e2);
+			}
+			/*LOGGER.log(Level.SEVERE, e.getMessage(), e);*/
+			//throw e;
+		}
+	}
+
+	private List<User> findReceivers(QuoteItemDesign vo) {
+		List<Object[]> dataAccessAndBizUnits = new ArrayList<Object[]>();
+		QuoteItem item = vo.getQuoteItem();
+		EJBQuoteUtility.findReceiver(dataAccessAndBizUnits, item, materialTypeSB, programTypeSB  );
+		List<Role> roles = new ArrayList<>();
+		Role role = findRoleByName(QuoteSBConstant.ROLE_QC_PRICING);
+		roles.add(role);
+		List<User> receivers = userSB.findByDataAccess(dataAccessAndBizUnits, roles);
+		if(receivers == null || receivers.isEmpty()){
+			List<Role> rolesQc = new ArrayList<>();
+			Role roleQc = findRoleByName(QuoteSBConstant.ROLE_QC_OPERATION);
+			rolesQc.add(roleQc);
+			receivers = userSB.findByDataAccess(dataAccessAndBizUnits, rolesQc);			
+		}
+		return receivers;
+	}
+
+	public Role findRoleByName(String name) {
+		TypedQuery<Role> query = em.createQuery("select r from Role r where r.name=:name", Role.class);
+		query.setParameter("name", name);
+		Role role = null;
+		try {
+			role = query.getSingleResult();
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Error occured, Multiple roles were found for role name " + name + ", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e));
+		}
+		return role;
+
+	}
+
+	public void batchSave(List<QuoteItemDesign> items) {
+		for (QuoteItemDesign qid : items) {
+			qid.getQuoteItem().setAction(ActionEnum.BMT_EXCEL_UPLOAD.name());
+			em.merge(qid);
+		}
+	}
+
+	public QuoteItemDesign findByQuoteNumber(String quoteNumber,User user) throws WebQuoteException{
+		try{
+			String dataAccess = getDataAccess(user);
+			
+			StringBuilder jpql = new StringBuilder("select o from QuoteItemDesign o where o.quoteItem.quoteNumber = :quoteNumber ");
+			jpql.append(dataAccess);
+			if (!user.getBizUnits().isEmpty()) {
+				jpql.append(" and o.quoteItem.quote.bizUnit in :bizUnits ");
+			}
+			
+			TypedQuery<QuoteItemDesign> query = em.createQuery(jpql.toString(), QuoteItemDesign.class);
+			query.setParameter("quoteNumber", quoteNumber);
+			if (!user.getBizUnits().isEmpty()) {
+				query.setParameter("bizUnits", user.getBizUnits());
+			}
+			
+			return query.getSingleResult();			
+		}catch(NoResultException e){
+			throw new WebQuoteException(CommonConstants.COMMON_QUOTE_NUMBER_NOT_FOUND,new Object[]{quoteNumber});
+		}catch(Exception e){
+			throw new WebQuoteException(CommonConstants.COMMON_FIND_QUOTE_NUMBER_ERROR);
+		}
+	}
+}

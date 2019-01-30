@@ -1,0 +1,212 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+			xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="style-005.css" />
+	<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+		<p:messages id="errorMessage" escape="false" closable="true" autoUpdate="true"/>
+
+		<h:form id="orderOnHandForm">
+			<p:accordionPanel id = "accordionPannel1">
+				<p:tab title="#{dbResource['wq.label.orderOnHandSearch']}">
+				
+				<h:panelGrid id="display1" columns="2" >
+					
+					<h:panelGrid id="display2"   >
+						<h:panelGrid id="display2_0" columns="6" cellpadding="0" cellspacing="9">
+							<h:outputText value="#{dbResource['wq.label.periodType']}:"  escape="false" />
+							<h:selectOneMenu id="oohReportMB_periodType" value="#{oohReportMB.criteria.searchQuoteType}" style="width:80%;">
+									<f:selectItems value="#{oohReportMB.quotePeriodSelectList}" />
+							</h:selectOneMenu>
+							<h:outputText value="&#160;#{dbResource['wq.label.cust']}:"  escape="false"  />
+							<p:inputText value="#{oohReportMB.criteria.customer}" style="width:80%"/>	
+
+							<h:selectOneRadio id="searchCustomerType" value="#{oohReportMB.criteria.searchCustomerType}" layout="lineDirection" >  
+								  		<f:selectItem itemLabel="#{dbResource['wq.label.SoldToCode']}" itemValue="0" />  
+								  		<f:selectItem itemLabel="#{dbResource['wq.label.SoldToParty']}" itemValue="1" />  
+							</h:selectOneRadio> 
+							<h:panelGrid></h:panelGrid>
+								
+							<h:outputText value="#{dbResource['wq.label.BURegion']}:"  escape="false" />
+							<h:selectOneMenu id="oohReportMB_bizUnit" value="#{oohReportMB.criteria.bizUnit}" style="width:80%;">
+									<f:selectItems value="#{oohReportMB.bizUnitSelectList}" />
+									 <p:ajax event="change" listener="#{oohReportMB.changeBizUnit}" update=":orderOnHandForm:accordionPannel1:display1"/>  
+							</h:selectOneMenu>
+							
+							
+							<h:outputText value="#{dbResource['wq.label.salesMgr']}:"  escape="false" />
+							<h:selectOneMenu id="oohReportMB_salesMgr" value="#{oohReportMB.criteria.salesMgr}" style="width:80%;">
+									<f:selectItems value="#{oohReportMB.salesMgrSelectList}" />
+							</h:selectOneMenu>
+							
+					 		
+					 		<h:outputText value="#{dbResource['wq.label.salesTeam']}:"  escape="false" />
+							<h:selectOneMenu id="oohReportMB_salesTeam" value="#{oohReportMB.criteria.salesTeam}" style="width:80%;">
+									<f:selectItems value="#{oohReportMB.salesTeamSelectList}" />
+									<p:ajax event="change" listener="#{oohReportMB.changeTeam}" update=":orderOnHandForm:accordionPannel1:oohReportMB_salesUser"/> 
+							</h:selectOneMenu>
+							
+					 
+							<h:outputText value="#{dbResource['wq.label.sales']}:"  escape="false" />
+							<h:selectOneMenu id="oohReportMB_salesUser" value="#{oohReportMB.criteria.salesUser}" style="width:80%;">
+									<f:selectItems value="#{oohReportMB.salesUserSelectList}" />
+							</h:selectOneMenu>
+							
+							<h:outputText value="#{dbResource['wq.label.mfr']}:"  escape="false" />
+							<h:selectOneMenu id="oohReportMB_mfr" value="#{oohReportMB.criteria.mfr}" style="width:80%;">
+									<f:selectItems value="#{oohReportMB.mfrSelectList}" />
+							</h:selectOneMenu>
+							
+							
+							<h:outputText value="#{dbResource['wq.label.proGroup']}1:"  escape="false" />
+							<p:inputText value="#{oohReportMB.criteria.productGrp1}" style="width:80%;"/>	
+							
+							
+							<h:outputText value="#{dbResource['wq.label.proGroup']}2:"  escape="false" />
+							<p:inputText value="#{oohReportMB.criteria.productGrp2}" style="width:80%;"/>	
+							
+						
+							<h:outputText value="#{dbResource['wq.label.proGroup']}3:"  escape="false" />
+							<p:inputText value="#{oohReportMB.criteria.productGrp3}" style="width:80%;"/>	
+							
+							
+							<h:outputText value="#{dbResource['wq.label.proGroup']}4:"  escape="false" />
+							<p:inputText value="#{oohReportMB.criteria.productGrp4}" style="width:80%;"/>
+							
+							
+							<h:outputText value="#{dbResource['wq.label.quoteHandler']}:"  escape="false" />
+							<h:selectOneMenu id="oohReportMB_quoteHandler" value="#{oohReportMB.criteria.quoteHandler}" style="width:80%;">
+									<f:selectItems value="#{oohReportMB.quoteHandlerSelectList}" />
+							</h:selectOneMenu>
+							
+							<h:outputText value="#{dbResource['wq.label.quotedPN']}:"  escape="false" />
+							<p:inputText value="#{oohReportMB.criteria.quotedPartNumber}" style="width:80%;"/>	
+						</h:panelGrid>
+						
+					</h:panelGrid>	
+					<h:panelGrid id="display3" columns="1" cellpadding="1" cellspacing="0" scrollable="false" >
+						  <h:outputText value="#{dbResource['wq.label.groupby']}"  escape="false" />
+						  <p:pickList value="#{oohReportMB.groupCols}" var="grp"
+                                                       itemLabel="#{grp.groupByName}" itemValue="#{grp}" style="height:80%;"
+                                                       showTargetControls="true" 
+                                                       addLabel="#{dbResource['wq.button.add']}" addAllLabel="#{dbResource['wq.button.addAll']}" removeLabel="#{dbResource['wq.button.remove']}" removeAllLabel="#{dbResource['wq.button.removeAll']}"
+                                                       moveUpLabel="#{dbResource['wq.label.moveUP']}" moveDownLabel="#{dbResource['wq.label.moveDown']}" moveTopLabel="#{dbResource['wq.label.moveTop']}" moveBottomLabel="#{dbResource['wq.label.moveBottom']}"
+                                                       
+                                                       >
+                                               
+                                               <f:converter converterId="webquote.commodity.PickListConverter" />
+                                               <f:facet name="add">
+                                                       <h:commandButton value="#{dbResource['wq.button.add']}" styleClass="pickListControl"/>
+                                               </f:facet>
+                                               <f:facet name="addAll">
+                                                       <h:commandButton value="#{dbResource['wq.button.addAll']}" styleClass="pickListControl"/>
+                                               </f:facet>
+                                               <f:facet name="remove">
+                                                       <h:commandButton value="#{dbResource['wq.button.remove']}" styleClass="pickListControl"/>
+                                               </f:facet>
+                                               <f:facet name="removeAll">
+                                                       <h:commandButton value="#{dbResource['wq.button.removeAll']}" styleClass="pickListControl"/>
+                                               </f:facet>
+												<p:ajax event="transfer" listener="#{oohReportMB.onTransfer}" update=":errorMessage"/> 
+                                       </p:pickList>
+					</h:panelGrid>
+				</h:panelGrid>
+				<h:panelGrid columns="4" cellpadding="0" >
+					 <p:commandButton value="#{dbResource['wq.button.searchSend']}" icon="ui-icon-search" actionListener="#{oohReportMB.sendReport}" update=":errorMessage"/>
+					<ui:remove>
+						<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search" actionListener="#{oohReportMB.search}" update=":errorMessage,:orderOnHandForm:orderOnHandReport_dataTable"/>
+					</ui:remove>
+						<p:commandButton value="#{dbResource['wq.label.reset']}"  icon="ui-icon-triangle-1-w" actionListener="#{oohReportMB.reset}" update=":orderOnHandForm:accordionPannel1" />
+				       
+				</h:panelGrid>
+				</p:tab>
+			</p:accordionPanel>
+<ui:remove>
+		<p:dataTable id="orderOnHandReport_dataTable" 
+   			var="vo" 
+   			value="#{oohReportMB.orderOnHandReportVos}" 
+   			widgetVar="voTable" 
+   			filteredValue="#{oohReportMB.filteredOrderOnHandReportVos}"
+   			editable="true"
+          	paginatorPosition="top"
+			rowKey="#{rowIndex}" 
+			paginator="true" 
+			rowIndexVar="rowIndex"
+			rows="10"
+			rowsPerPageTemplate="10,20,50"
+			emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+                 
+	       <p:column headerText="#{dbResource['wq.label.no']}"  >
+				<f:facet name="header">
+					<h:outputText value="#{dbResource['wq.label.no']}"/>
+				</f:facet>
+				<h:outputText value="#{rowIndex+1}" />
+			</p:column>
+	        <p:columns value="#{oohReportMB.columns}" var="column" columnIndexVar="colIndex" sortBy="#{vo[column.property]}" filterBy="#{vo[column.property]}">
+	            <f:facet name="header">
+	                <h:outputText value="#{column.header}" />
+	            </f:facet>
+	            <h:outputText value="#{vo[column.property]}"  >
+	            	<f:convertNumber  pattern="#,##0.00"  minFractionDigits="2"/>
+	            </h:outputText>
+	        </p:columns>
+ 
+        <p:columnGroup type="footer">
+            <p:row >
+	            <p:column  colspan="#{oohReportMB.grandColspanSize}" style="text-align:right" footerText="#{dbResource['wq.label.grandTotal']}:" />
+	            <p:column  >
+						<f:facet name="footer">
+							<h:outputText value="#{oohReportMB.grandTotal.nonOohTP}">
+								<f:convertNumber   pattern="#,##0.00" minFractionDigits="2"/>
+							</h:outputText>
+						</f:facet>
+					</p:column>
+					<p:column  >
+						<f:facet name="footer">
+							<h:outputText value="#{oohReportMB.grandTotal.oohNoTP}">
+								<f:convertNumber   pattern="#,##0.00" minFractionDigits="2"/>
+							</h:outputText>
+						</f:facet>
+					</p:column>
+					<p:column  >
+						<f:facet name="footer">
+							<h:outputText value="#{oohReportMB.grandTotal.oohWithTP}">
+								<f:convertNumber    pattern="#,##0.00" minFractionDigits="2"/>
+							</h:outputText>
+						</f:facet>
+					</p:column>
+					<p:column >
+						<f:facet name="footer">
+							<h:outputText value="#{oohReportMB.grandTotal.oohAmt}">
+								<f:convertNumber    pattern="#,##0.00" minFractionDigits="2"/>
+							</h:outputText>
+						</f:facet>
+					</p:column>
+					<p:column >
+						<f:facet name="footer">
+							<h:outputText value="#{oohReportMB.grandTotal.totalAmt}">
+								<f:convertNumber    pattern="#,##0.00" minFractionDigits="2"/>
+							</h:outputText>
+						</f:facet>
+					</p:column>
+					
+				
+            </p:row>
+        </p:columnGroup>
+ 
+      
+    </p:dataTable>
+    
+</ui:remove>
+ 	</h:form>
+        	
+	</ui:define>
+	</ui:composition>

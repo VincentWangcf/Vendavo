@@ -1,0 +1,853 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Transient;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.vo.PricerInfo;
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+
+
+
+@Entity
+@Table(name="MATERIAL")
+public class Material implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	@SequenceGenerator(name="MATERIAL_ID_GENERATOR", sequenceName="WQ_SEQ",allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="MATERIAL_ID_GENERATOR")
+	@Column(unique=true, nullable=false)
+	private long id;
+
+	@Column(name="ALLOCATION_FLAG", length=1)
+	private Boolean allocationFlag;
+
+	@Column(name="KIT_PART_FLAG", length=1)
+	private Boolean kitPartFlag;
+
+	@Column(name="BLOCKED_FLAG", length=2)
+	private Boolean blockedFlag;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="CREATED_ON", nullable=false)
+	private Date createdOn;
+
+	@Column(name="DELETION_FLAG", length=1)
+	private Boolean deletionFlag;
+
+	@Column(length=45)
+	private String description;
+
+	@Column(name="DISPLAY_ON_TOP")
+	private Integer displayOnTop;
+
+	@Column(name="FULL_MFR_PART_NUMBER", length=40)
+	private String fullMfrPartNumber;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="LAST_UPDATED_ON")
+	private Date lastUpdatedOn;
+
+	@Column(name="MATERIAL_TYPE", length=10)
+	private String materialType;
+
+	@Column(name="SAP_MATERIAL_TYPE", length=4)
+	private String sapMaterialType;
+	
+	@ManyToOne
+	@JoinColumn(name="MANUFACTURER_ID")	
+	private Manufacturer manufacturer;
+
+	@Column(name="NEW_ITEM_FLAG", length=1)
+	private Boolean newItemFlag;
+
+	@Column(name="PRODUCT_HIERARCHY", length=18)
+	private String productHierarchy;
+
+	@Column(name="SALES_ORG", nullable=false, length=4)
+	private String salesOrg;
+
+	@Column(name="SALES_PLANT", nullable=false, length=4)
+	private String salesPlant;
+
+	@Column(name="SAP_PART_NUMBER", length=18)
+	private String sapPartNumber;
+
+	@Column(name="SPECIAL_MATERIAL", length=4)
+	private String specialMaterial;//If the SPECIAL_MATERIAL is   0001  , it means that it is special material.
+
+	public String getSpecialMaterial() {
+		return specialMaterial;
+	}
+
+	public void setSpecialMaterial(String specialMaterial) {
+		this.specialMaterial = specialMaterial;
+	}
+
+	@Column(name = "CREATED_BY", nullable = false, length = 10)
+	private String createdBy;
+
+	@Column(name = "LAST_UPDATED_BY", length = 10)
+	private String lastUpdatedBy;
+
+	//uni-directional many-to-one association to ProductCategory
+	@ManyToOne
+	@JoinColumn(name="PRODUCT_CATEGORY_ID")
+	private ProductCategory productCategory;
+
+	//uni-directional many-to-one association to ProductGroup
+	@ManyToOne
+	@JoinColumn(name="PRODUCT_GROUP2_ID")
+	private ProductGroup productGroup2;
+	
+	//uni-directional many-to-one association to ProductGroup
+	@ManyToOne
+	@JoinColumn(name="PRODUCT_GROUP1_ID")
+	private ProductGroup productGroup1;	
+	
+	@Column(name="PRODUCT_GROUP3")
+	private String productGroup3;
+	
+	@Column(name="PRODUCT_GROUP4")
+	private String productGroup4;
+	
+	@Column(name="X_DISTR_CHAIN_STATUS", length=2)
+	private String xDistrChainStatus;
+	
+	@Column(name="SAP_PRODUCT_CATEGORY", length=10)
+	private String sapProductCategory;
+	
+	@OneToMany(mappedBy="material")
+	private List<Pricer> materialDetails;
+	
+	@OneToMany(mappedBy="material",cascade=CascadeType.ALL)
+	private List<Pricer> pricers;
+	
+	@OneToMany(mappedBy="material")
+	private List<MaterialRegional> materialRegionals;
+	
+//	@OneToMany(fetch=FetchType.LAZY,mappedBy="material")
+//	private List<SapMaterialDetail> sapMaterialDetails;
+	
+	
+
+
+
+	//introduced this variable in INC0253990 
+	//used for determine if a material is program material
+	//according to Victor Tam, need consider program effective date, but not price validity
+	//pay attention to the diff with variable isProgramPart, which consider program effective date and price validity
+	@Transient
+	private boolean programMaterial;
+	
+	
+	@Transient
+	private NormalPricer properMaterialDetail;
+	
+	@Transient
+	private List<Pricer> calculatedMaterialDetails;
+	
+	@Column(name="VALID", length=1)
+	private Boolean valid;
+			
+	@Column(name = "HAS_SAP_FLAG", precision = 1, scale = 0)
+	private Boolean hasSapFlag;
+	
+	@OneToMany(mappedBy="material",fetch = FetchType.LAZY)
+	private List<SapMaterial> sapMaterials = new ArrayList<SapMaterial>(0);
+
+	@Transient
+	private List<NormalPricer> properMaterialDetailList;
+	
+	
+	@Transient
+	private boolean isProgramPart;
+	
+	@Transient
+	private boolean hasPricers;
+	
+	public Boolean getValid() {
+		return valid;
+	}
+
+	public void setValid(Boolean valid) {
+		this.valid = valid;
+	}
+
+	public Material() {
+	}
+
+	public long getId() {
+		return this.id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public Boolean getAllocationFlag() {
+		return this.allocationFlag;
+	}
+
+	public void setAllocationFlag(Boolean allocationFlag) {
+		this.allocationFlag = allocationFlag;
+	}
+
+	public Boolean getBlockedFlag() {
+		return this.blockedFlag;
+	}
+
+	public void setBlockedFlag(Boolean blockedFlag) {
+		this.blockedFlag = blockedFlag;
+	}
+
+	public Date getCreatedOn() {
+		return this.createdOn;
+	}
+
+	public void setCreatedOn(Date createdOn) {
+		this.createdOn = createdOn;
+	}
+
+	public Boolean getDeletionFlag() {
+		return this.deletionFlag;
+	}
+
+	public void setDeletionFlag(Boolean deletionFlag) {
+		this.deletionFlag = deletionFlag;
+	}
+
+	public String getDescription() {
+		return this.description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public Integer getDisplayOnTop() {
+		return this.displayOnTop;
+	}
+
+	public void setDisplayOnTop(Integer displayOnTop) {
+		this.displayOnTop = displayOnTop;
+	}
+
+	public String getFullMfrPartNumber() {
+		return this.fullMfrPartNumber;
+	}
+
+	public void setFullMfrPartNumber(String fullMfrPartNumber) {
+		this.fullMfrPartNumber = fullMfrPartNumber;
+	}
+
+
+	public Date getLastUpdatedOn() {
+		return this.lastUpdatedOn;
+	}
+
+	public void setLastUpdatedOn(Date lastUpdatedOn) {
+		this.lastUpdatedOn = lastUpdatedOn;
+	}
+
+	public String getMaterialType() {
+		return this.materialType;
+	}
+
+	public void setMaterialType(String materialType) {
+		this.materialType = materialType;
+	}
+
+	public Boolean getNewItemFlag() {
+		return this.newItemFlag;
+	}
+
+	public void setNewItemFlag(Boolean newItemFlag) {
+		this.newItemFlag = newItemFlag;
+	}
+
+	public String getProductHierarchy() {
+		return this.productHierarchy;
+	}
+
+	public void setProductHierarchy(String productHierarchy) {
+		this.productHierarchy = productHierarchy;
+	}
+
+	public String getSalesOrg() {
+		return this.salesOrg;
+	}
+
+	public void setSalesOrg(String salesOrg) {
+		this.salesOrg = salesOrg;
+	}
+
+	public String getSalesPlant() {
+		return this.salesPlant;
+	}
+
+	public void setSalesPlant(String salesPlant) {
+		this.salesPlant = salesPlant;
+	}
+
+	public String getSapPartNumber() {
+		return this.sapPartNumber;
+	}
+
+	public void setSapPartNumber(String sapPartNumber) {
+		this.sapPartNumber = sapPartNumber;
+	}
+
+	public String getCreatedBy()
+	{
+		return createdBy;
+	}
+
+	public void setCreatedBy(String createdBy)
+	{
+		this.createdBy = createdBy;
+	}
+
+	public String getLastUpdatedBy()
+	{
+		return lastUpdatedBy;
+	}
+
+	public void setLastUpdatedBy(String lastUpdatedBy)
+	{
+		this.lastUpdatedBy = lastUpdatedBy;
+	}
+
+	public ProductCategory getProductCategory() {
+		return this.productCategory;
+	}
+
+	public void setProductCategory(ProductCategory productCategory) {
+		this.productCategory = productCategory;
+	}
+
+	public ProductGroup getProductGroup2() {
+		return this.productGroup2;
+	}
+
+	public void setProductGroup2(ProductGroup productGroup2) {
+		this.productGroup2 = productGroup2;
+	}
+
+	public Manufacturer getManufacturer() {
+		return manufacturer;
+	}
+
+	public void setManufacturer(Manufacturer manufacturer) {
+		this.manufacturer = manufacturer;
+	}
+
+	public String getxDistrChainStatus() {
+		return xDistrChainStatus;
+	}
+
+	public void setxDistrChainStatus(String xDistrChainStatus) {
+		this.xDistrChainStatus = xDistrChainStatus;
+	}
+
+	public String getSapProductCategory() {
+		return sapProductCategory;
+	}
+
+	public void setSapProductCategory(String sapProductCategory) {
+		this.sapProductCategory = sapProductCategory;
+	}
+
+	public List<Pricer> getMaterialDetails() {
+		return materialDetails;
+	}
+
+	public void setMaterialDetails(List<Pricer> materialDetails) {
+		this.materialDetails = materialDetails;
+	}
+
+//	public List<SapMaterialDetail> getSapMaterialDetails() {
+//		return sapMaterialDetails;
+//	}
+//
+//	public void setSapMaterialDetails(List<SapMaterialDetail> sapMaterialDetails) {
+//		this.sapMaterialDetails = sapMaterialDetails;
+//	}
+
+	public Boolean getKitPartFlag() {
+		return kitPartFlag;
+	}
+
+	public void setKitPartFlag(Boolean kitPartFlag) {
+		this.kitPartFlag = kitPartFlag;
+	}
+	
+ 	public void setProgramMaterial(boolean programMaterial) {
+		this.programMaterial = programMaterial;
+	}
+
+	
+ 	public boolean isProgramMaterial() {
+		return programMaterial;
+	}
+
+	
+	public String getSapMaterialType() {
+		return sapMaterialType;
+	}
+
+	public void setSapMaterialType(String sapMaterialType) {
+		this.sapMaterialType = sapMaterialType;
+	}
+
+	@Override
+	public String toString() {
+		return "Material [fullMfrPartNumber=" + fullMfrPartNumber
+				+ ", sapMaterialType=" + sapMaterialType + ", manufacturer="
+				+ manufacturer + ", salesOrg=" + salesOrg + ", salesPlant="
+				+ salesPlant +  "sapPartNumber ,"+ sapPartNumber+ "]";
+	}
+
+	public ProductGroup getProductGroup1() {
+		return productGroup1;
+	}
+
+	public void setProductGroup1(ProductGroup productGroup1) {
+		this.productGroup1 = productGroup1;
+	}
+
+	public String getProductGroup3() {
+		return productGroup3;
+	}
+
+	public void setProductGroup3(String productGroup3) {
+		this.productGroup3 = productGroup3;
+	}
+
+	public String getProductGroup4() {
+		return productGroup4;
+	}
+
+	public void setProductGroup4(String productGroup4) {
+		this.productGroup4 = productGroup4;
+	}
+
+	public NormalPricer getProperMaterialDetail() {
+		return properMaterialDetail;
+	}
+	@Transient
+	public void setProperMaterialDetail(NormalPricer properMaterialDetail) {
+		this.properMaterialDetail = properMaterialDetail;
+	}
+
+
+	public Boolean getHasSapFlag()
+	{
+		return hasSapFlag;
+	}
+
+	public void setHasSapFlag(Boolean hasSapFlag)
+	{
+		this.hasSapFlag = hasSapFlag;
+	}
+
+	public List<SapMaterial> getSapMaterials()
+	{
+		return sapMaterials;
+	}
+
+	public void setSapMaterials(List<SapMaterial> sapMaterials)
+	{
+		this.sapMaterials = sapMaterials;
+	}
+
+	public List<NormalPricer> getProperMaterialDetailList()
+	{
+		return properMaterialDetailList;
+	}
+	
+	@Transient
+	public void setProperMaterialDetailList(
+			List<NormalPricer> properMaterialDetailList)
+	{
+		this.properMaterialDetailList = properMaterialDetailList;
+	}
+	
+	
+	public List<Pricer> getCalculatedMaterialDetails() {
+		return calculatedMaterialDetails;
+	}
+
+	public void setCalculatedMaterialDetails(
+			List<Pricer> calculatedMaterialDetails) {
+		this.calculatedMaterialDetails = calculatedMaterialDetails;
+	}
+
+	public boolean isProgramPart()
+	{
+		return isProgramPart;
+	}
+	@Transient
+	public void setProgramPart(boolean isProgramPart)
+	{
+		this.isProgramPart = isProgramPart;
+	}
+	
+	public MaterialRegional getMaterialRegaional(String region) {
+		for (MaterialRegional materialRegional : materialRegionals) {
+			if (materialRegional.getBizUnit().getName().equalsIgnoreCase(region)) {
+				return materialRegional;
+			}
+		}
+		return null;
+	}
+	
+	public Date getCurrentDate()
+	{
+		Calendar todayStart = Calendar.getInstance();
+		todayStart.set(Calendar.HOUR_OF_DAY, 0);
+		todayStart.set(Calendar.MINUTE, 0);
+		todayStart.set(Calendar.SECOND, 0);
+		todayStart.set(Calendar.MILLISECOND, 0);
+		return todayStart.getTime();
+	}
+
+	public boolean isHasPricers() {
+		return hasPricers;
+	}
+
+	public void setHasPricers(boolean hasPricers) {
+		this.hasPricers = hasPricers;
+	}
+
+	public List<Pricer> getPricers() {
+		return pricers;
+	}
+
+	public void setPricers(List<Pricer> pricers) {
+		this.pricers = pricers;
+	}
+	
+	public List<MaterialRegional> getMaterialRegionals() {
+		return materialRegionals;
+	}
+
+	public void setMaterialRegionals(List<MaterialRegional> materialRegionals) {
+		this.materialRegionals = materialRegionals;
+	}	
+	
+	public void applyAQLogic(RfqItemVO rfqItem, String region, Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers){
+		
+		MaterialRegional materialRegional = this.getMaterialRegaional(region);
+		if (materialRegional == null) {
+			return;
+		}
+		materialRegional.fillInPricer(rfqItem);
+		
+		ManufacturerDetail mfrDetail = materialRegional.getManufacturerDetail();
+		
+		if (mfrDetail != null) {
+			mfrDetail.fillIn(rfqItem);
+		}
+		
+		List<Pricer> pricers = getCandidatePricersForAQ(region, soldToCustomer, endCustomer, allowedCustomers);
+		
+		//TO DO, need remove the transient property hasPricers. 
+		if (! pricers.isEmpty()) {
+			this.setHasPricers(true);
+		}
+		
+		if (hasProgramPricer(pricers)) {
+			rfqItem.setMaterialTypeId("NORMAL");
+		} else {
+			rfqItem.setMaterialTypeId("PROGRAM");
+		}
+		
+		boolean matchAQConditions = false;
+		if (! rfqItem.isSpecialPriceIndicator()) {
+			for(Pricer pricer : pricers) {
+				pricer.fillInPricer(rfqItem);
+				rfqItem.calQty();
+				pricer.fillPmoq(rfqItem);
+				if(rfqItem.matchAQConditions()) {
+					matchAQConditions = true;	
+					break;
+				} else {
+					rfqItem.clearPricingInfo();
+				}
+			}
+		}
+		
+		if((rfqItem.isSpecialPriceIndicator() || !matchAQConditions) && ! pricers.isEmpty()) {
+			pricers.get(0).fillInPricer(rfqItem);
+			pricers.get(0).getCostIndicator().apply(this.getEffectiveOrExpiredABookCostPricer(region), rfqItem);
+			rfqItem.calQty();
+			//below 2 line should not be at this location. It is mainly because we have two class RfqItemVO and PricerInfo. need further enhancement
+			rfqItem.setQuotedQty(null);
+			//rfqItem.setPmoq(null);
+		} 
+	
+	}
+	public List<Pricer> getCandidatePricersForAQ(String region, Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers){
+		
+		if (getMaterialRegaional(region) ==  null) {
+			return  new ArrayList<Pricer>();
+		}
+		
+		return getCandidatePricersForAQ(region, soldToCustomer, endCustomer, allowedCustomers, getMaterialRegaional(region).isSalesCostFlag());
+
+	}
+	
+	private List<Pricer> getCandidatePricersForAQ(String region, Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers, boolean isSalesCostFlag){
+		List<Pricer> results = new ArrayList<>();
+		if (getMaterialRegaional(region) ==  null) {
+			return results;
+		}
+		
+		for (Pricer pricer : pricers){
+			if (pricer.isRegionCustomerTypeMatched(region, soldToCustomer, endCustomer, allowedCustomers, isSalesCostFlag) 
+					&& pricer.isEffectivePricer()) {
+				results.add(pricer);
+			}
+		}
+		
+		List<Pricer> results2 = new ArrayList<>();
+		for (Pricer pricer : results) {
+			if (! pricer.allowOverride()) {
+				results2.add(pricer);
+			}
+		}
+		
+		if (! results2.isEmpty()) {
+			results = results2;
+		}
+		
+		Collections.sort(results, (p1, p2) -> {
+			if((p1.getCost() > 0 && p2.getCost() > 0) && !(p1.getCost().equals(p2.getCost()))){
+				return p1.getCost().compareTo(p2.getCost());
+			}else{
+				if(p1.getPriority() != p2.getPriority()){
+					return p1.getPriority() - p2.getPriority();
+				}else{
+					return p1.getCostIndicator().getName().compareTo(p2.getCostIndicator().getName());
+				}
+			}
+		});
+		
+		if (getEffectiveABookCostPricer(region) == null && getClosestExpiredABookCostPricer(region) != null) {
+			results.add(getClosestExpiredABookCostPricer(region));
+		}
+		return results;	
+	}
+	
+
+	
+	
+	private Pricer getClosestExpiredABookCostPricer(String region) {
+		List<Pricer> aBookCostPricers = new ArrayList<>();
+		for (Pricer pricer : pricers) {
+			if (pricer.isRegionMatched(region) && pricer.isABookCostPricer()) {
+				aBookCostPricers.add(pricer);
+			}
+		}
+		
+		if (aBookCostPricers.isEmpty()) {
+			return null;
+		}
+		
+		Collections.sort(aBookCostPricers, (pricer1, pricer2)-> {return pricer2.getQuotationEffectiveDate().compareTo(pricer1.getQuotationEffectiveDate());});
+		
+		for (Pricer pricer : aBookCostPricers) {
+			if (pricer.getQuotationEffectiveTo().before(new Date())) {
+				return pricer;
+			}
+		}
+		
+		return null;
+	}
+	
+	private Pricer getEffectiveABookCostPricer(String region) {
+		for (Pricer pricer : pricers) {
+			if (pricer.getBizUnitBean().getName().equalsIgnoreCase(region) && pricer.isABookCostPricer() && pricer.isEffectivePricer()) {
+				return pricer;
+			}
+		}		
+		return null;
+	}
+	
+	NormalPricer getEffectiveOrExpiredABookCostPricer(String region) {
+		if (getEffectiveABookCostPricer(region) != null) {
+			Pricer pricer = getEffectiveABookCostPricer(region);
+			if(pricer instanceof NormalPricer) {
+				return (NormalPricer)pricer;
+			}
+		}
+		
+		if (getClosestExpiredABookCostPricer(region) != null) {
+			Pricer pricer = getClosestExpiredABookCostPricer(region);
+			if(pricer instanceof NormalPricer) {
+				return (NormalPricer)pricer;
+			}
+		}
+		
+		return null;
+
+	}	
+	
+	public List<PricerInfo> searchForPricerPopup(PricerInfo pricerInfo) {
+		List<Pricer> pricers = new ArrayList<>();
+		for (Pricer pricer : this.pricers) {
+			if (pricer.isRegionCustomerTypeMatched(pricerInfo)) {
+				pricers.add(pricer);
+			}
+		}
+		List<PricerInfo> results = new ArrayList<>();
+		for (Pricer pricer : pricers) {
+			PricerInfo returnPrincerInfo = PricerInfo.newInstance(pricerInfo);
+			pricer.fillupPricerInfo(returnPrincerInfo);
+			results.add(returnPrincerInfo);
+		}
+		return results;
+		
+	}
+	
+	
+	private Pricer getPricerByCostIndicatorName(String costIndicator, String region, Customer soldToCustomer, 
+			Customer endCustomer, List<Customer> allowedCustomers, boolean salesCostFlag) {
+		List<Pricer> pricers = getCandidatePricersForAQ(region, soldToCustomer, endCustomer, allowedCustomers, salesCostFlag);
+		for (Pricer pricer : pricers) {
+			if (pricer.getCostIndicator().getName().equalsIgnoreCase(costIndicator)) {
+				return pricer;
+			}
+		}
+		
+		return null;
+		
+	}
+	
+	
+	public boolean isValidForMaterialPoupup(String region, Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers) {
+		for (Pricer pricer : pricers) {
+			if (pricer.isRegionCustomerTypeMatched(region, soldToCustomer, endCustomer, allowedCustomers, getMaterialRegaional(region).isSalesCostFlag())
+					&& pricer.isEffectivePricer()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void fillupPricerInfoByPricerId(long pricerId, PricerInfo pricerInfo) {
+		Pricer pricer = null;
+		for (Pricer p : pricers) {
+			if (p.getId() == pricerId) {
+				pricer = p; 
+				break;
+			}
+		}
+
+		if (pricer != null) {
+			pricer.fillupPricerInfo(pricerInfo);
+		}
+	}
+	
+	public void switchCostIndicator(PricerInfo pricerInfo, String costIndicator) {
+		Pricer pricer = getPricerByCostIndicatorName(costIndicator, pricerInfo.getBizUnit(), pricerInfo.getSoldToCustomer(), 
+				pricerInfo.getEndCustomer(), pricerInfo.getAllowedCustomers(), pricerInfo.isSalesCostFlag());
+		if (pricer != null) {
+			pricer.fillupPricerInfo(pricerInfo);
+		}
+	}
+
+	
+	public static final String A_BOOK_COST = "A-Book Cost";
+	
+	public Pricer getValidProgPricerByBizUintAndCostIndicator(String bizUnitName,String costIndicator) {
+		Pricer validProgPricer = null;
+		for(Pricer p : pricers) {
+			if ((bizUnitName != null && p.getBizUnitBean() != null
+					&& StringUtils.equalsIgnoreCase(bizUnitName, p.getBizUnitBean().getName())) 
+					&& p.isEffectivePricer()
+					&& (p.getCostIndicator() != null && p.getCostIndicator().getName() != null
+							&& StringUtils.equals(p.getCostIndicator().getName(), costIndicator))) {
+				if(p instanceof ProgramPricer) {
+					validProgPricer = p;
+				}
+				
+			}
+		}
+		return validProgPricer;
+	}
+	
+	
+	public void applyDefaultCostIndicatorLogic(PricerInfo pricerInfo, boolean needRefillAccessRelatedFields) {
+		pricerInfo.clearPricingInfo();
+
+		pricerInfo.setQuotedMaterial(this);
+		
+		MaterialRegional materialRegional = this.getMaterialRegaional(pricerInfo.getBizUnit());
+		if (materialRegional == null) {
+			return;
+		}
+		
+		if (needRefillAccessRelatedFields) {
+			materialRegional.fillInPricer(pricerInfo);
+		}
+		
+		ManufacturerDetail mfrDetail = materialRegional.getManufacturerDetail();
+		
+		if (mfrDetail != null) {
+			mfrDetail.fillIn(pricerInfo);
+		}
+
+		List<Pricer> pricers = getCandidatePricersForAQ(pricerInfo.getBizUnit(), pricerInfo.getSoldToCustomer(), 
+				pricerInfo.getEndCustomer(), pricerInfo.getAllowedCustomers(), pricerInfo.isSalesCostFlag()); 
+		
+		if (needRefillAccessRelatedFields) {
+			if (hasProgramPricer(pricers)) {
+				pricerInfo.setMaterialTypeId("NORMAL");
+			} else {
+				pricerInfo.setMaterialTypeId("PROGRAM");
+			}
+		}
+		
+		if( ! pricers.isEmpty()) {
+			pricers.get(0).fillupPricerInfo(pricerInfo);
+			pricers.get(0).getCostIndicator().apply(this.getEffectiveOrExpiredABookCostPricer(pricerInfo.getBizUnit()), pricerInfo);
+			pricerInfo.calQty();
+		}
+
+	}
+	
+
+	
+	private boolean hasProgramPricer(List<Pricer> pricers) {
+		for (Pricer pricer : pricers) {
+			if (pricer instanceof ProgramPricer && pricer.isEffectivePricer()) {
+				return true;
+			}
+		}
+		return false;
+	}	
+}

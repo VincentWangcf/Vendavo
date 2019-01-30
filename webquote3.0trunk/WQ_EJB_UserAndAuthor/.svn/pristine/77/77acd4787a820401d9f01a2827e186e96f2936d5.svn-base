@@ -1,0 +1,55 @@
+package com.avnet.emasia.webquote.user.ejb;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.ProductGroup;
+import com.avnet.emasia.webquote.entity.Quote;
+
+/**
+ * Session Bean implementation class UserSB
+ */
+@Stateless
+@LocalBean
+public class ProductGroupSB {
+
+	@PersistenceContext(unitName="Server_Source")
+	EntityManager em;
+	
+	
+	public List<ProductGroup> findAll(){
+		
+		Query query = em.createQuery("select p from ProductGroup p order by upper(p.name)" );
+		List<ProductGroup> productGroups = (List<ProductGroup>)query.getResultList();
+		
+		return productGroups;
+	}
+	
+	public ProductGroup findProductGroupByName(String name){
+		
+		Query query = em.createQuery("select p from ProductGroup p where p.name = :name" );
+		query.setParameter("name", name);
+		List<ProductGroup> list = (List<ProductGroup>)query.getResultList();
+		return list.isEmpty() ? null:list.get(0);
+		//return (ProductGroup)query.getSingleResult();
+	}
+	
+	
+	public List<ProductGroup> mFindProductGroupByName(String name){
+
+		TypedQuery<ProductGroup> query = em.createQuery("select DISTINCT p from ProductGroup p where UPPER(p.name) like :name", ProductGroup.class);
+		query.setParameter("name", "%" + name.toUpperCase() + "%");
+		return query.getResultList();
+	}
+
+	
+}

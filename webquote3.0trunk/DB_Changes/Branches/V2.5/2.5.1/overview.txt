@@ -1,0 +1,8 @@
+001 - Table attachment definition 
+002 - Table attachment data patch 
+003 - Add record to AppPropety, SYSTEM_CODE_MAINTENANCE table
+004 - security settings for page "BMT Platform", "My Quote Search For BMT", "Audit Report"
+005 - New table definition for DESIGN_LOCATION, QUOTE_ITEM_DESIGN, QUOTE_ITEM_DESIGN_HIS, QUOTE_RESPONSE_TIME_HISTORY, TASK_HISTORY, TASK_INFO, QUOTE_ITEM_HIS 
+006 - Table Quote, Quote_item changes
+007 - new Views for BW team
+008 - SQL changes for Japan code change

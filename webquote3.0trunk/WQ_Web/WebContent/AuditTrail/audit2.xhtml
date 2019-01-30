@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+        <h:head>
+            <f:facet name="first">
+                <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+                <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+			<meta http-equiv="Cache-Control" Content="no-cache"/>
+			<meta http-equiv="Pragma" Content="no-cache"/>
+			<meta http-equiv="Expires" Content="0"/>                   
+                <title>Audit Trail</title>
+            </f:facet>
+            <link type="text/css" rel="stylesheet" href="../css/myquote-004.css" />                        
+        </h:head>
+<h:body>
+<h:form id="searchForm"> 
+	<p:panel header="Search Criteria" toggleable="true" id="panel">  
+	    <p:panelGrid columns="1" cellpadding="10">
+		    <p:row> 
+		       <h:outputLabel for="action" value="Action: *" />  
+		       <p:selectOneMenu required="true" id="action" value="#{auditMBean.auditSearchCriteria.action}" effect="size">
+					<f:selectItem itemLabel="All" itemValue="all" />
+					<f:selectItem itemLabel="Submit RFQ" itemValue="submitRFQ" />
+					<f:selectItem itemLabel="Update Quote" itemValue="updateQuote" />
+					<f:selectItem itemLabel="Refresh Quote" itemValue="refreshQuote" />
+		       </p:selectOneMenu>
+		       <h:outputLabel for="employeeName" value="Employee Name: *" />  
+		       <p:inputText id="employeeName" value="#{auditMBean.auditSearchCriteria.employeeName}" label="employeeName" />
+	           
+	           <h:outputLabel for="employeeId" value="Employee Id: *" />  
+		       <p:inputText id="employeeId" value="#{auditMBean.auditSearchCriteria.employeeId}" label="employeeId" />
+	        </p:row>
+	        <p:row> 
+	           <h:outputLabel for="recordNumber" value="Record Number: *" />  
+		       <p:inputText id="recordNumber" value="#{auditMBean.auditSearchCriteria.recordNumber}" label="recordNumber" />
+		       <h:outputLabel for="fromDate" value="From Date: *" />  
+		       <p:calendar id="fromDate" value="#{auditMBean.auditSearchCriteria.fromDate}" showOn="button" effectDuration="1000000" effect="size" />
+	           <h:outputLabel for="toDate" value="To Date: *" />  
+	           <p:calendar id="toDate" value="#{auditMBean.auditSearchCriteria.toDate}" showOn="button" effectDuration="1000000" effect="size" /> 
+	        </p:row>
+
+            <f:facet name="footer">  
+	            <p:commandButton id="auditSearchButton" value="Search"  action="#{auditMBean.search}" icon="ui-icon-search" >
+	                <!--   <f:setPropertyActionListener value="#{true}" target="#{requestScope.renderSearchResult}" />  -->
+	            </p:commandButton>  
+	            <!--  update=":auditSearchForm:dataTable" -->
+	            
+	        </f:facet>      
+
+	    </p:panelGrid>
+	</p:panel>
+<!-- rendered="#{requestScope.renderSearchResult}" -->
+    <p:outputPanel id="searchResult" >  
+    <h:panelGrid columns="4" cellpadding="0" style="position: relative;float:right;" >
+	      <h:commandLink>
+	          <p:graphicImage value="/images/excel.png" styleClass="img1"/>
+	          <p:dataExporter type="xls" target="dataTable" fileName="auditTraillist" />
+	      </h:commandLink>
+	
+	      <h:commandLink>
+	          <p:graphicImage value="/images/pdf.png" styleClass="img1"/>
+	          <p:dataExporter type="pdf" target="dataTable" fileName="auditTraillist"/>
+	      </h:commandLink>
+	
+	      <h:commandLink>
+	          <p:graphicImage value="/images/csv.png" styleClass="img1"/>
+	          <p:dataExporter type="csv" target="dataTable" fileName="auditTraillist" />
+	      </h:commandLink>
+	
+	      <h:commandLink>
+	          <p:graphicImage value="/images/xml.png" styleClass="img1"/>
+	          <p:dataExporter type="xml" target="dataTable" fileName="auditTraillist" />
+	      </h:commandLink>  
+	    </h:panelGrid>
+	    <p:dataTable id="dataTable" 
+	                 var="auditTrail" 
+	                 value="#{auditMBean.auditTrails}"
+	                 styleClass="dtable"
+	                 paginator="true" rows="10"
+	                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+	                 rowsPerPageTemplate="5,10,15"
+	                 rowIndexVar="rowIndex"                 	
+                     style="width:100%"
+	                 emptyMessage="#{dbResource['wq.message.noAuditRecordTrailFound']}"
+	                 filteredValue="#{auditMBean.filteredAuditTrails}">
+
+	        <f:facet name="header">
+	            Audit Trail
+	        </f:facet>
+	
+	        <p:column>
+	            <f:facet name="header">
+	                <h:outputText value="No." />
+	            </f:facet>
+				<h:outputText id="sequenceNumber" value="#{rowIndex+1}" />
+			</p:column>
+			
+	        <p:column id="action"  sortBy="#{auditTrail.action}"  filterBy="#{auditTrail.action}" filterMatchMode="contains">
+	            <f:facet name="header">
+	                <h:outputText value="Action" />
+	            </f:facet>
+	            <h:outputText value="#{auditTrail.action}" />
+	        </p:column>
+	
+	        <p:column id="recordNumber" sortBy="#{auditTrail.targetId}" filterBy="#{auditTrail.targetId}"  filterMatchMode="contains">
+	            <f:facet name="header">
+	                <h:outputText value="Record Number" />
+	            </f:facet>
+	            <h:outputText value="#{auditTrail.targetId}" />
+	        </p:column>
+	        
+
+		    <p:column id="reasonToChange" sortBy="#{auditTrail.description}" filterBy="#{auditTrail.description}"  filterMatchMode="contains">
+	            <f:facet name="header">
+	                <h:outputText value="Reason To Change" />
+	            </f:facet>
+	            <h:outputText value="#{auditTrail.description}" />
+	            <p:tooltip for="reasonToChange" value="#{auditTrail.description}" showEffect="clip" hideEffect="explode" />
+	        </p:column>
+		    
+		    <p:column id="employeeName" sortBy="#{auditTrail.employeeName}" filterBy="#{auditTrail.employeeName}"  filterMatchMode="contains">
+	            <f:facet name="header">
+	                <h:outputText value="Employee Name" />
+	            </f:facet>
+	            <h:outputText value="#{auditTrail.employeeName}" />
+	        </p:column>
+	        
+	        <p:column id="employeeId" sortBy="#{auditTrail.createdBy}" filterBy="#{auditTrail.createdBy}"  filterMatchMode="contains">
+	            <f:facet name="header">
+	                <h:outputText value="Employee Id" />
+	            </f:facet>
+	            <h:outputText value="#{auditTrail.createdBy}" />
+	        </p:column>
+	
+	        <p:column id="createdOn">
+	            <f:facet name="header">
+	                <h:outputText value="Created On" />
+	            </f:facet>
+	            <h:outputText value="#{auditTrail.createdOn}">
+	                 <f:convertDateTime pattern="yyyy-MM-dd HH:mm:ss"/> 
+	            </h:outputText>
+	        </p:column>
+	        
+			<p:column style="width:4%">  
+				<p:commandButton id="selectButton" update=":searchForm:dataTable2" oncomplete="PF('auditTrailDialog').show()" icon="ui-icon-search" title="View">  
+					<f:setPropertyActionListener value="#{auditTrail}" target="#{auditMBean.selectedAuditTrail}" />  
+				</p:commandButton>  
+			</p:column>  
+	
+	
+	    </p:dataTable>
+    </p:outputPanel>
+    
+     <p:dialog header="Log Detail" widgetVar="auditTrailDialog" 
+              width="400" height="300" showEffect="explode" hideEffect="explode" modal="true" >  
+  
+           <h:panelGrid id="display" columns="2" cellpadding="4" style="margin:0 auto;">  
+  
+             <p:dataTable id="dataTable2" var="auditTrailRecord" value="#{auditMBean.selectedAuditTrail.auditTrailRecords}"
+	                 styleClass="dtable"              	
+                     style="width:300px"
+                     scrollable="true"
+                     scrollHeight="270" 
+                     scrollWidth="380"
+					 emptyMessage="#{dbResource['wq.message.noRecordFound']}"
+                     resizableColumns="true">
+	        <p:column id="filedName"  >
+	            <f:facet name="header">
+	                <h:outputText value="Field Name" />
+	            </f:facet>
+	            <h:outputText value="#{auditTrailRecord.targetColumn}" />
+	        </p:column> 
+	        <p:column id="from_value" >
+	            <f:facet name="header">
+	                <h:outputText value="From Value" />
+	            </f:facet>
+	            <h:outputText value="#{auditTrailRecord.fromValue}" />
+	        </p:column>
+	
+	        <p:column id="to_value"  >
+	            <f:facet name="header">
+	                <h:outputText value="To Value" />
+	            </f:facet>
+	            <h:outputText value="#{auditTrailRecord.toValue}" />
+	        </p:column>
+	
+	
+	    </p:dataTable>
+        </h:panelGrid>  
+    </p:dialog>  
+      
+</h:form>
+                    
+                    
+</h:body>
+</html>

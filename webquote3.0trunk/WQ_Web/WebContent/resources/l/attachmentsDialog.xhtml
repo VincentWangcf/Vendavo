@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:cc="http://java.sun.com/jsf/composite" xmlns:l="http://java.sun.com/jsf/composite/l" xmlns:h="http://java.sun.com/jsf/html" xmlns:p="http://primefaces.org/ui">
+
+<cc:interface shortDescription="default open dialog js is 'attachmentDialog.show()',if you have multipe usage in same page, just set different widgetVarForDialog value, like someString.show()">
+	<cc:attribute name="header" default="#{dbResource['wq.header.attchmntList']}" />
+	<cc:attribute name="canDownload" default="false" type="java.lang.Boolean"/>
+	<cc:attribute name="attachments" type="java.util.List" required="true" shortDescription="List&lt;Attachment&gt;"/>
+	<cc:attribute name="widgetVarForDialog" default="attachmentDialog"/>
+</cc:interface>
+
+<cc:implementation>
+		<p:dialog widgetVar="#{cc.attrs.widgetVarForDialog}" dynamic="true" header="#{cc.attrs.header}" height="auto">
+
+			<p:dataTable id="componentAttData" value="#{cc.attrs.attachments}" var="att" rowIndexVar="index">
+				<p:column headerText="#{dbResource['wq.label.no']}">
+					<h:outputText value="#{index+1}" />
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.fileName']}">
+					<h:outputText value="#{att.fileName}" />
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.fileType']}">
+					<h:outputText value="#{att.type}" />
+				</p:column>
+				<p:column headerText="#{dbResource['wq.button.download']}" rendered="#{cc.attrs.canDownload}">
+					<l:download attachment="#{att}" />
+				</p:column>
+			</p:dataTable>
+		</p:dialog>
+</cc:implementation>
+</html>

@@ -1,0 +1,38 @@
+JBoss config issue dev
+miss remote-outbound-connection
+miss JMS setting
+
+
+DB changes
+
+	logout linke
+	http://emasiaweb-dev.avnet.com/pkmslogout?filename=emasiaweb-webquote_jp-logout.htm
+	https://emasiaweb-test.avnet.com/pkmslogout?filename=emasiaweb-test-webquote_jp-logout.htm
+	https://emasiaweb-stage.avnet.com/pkmslogout?filename=emasiaweb-stage-webquote_jp-logout.htm
+	https://emasiaweb.avnet.com/pkmslogout?filename=emasiaweb-webquote_jp-logout.htm
+
+	web service id/password/url in app_property
+	WEBWQ
+	Welcome100
+
+	ZSD_WQ_CR_CUSTOMER
+	http://emjdas0.avnet.com:1080/sap/bc/srt/wsdl/bndg_56CB1CDD9FA60880E1008000AC10257C/wsdl11/allinone/ws_policy/document?sap-client=070
+	http://emjdas0.avnet.com:1080/sap/bc/srt/rfc/sap/zwqcust/070/zwqcust/zwqcust
+	
+	ZSD_RECV_WEB_QUOTE
+	http://emjdas0.avnet.com:1080/sap/bc/srt/wsdl/bndg_56CB20049FA60880E1008000AC10257C/wsdl11/allinone/ws_policy/document?sap-client=070
+	http://emjdas0.avnet.com:1080/sap/bc/srt/rfc/sap/zwqtosap/070/zwqtosap/zwqtosap
+	
+	ZSD_RECV_WQMRPBLKCTL
+	http://emjdas0.avnet.com:1080/sap/bc/srt/wsdl/bndg_56DF1B0E59770A70E1008000AC10257C/wsdl11/allinone/ws_policy/document?sap-client=070
+	http://emjdas0.avnet.com:1080/sap/bc/srt/rfc/sap/zwqrmtosap/070/zwqrmtosap/zwqrmtosap
+
+
+	insert JAPAN to biz_unit;
+	sales org: JP11 and JP13
+	
+	update path in schedule_config table's common
+	
+	get salesorg - plant mapping from Japan via email and inert into plant_salesorg_mapping table. 
+
+

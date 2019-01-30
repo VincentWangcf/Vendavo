@@ -1,0 +1,29 @@
+package com.avnet.emasia.webquote.quote.ejb;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+
+import com.avnet.emasia.webquote.quote.vo.CostExtractSearchCriterial;
+import com.avnet.emasia.webquote.vo.CostCompareVO;
+import com.avnet.emasia.webquote.vo.CostInfoVO;
+
+@Stateless
+@LocalBean
+public class CostExtractSB {
+	
+	public List<CostInfoVO> queryCostInfo(CostExtractSearchCriterial criterial) {
+		return search( criterial);
+	}
+	
+	public List<CostCompareVO> queryCostCompareInfo(List<CostInfoVO> costInfoVOs,CostExtractSearchCriterial criterial) {
+		return search( criterial);
+	}
+	
+	public List search(CostExtractSearchCriterial criterial) {
+		return new ArrayList();
+	}
+	
+}

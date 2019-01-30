@@ -1,0 +1,26 @@
+package com.avnet.emasia.webquote.rowdata;
+
+import java.util.Set;
+
+import javax.validation.ConstraintViolation;
+
+public interface Bean {
+	
+	int getSeq();
+	void setSeq(int seq);
+	
+	
+	String putConvertError(String field, String convertError);
+	String getConvertError(String field);
+	String getConvertErrors();
+	
+	
+	boolean addValidationError(String validationError);
+	String getValidationErrors();
+	
+	boolean isConvertSuccessful();
+	boolean isValid();
+	
+//	<T extends Bean> Set<ConstraintViolation<T>> getConstraintViolations();
+//	<T extends Bean> void setConstraintViolations(Set<ConstraintViolation<T>> violations);
+}

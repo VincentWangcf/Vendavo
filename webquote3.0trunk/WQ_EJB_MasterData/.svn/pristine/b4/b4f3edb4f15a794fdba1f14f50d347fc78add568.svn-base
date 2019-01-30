@@ -1,0 +1,51 @@
+package com.avnet.emasia.webquote.masterData.dao.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Remote;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
+import com.avnet.emasia.webquote.entity.DataSyncError;
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.masterData.util.StringUtils;
+
+import com.avnet.emasia.webquote.masterData.dao.SapInterfaceBatchesDAO;
+import com.avnet.emasia.webquote.masterData.dto.Config;
+import com.avnet.emasia.webquote.masterData.dto.FileContext;
+import com.avnet.emasia.webquote.masterData.ejb.MasterDataSB;
+import com.avnet.emasia.webquote.masterData.ejb.ScheduleConfigSB;
+import com.avnet.emasia.webquote.masterData.ejb.StandardJob;
+import com.avnet.emasia.webquote.masterData.ejb.remote.PosRemote;
+import com.avnet.emasia.webquote.masterData.exception.CheckedException;
+import com.avnet.emasia.webquote.masterData.util.Constants;
+import com.avnet.emasia.webquote.masterData.util.FunctionUtils;
+import com.avnet.emasia.webquote.masterData.util.ResourceLoader;
+import com.avnet.emasia.webquote.quote.ejb.PosSB;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+
+
+public class SapInterfaceBatchesDAOImpl implements SapInterfaceBatchesDAO {
+
+	@Override
+	public Long createBatch(String createdBy, String processID) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void updateBatchEnd(Long Id, Integer processStatus) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

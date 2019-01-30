@@ -1,0 +1,357 @@
+package com.avnet.emasia.webquote.masterData.ejb.job;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Remote;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
+import com.avnet.emasia.webquote.entity.QuantityBreakPrice;
+//import com.avnet.emasia.webquote.entity.MaterialRegional;
+import com.avnet.emasia.webquote.entity.SalesCostPricer;
+import com.avnet.emasia.webquote.entity.PricerDeleted;
+import com.avnet.emasia.webquote.masterData.dao.SalesCostPricerDAO;
+import com.avnet.emasia.webquote.masterData.dao.PricerDeletedDAO;
+import com.avnet.emasia.webquote.masterData.dao.SapInterfaceBatchesDAO;
+import com.avnet.emasia.webquote.masterData.dto.Config;
+import com.avnet.emasia.webquote.masterData.ejb.SapJob;
+import com.avnet.emasia.webquote.masterData.ejb.ScheduleConfigSB;
+import com.avnet.emasia.webquote.masterData.ejb.remote.SalesCostPricerToSapRemote;
+import com.avnet.emasia.webquote.masterData.exception.CheckedException;
+import com.avnet.emasia.webquote.utilities.DateUtils;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.util.SftpUtil;
+
+
+/**
+ * @author WingHong, Wong
+ * @Created on 2017-11-21
+ */
+@Stateless
+@Remote(SalesCostPricerToSapRemote.class)
+public class SalesCostPricerToSapJob extends SapJob implements SalesCostPricerToSapRemote
+{
+	private static Logger logger = Logger.getLogger(SalesCostPricerToSapJob.class.getName());
+	//private static final String SALES_COST_FLAG_BATCH = "SC_PRICER";
+	private static final String PROCESS_ID = "SC_PRICER";
+	private static final String JOB_NAME = "Sales Cost Pricer Job";
+	private Config commonConfig;
+ 
+
+    @EJB
+    private ScheduleConfigSB schedConfSB;
+    
+    @EJB
+    private SapInterfaceBatchesDAO sapInterfacesBatchesDAO;
+    
+    @EJB
+    private SalesCostPricerDAO salesCostPricerDAO;
+    //private MaterialRegionalDAO materialRegionalDAO;
+
+    @EJB
+    private PricerDeletedDAO pricerDeletedDAO;
+    
+    public SalesCostPricerToSapJob(){
+    	this.processId = PROCESS_ID;
+    	this.jobName = JOB_NAME;
+    }
+    
+    //For schedule job
+    /* (non-Javadoc)
+     * @see com.avnet.emasia.webquote.masterData.ejb.job.SalesCostPricerToSapJob#executeTask(javax.ejb.Timer)
+     */
+    @Asynchronous
+    @TransactionTimeout(value = 30000, unit = TimeUnit.SECONDS) 
+    public void executeTask(Timer timer)
+    {
+        try
+        {
+            run();	
+        }
+        catch(Exception e)
+        {
+        	String msg = MessageFormatorUtil.getParameterizedStringFromException(e);
+        	logger.log(Level.SEVERE, "Exception occured in CustomerLoadingJob#executeTask for Timer: "+timer.getInfo()+", Task: "+this.processId + "(" + this.jobName +")" +", Reason for failure: "+msg, e);
+        }
+    }
+    
+    //For control-M
+    @TransactionTimeout(value = 30000, unit = TimeUnit.SECONDS) 
+    @Override
+    public int executeTask()
+    {
+        int returnInt = 1; 
+    	try
+        {
+	        run();
+        }
+    	catch(Exception e)
+        {
+    		logger.log(Level.SEVERE, "Exception occured in executing task: "+this.processId + "(" + this.jobName +")" + ", Reason for failure: "+e.getMessage(), e);
+        	returnInt = 0 ;
+        }
+        return returnInt;
+    }
+    
+    
+    public void process() throws CheckedException{
+    	
+    	try{
+    		//setup config
+    		//schedConfSB.getCommonConfig();
+    		//Config commonConfig = initCommonLoadingAndSchedule();
+    		this.commonConfig = schedConfSB.getCommonConfig();
+    		logger.info("File path: " + commonConfig.getJobTempOutputPath());
+
+    		//Insert record to SAP_INTERFACE_BATCHES table
+    		long recordId = sapInterfacesBatchesDAO.createBatch(this.processId, this.processId);
+
+    		//Update PRICER_DELTED.BATCH_STATUS to be process eg 10 or 11
+    		pricerDeletedDAO.setRowLimit(this.commonConfig.getRowLimit());
+    		pricerDeletedDAO.batchStartUpdate();
+
+    		//Select all the record to be process from PRICER_DELTED.BATCH_STATUS
+    		List<PricerDeleted> pricerDeletedList = pricerDeletedDAO.getProcessingData();
+
+    		//Update PRICER.BATCH_STATUS to be process eg 10 or 11
+    		salesCostPricerDAO.setRowLimit(this.commonConfig.getRowLimit());
+    		salesCostPricerDAO.batchStartUpdate();
+
+    		//Select all the record to be process from PRICER.BATCH_STATUS
+    		List<SalesCostPricer> salesCostPricerList = salesCostPricerDAO.getProcessingData();
+
+    		//Output 'salesCostPricerList' to a DAT file.
+    		logger.info("pricerDeletedList.size(): " + pricerDeletedList.size());
+    		logger.info("salesCostPricerList.size(): " + salesCostPricerList.size());
+    		List<File> lFiles = outputFile(salesCostPricerList, pricerDeletedList);
+    		//File fileName = outputFile(salesCostPricerList, pricerDeletedList);
+    		//outputFile(salesCostPricerList, pricerDeletedList);
+    		
+    		//SFTP to SAP server
+    		logger.info("fileName.getAbsolutePath(): " + lFiles.get(0).getAbsolutePath());
+    		logger.info("fileName.getAbsolutePath(): " + lFiles.get(1).getAbsolutePath());
+    		copyFileToSAP(lFiles.get(0).getAbsolutePath());
+    		copyFileToSAP(lFiles.get(1).getAbsolutePath());
+    		//copyFileToSAP(fileName.getAbsolutePath());
+    		
+    		//Move output file to backup folder
+			moveFile(lFiles.get(0).getAbsolutePath(), this.commonConfig.getBackupPath());
+			moveFile(lFiles.get(1).getAbsolutePath(), this.commonConfig.getBackupPath());
+    		
+    		//Update processed data to completed status
+    		salesCostPricerDAO.batchEndUpdate();
+    		pricerDeletedDAO.batchEndUpdate();
+    		
+    		//Update Batch status to completed
+    		sapInterfacesBatchesDAO.updateBatchEnd(recordId, 1);
+    		
+    	}catch(CheckedException e){
+    		Writer result = new StringWriter();
+    	    PrintWriter printWriter = new PrintWriter(result);
+    	    e.printStackTrace(printWriter);
+    	    
+    	    CheckedException ce = new CheckedException(e);
+    		ce.setMessage(e.getMessage() + ": \n" + result);
+    		throw ce;
+    		
+    	}catch(Exception e){
+    	
+    		Writer result = new StringWriter();
+    	    PrintWriter printWriter = new PrintWriter(result);
+    	    e.printStackTrace(printWriter);
+    	    
+    	    CheckedException ce = new CheckedException(e);
+    		ce.setMessage(e.getMessage() + ": \n" + result);
+    		throw ce;
+    	}
+    }
+    
+    private List<File> outputFile(List<SalesCostPricer> salesCostPricerList, List<PricerDeleted> pricerDeletedList) throws CheckedException{
+    	File file =  null;
+    	String fileName = "";
+    	List<File> lFile =  new ArrayList<File>();
+
+    	try{
+    		String pattern = "yyyyMMddHHmmss";
+    		SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+//WQ_SALESCOSTDELyyyymmddhhmmss
+//WQ_DEL_SCyyyymmddhhmmss.DAT
+//SAP_DEL_SCyyyymmddhhmmss.DAT
+    		Date now = DateUtils.getCurrentAsiaDateObj();
+    		String formattedDate = simpleDateFormat.format(DateUtils.getCurrentAsiaDateObj());
+//    		String formattedDate = simpleDateFormat.format(now);
+    		fileName = "SAP_DEL_SC" +formattedDate + commonConfig.getDataFilePostfix();
+//    		fileName = "WQ_DEL_SC" +formattedDate + commonConfig.getDataFilePostfix();
+//    		fileName = "WQ_SALESCOSTDEL" +formattedDate + commonConfig.getDataFilePostfix();
+//    		fileName = "SAP_SC_MAINTAIN_" +formattedDate + commonConfig.getDataFilePostfix();
+    		String datFile = this.commonConfig.getJobTempOutputPath() + fileName; //"C:\\Users\\P02811\\temp\\SAP_SC_MAT_FLAG_" + formattedDate + ".DAT";
+//    		String datFile = this.commonConfig.getSapFilePath() + "SAP_SC_MAINTAIN_" +formattedDate + commonConfig.getDataFilePostfix(); //"C:\\Users\\P02811\\temp\\SAP_SC_MAT_FLAG_" + formattedDate + ".DAT";
+    		//String datFile = this.commonConfig.getFilePath() + "SAP_SC_MAINTAIN_" +formattedDate + commonConfig.getDataFilePostfix();
+    		file = new File(datFile);
+
+    		System.out.println("outputFile(): " + datFile);
+    		
+    		// creates the file
+    		file.createNewFile();
+    		FileWriter writer = new FileWriter(file);
+
+    		//Write file header
+    		CSVUtils.writeLine(writer, Arrays.asList("SC_TYP", "REGION", "ZINM_MAX_QTY", "VALID_FR_DAT", "VALID_TO_DAT", "DEL_IND", "PRI_UNIT", "CUR", "QTY_SCALE_IND", "QTY_SCALE_CNT", "SCALE_QTY", "SC_PRI", "APN", "MFR", "MPN"), '|');
+//    		CSVUtils.writeLine(writer, Arrays.asList("SC_TYP", "REGION", "ZINM_MAX_QTY", "VALID_FR_DAT", "PRE_VALID_TO_DAT", "VALID_TO_DAT", "DEL_IND", "PRI_UNIT", "CUR", "QTY_SCALE_IND", "QTY_SCALE_CNT", "SCALE_QTY", "SC_PRI", "APN", "MFR", "MPN"), '|');
+    		//Write file content
+    		for(PricerDeleted pricerDeleted : pricerDeletedList){
+    			//Fixed the issue that SAP P/N  is not linked to correct P/N by Damonchen@20180726
+    			//change pricerDeleted.getMaterial().getSapPartNumber() to pricerDeleted.getMaterial().getSapMaterials()
+    			if (pricerDeleted.getMaterial()!=null && pricerDeleted.getMaterial().getSapMaterials()!=null && pricerDeleted.getMaterial().getSapMaterials().size()>0){	//skip data without SAP_PART_NUMBER
+        			CSVUtils.writeLine(writer, Arrays.asList(
+        					pricerDeleted.getSalesCostType() != null? pricerDeleted.getSalesCostType().name(): "",		//SC_TYP
+        					pricerDeleted.getBizUnitBean().getName().equals("ASIA")?"": pricerDeleted.getBizUnitBean().getName(),	//REGION
+        					pricerDeleted.getQtyControl() != null? pricerDeleted.getQtyControl().toString() :  "0",	//ZINM_MAX_QTY	//20171122: review by Mike Szeto to change the column to QTY_CONTROL
+//        					pricerDeleted.getAvailableToSellQty().toString(),			//ZINM_MAX_QTY
+        					DateUtils.formateDate2String(pricerDeleted.getQuotationEffectiveDate(),"yyyyMMdd"),	//VALID_FR_DAT
+//        					pricerDeleted.getPreValidToDate()!=null? DateUtils.formateDate2String(pricerDeleted.getPreValidToDate(),"yyyyMMdd") : "",			//PRE_VALID_TO_DAT
+        					pricerDeleted.getQuotationEffectiveTo()!=null? DateUtils.formateDate2String(pricerDeleted.getQuotationEffectiveTo(),"yyyyMMdd") : "",		//VALID_TO_DAT
+//        					DateUtils.formateDate2String(pricerDeleted.getPreValidToDate(),"yyyyMMdd"),			//PRE_VALID_TO_DAT
+//        					DateUtils.formateDate2String(pricerDeleted.getQuotationEffectiveTo(),"yyyyMMdd"),		//VALID_TO_DAT
+        					"X",			//DEL_IND
+        					"1000",		//PRI_UNIT
+        					"USD",		//CUR
+        					"",			//QTY_SCALE_IND
+        					"0","0","0",
+        					"",		//APN
+        					pricerDeleted.getMaterial().getManufacturer().getName(),	//MFR
+        					pricerDeleted.getMaterial().getFullMfrPartNumber()		//MPN
+        					), '|');
+    			} else {
+    				System.out.println("getMaterial() = null");
+    			}
+
+    		}
+    		logger.info("Completed output content to file (DEL) : " + file.getAbsolutePath());
+
+    		writer.flush();
+    		writer.close();
+    		lFile.add(file);
+
+//WQ_SALESCOSTCREyyyymmddhhmmss
+//WQ_CRE_SCyyyymmddhhmmss.DAT
+//SAP_CRE_SCyyyymmddhhmmss.DAT
+    		fileName = "SAP_CRE_SC" +formattedDate + commonConfig.getDataFilePostfix();
+//    		fileName = "WQ_CRE_SC" +formattedDate + commonConfig.getDataFilePostfix();
+//    		fileName = "WQ_SALESCOSTCRE" +formattedDate + commonConfig.getDataFilePostfix();
+    		datFile = this.commonConfig.getJobTempOutputPath() + fileName; //"C:\\Users\\P02811\\temp\\SAP_SC_MAT_FLAG_" + formattedDate + ".DAT";
+    		file = new File(datFile);
+
+    		System.out.println("outputFile(): " + datFile);
+    		
+    		// creates the file
+    		file.createNewFile();
+    		writer = new FileWriter(file);
+
+    		//Write file header
+    		CSVUtils.writeLine(writer, Arrays.asList("SC_TYP", "REGION", "ZINM_MAX_QTY", "VALID_FR_DAT", "VALID_TO_DAT", "DEL_IND", "PRI_UNIT", "CUR", "QTY_SCALE_IND", "QTY_SCALE_CNT", "SCALE_QTY", "SC_PRI", "APN", "MFR", "MPN"), '|');
+    		
+    		for(SalesCostPricer salesCostPricer : salesCostPricerList){
+    			//Fixed the issue that SAP P/N  is not linked to correct P/N by Damonchen@20180726
+    			//change salesCostPricer.getMaterial().getSapPartNumber() to salesCostPricer.getMaterial().getSapMaterials()
+    			if (salesCostPricer.getMaterial()!=null && salesCostPricer.getMaterial().getSapMaterials()!=null && salesCostPricer.getMaterial().getSapMaterials().size()>0){	//skip data without SAP_PART_NUMBER
+        			if (salesCostPricer.getQuantityBreakPrices().size()>0) {
+        				int qbpCnt =0;
+        				
+        				for(QuantityBreakPrice quantityBreakPrice : salesCostPricer.getQuantityBreakPrices()) {
+        					qbpCnt++;
+                			CSVUtils.writeLine(writer, Arrays.asList(
+                					salesCostPricer.getSalesCostType().name(),		//SC_TYP
+                					salesCostPricer.getBizUnitBean().getName().equals("ASIA")?"": salesCostPricer.getBizUnitBean().getName(),	//REGION
+                					salesCostPricer.getQtyControl() != null? salesCostPricer.getQtyControl().toString() :  "0",	//ZINM_MAX_QTY	//20171122: review by Mike Szeto to change the column to QTY_CONTROL
+                					//salesCostPricer.getAvailableToSellQty() != null? salesCostPricer.getAvailableToSellQty().toString() :  "0",	//ZINM_MAX_QTY
+                					//salesCostPricer.getAvailableToSellQty().toString(),			//ZINM_MAX_QTY
+                					DateUtils.formateDate2String(salesCostPricer.getQuotationEffectiveDate(),"yyyyMMdd"),	//VALID_FR_DAT
+                					//salesCostPricer.getPreValidToDate()!=null? DateUtils.formateDate2String(salesCostPricer.getPreValidToDate(),"yyyyMMdd") : "",			//PRE_VALID_TO_DAT
+                					salesCostPricer.getQuotationEffectiveTo()!=null? DateUtils.formateDate2String(salesCostPricer.getQuotationEffectiveTo(),"yyyyMMdd") : "",		//VALID_TO_DAT
+                					"",			//DEL_IND
+                					"1000",		//PRI_UNIT
+                					"USD",		//CUR
+                					"X",		//QTY_SCALE_IND
+                					//salesCostPricer.getQuantityBreakPrices().size()>0? "X": "",
+                					//Integer.toString(salesCostPricer.getQuantityBreakPrices().size()),				//QTY_SCALE_CNT
+                					Integer.toString(qbpCnt),								//QTY_SCALE_CNT
+                					quantityBreakPrice.getQuantityBreak().toString(),								//SCALE_QTY
+                					quantityBreakPrice.getSalesCost().multiply(new BigDecimal("1000")).toString(),	//SC_PRI
+                					"",		//APN
+                					salesCostPricer.getMaterial().getManufacturer().getName(),	//MFR
+                					salesCostPricer.getMaterial().getFullMfrPartNumber()		//MPN
+                					), '|');
+        					
+        				}
+        			} else {
+        				//skip data without QuantityBreakPrice (confirmed with Mike Szeto)
+    /*
+            			CSVUtils.writeLine(writer, Arrays.asList(
+            					salesCostPricer.getSalesCostType().name(),		//SC_TYP
+            					salesCostPricer.getBizUnitBean().getName().equals("ASIA")?"": salesCostPricer.getBizUnitBean().getName(),	//REGION
+            					"",		//APN
+            					salesCostPricer.getMaterial().getManufacturer().getName(),	//MFR
+            					salesCostPricer.getMaterial().getFullMfrPartNumber(),		//MPN
+            					salesCostPricer.getAvailableToSellQty().toString(),			//ZINM_MAX_QTY
+            					DateUtils.formateDate2String(salesCostPricer.getQuotationEffectiveDate(),"yyyyMMdd"),	//VALID_FR_DAT
+            					DateUtils.formateDate2String(salesCostPricer.getPreValidToDate(),"yyyyMMdd"),			//PRE_VALID_TO_DAT
+            					DateUtils.formateDate2String(salesCostPricer.getQuotationEffectiveTo(),"yyyyMMdd"),		//VALID_TO_DAT
+            					"",			//DEL_IND
+            					"1000",		//PRI_UNIT
+            					"USD",		//CUR
+            					"",			//QTY_SCALE_IND
+            					"0","0","0"), '|');
+            			
+    */
+        			}
+    				
+    			} else {
+    				System.out.println("getMaterial() = null");
+    			}
+
+    		}
+    		logger.info("Completed output content to file : " + file.getAbsolutePath());
+
+    		writer.flush();
+    		writer.close();
+    		lFile.add(file);
+
+    	}catch(Exception e){
+
+    		Writer result = new StringWriter();
+    		PrintWriter printWriter = new PrintWriter(result);
+    		e.printStackTrace(printWriter);
+
+    		CheckedException ce = new CheckedException(e);
+    		ce.setMessage(e.getMessage() + ": \n" + result);
+    		throw ce;
+    	}
+
+    	return lFile;
+    }
+	
+	@Override
+	public boolean isRanOnThisServer(String serviceName) {
+		return true;
+	}
+	
+	
+}

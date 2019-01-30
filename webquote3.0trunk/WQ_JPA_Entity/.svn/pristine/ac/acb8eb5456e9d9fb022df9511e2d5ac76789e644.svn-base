@@ -1,0 +1,10 @@
+package com.avnet.emasia.webquote.entity;
+
+public enum SalesCostType {
+	ZBMP,
+	ZBMD,
+	ZINC,
+	ZIND,
+	ZINM
+
+}

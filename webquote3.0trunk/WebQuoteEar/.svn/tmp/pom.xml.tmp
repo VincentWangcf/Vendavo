@@ -1,0 +1,160 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.avnet.emasia</groupId>
+		<artifactId>webquote</artifactId>
+		<version>2.6</version>
+		<relativePath>../webquote/pom.xml</relativePath>
+	</parent>
+
+	<artifactId>WebQuoteEar</artifactId>
+	<packaging>ear</packaging>
+
+
+	<dependencies>
+
+		<dependency>
+			<groupId>com.avnet.emasia</groupId>
+			<artifactId>WQ_EJB_AuditTrail</artifactId>
+			<type>ejb</type>
+			<scope>compile</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.avnet.emasia</groupId>
+			<artifactId>WQ_EJB_Commodity</artifactId>
+			<type>ejb</type>
+			<scope>compile</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.avnet.emasia</groupId>
+			<artifactId>WQ_EJB_MasterData</artifactId>
+			<type>ejb</type>
+			<scope>compile</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.avnet.emasia</groupId>
+			<artifactId>WQ_EJB_Quote</artifactId>
+			<type>ejb</type>
+			<scope>compile</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.avnet.emasia</groupId>
+			<artifactId>WQ_EJB_Reports</artifactId>
+			<type>ejb</type>
+			<scope>compile</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.avnet.emasia</groupId>
+			<artifactId>WQ_EJB_UserAndAuthor</artifactId>
+			<type>ejb</type>
+			<scope>compile</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.avnet.emasia</groupId>
+			<artifactId>WQ_EJB_Utility</artifactId>
+			<type>ejb</type>
+			<scope>compile</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.avnet.emasia</groupId>
+			<artifactId>WQ_JPA_Entity</artifactId>
+			<type>ejb</type>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.avnet.emasia</groupId>
+			<artifactId>WQ_Web</artifactId>
+			<type>war</type>
+			<scope>compile</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>xerces</groupId>
+			<artifactId>xmlParserAPIs</artifactId>
+			<version>2.6.2</version>
+		</dependency>
+<<<<<<< .mine
+		 
+=======
+>>>>>>> .r23660
+	</dependencies>
+	<build>
+
+	<extensions>
+		<extension>
+			<groupId>org.apache.maven.wagon</groupId>
+			<artifactId>wagon-ssh</artifactId>
+			<version>2.8</version>
+		</extension>
+	</extensions>
+
+
+
+	<finalName>${project.parent.artifactId}</finalName>
+	<plugins>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-ear-plugin</artifactId>
+			<version>${version.ear.plugin}</version>
+			<configuration>
+				<!-- Tell Maven we are using Java EE 6 -->
+				<version>6</version>
+				<!-- Use Java EE ear libraries as needed. Java EE ear libraries are in 
+					easy way to package any libraries needed in the ear, and automatically have 
+					any modules (EJB-JARs and WARs) use them -->
+				<defaultLibBundleDir>lib</defaultLibBundleDir>
+				<modules>
+					<!-- Default context root of the web app is /webquote-web. If a custom 
+						context root is needed, uncomment the following snippet to register our War 
+						as a web module and set the contextRoot property -->
+					<webModule>
+						<groupId>com.avnet.emasia</groupId>
+						<artifactId>WQ_Web</artifactId>
+						<contextRoot>/webquote3</contextRoot>
+					</webModule>
+				</modules>
+				<fileNameMapping>no-version</fileNameMapping>
+				<finalName>WebQuoteEar</finalName>
+			</configuration>
+		</plugin>
+		<!-- The JBoss AS plugin deploys your ear to a local JBoss EAP container -->
+		<!-- Due to Maven's lack of intelligence with EARs we need to configure 
+			the jboss-as maven plugin to skip deployment for all modules. We then enable 
+			it specifically in the ear module. -->
+		<plugin>
+			<groupId>org.jboss.as.plugins</groupId>
+			<artifactId>jboss-as-maven-plugin</artifactId>
+			<configuration>
+				<skip>false</skip>
+			</configuration>
+		</plugin>
+
+		<plugin>
+			<groupId>org.codehaus.mojo</groupId>
+			<artifactId>wagon-maven-plugin</artifactId>
+			<version>1.0</version>
+			<configuration>
+				<serverId>ftp-repository</serverId>
+				<fromFile>${project.build.directory}/WebQuoteEar.ear</fromFile>
+				<url>scp://albany1.avnet.com/app/eap70/webquote/ears</url>
+				<commands>
+					<command>sudo -u jboss /app_mgmt/redhat/buildScripts/scripts/eap70/manage_application70.ksh update webquoteapp /app/eap70/webquote/ears/WebQuoteEar.ear webquote</command>
+				</commands>
+				<displayCommandOutputs>true</displayCommandOutputs>
+			</configuration>
+		</plugin>
+	</plugins>
+</build>
+
+
+</project>

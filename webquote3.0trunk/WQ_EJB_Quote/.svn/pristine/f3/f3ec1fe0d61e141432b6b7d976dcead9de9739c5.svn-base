@@ -1,0 +1,6 @@
+package com.avnet.emasia.webquote.columndata;
+
+public @interface Column {
+	String columnName();
+	int columnPosition();
+}

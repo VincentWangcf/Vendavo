@@ -1,0 +1,337 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+public class MaterialFactory {
+	
+	
+	Material material;;
+	BizUnit china, tw, jp;
+	ProductGroup productGroup1;
+	ProductGroup productGroup2;
+	Manufacturer mfr;
+	ProductCategory productCategory;
+	Customer soldTo;
+	Customer end;
+	List<Customer> allowedCustomers;
+	Calendar now, oneMonthLate, oneDateBefore;
+	DateFormat dateFormat = new SimpleDateFormat("DD/MM/YYYY");  
+	
+	
+	private MaterialFactory() {
+	}
+	
+	public static MaterialFactory getInstance() {
+		return new MaterialFactory();
+	}
+	
+	public Material createMaterial() {
+		material = new Material();
+		material.setPricers(new ArrayList<Pricer>());
+		
+		now = Calendar.getInstance();
+		oneMonthLate = Calendar.getInstance();
+		oneMonthLate.add(Calendar.MONTH, 1);
+		oneDateBefore= Calendar.getInstance();
+		oneDateBefore.add(Calendar.DATE, -1);
+		
+		
+		china =  new BizUnit("CHINA");
+		tw =  new BizUnit("TW");
+		jp = new BizUnit("JAPAN");
+		
+		productGroup1 =  new ProductGroup();
+		productGroup1.setName("DISCRETE");
+
+		productGroup2 =  new ProductGroup();
+		productGroup2.setName("NORMAL");
+		
+		productCategory = new ProductCategory();
+		productCategory.setCategoryCode("SEMI");
+		
+		soldTo = new Customer()	;
+		soldTo.setCustomerNumber("soldTo");
+		
+		end = new Customer();
+		end.setCustomerNumber("end");
+		
+		allowedCustomers = new ArrayList<>();
+
+		
+		mfr =  new Manufacturer();
+		material.setManufacturer(mfr);
+		
+		mfrDetailSetup();
+		List<MaterialRegional> mrs = new ArrayList<>();
+		mrs.add(createMaterialRegional());
+		MaterialRegional mr = createMaterialRegional();
+		mr.setBizUnit(tw);
+		mrs.add(mr);
+		
+		MaterialRegional mrjp = createMaterialRegional();
+		mrjp.setBizUnit(jp);
+		mrs.add(mrjp);
+		
+		material.setMaterialRegionals(mrs);
+		
+		material.getPricers().add(createNormalPricer());
+		material.getPricers().add(createContractPricer());
+		material.getPricers().add(createProgramPricer());
+		material.getPricers().add(createSalesCostPricer());
+		
+		return material;
+	}
+	
+	public List<Pricer> createPricers() {
+		return null;
+	}
+	
+	private void mfrDetailSetup() {
+		ManufacturerDetail mfrDetail = new ManufacturerDetail();
+		mfrDetail.setBizUnit(china);
+		
+		mfrDetail.setProductCategory(productCategory);
+		mfrDetail.setProductGroup(productGroup2);
+		mfrDetail.setCancellationWindow(30);
+		mfrDetail.setReschedulingWindow(40);
+		mfrDetail.setManufacturer(mfr);
+		mfrDetail.setMultiUsage(true);
+		mfrDetail.setQuantityIndicator("EXACT");
+		mfrDetail.setResaleIndicator("00AA");
+		List<ManufacturerDetail> mfrDetails = new ArrayList<>();
+		mfrDetails.add(mfrDetail);
+		
+		ManufacturerDetail mfrDetail2 = new ManufacturerDetail();
+		mfrDetail2.setBizUnit(china);
+		
+		mfrDetail2.setProductCategory(productCategory);
+		ProductGroup productGroup =  new ProductGroup();
+		productGroup.setName("CP_DIODE");
+		mfrDetail2.setProductGroup(productGroup);
+		mfrDetail2.setCancellationWindow(80);
+		mfrDetail2.setReschedulingWindow(90);
+		mfrDetail2.setManufacturer(mfr);
+		mfrDetail2.setMultiUsage(false);
+		mfrDetail2.setQuantityIndicator("MOQ");
+		mfrDetail2.setResaleIndicator("0000");
+		
+		mfrDetails.add(mfrDetail2);
+		
+		mfr.setManufacturerDetailList(mfrDetails);
+	}
+	
+	private MaterialRegional createMaterialRegional() {
+		MaterialRegional mr = new MaterialRegional();
+		mr.setMaterial(material);
+		mr.setBizUnit(china);
+		mr.setProductCategory(productCategory);
+		mr.setProductGroup1(productGroup1);
+		mr.setProductGroup2(productGroup2);
+		mr.setProductGroup3("PG3");
+		mr.setProductGroup3("PG4");
+		mr.setSalesCostFlag(false);
+		return mr;
+	}
+	
+	private NormalPricer createNormalPricer() {
+		NormalPricer np1 = new NormalPricer();
+		np1.setMaterial(material);
+		np1.setBizUnitBean(china);
+		
+
+		np1.setBizUnitBean(china);
+		np1.setCurrency(Currency.USD);
+		np1.setCost(0.5d);
+		CostIndicator costIndicator =  new CostIndicator();
+		costIndicator.setName("A-Book Cost");
+		np1.setCostIndicator(costIndicator);
+		
+		np1.setPriceValidity(dateFormat.format(oneMonthLate.getTime()));
+		np1.setShipmentValidity(oneMonthLate.getTime());
+		np1.setMpq(300);
+		np1.setMoq(1100);
+		np1.setMov(650);
+		np1.setLeadTime("10 wks");
+		np1.setQuotationEffectiveDate(now.getTime());
+		np1.setQuotationEffectiveTo(oneMonthLate.getTime());
+		np1.setTermsAndConditions("T and C");
+		np1.setMinSellPrice(1.2d);
+		np1.setPartDescription("this is part description");
+		np1.setPriceListRemarks1("pl remark1");
+		np1.setPriceListRemarks2("pl remark2");
+		np1.setPriceListRemarks3("pl remark3");
+		np1.setPriceListRemarks4("pl remark4");
+		np1.setBottomPrice(1.1d);
+		
+		return np1;
+	}
+	
+	private ContractPricer createContractPricer() {
+		ContractPricer cp1 = new ContractPricer();
+		cp1.setMaterial(material);
+		cp1.setBizUnitBean(china);
+		
+		cp1.setCurrency(Currency.USD);
+		cp1.setCost(1d);
+		CostIndicator costIndicator =  new CostIndicator();
+		costIndicator.setName("A-Contract Cost");
+		cp1.setCostIndicator(costIndicator);
+		cp1.setPriceValidity(dateFormat.format(oneMonthLate.getTime()));
+		cp1.setShipmentValidity(oneMonthLate.getTime());
+		
+		cp1.setMpq(300);
+		cp1.setMoq(1400);
+		cp1.setCost(0.5d);
+		cp1.setMov(650);
+		cp1.setLeadTime("10 wks");
+		cp1.setQuotationEffectiveDate(now.getTime());
+		cp1.setQuotationEffectiveTo(oneMonthLate.getTime());
+		cp1.setTermsAndConditions("T and C");
+		cp1.setMinSellPrice(1.2d);
+		cp1.setAvnetQcComments("this is avnetQcComments");
+		
+		cp1.setSoldtoCustomer(soldTo);
+		cp1.setEndCustomer(end);
+		
+		
+		cp1.setStartDate(oneDateBefore.getTime());
+		cp1.setVendorQuoteNumber("vendor quote#123");
+		cp1.setVendorQuoteQuantity(10000);
+		cp1.setOverrideFlag(true);
+		
+		return cp1;
+
+	}
+	
+	private ProgramPricer createProgramPricer() {
+		ProgramPricer pp1 = new ProgramPricer();
+		pp1.setMaterial(material);
+		pp1.setBizUnitBean(china);
+
+		pp1.setCurrency(Currency.USD);
+		pp1.setCost(1d);
+		CostIndicator costIndicator =  new CostIndicator();
+		costIndicator.setName("A-MPP Cost");
+		pp1.setCostIndicator(costIndicator);
+		
+		pp1.setPriceValidity(dateFormat.format(oneMonthLate.getTime()));
+		pp1.setShipmentValidity(oneMonthLate.getTime());
+		pp1.setMpq(300);
+		pp1.setMoq(1100);
+		pp1.setCost(0.5d);
+		pp1.setMov(650);
+		pp1.setLeadTime("10 wks");
+		pp1.setQuotationEffectiveDate(new Date());
+		pp1.setQuotationEffectiveTo(oneMonthLate.getTime());
+		pp1.setTermsAndConditions("T and C");
+		pp1.setAvnetQcComments("this is avnetQcComments");
+		
+		ProgramType programType = new ProgramType();
+		programType.setName("FireSale");
+		pp1.setProgramType(programType );
+		
+		pp1.setDisplayOnTop(0);
+		pp1.setSpecialItemFlag(1);
+		pp1.setAvailableToSellQty(100000);
+		
+		List<QuantityBreakPrice> qtyBreakPrices = new ArrayList<>();
+		QuantityBreakPrice qtyBreakPrice = new QuantityBreakPrice();
+		qtyBreakPrice.setQuantityBreak(1);
+		qtyBreakPrice.setQuantityBreakPrice(0.99d);
+		qtyBreakPrice.setMaterialDetail(pp1);
+		qtyBreakPrices.add(qtyBreakPrice);
+		
+		QuantityBreakPrice qtyBreakPrice2 = new QuantityBreakPrice();
+		qtyBreakPrice2.setQuantityBreak(1000);
+		qtyBreakPrice2.setQuantityBreakPrice(0.99d);
+		qtyBreakPrice2.setMaterialDetail(pp1);
+		qtyBreakPrices.add(qtyBreakPrice2);
+
+		QuantityBreakPrice qtyBreakPrice3 = new QuantityBreakPrice();
+		qtyBreakPrice3.setQuantityBreak(3000);
+		qtyBreakPrice3.setMaterialDetail(pp1);
+		qtyBreakPrices.add(qtyBreakPrice3);
+		
+		pp1.setQuantityBreakPrices(qtyBreakPrices);
+		
+		pp1.setProgramEffectiveDate(now.getTime());
+		pp1.setProgramClosingDate(oneMonthLate.getTime());
+		
+		pp1.setQtyIndicator("LIMIT");
+		pp1.setNewItemIndicator(true);
+		pp1.setAllocationFlag(true);
+		pp1.setResaleIndicator("00AA");
+		pp1.setAqFlag(true);
+		pp1.setAvailableToSellMoreFlag(true);
+		return pp1;
+
+	}
+	
+	private SalesCostPricer createSalesCostPricer() {
+		SalesCostPricer sp1 = new SalesCostPricer();
+		sp1.setMaterial(material);
+		sp1.setBizUnitBean(china);
+
+		sp1.setCurrency(Currency.USD);
+		sp1.setCost(1d);
+		CostIndicator costIndicator =  new CostIndicator();
+		costIndicator.setName("A-Book Cost");
+		sp1.setCostIndicator(costIndicator);
+		sp1.setPriceValidity(dateFormat.format(oneMonthLate.getTime()));
+		sp1.setShipmentValidity(oneMonthLate.getTime());
+		sp1.setMpq(300);
+		sp1.setMoq(1100);
+		sp1.setCost(0.5d);
+		sp1.setMov(650);
+		sp1.setLeadTime("10 wks");
+		sp1.setQuotationEffectiveDate(now.getTime());
+		sp1.setQuotationEffectiveTo(oneMonthLate.getTime());
+		sp1.setTermsAndConditions("T and C");
+		sp1.setAvnetQcComments("this avnetQcComments");
+		
+		ProgramType programType = new ProgramType();
+		programType.setName("FireSale");
+		sp1.setProgramType(programType );
+
+		sp1.setDisplayOnTop(0);
+		sp1.setSpecialItemFlag(1);
+		sp1.setAqFlag(true);
+		sp1.setAvailableToSellQty(100000);
+		sp1.setQtyIndicator("LIMIT");
+		
+		sp1.setSalesCostType(SalesCostType.ZBMP);
+		
+		List<QuantityBreakPrice> qtyBreakPrices = new ArrayList<>();
+		sp1.setQuantityBreakPrices(qtyBreakPrices);
+		QuantityBreakPrice qtyBreakPrice = new QuantityBreakPrice();
+		qtyBreakPrice.setQuantityBreak(1);
+		qtyBreakPrice.setSalesCost(new BigDecimal(0.99d));
+		qtyBreakPrice.setSuggestedResale(new BigDecimal(1.5d));
+		qtyBreakPrice.setMaterialDetail(sp1);
+		qtyBreakPrices.add(qtyBreakPrice);
+		
+		QuantityBreakPrice qtyBreakPrice1 = new QuantityBreakPrice();
+		qtyBreakPrice1.setQuantityBreak(1000);
+		qtyBreakPrice1.setSalesCost(new BigDecimal(0.98d));
+		qtyBreakPrice1.setSuggestedResale(new BigDecimal(1.45d));
+		qtyBreakPrice1.setMaterialDetail(sp1);
+		qtyBreakPrices.add(qtyBreakPrice1);
+
+		QuantityBreakPrice qtyBreakPrice2 = new QuantityBreakPrice();
+		qtyBreakPrice2.setQuantityBreak(3000);
+		qtyBreakPrice2. setSalesCost(new BigDecimal(0.97d));
+		qtyBreakPrice2.setSuggestedResale(new BigDecimal(1.4d));
+		qtyBreakPrice2.setMaterialDetail(sp1);
+		qtyBreakPrices.add(qtyBreakPrice2);
+		
+		return sp1;
+	}
+	
+
+}

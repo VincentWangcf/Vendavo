@@ -1,0 +1,107 @@
+package com.avnet.emasia.webquote.stm.dto;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.DataAccess;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+
+public class VendorQuoteSearch implements Serializable {
+
+	private static final long serialVersionUID = -9153645195917482121L;
+	private String rfqCode;
+	private String quotedPartNumber;
+	private String bpmCode;
+	private String sqNumber;
+	private List<DataAccess> dataAccesses;
+	private String stage = null;
+	private List<BizUnit> bizUnits;
+	private List<String> mfr;
+	private List<String> status = new ArrayList<String>();
+	private List<String> pageStatus = new ArrayList<String>();
+	
+	public String getRfqCode() {
+		return rfqCode;
+	}
+
+	public void setRfqCode(String rfqCode) {
+		this.rfqCode = rfqCode;
+	}
+
+
+	public String getBpmCode() {
+		return bpmCode;
+	}
+
+	public void setBpmCode(String bpmCode) {
+		this.bpmCode = bpmCode;
+	}
+
+	public String getSqNumber() {
+		return sqNumber;
+	}
+
+	public void setSqNumber(String sqNumber) {
+		this.sqNumber = sqNumber;
+	}
+
+	public List<DataAccess> getDataAccesses() {
+		return dataAccesses;
+	}
+
+	public void setDataAccesses(List<DataAccess> dataAccesses) {
+		this.dataAccesses = dataAccesses;
+	}
+
+	public List<BizUnit> getBizUnits() {
+		return bizUnits;
+	}
+
+	public void setBizUnits(List<BizUnit> bizUnits) {
+		this.bizUnits = bizUnits;
+	}
+
+	public List<String> getMfr() {
+		return mfr;
+	}
+
+	public void setMfr(List<String> mfr) {
+		this.mfr = mfr;
+	}
+
+	public String getStage() {
+		return stage;
+	}
+
+	public void setStage(String stage) {
+		this.stage = stage;
+	}
+
+	public String getQuotedPartNumber() {
+		return quotedPartNumber;
+	}
+
+	public void setQuotedPartNumber(String quotedPartNumber) {
+		this.quotedPartNumber = quotedPartNumber;
+	}
+
+	public List<String> getStatus() {
+		return status;
+	}
+
+	public void setStatus(List<String> status) {
+		this.status = status;
+	}
+
+	public List<String> getPageStatus() {
+		return pageStatus;
+	}
+
+	public void setPageStatus(List<String> pageStatus) {
+		this.pageStatus = pageStatus;
+	}
+
+}

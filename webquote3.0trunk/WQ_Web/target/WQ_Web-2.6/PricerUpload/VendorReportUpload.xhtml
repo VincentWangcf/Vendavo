@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+<f:view contentType="text/html">
+	<h:head>
+		<f:facet name="first">
+			<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+			<meta content='text/html; charset=UTF-8' http-equiv="Content-Type" />
+			<title>#{dbResource['wq.label.vendorReport']}</title>
+		</f:facet>
+	</h:head>
+	<h:body>
+		<h:form id="form_vendorReportUpload" enctype="multipart/form-data">
+			<p:growl id="vendorReportGrowl" sticky="#{growlPropertyMB.sticky}" showDetail="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"/>
+					<p:panel header="#{dbResource['wq.label.vendorReportUpload']}" style="font-size:12pt">
+						<p:messages id="messages" showDetail="true" autoUpdate="true" closable="true" />
+						<h:panelGrid columns="2" cellpadding="0">
+							<p:fileUpload label="#{dbResource['wq.button.chooseFile']}"  value="#{vendorReportMB.vendorReportExcel}" allowTypes="/(\.|\/)(xls|xlsx)$/" mode="simple"  skinSimple="true"/>
+							<p:commandButton value="#{dbResource['wq.button.upload']}" icon="ui-icon-circle-check" update=":form_vendorReportUpload:vendorReportGrowl" actionListener="#{vendorReportMB.readExcelForm}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false"/>						
+						</h:panelGrid> 
+						<p:panelGrid columns="1">
+							<p:commandLink value="#{dbResource['wq.button.vendorReportTemplateDownload']}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">
+								<p:fileDownload value="#{vendorReportMB.vendorReportTemplate}" />
+							</p:commandLink>							    
+					 	</p:panelGrid>
+					</p:panel>
+		</h:form>
+	</h:body>
+</f:view>
+
+</html>

@@ -1,0 +1,347 @@
+package com.avnet.emasia.webquote.utilities;
+
+
+
+import java.text.ParseException;
+import com.avnet.emasia.webquote.utilities.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+
+
+
+/**
+ * @author Tonmy,Li(906893)
+ * @Created on 2013-01-22
+ * 
+ */
+
+public class DateUtils {
+
+	
+	private static final Logger LOGGER = Logger.getLogger(DateUtils.class
+			.getName());
+    public static final long DAY_MILLSECONDS = 24 * 3600 * 1000;
+	public static String getCurrentAsiaDate()
+	{		
+		Calendar cal = Calendar.getInstance();
+		Date date = cal.getTime();
+		SimpleDateFormat formatter2  = new SimpleDateFormat("yyyyMMdd");
+		return formatter2.format(date);
+	}
+	
+	public static Date getCurrentAsiaDateObj(){		
+		Calendar cal = Calendar.getInstance();
+		Date date = cal.getTime();
+		return date;
+	}
+	public static Calendar getCurrentAsiaCal(){		
+		Calendar cal = Calendar.getInstance();
+		return cal;
+	}
+	public static String getAnnoucementDate(Date da) {
+		String returnStr = null;
+		SimpleDateFormat formatter5 = new SimpleDateFormat("yyyy-MM-dd");
+		try
+		{
+			returnStr = formatter5.format(da);
+		}
+		catch(Exception e)
+		{
+			 LOGGER.log(Level.WARNING,"Error occured in getAnnoucementDate method for date input ::"+da+"" + e.getMessage(), e);
+		}
+		return returnStr;
+	}
+	
+	public static String getDateByPattern(String prmPattern) {
+		SimpleDateFormat formatter = new SimpleDateFormat(prmPattern);
+		return formatter.format(new java.util.Date());
+	}
+
+	public static Date switchStringToDate(String prmDate, String prmPattern) {
+		SimpleDateFormat formatter = new SimpleDateFormat(prmPattern);
+		//for 00000000 will need to covert successfully. Do not confirm it , so let as before.
+		formatter.setLenient(true);
+		try {
+			return formatter.parse(prmDate);
+		} catch (ParseException e) {
+			 LOGGER.log(Level.WARNING,"Error occured in switchStringToDate for prm date: "+prmDate +", prm pattern: "+prmPattern+", "
+			 		+ "Reason for failure: "+ e.getMessage(), e);
+			return null;
+		}
+	}
+
+	public static String formateDate2String(Date date, String prmPattern) {
+		SimpleDateFormat formatter = new SimpleDateFormat(prmPattern);
+		return formatter.format(date);
+	}
+
+	// input "yyyyMMdd" output "yyyyMMdd"
+	public static String afterDate(String prmDate, int prmIAfterDay) {
+		Calendar cal = Calendar.getInstance();
+		cal.set(Integer.parseInt(prmDate.substring(0, 4)), Integer
+				.parseInt(prmDate.substring(4, 6)) - 1, Integer
+				.parseInt(prmDate.substring(6, 8)));
+		cal.add(Calendar.DATE, prmIAfterDay);
+		String sRetYear = zeroFormat(cal.get(Calendar.YEAR), 4);
+		String sRetMonth = zeroFormat(cal.get(Calendar.MONTH) + 1,
+				2);
+		String sRetDay = zeroFormat(cal.get(Calendar.DATE), 2);
+		return sRetYear + sRetMonth + sRetDay;
+	}
+
+	public static java.sql.Date convertDate(java.util.Date date) {
+		return null == date ? null : new java.sql.Date(date.getTime());
+	}
+
+
+	public static Date getHalfYearBeforeCur() 
+	{ 
+		Calendar cal = getCurrentAsiaCal();
+		cal.add(Calendar.MONTH, 6);
+		Date date = cal.getTime();
+		return date;
+
+	}
+	
+	private static String zeroFormat(int iValue, int prmLength) {
+		String sValue = String.valueOf(iValue);
+		int iLength = sValue.length();
+		for (int i = iLength; i < prmLength; i++) {
+			sValue = 0 + sValue;
+		}
+		return sValue;
+	}
+	
+	
+	public static boolean isDate(String dateStr){
+	    boolean returnB = true;
+	    SimpleDateFormat bartDateFormat = new SimpleDateFormat("dd/MM/yyyy"); 
+	    try
+		{
+	      bartDateFormat.parse(dateStr);
+		}
+	    catch(ParseException e)
+		{
+	    	 LOGGER.log(Level.WARNING,"Error occured in isDate method to validate the Date : "+dateStr+", Reason for failure: " + e.getMessage());
+	    	returnB = false;
+		}
+	    return returnB ; 
+	}
+	
+	
+	 public static String addDay(String strDate,int rd) 
+	   { 
+		   if(strDate==null) return null; 
+			   try 
+			   { 
+				   SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy"); 
+				   Date date = formatter.parse(strDate); 
+				   GregorianCalendar calendar = new GregorianCalendar(); 
+				   calendar.setTime(date); 
+				   calendar.add(GregorianCalendar.DATE, rd); 
+				   date = calendar.getTime(); 
+				   return  formatter.format(date); 
+			   } 
+			   catch(ParseException pe) 
+			   { 
+				   LOGGER.log(Level.WARNING, "Error occured in addDay method parsing the date : "+strDate+", days to be added: "+rd+", "
+				   		+ "Reason for failure: "+pe.getMessage(), pe);
+			   } 
+		   return null; 
+	   }   
+	
+	   public static Date addDay(Date date,int rd) 
+	   { 
+		   if(date==null) return null; 
+		   GregorianCalendar calendar = new GregorianCalendar(); 
+		   calendar.setTime(date); 
+		   calendar.add(GregorianCalendar.DATE, rd); 
+		   date = calendar.getTime(); 
+		   return  date; 
+	   }  
+		public static String getCurrentDateStrForValidity() { 
+
+			Date currentDate = getCurrentAsiaDateObj();
+			SimpleDateFormat bartDateFormat = new SimpleDateFormat("dd/MM/yyyy"); 
+			String oneYearBeforeStr = bartDateFormat.format(currentDate);
+		    return oneYearBeforeStr;
+
+	    }
+		
+		public static String getDefaultDateStrEmailTimeStamp() { 
+
+			  Date d = getCurrentAsiaDateObj();
+
+			  SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HHmmss");
+			  
+			  String dateStr = formatter.format(d);
+			  
+			  return dateStr;
+
+		}
+		public static String formatDate(Date date)
+	   {
+		   String returnDateStr = null;
+		   if(null == date)
+			   return null;
+		   try
+		   {
+			   SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy/MM/dd"); 
+			   returnDateStr = dateTimeFormat.format(date);
+		   }
+		   catch(Exception e)
+		   {
+			   LOGGER.log(Level.WARNING, "Error occure in formatDate method for input date "+date+""+e.getMessage(), e);
+		   }
+		   return returnDateStr;
+	   }
+		
+	
+	   public static String formatDatetime(Date date)
+	   {
+		   String returnDateStr = null;
+		   if(null == date)
+			   return null;
+		   try
+		   {
+			   SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss"); 
+			   returnDateStr = dateTimeFormat.format(date);
+		   }
+		   catch(Exception e)
+		   {
+			   LOGGER.log(Level.WARNING, "Error occure in formatDatetime method for input date "+date.toString()+", Reason for failure: "+e.getMessage(), e);
+		   }
+		   return returnDateStr;
+	   }
+	   
+	   
+	   public static int getDayDiffExcludeSatAndSun(Calendar calStart, Calendar calEnd){ 
+			
+		    
+			Calendar start = (Calendar)calStart.clone(); 
+			start.set(Calendar.AM_PM, 0);
+			start.set(Calendar.HOUR, 0);
+			start.set(Calendar.HOUR_OF_DAY, 0);
+			start.set(Calendar.MINUTE, 0);
+			start.set(Calendar.SECOND, 0);
+			start.set(Calendar.MILLISECOND, 0);
+			
+			Calendar end = (Calendar)calEnd.clone(); 
+			end.set(Calendar.AM_PM, 0);
+			end.set(Calendar.HOUR, 0);
+			end.set(Calendar.HOUR_OF_DAY, 0);
+			end.set(Calendar.MINUTE, 0);
+			end.set(Calendar.SECOND, 0);
+			end.set(Calendar.MILLISECOND, 0);		
+	        int diff = getDayDiff(start, end);
+	        if ( diff <= 0) return 0;
+	        int count = 0;
+	        while(! start.equals(end)){
+	        	start.add(Calendar.DATE, 1);
+	        	if(start.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || start.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY){
+	        		continue;
+	        	}
+	        	count++;
+	        	//no need to calculate very large number
+	        	if (count >=10000){
+	        		break;
+	        	}
+	        }
+	        
+
+	        
+	        return count;
+	    }	
+	   
+		public static int getDayDiff(Calendar calStart, Calendar calEnd){	
+			 
+	        Calendar start = (Calendar)calStart.clone(); 
+	        Calendar end = (Calendar)calEnd.clone(); 
+	        
+	        start.set(start.get(Calendar.YEAR), start.get(Calendar.MONTH), start.get(Calendar.DATE), 0, 0, 0); 
+	        start.set(Calendar.MILLISECOND, 0); 
+
+	        end.set(end.get(Calendar.YEAR), end.get(Calendar.MONTH),  end.get(Calendar.DATE), 0, 0, 0); 
+	        end.set(Calendar.MILLISECOND, 0); 
+
+	        return   (int)((end.getTimeInMillis() - start.getTimeInMillis()) / DAY_MILLSECONDS); 
+		}
+		
+		
+		public static Date getTheDayBeforeBegin(){		
+			Calendar cal = Calendar.getInstance();
+			cal.add(Calendar.DATE, -1); 
+			cal.set(Calendar.AM_PM, 0);
+			cal.set(Calendar.HOUR, 0);
+			cal.set(Calendar.HOUR_OF_DAY, 0);
+			cal.set(Calendar.MINUTE, 0);
+			cal.set(Calendar.SECOND, 0);
+			cal.set(Calendar.MILLISECOND, 0);
+			
+			Date date = cal.getTime();
+			return date;
+		}
+		
+		public static Date getTheDayBeforeEnd(){		
+			Calendar cal = Calendar.getInstance();
+			cal.add(GregorianCalendar.DATE, -1); 
+			cal.set(Calendar.HOUR_OF_DAY, 23);
+			cal.set(Calendar.MINUTE, 59);
+			cal.set(Calendar.SECOND, 59);
+			cal.set(Calendar.MILLISECOND, 999);
+			Date date = cal.getTime();
+			return date;
+		}
+
+		public static int getDayDiff(Date startDate, Date endDate) {      
+		       int diffDays = 0;   
+		       try{      
+		           Calendar start = Calendar.getInstance();      
+		           start.setTime(startDate);      
+		           Calendar end = Calendar.getInstance();      
+		           end.setTime(endDate);      
+		           if (end.equals(start)) {
+		        	   return 0;  
+		           }else if(start.after(end)) {
+		        	   return -1;
+		           }else {
+		        	   diffDays= getDayDiff(start,end);//Fix incident INC0097122
+		           }      
+		         
+		       } catch (Exception e){      
+		    	   LOGGER.log(Level.WARNING,"Error occured in getDay Diff ::"+ e.getMessage(), e); 
+		       }      
+		       return diffDays;      
+		  }
+
+		/**   
+		* @Description: TODO
+		* @author 042659
+		* @param poExpiryDate
+		* @param string
+		* @return Object    
+		* @throws  
+		*/  
+		public static Object getFormatDate(Date date, String formatStr) {
+			   if(null == date)
+				   return null;
+			   try
+			   {
+				   SimpleDateFormat dateTimeFormat = new SimpleDateFormat(formatStr); 
+				   return dateTimeFormat.format(date);
+			   }
+			   catch(Exception e)
+			   {
+				   LOGGER.log(Level.WARNING, "Error occure in formatDate method for input date "+date+""+e.getMessage(), e);
+			   }
+			return null;
+		   }
+		
+		
+	
+	
+}

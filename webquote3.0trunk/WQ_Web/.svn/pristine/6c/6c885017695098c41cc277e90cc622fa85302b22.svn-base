@@ -1,0 +1,670 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	
+<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+			<h:form id="form">
+					<p:panel header="#{dbResource['wq.label.priceList']}" style="font-size:12pt" >
+					<p:messages id="msgId" escape="false" closable="true" autoUpdate="true"/>				
+
+				<p:dataTable var="normalItem"
+							value="#{pricerEnquiryMB.beans.selectedNormals}"
+							rowKey="#{normalItem.metarialDetailId}" 				 		
+							rowIndexVar="rowIndex"
+							id="pricr_datatable" 
+							editable="true"
+							editMode="cell"
+							cellEditEvent="click" 
+							resizableColumns="true" 
+							scrollable="true"  
+							paginator="true" 
+							rows="20" 
+							rendered="#{pricerEnquiryMB.normalMaterial}"
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+							<p:column headerText="#{dbResource['wq.label.no']}" id="rowNumber" width="60">
+			        			<h:outputText value="#{normalItem.lineSeq}"/>
+			        		<!-- 	<h:outputText value="#{rowIndex+1}"/> -->
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.region']}" id="region" width="60">
+			        			<h:outputText value="#{normalItem.region}"/>
+		        			</p:column>
+							<p:column headerText="#{dbResource['wq.label.mfr']}" id="mfr" width="60">
+			        			<h:outputText value="#{normalItem.mfr}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.mfrPN']}" id="fullPart" width="100">
+								<h:outputText value="#{normalItem.fullMfrPart}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.cost']}" width="100">
+			        			<h:inputText value="#{normalItem.cost}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.costIndicator']}" width="100">
+			        			<h:outputText value="#{normalItem.costIndicator}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.validity']}" width="170">
+			        			<h:inputText value="#{normalItem.validity}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.shipmentVal']}" width="150">
+			        			<h:inputText value="#{normalItem.shipmentValidity}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.MPQ']}" width="70">
+			        			<h:inputText value="#{normalItem.MPQ}" style="width:100%;"/>			        			
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.moq']}" width="70">
+			        			<h:inputText value="#{normalItem.MOQ}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.mov']}" width="70">
+			        			<h:inputText value="#{normalItem.MOV}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.leadTime']}" width="100">
+			        			<h:inputText value="#{normalItem.leadTime}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QuotationEffectiveDate']}" width="150">
+			        			<h:outputText value="#{normalItem.quotationEffectiveDate}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.TermsAndConditions']} " width="270">
+			        			<h:inputText value="#{normalItem.termsAndConditions}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QCExternalComment']}" width="150">
+			        			<h:inputText value="#{normalItem.avnetQuoteCentreComments}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.minSellPrice']}" width="100">
+			        			<h:inputText value="#{normalItem.minSell}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.proGroup']}1" width="100">
+			        			<h:outputText value="#{normalItem.productGroup1}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.proGroup']}2" width="100">
+			        			<h:outputText value="#{normalItem.productGroup2}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.proGroup']}3" width="100">
+			        			<h:outputText value="#{normalItem.productGroup3}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.proGroup']}4" width="100">
+			        			<h:outputText value="#{normalItem.productGroup4}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.description']}" width="450">
+			        			<h:inputText value="#{normalItem.description}" style="width:100%;"/>
+		        			</p:column>		
+		        			<p:column headerText="#{dbResource['wq.label.priceListRemarks']}" width="250">
+			        			<h:inputText value="#{normalItem.priceListRemarks}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.priceListRemarks']}2" width="250">
+			        			<h:inputText value="#{normalItem.priceListRemarks2}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.priceListRemarks']}3" width="200">
+			        			<h:inputText value="#{normalItem.priceListRemarks3}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.priceListRemarks']}4" width="200">
+			        			<h:inputText value="#{normalItem.priceListRemarks4}" style="width:100%;"/>
+		        			</p:column>
+
+		        			<p:column headerText="#{dbResource['wq.label.bottomPrice']}" width="100">
+			        			<h:inputText value="#{normalItem.bottomPrice}" style="width:100%;"/>
+		        			</p:column>
+
+		        			<p:column headerText="#{dbResource['wq.label.productCat']}" width="70">
+			        			<h:outputText value="#{normalItem.productCat}"/>
+		        			</p:column>
+
+						</p:dataTable>
+						<p:dataTable var="programItem"
+							value="#{pricerEnquiryMB.beans.selectedPrograms}"
+							rowKey="#{programItem.metarialDetailId}" 
+							rowIndexVar="rwIndx"
+							id="datatable_prg" 
+							editable="true"
+							editMode="cell"
+							cellEditEvent="click" 
+							resizableColumns="true" 
+							scrollable="true"  
+							paginator="true" 
+							rows="20" 
+							rendered="#{pricerEnquiryMB.programMaterial}"
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+							<p:column headerText="#{dbResource['wq.label.no']}" id="rowNumber" width="60">
+			        			<h:outputText value="#{programItem.lineSeq}"/>
+			        			<!-- <h:outputText value="#{rwIndx+1}"/> -->
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.region']}" id="region" width="60">
+			        			<h:outputText value="#{programItem.region}"/>
+		        			</p:column>
+							<p:column headerText="#{dbResource['wq.label.mfr']}" id="mfr" width="60">
+			        			<h:outputText value="#{programItem.mfr}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.mfrPN']}" id="fullPart" width="100">
+								<h:outputText value="#{programItem.fullMfrPart}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.cost']}" width="100">
+			        			<h:inputText value="#{programItem.cost}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.costIndicator']}" width="100">
+			        			<h:outputText value="#{programItem.costIndicator}" />
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.validity']}" width="140">
+			        			<h:inputText value="#{programItem.validity}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.shipmentVal']}" width="140">
+			        			<h:inputText value="#{programItem.shipmentValidity}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.MPQ']}" width="70">
+			        			<h:inputText value="#{programItem.MPQ}" style="width:100%;"/>			        			
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.moq']}" width="70">
+			        			<h:inputText value="#{programItem.MOQ}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.mov']}" width="70">
+			        			<h:inputText value="#{programItem.MOV}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.leadTime']}" width="140">
+			        			<h:inputText value="#{programItem.leadTime}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QuotationEffectiveDate']}" width="150">
+			        			<h:outputText value="#{programItem.quotationEffectiveDate}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.TermsAndConditions']} :" width="270">
+			        			<h:inputText value="#{programItem.termsAndConditions}" style="width:100%;" />
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QCExternalComment']}" width="150">
+			        			<h:inputText value="#{programItem.avnetQuoteCentreComments}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.prog']}" width="150">
+			        			<h:outputText value="#{programItem.program}"/>
+		        			</p:column>	        			
+		        			<p:column headerText="#{dbResource['wq.label.displayOnTop']}" width="170">
+			        			<h:inputText value="#{programItem.displayOnTop}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.specialItemIndicator']}" width="200">
+			        			<h:inputText value="#{programItem.specialItemIndicator}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.AvailableToSellQuantity']}" width="270">
+			        			<h:inputText value="#{programItem.availabletoSellQuantity}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}" width="170">
+			        			<h:inputText value="#{programItem.quantityBreak1}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakPrice']}1" width="170">
+			        			<h:inputText value="#{programItem.quantityBreakPrice1}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}2" width="170">
+			        			<h:inputText value="#{programItem.quantityBreak2}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakPrice']}2" width="170">
+			        			<h:inputText value="#{programItem.quantityBreakPrice2}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}3" width="170">
+			        			<h:inputText value="#{programItem.quantityBreak3}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakPrice']}3" width="170">
+			        			<h:inputText value="#{programItem.quantityBreakPrice3}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}4" width="170">
+			        			<h:inputText value="#{programItem.quantityBreak4}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakPrice']}4" width="170">
+			        			<h:inputText value="#{programItem.quantityBreakPrice4}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}5" width="170">
+			        			<h:inputText value="#{programItem.quantityBreak5}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakPrice']}5" width="170">
+			        			<h:inputText value="#{programItem.quantityBreakPrice5}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.CallQuote']}" width="100">
+		        			<h:selectOneMenu value="#{programItem.callForQuote}" >
+		        			    <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            		<f:selectItem itemLabel="No" itemValue="No" /> 
+			            	</h:selectOneMenu>
+			        		
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.programEffectiveDate']} (DD/MM/YYYY)" width="270">
+			        			<h:inputText value="#{programItem.programEffectiveDate}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.programclosingDate']} (DD/MM/YYYY)" width="270">
+			        			<h:inputText value="#{programItem.programClosingDate}"/>
+		        			</p:column>
+
+		        			<p:column headerText="#{dbResource['wq.label.quantityIndicator']}" width="170">
+			        			<h:inputText value="#{programItem.qtyIndicator}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.newItemIndicator']}" width="200">
+		        			<h:selectOneMenu value="#{programItem.newItemIndicator}" >
+		        			    <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            		<f:selectItem itemLabel="No" itemValue="No" /> 
+			            	</h:selectOneMenu>
+			        		
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.allocFlag']}" width="170">
+		        			<h:selectOneMenu value="#{programItem.allocationFlag}" >
+		        			    <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            		<f:selectItem itemLabel="No" itemValue="No" /> 
+			            	</h:selectOneMenu>
+			 
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.resaleIndicator']}" width="170">
+			        			<h:inputText value="#{programItem.resaleIndicator}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.AQFlag']}" width="170">
+		        			<h:selectOneMenu value="#{programItem.AQFlag}" >
+		        			    <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            		<f:selectItem itemLabel="No" itemValue="No" />
+			            	</h:selectOneMenu>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.availableSellMore']}" width="170">
+		        			<h:selectOneMenu value="#{programItem.availableToSellMoreFlag}" >
+		        			    <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            		<f:selectItem itemLabel="No" itemValue="No" /> 
+			            	</h:selectOneMenu>
+	
+		        			</p:column>
+						</p:dataTable>
+						<p:dataTable var="contractItem"
+							value="#{pricerEnquiryMB.beans.selectedContracts}"
+							rowKey="#{contractItem.contractPriceId}" 
+							rowIndexVar="rowIndex"
+							id="ctrp_table" 
+							resizableColumns="true" 
+							scrollable="true"  
+							paginator="true" 
+							rows="20"
+							editable="true"
+							editMode="cell"
+							cellEditEvent="click" 
+							rendered="#{pricerEnquiryMB.contractPricer}"
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}.">					
+							<p:column headerText="#{dbResource['wq.label.no']}" width="45">
+			        			<h:outputText value="#{contractItem.lineSeq}"/>
+			        			<!-- <h:outputText value="#{rowIndex+1}"/> -->
+		        			</p:column>	
+		        			<p:column headerText="#{dbResource['wq.label.region']}" id="region" width="60">
+			        			<h:outputText value="#{contractItem.region}"/>
+		        			</p:column>	        			
+							<p:column headerText="#{dbResource['wq.label.mfr']}" id="mfr" width="60">
+			        			<h:outputText value="#{contractItem.mfr}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.mfrPN']}" id="fullPart" width="200">
+								<h:outputText value="#{contractItem.fullMfrPart}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.cost']}" width="140">
+			        			<h:inputText value="#{contractItem.cost}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.costIndicator']}" width="170">
+			        			<h:outputText value="#{contractItem.costIndicator}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.validity']}" width="170">
+			        			<h:inputText value="#{contractItem.validity}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.shipmentVal']}" width="150">
+			        			<h:inputText value="#{contractItem.shipmentValidity}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.MPQ']}" width="70">
+			        			<h:inputText value="#{contractItem.MPQ}" style="width:100%;"/>			        			
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.moq']}" width="70">
+			        			<h:inputText value="#{contractItem.MOQ}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.mov']}" width="70">
+			        			<h:inputText value="#{contractItem.MOV}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.leadTime']}" width="140">
+			        			<h:inputText value="#{contractItem.leadTime}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.TermsAndConditions']} :" width="270">
+			        			<h:inputText value="#{contractItem.termsAndConditions}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QuotationEffectiveDate']}" width="150">
+			        			<h:outputText value="#{contractItem.quotationEffectiveDate}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.minSellPrice']}" width="100">
+			        			<h:inputText value="#{contractItem.minSell}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QCExternalComment']}" width="150">
+			        			<h:inputText value="#{contractItem.avnetQuoteCentreComments}"/>
+		        			</p:column>
+							<p:column headerText="#{dbResource['wq.label.custNameSP']}" width="300">
+			        			<h:inputText value="#{contractItem.customerName}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.SoldToCode']}" width="80">
+			        			<h:inputText value="#{contractItem.soldToCode}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.endCust']}" width="300">
+			        			<h:inputText value="#{contractItem.endCustomerName}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.EndCustomerCode']}" width="80">
+			        			<h:inputText value="#{contractItem.endCustomerCode}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.curr']}" width="50">
+			        			<h:inputText value="#{contractItem.currency}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.lstartDate']}" width="80">
+			        			<h:inputText value="#{contractItem.startDate}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.vendorQuote']}#" width="120">
+			        			<h:inputText value="#{contractItem.vendorQuoteNo}"/>
+		        			</p:column>
+		        			
+							<p:column headerText="#{dbResource['wq.label.vendorQuoteQty']}" width="100">
+			        			<h:inputText value="#{contractItem.vendorQuoteQty}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.overridden']}" width="100">
+		        			<h:selectOneMenu value="#{contractItem.overriddenStr}" >
+		        			    <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            		<f:selectItem itemLabel="No" itemValue="No" /> 
+			            	</h:selectOneMenu>
+			        		
+		        			</p:column>		        			
+						</p:dataTable>
+						<p:dataTable var="itemSC"
+							value="#{pricerEnquiryMB.beans.selectedSalesCosts}"
+							rowKey="#{itemSC.metarialDetailId}" 
+							rowIndexVar="rwIndx"
+							id="scost_table" 
+							editable="true"
+							editMode="cell"
+							cellEditEvent="click" 
+							resizableColumns="true" 
+							scrollable="true"  
+							paginator="true" 
+							rows="20" 
+							rendered="#{pricerEnquiryMB.salesCostPricer}"
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+							<p:column headerText="#{dbResource['wq.label.no']}" id="rowNumber" width="60">
+			        			<h:outputText value="#{itemSC.lineSeq}"/>
+			        			<!-- <h:outputText value="#{rwIndx+1}"/> -->
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.region']}" id="region" width="60">
+			        			<h:outputText value="#{itemSC.region}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.salesCostType']}" id="salesCostType" width="160">
+			        			<h:outputText value="#{itemSC.salesCostType}"/>
+		        			</p:column>
+							<p:column headerText="#{dbResource['wq.label.mfr']}" id="mfr" width="60">
+			        			<h:outputText value="#{itemSC.mfr}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.mfrPN']}" id="fullPart" width="100">
+								<h:outputText value="#{itemSC.fullMfrPart}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.cost']}" width="100">
+			        			<h:inputText value="#{itemSC.cost}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.costIndicator']}" width="100">
+			        			<h:outputText value="#{itemSC.costIndicator}" />
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.validity']}" width="140">
+			        			<h:inputText value="#{itemSC.validity}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.shipmentVal']}" width="140">
+			        			<h:inputText value="#{itemSC.shipmentValidity}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.MPQ']}" width="70">
+			        			<h:inputText value="#{itemSC.MPQ}" style="width:100%;"/>			        			
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.moq']}" width="70">
+			        			<h:inputText value="#{itemSC.MOQ}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.mov']}" width="70">
+			        			<h:inputText value="#{itemSC.MOV}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.leadTime']}" width="140">
+			        			<h:inputText value="#{itemSC.leadTime}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QuotationEffectiveDate']}" width="150">
+			        			<h:outputText value="#{itemSC.quotationEffectiveDate}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.TermsAndConditions']} :" width="270">
+			        			<h:inputText value="#{itemSC.termsAndConditions}" style="width:100%;" />
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QCExternalComment']}" width="150">
+			        			<h:inputText value="#{itemSC.avnetQuoteCentreComments}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.prog']}" width="150">
+			        			<h:outputText value="#{itemSC.program}"/>
+		        			</p:column>	        			
+		        			<p:column headerText="#{dbResource['wq.label.displayOnTop']}" width="170">
+			        			<h:inputText value="#{itemSC.displayOnTop}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.specialItemIndicator']}" width="200">
+			        			<h:inputText value="#{itemSC.specialItemIndicator}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.AvailableToSellQuantity']}" width="270">
+			        			<h:inputText value="#{itemSC.availabletoSellQuantity}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.qtyControl']}" width="100">
+			        			<h:inputText value="#{itemSC.qtyControl}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreak1}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSalesCost1']}" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreakSalesCost1}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSuggestedResale1']}" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreakSuggestedResale1}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}2" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreak2}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSalesCost2']}" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreakSalesCost2}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSuggestedResale2']}" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreakSuggestedResale2}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}3" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreak3}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSalesCost3']}" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreakSalesCost3}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSuggestedResale3']}" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreakSuggestedResale3}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}4" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreak4}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSalesCost4']}" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreakSalesCost4}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSuggestedResale4']}" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreakSuggestedResale4}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}5" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreak5}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSalesCost5']}" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreakSalesCost5}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSuggestedResale5']}" width="170">
+			        			<h:inputText value="#{itemSC.quantityBreakSuggestedResale5}"/>
+		        			</p:column>
+
+		        			<p:column headerText="#{dbResource['wq.label.quantityIndicator']}" width="170">
+			        			<h:inputText value="#{itemSC.qtyIndicator}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.newItemIndicator']}" width="200">
+		        			<h:selectOneMenu value="#{itemSC.newItemIndicator}" >
+		        			    <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            		<f:selectItem itemLabel="No" itemValue="No" /> 
+			            	</h:selectOneMenu>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.allocFlag']}" width="170">
+		        			<h:selectOneMenu value="#{itemSC.allocationFlag}" >
+		        			    <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            		<f:selectItem itemLabel="No" itemValue="No" /> 
+			            	</h:selectOneMenu>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.AQFlag']}" width="170">
+		        			<h:selectOneMenu value="#{itemSC.AQFlag}" >
+		        			    <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            		<f:selectItem itemLabel="No" itemValue="No" />
+			            	</h:selectOneMenu>
+		        			</p:column>
+						</p:dataTable>			
+						<p:dataTable var="itemSim"
+							value="#{pricerEnquiryMB.beans.selectedSimples}"
+							rowKey="#{itemSim.metarialDetailId}" 
+							rowIndexVar="rwIndx"
+							id="simple_table" 
+							editable="true"
+							editMode="cell"
+							cellEditEvent="click" 
+							resizableColumns="true" 
+							scrollable="true"  
+							paginator="true" 
+							rows="20" 
+							rendered="#{pricerEnquiryMB.simplePricer}"
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+							<p:column headerText="#{dbResource['wq.label.no']}" id="rowNumber" width="60">
+			        			<h:outputText value="#{itemSim.lineSeq}"/>
+			        			<!-- <h:outputText value="#{rwIndx+1}"/> -->
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.region']}" id="region" width="60">
+			        			<h:outputText value="#{itemSim.region}"/>
+		        			</p:column>
+							<p:column headerText="#{dbResource['wq.label.mfr']}" id="mfr" width="60">
+			        			<h:outputText value="#{itemSim.mfr}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.mfrPN']}" id="fullPart" width="100">
+								<h:outputText value="#{itemSim.fullMfrPart}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.cost']}" width="100">
+			        			<h:inputText value="#{itemSim.cost}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.costIndicator']}" width="100">
+			        			<h:outputText value="#{itemSim.costIndicator}" />
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.validity']}" width="140">
+			        			<h:inputText value="#{itemSim.validity}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.shipmentVal']}" width="140">
+			        			<h:inputText value="#{itemSim.shipmentValidity}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.MPQ']}" width="70">
+			        			<h:inputText value="#{itemSim.MPQ}" style="width:100%;"/>			        			
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.moq']}" width="70">
+			        			<h:inputText value="#{itemSim.MOQ}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.mov']}" width="70">
+			        			<h:inputText value="#{itemSim.MOV}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.leadTime']}" width="140">
+			        			<h:inputText value="#{itemSim.leadTime}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QuotationEffectiveDate']}" width="150">
+			        			<h:outputText value="#{itemSim.quotationEffectiveDate}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.TermsAndConditions']} :" width="270">
+			        			<h:inputText value="#{itemSim.termsAndConditions}" style="width:100%;" />
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QCExternalComment']}" width="150">
+			        			<h:inputText value="#{itemSim.avnetQuoteCentreComments}" style="width:100%;"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.prog']}" width="150">
+			        			<h:outputText value="#{itemSim.program}"/>
+		        			</p:column>	        			
+		        			<p:column headerText="#{dbResource['wq.label.displayOnTop']}" width="170">
+			        			<h:inputText value="#{itemSim.displayOnTop}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.specialItemIndicator']}" width="200">
+			        			<h:inputText value="#{itemSim.specialItemIndicator}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.AvailableToSellQuantity']}" width="270">
+			        			<h:inputText value="#{itemSim.availabletoSellQuantity}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.qtyControl']}" width="100">
+			        			<h:inputText value="#{itemSim.qtyControl}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreak1}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSalesCost1']}" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreakSalesCost1}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSuggestedResale1']}" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreakSuggestedResale1}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}2" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreak2}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSalesCost2']}" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreakSalesCost2}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSuggestedResale2']}" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreakSuggestedResale2}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}3" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreak3}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSalesCost3']}" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreakSalesCost3}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSuggestedResale3']}" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreakSuggestedResale3}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}4" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreak4}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSalesCost4']}" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreakSalesCost4}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSuggestedResale4']}" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreakSuggestedResale4}"/>
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.QuantityBreak']}5" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreak5}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSalesCost5']}" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreakSalesCost5}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.quantityBreakSuggestedResale5']}" width="170">
+			        			<h:inputText value="#{itemSim.quantityBreakSuggestedResale5}"/>
+		        			</p:column>
+							<p:column headerText="#{dbResource['wq.label.vendorQuoteNum']}" width="170">
+			        			<h:inputText value="#{itemSim.vendorQuoteNo}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.vendorQuoteQty']}" width="200">
+			        			<h:inputText value="#{itemSim.vendorQuoteQty}"/>
+		        			</p:column>
+		        			
+						</p:dataTable>
+			<f:facet name="footer">
+	        	
+	        	<p:commandButton value="#{dbResource['wq.button.confirmEditPrice']}"  icon="ui-icon ui-icon-circle-arrow-n" actionListener="#{pricerEnquiryMB.editPrice}"/>
+	        	<p:commandButton value="#{dbResource['wq.button.backPriceInquiry']}" icon="ui-icon ui-icon-circle-arrow-w" action="#{pricerEnquiryMB.getMyPage}" />
+	        </f:facet>
+				</p:panel>
+			</h:form>
+	</ui:define>
+</ui:composition>

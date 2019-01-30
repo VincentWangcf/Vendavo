@@ -1,0 +1,958 @@
+
+package com.sap.document.sap.soap.functions.mc_style;
+
+import java.math.BigDecimal;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
+import javax.xml.datatype.XMLGregorianCalendar;
+
+
+/**
+ * <p>Java class for ZquoteLst complex type.
+ * 
+ * <p>The following schema fragment specifies the expected content contained within this class.
+ * 
+ * <pre>
+ * &lt;complexType name="ZquoteLst">
+ *   &lt;complexContent>
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
+ *       &lt;sequence>
+ *         &lt;element name="RfqNo" type="{urn:sap-com:document:sap:rfc:functions}char10"/>
+ *         &lt;element name="Validfrom" type="{urn:sap-com:document:sap:rfc:functions}date"/>
+ *         &lt;element name="Validto" type="{urn:sap-com:document:sap:rfc:functions}date"/>
+ *         &lt;element name="Shipvalidto" type="{urn:sap-com:document:sap:rfc:functions}date"/>
+ *         &lt;element name="Quoteprice" type="{urn:sap-com:document:sap:rfc:functions}curr11.2"/>
+ *         &lt;element name="Finalprice" type="{urn:sap-com:document:sap:rfc:functions}curr11.2"/>
+ *         &lt;element name="Cost" type="{urn:sap-com:document:sap:rfc:functions}curr11.2"/>
+ *         &lt;element name="Resaleind" type="{urn:sap-com:document:sap:rfc:functions}char5"/>
+ *         &lt;element name="Curr" type="{urn:sap-com:document:sap:rfc:functions}cuky5"/>
+ *         &lt;element name="CostCurr" type="{urn:sap-com:document:sap:rfc:functions}cuky5"/>
+ *         &lt;element name="Unit" type="{urn:sap-com:document:sap:rfc:functions}decimal5.0"/>
+ *         &lt;element name="Kunnr" type="{urn:sap-com:document:sap:rfc:functions}char10"/>
+ *         &lt;element name="Shipto" type="{urn:sap-com:document:sap:rfc:functions}char10"/>
+ *         &lt;element name="Endcust" type="{urn:sap-com:document:sap:rfc:functions}char10"/>
+ *         &lt;element name="Quoteqty" type="{urn:sap-com:document:sap:rfc:functions}quantum15.3"/>
+ *         &lt;element name="Matnr" type="{urn:sap-com:document:sap:rfc:functions}char18"/>
+ *         &lt;element name="Mfrnr" type="{urn:sap-com:document:sap:rfc:functions}char10"/>
+ *         &lt;element name="Mfrpn" type="{urn:sap-com:document:sap:rfc:functions}char40"/>
+ *         &lt;element name="MultiUse" type="{urn:sap-com:document:sap:rfc:functions}char1"/>
+ *         &lt;element name="Konzs" type="{urn:sap-com:document:sap:rfc:functions}char10"/>
+ *         &lt;element name="Loekz" type="{urn:sap-com:document:sap:rfc:functions}char1"/>
+ *         &lt;element name="Zzproject" type="{urn:sap-com:document:sap:rfc:functions}char20"/>
+ *         &lt;element name="Zregion" type="{urn:sap-com:document:sap:rfc:functions}char5"/>
+ *         &lt;element name="Vkorg" type="{urn:sap-com:document:sap:rfc:functions}char4"/>
+ *         &lt;element name="Pmoq" type="{urn:sap-com:document:sap:rfc:functions}char10"/>
+ *         &lt;element name="Erdat" type="{urn:sap-com:document:sap:rfc:functions}date"/>
+ *         &lt;element name="Erzet" type="{urn:sap-com:document:sap:rfc:functions}char6"/>
+ *         &lt;element name="Err" type="{urn:sap-com:document:sap:rfc:functions}char1"/>
+ *         &lt;element name="QcComment" type="{urn:sap-com:document:sap:rfc:functions}char255"/>
+ *       &lt;/sequence>
+ *     &lt;/restriction>
+ *   &lt;/complexContent>
+ * &lt;/complexType>
+ * </pre>
+ * 
+ * 
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "ZquoteLst", propOrder = {
+    "rfqNo",
+    "validfrom",
+    "validto",
+    "shipvalidto",
+    "quoteprice",
+    "finalprice",
+    "cost",
+    "resaleind",
+    "curr",
+    "costCurr",
+    "unit",
+    "kunnr",
+    "shipto",
+    "endcust",
+    "quoteqty",
+    "matnr",
+    "mfrnr",
+    "mfrpn",
+    "multiUse",
+    "konzs",
+    "loekz",
+    "zzproject",
+    "zregion",
+    "vkorg",
+    "pmoq",
+    "erdat",
+    "erzet",
+    "err",
+    "qcComment",
+    "excRate",
+    "handling",
+    "tcurr",
+    "zflagUsed",
+    "costInd",
+    "dpRefId",
+    "dpRefLineId",
+    "salesCostType",
+    "salesCost"
+})
+public class ZquoteLst {
+
+    @XmlElement(name = "RfqNo", required = true)
+    protected String rfqNo;
+    @XmlElement(name = "Validfrom", required = true)
+    protected XMLGregorianCalendar validfrom;
+    @XmlElement(name = "Validto", required = true)
+    protected XMLGregorianCalendar validto;
+    @XmlElement(name = "Shipvalidto", required = true)
+    protected XMLGregorianCalendar shipvalidto;
+    @XmlElement(name = "Quoteprice", required = true)
+    protected BigDecimal quoteprice;
+    @XmlElement(name = "Finalprice", required = true)
+    protected BigDecimal finalprice;
+    @XmlElement(name = "Cost", required = true)
+    protected BigDecimal cost;
+    @XmlElement(name = "Resaleind", required = true)
+    protected String resaleind;
+    @XmlElement(name = "Curr", required = true)
+    protected String curr;
+    @XmlElement(name = "CostCurr", required = true)
+    protected String costCurr;
+    @XmlElement(name = "Unit", required = true)
+    protected BigDecimal unit;
+    @XmlElement(name = "Kunnr", required = true)
+    protected String kunnr;
+    @XmlElement(name = "Shipto", required = true)
+    protected String shipto;
+    @XmlElement(name = "Endcust", required = true)
+    protected String endcust;
+    @XmlElement(name = "Quoteqty", required = true)
+    protected BigDecimal quoteqty;
+    @XmlElement(name = "Matnr", required = true)
+    protected String matnr;
+    @XmlElement(name = "Mfrnr", required = true)
+    protected String mfrnr;
+    @XmlElement(name = "Mfrpn", required = true)
+    protected String mfrpn;
+    @XmlElement(name = "MultiUse", required = true)
+    protected String multiUse;
+    @XmlElement(name = "Konzs", required = true)
+    protected String konzs;
+    @XmlElement(name = "Loekz", required = true)
+    protected String loekz;
+    @XmlElement(name = "Zzproject", required = true)
+    protected String zzproject;
+    @XmlElement(name = "Zregion", required = true)
+    protected String zregion;
+    @XmlElement(name = "Vkorg", required = true)
+    protected String vkorg;
+    @XmlElement(name = "Pmoq", required = true)
+    protected String pmoq;
+    @XmlElement(name = "Erdat", required = true)
+    protected XMLGregorianCalendar erdat;
+    @XmlElement(name = "Erzet", required = true)
+    protected String erzet;
+    @XmlElement(name = "Err", required = true)
+    protected String err;
+    @XmlElement(name = "QcComment", required = true)
+    protected String qcComment;
+    @XmlElement(name = "ExcRate", required = true)
+    protected BigDecimal excRate;
+    @XmlElement(name = "Handling", required = true)
+    protected BigDecimal handling;
+    @XmlElement(name = "Tcurr", required = true)
+    protected String tcurr;
+
+    
+    
+    @XmlElement(name = "ZflagUsed", required = true)
+    protected String zflagUsed;
+    
+    @XmlElement(name = "CostInd", required = true)
+    protected String costInd;
+    
+    
+    @XmlElement(name = "WcsRefId", required = true)
+    protected String dpRefId;
+    
+    @XmlElement(name = "WcsRefLineId", required = true)
+    protected String dpRefLineId;
+    
+    @XmlElement(name = "CostType", required = true)
+    protected String salesCostType;
+    
+    @XmlElement(name = "Sc", required = true)
+    protected BigDecimal salesCost;
+    
+
+	public String getCostInd() {
+		return costInd;
+	}
+
+	public void setCostInd(String costInd) {
+		this.costInd = costInd;
+	}
+
+	public void setZflagUsed(String zflagUsed) {
+		this.zflagUsed = zflagUsed;
+	}
+	
+    public String getZflagUsed() {
+		return zflagUsed;
+	}
+
+
+    /**
+     * Gets the value of the rfqNo property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getRfqNo() {
+        return rfqNo;
+    }
+
+    /**
+     * Sets the value of the rfqNo property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setRfqNo(String value) {
+        this.rfqNo = value;
+    }
+
+    /**
+     * Gets the value of the validfrom property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link XMLGregorianCalendar }
+     *     
+     */
+    public XMLGregorianCalendar getValidfrom() {
+        return validfrom;
+    }
+
+    /**
+     * Sets the value of the validfrom property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link XMLGregorianCalendar }
+     *     
+     */
+    public void setValidfrom(XMLGregorianCalendar value) {
+        this.validfrom = value;
+    }
+
+    /**
+     * Gets the value of the validto property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link XMLGregorianCalendar }
+     *     
+     */
+    public XMLGregorianCalendar getValidto() {
+        return validto;
+    }
+
+    /**
+     * Sets the value of the validto property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link XMLGregorianCalendar }
+     *     
+     */
+    public void setValidto(XMLGregorianCalendar value) {
+        this.validto = value;
+    }
+
+    /**
+     * Gets the value of the shipvalidto property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link XMLGregorianCalendar }
+     *     
+     */
+    public XMLGregorianCalendar getShipvalidto() {
+        return shipvalidto;
+    }
+
+    /**
+     * Sets the value of the shipvalidto property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link XMLGregorianCalendar }
+     *     
+     */
+    public void setShipvalidto(XMLGregorianCalendar value) {
+        this.shipvalidto = value;
+    }
+
+    /**
+     * Gets the value of the quoteprice property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link BigDecimal }
+     *     
+     */
+    public BigDecimal getQuoteprice() {
+        return quoteprice;
+    }
+
+    /**
+     * Sets the value of the quoteprice property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link BigDecimal }
+     *     
+     */
+    public void setQuoteprice(BigDecimal value) {
+        this.quoteprice = value;
+    }
+
+    /**
+     * Gets the value of the finalprice property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link BigDecimal }
+     *     
+     */
+    public BigDecimal getFinalprice() {
+        return finalprice;
+    }
+
+    /**
+     * Sets the value of the finalprice property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link BigDecimal }
+     *     
+     */
+    public void setFinalprice(BigDecimal value) {
+        this.finalprice = value;
+    }
+
+    /**
+     * Gets the value of the cost property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link BigDecimal }
+     *     
+     */
+    public BigDecimal getCost() {
+        return cost;
+    }
+
+    /**
+     * Sets the value of the cost property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link BigDecimal }
+     *     
+     */
+    public void setCost(BigDecimal value) {
+        this.cost = value;
+    }
+
+    /**
+     * Gets the value of the resaleind property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getResaleind() {
+        return resaleind;
+    }
+
+    /**
+     * Sets the value of the resaleind property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setResaleind(String value) {
+        this.resaleind = value;
+    }
+
+    /**
+     * Gets the value of the curr property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getCurr() {
+        return curr;
+    }
+
+    /**
+     * Sets the value of the curr property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setCurr(String value) {
+        this.curr = value;
+    }
+
+    /**
+     * Gets the value of the costCurr property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getCostCurr() {
+        return costCurr;
+    }
+
+    /**
+     * Sets the value of the costCurr property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setCostCurr(String value) {
+        this.costCurr = value;
+    }
+
+    /**
+     * Gets the value of the unit property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link BigDecimal }
+     *     
+     */
+    public BigDecimal getUnit() {
+        return unit;
+    }
+
+    /**
+     * Sets the value of the unit property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link BigDecimal }
+     *     
+     */
+    public void setUnit(BigDecimal value) {
+        this.unit = value;
+    }
+
+    /**
+     * Gets the value of the kunnr property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getKunnr() {
+        return kunnr;
+    }
+
+    /**
+     * Sets the value of the kunnr property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setKunnr(String value) {
+        this.kunnr = value;
+    }
+
+    /**
+     * Gets the value of the shipto property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getShipto() {
+        return shipto;
+    }
+
+    /**
+     * Sets the value of the shipto property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setShipto(String value) {
+        this.shipto = value;
+    }
+
+    /**
+     * Gets the value of the endcust property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getEndcust() {
+        return endcust;
+    }
+
+    /**
+     * Sets the value of the endcust property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setEndcust(String value) {
+        this.endcust = value;
+    }
+
+    /**
+     * Gets the value of the quoteqty property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link BigDecimal }
+     *     
+     */
+    public BigDecimal getQuoteqty() {
+        return quoteqty;
+    }
+
+    /**
+     * Sets the value of the quoteqty property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link BigDecimal }
+     *     
+     */
+    public void setQuoteqty(BigDecimal value) {
+        this.quoteqty = value;
+    }
+
+    /**
+     * Gets the value of the matnr property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getMatnr() {
+        return matnr;
+    }
+
+    /**
+     * Sets the value of the matnr property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setMatnr(String value) {
+        this.matnr = value;
+    }
+
+    /**
+     * Gets the value of the mfrnr property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getMfrnr() {
+        return mfrnr;
+    }
+
+    /**
+     * Sets the value of the mfrnr property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setMfrnr(String value) {
+        this.mfrnr = value;
+    }
+
+    /**
+     * Gets the value of the mfrpn property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getMfrpn() {
+        return mfrpn;
+    }
+
+    /**
+     * Sets the value of the mfrpn property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setMfrpn(String value) {
+        this.mfrpn = value;
+    }
+
+    /**
+     * Gets the value of the multiUse property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getMultiUse() {
+        return multiUse;
+    }
+
+    /**
+     * Sets the value of the multiUse property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setMultiUse(String value) {
+        this.multiUse = value;
+    }
+
+    /**
+     * Gets the value of the konzs property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getKonzs() {
+        return konzs;
+    }
+
+    /**
+     * Sets the value of the konzs property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setKonzs(String value) {
+        this.konzs = value;
+    }
+
+    /**
+     * Gets the value of the loekz property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getLoekz() {
+        return loekz;
+    }
+
+    /**
+     * Sets the value of the loekz property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setLoekz(String value) {
+        this.loekz = value;
+    }
+
+    /**
+     * Gets the value of the zzproject property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getZzproject() {
+        return zzproject;
+    }
+
+    /**
+     * Sets the value of the zzproject property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setZzproject(String value) {
+        this.zzproject = value;
+    }
+
+    /**
+     * Gets the value of the zregion property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getZregion() {
+        return zregion;
+    }
+
+    /**
+     * Sets the value of the zregion property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setZregion(String value) {
+        this.zregion = value;
+    }
+
+    /**
+     * Gets the value of the vkorg property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getVkorg() {
+        return vkorg;
+    }
+
+    /**
+     * Sets the value of the vkorg property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setVkorg(String value) {
+        this.vkorg = value;
+    }
+
+    /**
+     * Gets the value of the pmoq property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getPmoq() {
+        return pmoq;
+    }
+
+    /**
+     * Sets the value of the pmoq property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setPmoq(String value) {
+        this.pmoq = value;
+    }
+
+    /**
+     * Gets the value of the erdat property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link XMLGregorianCalendar }
+     *     
+     */
+    public XMLGregorianCalendar getErdat() {
+        return erdat;
+    }
+
+    /**
+     * Sets the value of the erdat property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link XMLGregorianCalendar }
+     *     
+     */
+    public void setErdat(XMLGregorianCalendar value) {
+        this.erdat = value;
+    }
+
+    /**
+     * Gets the value of the erzet property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getErzet() {
+        return erzet;
+    }
+
+    /**
+     * Sets the value of the erzet property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setErzet(String value) {
+        this.erzet = value;
+    }
+
+    /**
+     * Gets the value of the err property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getErr() {
+        return err;
+    }
+
+    /**
+     * Sets the value of the err property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setErr(String value) {
+        this.err = value;
+    }
+
+    /**
+     * Gets the value of the qcComment property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getQcComment() {
+        return qcComment;
+    }
+
+    /**
+     * Sets the value of the qcComment property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setQcComment(String value) {
+        this.qcComment = value;
+    }
+
+	public BigDecimal getExcRate() {
+		return excRate;
+	}
+
+	public void setExcRate(BigDecimal excRate) {
+		this.excRate = excRate;
+	}
+
+	public BigDecimal getHandling() {
+		return handling;
+	}
+
+	public void setHandling(BigDecimal handling) {
+		this.handling = handling;
+	}
+
+	public String getTcurr() {
+		return tcurr;
+	}
+
+	public void setTcurr(String tcurr) {
+		this.tcurr = tcurr;
+	}
+
+	public String getDpRefId() {
+		return dpRefId;
+	}
+
+	public void setDpRefId(String dpRefId) {
+		this.dpRefId = dpRefId;
+	}
+
+	public String getDpRefLineId() {
+		return dpRefLineId;
+	}
+
+	public void setDpRefLineId(String dpRefLineId) {
+		this.dpRefLineId = dpRefLineId;
+	}
+	
+	public String getSalesCostType() {
+		return salesCostType;
+	}
+
+	public void setSalesCostType(String salesCostType) {
+		this.salesCostType = salesCostType;
+	}
+
+	public BigDecimal getSalesCost() {
+		return salesCost;
+	}
+
+	public void setSalesCost(BigDecimal salesCost) {
+		this.salesCost = salesCost;
+	}
+    
+}

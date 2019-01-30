@@ -1,0 +1,107 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+		<h:form id="form">
+			<p:growl id="growl" for="growl" sticky="true" showDetail="true" escape="false" />
+			<p:accordionPanel>
+				<p:tab title="#{dbResource['wq.label.searchCriteria']}">			
+					<h:panelGrid cellpadding="0" style="width:80%;"  columns="8">					
+						<h:outputText value="#{dbResource['wq.label.mfr']}:"  escape="false" />
+						<p:inputText id="mfrNumber" size="20" value="#{restrictedCustomerMappingMB.criteria.mfrKeyword}" autoResize="false" />
+						<h:outputText value="#{dbResource['wq.label.partNumber']}:"/>
+						<p:inputText id="partNumber" size="20" value="#{restrictedCustomerMappingMB.criteria.partNumberKeyword}" autoResize="false" />
+						<h:outputText value="#{dbResource['wq.label.proGroup']} 1:"/>
+						<p:inputText id="productGroup1Number" size="20" value="#{restrictedCustomerMappingMB.criteria.productGroup1Keyword}" autoResize="false" />
+						<h:outputText value="#{dbResource['wq.label.proGroup']}2:"/>
+						<p:inputText id="productGroup2Number" size="20" value="#{restrictedCustomerMappingMB.criteria.productGroup2Keyword}" autoResize="false" />
+						<h:outputText value="#{dbResource['wq.label.proGroup']}3:"/>
+						<p:inputText id="productGroup3Number" size="20" value="#{restrictedCustomerMappingMB.criteria.productGroup3Keyword}" autoResize="false" />
+						<h:outputText value="#{dbResource['wq.label.proGroup']}4:"/>
+						<p:inputText id="productGroup4Number" size="20" value="#{restrictedCustomerMappingMB.criteria.productGroup4Keyword}" autoResize="false" />
+						<h:outputText value="#{dbResource['wq.label.SoldToCode']}:"/>
+						<p:inputText id="soldToCode" size="20" value="#{restrictedCustomerMappingMB.criteria.soldToCodeKeyword}" autoResize="false" />
+						<h:outputText value="#{dbResource['wq.label.EndCustomerCode']}:"/>
+						<p:inputText id="endCustomerCode" size="20" value="#{restrictedCustomerMappingMB.criteria.endCustomerCodeKeyword}" autoResize="false" />
+					</h:panelGrid>
+					<h:panelGrid columns="3" cellpadding="0" >		
+						<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search" actionListener="#{restrictedCustomerMappingMB.search}" update=":form:datatable"/>
+						<p:commandButton value="#{dbResource['wq.label.reset']}"  icon="ui-icon-triangle-1-w" actionListener="#{restrictedCustomerMappingMB.postContruct}" update="@form"/>
+					</h:panelGrid>
+				</p:tab>			
+			</p:accordionPanel>
+		
+		<p:panel header="#{dbResource['wq.label.restrictedCustomerMapping']}" style="font-size:12pt" >
+			<h:outputText value="#{dbResource['wq.message.SearchCriteriaPrecisely']}." rendered="#{restrictedCustomerMappingMB.recordsExceedMaxAllowed}" style="color:red;font-weight:bold;"/>
+			<h:panelGrid columns="13" cellpadding="0" >
+			<p:commandButton value="#{dbResource['wq.label.mapUpload']}" update="@form" action="#{restrictedCustomerMappingMB.goToUploadPage}"   >
+				<f:setPropertyActionListener target="#{restrictedCustomerMappingMB.myPage}" value="/RFQ/RestrictedCustomerMapping.jsf" />
+			</p:commandButton>
+				        	
+	        <p:commandButton value="#{dbResource['wq.button.mapDownload']}" ajax="false" onclick="PrimeFaces.monitorDownload(start, stop)" >  
+	        	<p:fileDownload value="#{restrictedCustomerMappingMB.downloadReport}" /> 
+	        </p:commandButton></h:panelGrid>	
+			
+	    <p:dataTable		var="vo" 
+		    				value="#{restrictedCustomerMappingMB.restrictedCustomerMappingVos}"  
+		    				paginator="true"  
+		    				rowIndexVar="rowIndex" 
+		    				rows="10" 
+		    				rowKey="#{vo.id}"
+	    					rowsPerPageTemplate="10,20,50"
+		                 	id="datatable" 
+		                 	paginatorPosition="top" 
+		                 	scrollable="true" 
+		                 	scrollHeight="100%"  
+		                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}."  >            
+			<p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{vo.mfr}" filterBy="#{vo.mfr}" filterMatchMode="contains" styleClass="column_mfr" widgetVar="mfrWidget">
+				<h:outputText value="#{vo.mfr}" />
+			</p:column>
+					
+			<p:column headerText="#{dbResource['wq.label.lPartNumber']}" sortBy="#{vo.partNumber}"  filterBy="#{vo.partNumber}" filterMatchMode="contains" styleClass="column_reschedulingWindow">
+			<h:outputText value="#{vo.partNumber}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.lProductGroup']}1" sortBy="#{vo.productGroup1}"  filterBy="#{vo.productGroup1}" filterMatchMode="contains" styleClass="column_cancellationWindow">
+			<h:outputText value="#{vo.productGroup1}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.lProductGroup']}2" sortBy="#{vo.productGroup2}"  filterBy="#{vo.productGroup2}" filterMatchMode="contains" styleClass="column_mfr">
+			<h:outputText value="#{vo.productGroup2}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.lProductGroup']}3" sortBy="#{vo.productGroup3}"  filterBy="#{vo.productGroup3}" filterMatchMode="contains" styleClass="column_resalesIndicator">
+			<h:outputText value="#{vo.productGroup3}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.lProductGroup']}4" sortBy="#{vo.productGroup4}"  filterBy="#{vo.productGroup4}" filterMatchMode="contains" styleClass="column_qtyIndicator">
+			<h:outputText value="#{vo.productGroup4}" />
+			</p:column>
+				
+			<p:column headerText="#{dbResource['wq.label.lSoldToCode']}" sortBy="#{vo.soldToCode}"  filterBy="#{vo.soldToCode}" filterMatchMode="contains" styleClass="column_productCategory">
+			<h:outputText value="#{vo.soldToCode}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.EndCustomerCode']}" sortBy="#{vo.endCustomerCode}"  filterBy="#{vo.endCustomerCode}" filterMatchMode="contains" styleClass="column_productGroup">
+			<h:outputText value="#{vo.endCustomerCode}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bizUnit']}" sortBy="#{vo.bizUnit}"  filterBy="#{vo.bizUnit}" filterMatchMode="contains" styleClass="column_productCategory">
+			<h:outputText value="#{vo.bizUnit}" />
+			</p:column>
+   		</p:dataTable>
+    	</p:panel>
+		</h:form>
+	</ui:define>
+</ui:composition>

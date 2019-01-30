@@ -1,0 +1,337 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.math.BigDecimal;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.cache.ICacheUtil;
+import com.avnet.emasia.webquote.constants.Constants;
+
+public class Money implements Comparable<Money> {
+	
+	static final Logger logger = Logger.getLogger(Money.class.getName());
+	
+	private Currency currency;
+
+	private BigDecimal amount;
+	
+	private static ICacheUtil cacheUtil;
+
+	static {
+		try {
+			Context context = new InitialContext();
+			setCacheUtil((ICacheUtil) context.lookup("java:app/WQ_JPA_Entity/CacheUtil!com.avnet.emasia.webquote.cache.ICacheUtil"));
+		} catch (NamingException e) {
+			logger.log(Level.SEVERE, "This shoud not happen" , e);
+		}			
+		
+	}
+
+	private Money(BigDecimal amount, Currency curr) {
+		this.amount = amount;
+		this.currency = curr;
+	}
+
+	public static Money of(String amount, String curr) {
+		if (StringUtils.isEmpty(amount) || StringUtils.isEmpty(curr)) {
+			return null;
+		}
+		try {
+			return new Money(new BigDecimal(amount), Currency.valueOf(curr));
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	public static Money of(BigDecimal amount, Currency curr) {
+		if (amount == null || curr == null) {
+			return null;
+		}
+		return new Money(amount, curr);
+	}
+
+	public static Money of(Double amount, Currency curr) {
+		if (amount == null || curr == null) {
+			return null;
+		}
+		try {
+			return new Money(new BigDecimal(amount), curr);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	public static Money of(Double amount, String curr) {
+		if (amount == null || StringUtils.isEmpty(curr)) {
+			return null;
+		}
+		try {
+			return new Money(new BigDecimal(amount), Currency.valueOf(curr));
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	public Currency getCurrency() {
+		return currency;
+	}
+
+	public BigDecimal getAmount() {
+		return amount;
+	}
+
+	static void setCacheUtil(ICacheUtil cacheUtil) {
+		Money.cacheUtil = cacheUtil;
+	}
+
+	
+	
+	// no setters allowed
+
+	
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((amount == null) ? 0 : amount.hashCode());
+		result = prime * result + ((currency == null) ? 0 : currency.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Money other = (Money) obj;
+		if (amount == null) {
+			if (other.amount != null)
+				return false;
+		} else if (!amount.equals(other.amount))
+			return false;
+		if (currency != other.currency)
+			return false;
+		return true;
+	}
+	
+	
+
+	@Override
+	public String toString() {
+		return "Money [currency=" + currency.name() + ", amount=" + amount + "]";
+	}
+
+	public Money convertTo(Currency toCurrency, BizUnit bizUnit, Customer soldToCustomer, Date date, int ... scale) {
+		
+		if (toCurrency == null || bizUnit == null || date == null) {
+			throw new IllegalArgumentException();
+		}
+		
+		List<ExchangeRate> exchangeRates = cacheUtil.getExchangeRates();
+		
+		
+		BigDecimal[] rates = findExchangeRate(this.currency,toCurrency, bizUnit, soldToCustomer, date, exchangeRates);
+		
+		if (rates[0] == null || rates[1] == null) {
+			return null;
+		} else {
+			int i = scale.length == 0 ? Constants.SCALE : scale[0];
+			return Money.of(getAmount().multiply(rates[1]).divide(rates[0], i , Constants.ROUNDING_MODE), toCurrency);
+		}
+
+	}
+
+	private static BigDecimal[] findExchangeRate(Currency fromCurr, Currency toCurr, BizUnit bizUnit, Customer soldToCustomer, Date date, List<ExchangeRate> exchangeRates) {
+		
+		if (fromCurr == toCurr) {
+			return new BigDecimal[] {BigDecimal.ONE, BigDecimal.ONE};	
+		}
+		
+		BigDecimal exchRateFrom = null;
+		BigDecimal exchRateTo = null;
+		List<ExchangeRate> fromRates = null;
+		List<ExchangeRate> toRates = null;
+
+		//exchRateFrom is based on this.currency and USD
+		if (fromCurr == Currency.USD) {
+			exchRateFrom = BigDecimal.ONE;
+		} else {
+			fromRates = findExchangeRateFromCache(fromCurr, bizUnit, soldToCustomer, date, exchangeRates);
+		}
+
+		//exchRateTo is based on toCurrency and USD
+		if (toCurr == Currency.USD) {
+			exchRateTo = BigDecimal.ONE;
+		} else {
+			toRates = findExchangeRateFromCache(toCurr, bizUnit, soldToCustomer, date, exchangeRates);
+		}
+		
+		if (exchRateFrom == null ^ exchRateTo == null) { // if only exchRateFrom or exchRateTo is null, no need match customer  
+			if (exchRateFrom == null && ! fromRates.isEmpty()) {
+				exchRateFrom =  fromRates.get(0).getExRateTo();
+			}
+			if (exchRateTo == null && ! toRates.isEmpty()) {
+				exchRateTo =  toRates.get(0).getExRateTo();
+			}
+			
+		}  else { // if both exchRateFrom and exchRateTo are null, need consider customer when matching
+			for(ExchangeRate fromRate : fromRates) {
+				boolean hasCustomerRate =  StringUtils.isNotEmpty(fromRate.getSoldToCode());
+				for(ExchangeRate toRate : toRates) {
+					if (hasCustomerRate ==  StringUtils.isNotEmpty(toRate.getSoldToCode())) {
+						exchRateFrom = fromRate.getExRateTo();
+						exchRateTo = toRate.getExRateTo();
+					}
+				}
+			}
+		}
+		
+		return new BigDecimal[] {exchRateFrom, exchRateTo};
+		
+	}
+
+	
+	private static List<ExchangeRate> findExchangeRateFromCache(Currency toCurrency, BizUnit bizUnit, Customer soldToCustomer, Date date, List<ExchangeRate> exchangeRates) {
+		
+		List<ExchangeRate> rates1 = null;
+		if (soldToCustomer != null ) {
+			//find from exchangeRates with customer matched
+			rates1 = exchangeRates.stream().filter(
+					rate -> rate.getCurrFrom().equals(Currency.USD.name())
+					&& rate.getCurrTo().equals(toCurrency.name()) 
+					&& rate.getBizUnit().equals(bizUnit.getName())
+					&& (StringUtils.isNotEmpty(rate.getSoldToCode()) && rate.getSoldToCode().equals(soldToCustomer.getCustomerNumber()))
+					&& rate.getValidFrom().before(date)
+					&& rate.getValidTo().after(date)).
+					collect(Collectors.toList());
+		}
+
+		//find from exchangeRates without customer
+		List<ExchangeRate> rates2 = exchangeRates.stream().filter(rate -> 
+			rate.getCurrFrom().equals(Currency.USD.name())
+			&& rate.getCurrTo().equals(toCurrency.name()) 
+			&& rate.getBizUnit().equals(bizUnit.getName())
+			&& rate.getValidFrom().before(date) 
+			&& rate.getValidTo().after(date)
+			&& StringUtils.isEmpty(rate.getSoldToCode()))
+		.collect(Collectors.toList());
+
+		//combine the 2 list. Exchange rates with customer matched have high priority.   
+		if (rates1 != null) {
+			rates1.addAll(rates2);
+		} else {
+			rates1 = rates2;
+		}
+		return rates1;
+	}
+	
+	
+	
+	
+	public void print() {
+		cacheUtil.getExchangeRates().stream().forEach(System.out::println);
+	
+	}
+
+	@Override
+	public int compareTo(Money obj) {
+		// only has the same currency then can compare ;
+		if(this.currency != obj.currency) {
+			throw new IllegalArgumentException("Money must be compared in same currency"); 
+		}
+		return this.amount.compareTo(obj.amount);
+	}
+	
+	public static BigDecimal[] getExchangeRate(Currency fromCurr, Currency toCurr, BizUnit bizUnit, Customer soldToCustomer, Date date) {
+		List<ExchangeRate> exchangeRates = cacheUtil.getExchangeRates();
+		return findExchangeRate(fromCurr, toCurr, bizUnit, soldToCustomer, date, exchangeRates);
+	}
+	
+	public static BigDecimal[] getExchangeRate(String fromCurr, String toCurr, String bizUnit, Customer soldToCustomer, Date date) {
+		 if(fromCurr==null || toCurr==null || bizUnit==null || date ==null) {
+			 //throw new IllegalArgumentException();
+			 return null;
+		 }
+		return getExchangeRate(Currency.valueOf(fromCurr) , Currency.valueOf(toCurr), new BizUnit(bizUnit), soldToCustomer, date);
+	}
+	
+	public static BigDecimal toCurrValue(BigDecimal valueFrom, BigDecimal exRateFrom, BigDecimal exRateTo) {
+		if(valueFrom == null || exRateFrom == null || exRateTo == null) 
+		{
+			logger.config(() -> MessageFormat.format("valueFrom:[{0}],exRateFrom:[{1}], exRateTo:[{2}]", valueFrom, exRateFrom, exRateTo));
+			return null;
+		}
+		if(exRateFrom.equals(BigDecimal.ZERO)) {
+			logger.warning("Can not use 0 to divide , handle it as null");
+			return null;
+		}
+		return exRateTo.multiply(valueFrom).divide(exRateFrom, Constants.SCALE, Constants.ROUNDING_MODE);
+	}
+	
+	public static Double toCurrValue(Double valueFrom, BigDecimal exRateFrom, BigDecimal exRateTo) {
+		if(valueFrom == null) return null;
+		BigDecimal v = toCurrValue(new BigDecimal(valueFrom), exRateFrom, exRateTo);
+		return v == null? null : v.doubleValue();
+	}
+	
+	public static List<QuantityBreakPrice> toCurrValue(List<QuantityBreakPrice> qts, BigDecimal exRateFrom, BigDecimal exRateTo) {
+		if(qts == null || qts.isEmpty()) return qts;
+		
+		qts.stream().forEach(q -> {
+			q.setQuantityBreakPrice(toCurrValue(q.getQuantityBreakPrice(), exRateFrom, exRateTo));
+			q.setSalesCost(toCurrValue(q.getSalesCost(), exRateFrom, exRateTo));
+			q.setSuggestedResale(toCurrValue(q.getSuggestedResale(), exRateFrom, exRateTo));
+		});
+		
+		return qts;
+	}
+	
+	public static List<QuantityBreakPrice> toCurrValue(List<QuantityBreakPrice> qts, Currency fromCurr, Currency toCurr, BizUnit bizUnit, Customer soldToCustomer, Date date) {
+		if(qts == null || qts.isEmpty()) {
+			logger.info("qts is null or empty");
+			return qts;
+		}
+		if(fromCurr==null || toCurr==null || bizUnit==null || date ==null) {
+			 logger.config(() -> MessageFormat.format("fromCurr[{0}],toCurr[{1}],bizUnit[{2}],date[{3}]", fromCurr, toCurr, bizUnit, date));
+			 return null;
+		}
+		BigDecimal[] rates = getExchangeRate(fromCurr, toCurr, bizUnit, soldToCustomer, date);
+		//null or has any null or length mismatch. return ;
+		if(rates == null || rates.length != 2 || Arrays.stream(rates).anyMatch(r -> null == r)) {
+			logger.info("The rates are " + Arrays.toString(rates));
+		}
+		
+		return toCurrValue(qts, rates[0], rates[1]);
+	}
+	
+	
+	public static Double toCurrValue( Double valueFrom, Currency fromCurr, Currency toCurr, BizUnit bizUnit, Customer soldToCustomer, Date date) {
+		if(valueFrom == null) return null;
+		if(fromCurr==null || toCurr==null || bizUnit==null || date ==null) {
+			 logger.config(() -> MessageFormat.format("fromCurr[{0}],toCurr[{1}],bizUnit[{2}],date[{3}]", fromCurr, toCurr, bizUnit, date));
+			 return null;
+		}
+		BigDecimal[] rates = getExchangeRate(fromCurr, toCurr, bizUnit, soldToCustomer, date);
+		//null or has any null or length mismatch. return ;
+		if(rates == null || rates.length != 2 || Arrays.stream(rates).anyMatch(r -> null == r)) {
+			logger.info("The rates are " + Arrays.toString(rates));
+		}
+		
+		return toCurrValue(valueFrom, rates[0], rates[1]);
+	}
+}

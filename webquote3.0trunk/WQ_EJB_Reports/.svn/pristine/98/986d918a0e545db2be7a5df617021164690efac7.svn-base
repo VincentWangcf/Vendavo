@@ -1,0 +1,145 @@
+package com.avnet.emasia.webquote.reports.ejb;
+
+import java.util.Hashtable;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.Resource;
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
+import javax.naming.Context;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.transaction.UserTransaction;
+
+
+import com.avnet.emasia.webquote.entity.OfflineReport;
+import com.avnet.emasia.webquote.exception.WebQuoteRuntimeException;
+import com.avnet.emasia.webquote.reports.ejb.remote.OffLineRemote;
+import com.avnet.emasia.webquote.reports.util.ReportsUtil;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.vo.OfflineReportParam;
+
+@Stateless
+@LocalBean
+@TransactionManagement(TransactionManagementType.BEAN)
+public class OfflineReportSB {
+
+    @Resource
+    UserTransaction ut;
+    
+	@EJB
+	SysConfigSB sysConfigSB;
+    
+	@PersistenceContext(unitName="Server_Source")
+	EntityManager em;
+	static Logger logger = Logger.getLogger("OfflineReportSB");
+	final static String BATCH_SQL = "select a from OfflineReport a where a.employeeId=:employeeId and a.createdOn=:createdOn and a.serviceBeanId=:serviceBeanId and a.sendFlag = 0";
+	
+	public List<OfflineReport> findAll(){
+		
+		Query query = em.createQuery("select c from OfflineReport c where c.type is null and c.sendFlag = 0");
+		List<OfflineReport> offlineReps = (List<OfflineReport>)query.getResultList();
+		
+		return offlineReps;
+	}
+
+	public List<OfflineReport> findBatchRequest(OfflineReport rpt) {
+
+		return ReportsUtil.findBatchRequestForOffineAndPartMaster(rpt, em);
+	}
+	
+	public long createOfflineReportRequest(List<OfflineReport> rptList)
+	{
+		//logger.info("call | createOfflineReportRequest");
+		try
+		{
+			ut.begin();
+			for(OfflineReport or : rptList)
+			{
+				em.persist(or);
+			}
+			em.flush();
+			ut.commit(); 	
+			if(rptList!=null && rptList.size()>0)
+			{
+				return rptList.get(0).getId();
+			}
+		}
+		catch(Exception e)
+		{
+			try 
+			{
+				logger.log(Level.SEVERE, "Exception in create offline report"+e.getMessage(), e);
+				ut.rollback();
+		    }
+		    catch(Exception syex) 
+		    {
+		    	logger.log(Level.SEVERE, "Exception in roll back transaction"+syex.getMessage(), syex);
+		    }
+		} 
+		return 0l;
+		
+	}
+	
+	public void updateOfflineReport(OfflineReport offlineRpt)
+	{
+		try
+		{
+			ut.begin();
+			em.merge(offlineRpt);
+			em.flush();
+			ut.commit(); 	
+		}
+		catch(Exception e)
+		{
+			try 
+			{
+				logger.log(Level.SEVERE, "Exception in update offline report"+e.getMessage(), e);
+				ut.rollback();
+		    }
+		    catch(Exception syex) 
+		    {
+		    	logger.log(Level.SEVERE, "Exception in roll back transaction"+syex.getMessage(), syex);
+		    }
+		}    			
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Asynchronous
+	public void sendOffLineReportRemote(OfflineReportParam param) {
+		logger.info(" Call sendOffLineReportRemote,RemoteClass==" + param.getRemoteEjbClass());
+		try {
+			final Hashtable props = new Hashtable();
+			props.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
+			final Context context = new javax.naming.InitialContext(props);
+			// final String appName = "WebQuoteRptJpEar";
+			String appName = sysConfigSB.getProperyValue("RPT_APP_NAME");
+			final String moduleName = "WQ_EJB_Reports";
+			final String distinctName = "";
+			final String beanName = param.getRemoteEjbClass();
+			final String viewClassName = OffLineRemote.class.getName();
+			System.out.println("Looking EJB via JNDI ");
+			System.out.println("ejb:" + appName + "/" + moduleName + "/" + beanName + "!" + viewClassName);
+			final OffLineRemote remoteBean = (OffLineRemote) context.lookup("ejb:" + appName + "/" + moduleName + "/" + beanName + "!" + viewClassName);
+			// returnInt = bean.executeTask(requestId);
+			remoteBean.sendOffLineReport(param);
+			System.out.println("Calll Remote sendOffLineReportRemote Ejb end");
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, e.getMessage(), e);
+			throw new WebQuoteRuntimeException(
+					"Exception Occured while invoking the bean in sendOffLineReportRemote Method : " + e.getMessage(),
+					new RuntimeException());
+		}
+	}
+	
+	
+	
+	
+}

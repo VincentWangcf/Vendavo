@@ -1,0 +1,2 @@
+1)001.sql to remove the duplicate pricer dirty record --add by June 2016/08/26
+2)002.sql for HA timer service changes

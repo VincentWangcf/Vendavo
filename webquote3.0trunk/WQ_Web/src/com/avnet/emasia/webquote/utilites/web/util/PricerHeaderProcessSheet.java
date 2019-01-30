@@ -1,0 +1,49 @@
+package com.avnet.emasia.webquote.utilites.web.util;
+
+import java.util.List;
+
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadTemplateBean;
+import com.avnet.emasia.webquote.commodity.constant.PricerConstant;
+import com.avnet.emasia.webquote.utilities.bean.ExcelAliasBean;
+
+public class PricerHeaderProcessSheet implements ProcessSheetInterface {
+
+	private List<ExcelAliasBean> excelAliasTreeSet = PricerUploadHelper.getPricerExcelAliasAnnotation();
+
+	private ExcelAliasBean excelAliasBean = null;
+
+	private PricerUploadTemplateBean headerBean = new PricerUploadTemplateBean();
+
+	@Override
+	public void processEachRecord(int column, int row, String value) {
+		 if (row == PricerConstant.PRICER_TEMPLATE_HEADER_ROW_NUMBER - 1) {
+			 if(column<PricerConstant.COLUMN_OF_LENGTH){
+				excelAliasBean = excelAliasTreeSet.get(column);
+				POIUtils.setter(headerBean, excelAliasBean.getFieldName(), value, String.class);
+			 }
+		}
+	}
+
+
+	public Object getHeaderBean() {
+		return headerBean;
+	}
+
+
+	@Override
+	public void rowCompleted() {
+		
+	}
+
+
+	@Override
+	public List getBeanList() {
+		return null;
+	}
+
+
+	@Override
+	public int getCountrows() {
+		return -1;
+	}
+}

@@ -1,0 +1,6 @@
+1)Fix incidents INC0153484 June Guo 2015/05/18
+2)Fix PG_MASTER_MAPPING issue  June Guo 2015/05/19
+3)Fix icidents INC0143568   June Guo 2015/05/19
+3)Fix icidents INC0149712   June Guo 2015/05/20
+4)Fix icidents INC0133463	Jason Chen 2015/05/20
+5)Fix icidents INC0155169	Jason Chen 2015/05/26

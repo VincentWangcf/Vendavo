@@ -1,0 +1,104 @@
+package com.avnet.emasia.webquote.masterData.ejb.scheduleJob;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Remote;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
+import com.avnet.emasia.webquote.entity.DataSyncError;
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.masterData.dto.Config;
+import com.avnet.emasia.webquote.masterData.dto.FileContext;
+import com.avnet.emasia.webquote.masterData.ejb.MasterDataSB;
+import com.avnet.emasia.webquote.masterData.ejb.StandardJob;
+import com.avnet.emasia.webquote.masterData.ejb.remote.FreeStockRemote;
+import com.avnet.emasia.webquote.masterData.exception.CheckedException;
+import com.avnet.emasia.webquote.masterData.util.Constants;
+import com.avnet.emasia.webquote.masterData.util.FunctionUtils;
+import com.avnet.emasia.webquote.masterData.util.ResourceLoader;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+
+
+/**
+ * @author Tonmy,Li(906893)
+ * @Created on 2013-01-23
+ * Upload sequence:  4.
+ */
+@Stateless
+public class FreeStockScheduleJob extends StandardJob
+{
+	private static Logger logger = Logger.getLogger(FreeStockScheduleJob.class.getName());
+    private String[] tables = {"FREE_STORE"};
+    private FileContext fileCon = null;
+    private List<DataSyncError> errorList = new ArrayList<DataSyncError>();;
+    @EJB
+    private MasterDataSB masterSB;
+  //For schedule job
+    /* (non-Javadoc)
+     * @see com.avnet.emasia.webquote.masterData.ejb.scheduleJob.FreeStockScheduleJob#executeTask(javax.ejb.Timer)
+     */
+    @Asynchronous
+    @TransactionTimeout(value = 36000, unit = TimeUnit.SECONDS) 
+	public void executeTask(Timer timer) {
+
+		try {
+			setType("FREE_STORE");
+			run();
+		} catch (Exception e) {
+			String msg = MessageFormatorUtil.getParameterizedStringFromException(e);
+			logger.log(Level.SEVERE, "Exception occured in FreeStockScheduleJob#executeTask for Timer: " + timer.getInfo() + ", Task: " + this.getType()
+					+ ", Reason for failure: " + msg, e);
+		}
+	}
+    
+    
+    /*
+     * loading actions
+     */
+	/* (non-Javadoc)
+	 * @see com.avnet.emasia.webquote.masterData.ejb.StandardJob#loadingAction()
+	 */
+	@Override
+	public void loadingAction() throws CheckedException {
+		logger.log(Level.INFO, "Method call FreeStockScheduleJob#loadingAction started... ");
+		fileCon = new FileContext(tables);  		
+		fileCon.setConfig(initCommonLoadingAndSchedule(tables));
+		//Fixed by DamonChen@20181224
+		if(fileCon.getConfig()!=null && fileCon.getConfig().length>0){
+			fileCon.getConfig()[0].setAllowMultipleLoad("N");	
+		}
+		
+		loadingActionLoadingAndScheduleFileContext(fileCon);
+		// re-initial the error record list
+		if (errorList != null)
+			errorList.clear();
+		errorList = new ArrayList<DataSyncError>();
+		
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see com.avnet.emasia.webquote.masterData.ejb.StandardJob#transfer(java.util.List, com.avnet.emasia.webquote.masterData.dto.Config, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<Object> transfer(List<String> dataList, Config config, String functionName, String fileName)
+			throws CheckedException {
+		return transferFreeStockLoadingAndScedule(dataList, config, functionName, fileName);
+	}
+
+	@Override
+	public void merge(List<Object>[] objList, String[] fileNameArray, String[] functionNameArray) throws CheckedException
+	{
+		masterSB.mergeFreeStock(objList, fileNameArray,functionNameArray,errorList);
+	}
+}

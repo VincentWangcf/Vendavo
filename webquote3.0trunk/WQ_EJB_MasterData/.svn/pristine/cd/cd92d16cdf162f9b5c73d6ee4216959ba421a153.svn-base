@@ -1,0 +1,154 @@
+package com.avnet.emasia.webquote.masterData.dao.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Remote;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
+
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
+import com.avnet.emasia.webquote.entity.DataSyncError;
+import com.avnet.emasia.webquote.entity.PricerDeleted;
+
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.masterData.util.StringUtils;
+import com.avnet.emasia.webquote.masterData.dao.PricerDeletedDAO;
+
+import com.avnet.emasia.webquote.masterData.dto.Config;
+import com.avnet.emasia.webquote.masterData.dto.FileContext;
+//import com.avnet.emasia.webquote.masterData.dto.SapInterfacePricer;
+
+import com.avnet.emasia.webquote.masterData.ejb.DataSyncErrorSB;
+import com.avnet.emasia.webquote.masterData.ejb.MasterDataSB;
+
+import com.avnet.emasia.webquote.masterData.ejb.ScheduleConfigSB;
+import com.avnet.emasia.webquote.masterData.ejb.StandardJob;
+import com.avnet.emasia.webquote.masterData.ejb.remote.PosRemote;
+import com.avnet.emasia.webquote.masterData.exception.CheckedException;
+import com.avnet.emasia.webquote.masterData.util.Constants;
+import com.avnet.emasia.webquote.masterData.util.FunctionUtils;
+import com.avnet.emasia.webquote.masterData.util.ResourceLoader;
+import com.avnet.emasia.webquote.quote.ejb.PosSB;
+import com.avnet.emasia.webquote.utilities.DateUtils;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+
+
+@Stateless
+@TransactionManagement(TransactionManagementType.BEAN)
+public class PricerDeletedDAOImpl implements PricerDeletedDAO {
+	@Resource
+	UserTransaction ut;
+
+	@PersistenceContext(unitName = "Server_Source")
+	private EntityManager em;
+
+	@EJB
+	private DataSyncErrorSB errorSB;
+
+	
+	private static Logger logger = Logger.getLogger(MasterDataSB.class.getName());
+
+	private final static int SESSION_TIME_OUT = 36000;
+	private final static String MATERIAL_TYPE_NORMAL = "NORMAL";
+
+
+	@Override
+	public void batchStartUpdate() throws IllegalStateException, SecurityException, SystemException {
+		// TODO Auto-generated method stub
+		logger.info("PricerDeletedDAOImpl.batchStartUpdate: Begin");
+		try {
+			ut.setTransactionTimeout(SESSION_TIME_OUT);
+			ut.begin();
+			
+	    	Query q1 = em.createQuery("UPDATE PricerDeleted v set v.deletedBatchStatus = v.deletedBatchStatus + 10 where v.deletedBatchStatus < 10");
+
+			q1.executeUpdate();
+	    	em.flush();
+        	em.clear();
+			ut.commit();				
+		} catch (Exception ex){
+			ex.printStackTrace();
+			//logger.log(Level.SEVERE, "batchStartUpdate", ex);
+			
+	    	//em.flush();
+        	//em.clear();
+        	ut.rollback();
+        	/*try {
+        		ut.commit();
+        	} catch (Exception e){
+        		LOG.log(Level.SEVERE, "update ActiveSession logout time failed!");
+        	}			*/
+		}
+
+		logger.info("PricerDeletedDAOImpl.batchStartUpdate: End");
+	}
+
+	@Override
+	public void batchEndUpdate() throws IllegalStateException, SecurityException, SystemException {
+		// TODO Auto-generated method stub
+		logger.info("PricerDeletedDAOImpl.batchEndUpdate: Begin");
+
+		try {
+			ut.setTransactionTimeout(SESSION_TIME_OUT);
+			ut.begin();
+	    	Query q1 = em.createQuery("UPDATE PricerDeleted v set v.deletedBatchStatus = v.deletedBatchStatus + 10 where v.deletedBatchStatus >= 10 AND v.deletedBatchStatus < 20");
+			q1.executeUpdate();
+	    	em.flush();
+        	em.clear();
+			ut.commit();				
+		} catch (Exception ex){
+			ex.printStackTrace();
+			//logger.log(Level.SEVERE, "batchStartUpdate", ex);
+			
+	    	//em.flush();
+        	//em.clear();
+			ut.rollback();
+			
+        	/*try {
+        		ut.commit();
+        	} catch (Exception e){
+        		LOG.log(Level.SEVERE, "update ActiveSession logout time failed!");
+        	}			*/
+		}
+
+		logger.info("PricerDeletedDAOImpl.batchEndUpdate: End");
+		
+	}
+
+	public List<PricerDeleted> getProcessingData() {
+		logger.info("PricerDeletedDAOImpl.getProcessingData: Begin");
+		List<PricerDeleted> mrLst = null;
+		
+		//ut.setTransactionTimeout(SESSION_TIME_OUT);
+		//ut.begin();
+		TypedQuery<PricerDeleted> queryMr = em
+				.createQuery("SELECT a FROM PricerDeleted a where a.deletedBatchStatus >= 10 AND a.deletedBatchStatus < 20 AND a.batchStatus<>0", PricerDeleted.class);
+		//.createQuery("SELECT a FROM Pricer a where a.batchStatus >= 10 AND a.batchStatus < 20", Pricer.class);
+		mrLst = queryMr.getResultList();
+
+		logger.info("PricerDeletedDAOImpl.getProcessingData: End");
+		return mrLst;			
+	}
+
+}

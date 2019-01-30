@@ -1,0 +1,5 @@
+1) Fix the email URL issue June.Guo 2015/12/03
+2) Fix INC0286383 June.Guo 2015/12/03
+3) Fix INC0281464 Jason Chen 2015/12/04
+4) Fix INC0236261 Jason Chen 2015/12/04
+5) INC0286894 , Lenon Yang

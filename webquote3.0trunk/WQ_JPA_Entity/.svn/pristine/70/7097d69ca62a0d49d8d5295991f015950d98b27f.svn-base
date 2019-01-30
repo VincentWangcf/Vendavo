@@ -1,0 +1,122 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name="REFERENCE_MARGIN_SETTING")
+public class ReferenceMarginSetting implements Serializable{
+
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	@SequenceGenerator(name="REFERENCE_MARGIN_SETTING_ID_GENERATOR", sequenceName="WQ_SEQ",allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="REFERENCE_MARGIN_SETTING_ID_GENERATOR")
+	@Column(name="ID")
+	private long id;
+	@ManyToOne
+	@JoinColumn(name="MANUFACTURER_ID")
+	private Manufacturer manufacturer;
+	
+//	@Column(name="MANUFACTURER_ID")
+//	private long manufacturerID;
+	@Column(name="BIZ_UNIT_ID")
+	private String bizUnitID;
+	@Column(name="PRODUCT_GROUP")
+	private long productGroupID;
+	@Column(name="MATERIAL_ID")
+	private long materialID;
+	@Column(name="FACTOR", precision=15, scale=5)
+	private Integer factor;
+	@Column(name="FLOOR", precision=15, scale=5)
+	private Integer floor;
+	@Column(name="CAP", precision=15, scale=5)
+	private Integer cap;
+
+
+	public long getID() {
+		return id;
+	}
+	public void setID(long iD) {
+		id = iD;
+	}
+	public Manufacturer getManufacturer() {
+		return manufacturer;
+	}
+	public void setManufacturer(Manufacturer manufacturer) {
+		this.manufacturer = manufacturer;
+	}
+//	public long getManufacturerID() {
+//		return manufacturerID;
+//	}
+//	public void setManufacturerID(long manufacturerID) {
+//		this.manufacturerID = manufacturerID;
+//	}
+	public String getBizUnitID() {
+		return bizUnitID;
+	}
+	public void setBizUnitID(String bizUnitID) {
+		this.bizUnitID = bizUnitID;
+	}
+	public long getProductGroupID() {
+		return productGroupID;
+	}
+	public void setProductGroupID(long productGroupID) {
+		this.productGroupID = productGroupID;
+	}
+	public long getMaterialID() {
+		return materialID;
+	}
+	public void setMaterialID(long materialID) {
+		this.materialID = materialID;
+	}
+	public Integer getFactor() {
+		return factor;
+	}
+	public void setFactor(Integer factor) {
+		this.factor = factor;
+	}
+	public Integer getFloor() {
+		return floor;
+	}
+	public void setFloor(Integer floor) {
+		this.floor = floor;
+	}
+	public Integer getCap() {
+		return cap;
+	}
+	public void setCap(Integer cap) {
+		this.cap = cap;
+	}
+	
+	public long getManufacturerID() {
+		return manufacturer.getId();
+	}
+	
+	
+	void applyReferenceMarginLogic(QuoteItem quoteItem){
+		if (quoteItem.getResaleMargin() == null) {
+			return;
+		}
+		double resaleMargin = quoteItem.getResaleMargin();
+		double factor = this.factor.doubleValue()/100;
+		double floor = this.floor.doubleValue();
+		double cap = this.cap.doubleValue();
+		double referenceMargin = factor*resaleMargin;
+
+		if (referenceMargin != 0d) {
+			if (referenceMargin < resaleMargin && resaleMargin < floor) {
+				quoteItem.setReferenceMargin(Double.valueOf(resaleMargin));
+			} else if (floor != 0 && referenceMargin < floor&& floor <= resaleMargin) {
+				quoteItem.setReferenceMargin(Double.valueOf(floor));
+			} else if (cap != 0 && referenceMargin > cap) {
+				quoteItem.setReferenceMargin(Double.valueOf(cap));
+			} else {
+				quoteItem.setReferenceMargin(Double.valueOf(referenceMargin));
+			}
+		}
+		
+	}
+	
+}

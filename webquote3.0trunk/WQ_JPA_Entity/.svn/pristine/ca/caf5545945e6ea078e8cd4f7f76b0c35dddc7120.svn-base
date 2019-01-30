@@ -1,0 +1,261 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import com.avnet.emasia.webquote.utilities.SimpleDateFormat;
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+/**
+ * remark by Jason: will remove this class after new HA Cluster Timer service testing
+ * customized schedule infomation.
+ * 
+ * @author 914975
+ */
+@Table(name = "TASK_INFO")
+@Entity
+public class TaskInfoBean implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+
+	@Id
+//	@GeneratedValue(generator = "system-uuid")
+	@Column(name = "ID")
+	private String taskId;
+
+	@Column(name = "TASK_NAME")
+	private String taskName;
+	
+	@Column(name = "TASK_CLASS_NAME")
+	private String taskClassName;
+	
+	@Column(name = "DESCRIPTION")
+	private String description;
+	// Details required by the SchedulerExpression
+	
+	@Column(name = "START_TIME")
+	private Date startDate;
+	
+	@Column(name = "END_TIME")
+	private Date endDate;
+	
+	@Column(name = "SECOND")
+	private String second;
+	
+	@Column(name = "MINUTE")
+	private String minute;
+	
+	@Column(name = "HOUR")
+	private String hour;
+	
+	@Column(name = "DAY_OF_WEEK")
+	private String dayOfWeek;
+	
+	@Column(name = "DAY_OF_MONTH")
+	private String dayOfMonth;
+	
+	@Column(name = "MONTH")
+	private String month;
+	
+	@Column(name = "YEAR")
+	private String year;
+	
+	@Transient
+	private transient Date nextTimeout;
+
+	@Transient
+	private transient boolean persistent = false;
+	
+	@Transient
+	private transient boolean newRecord;
+	
+	public TaskInfoBean() {
+
+	}
+	
+	public void setDeafaultValues(){
+		// Default values
+		this.persistent= true;
+		this.newRecord = true;
+		this.second = "0";
+		this.minute = "0";
+		this.hour = "*/15";
+		this.dayOfMonth = "*"; // Every Day
+		this.month = "*"; // Every Month
+		this.year = "*"; // Every Year
+		this.dayOfWeek = "*"; // Every Day of Week (Sun-Sat)
+	}
+
+	public String getTaskId() {
+		return taskId;
+	}
+
+	public void setTaskId(String taskId) {
+		this.taskId = taskId;
+	}
+
+	public String getTaskClassName() {
+		return taskClassName;
+	}
+
+	public void setTaskClassName(String taskClassName) {
+		this.taskClassName = taskClassName;
+	}
+
+	public String getTaskName() {
+		return taskName;
+	}
+
+	public void setTaskName(String taskName) {
+		this.taskName = taskName;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public Date getEndDate() {
+		return endDate;
+	}
+
+
+
+	public void setEndDate(Date endDate) {
+		this.endDate = endDate;
+	}
+
+	public Date getStartDate() {
+		return startDate;
+	}
+
+
+	public void setStartDate(Date startDate) {
+		this.startDate = startDate;
+	}
+
+	public String getDayOfMonth() {
+		return dayOfMonth;
+	}
+
+	public void setDayOfMonth(String dayOfMonth) {
+		this.dayOfMonth = dayOfMonth;
+	}
+
+	public String getDayOfWeek() {
+		return dayOfWeek;
+	}
+
+	public void setDayOfWeek(String dayOfWeek) {
+		this.dayOfWeek = dayOfWeek;
+	}
+
+	public String getHour() {
+		return hour;
+	}
+
+	public void setHour(String hour) {
+		this.hour = hour;
+	}
+
+	public String getMinute() {
+		return minute;
+	}
+
+	public void setMinute(String minute) {
+		this.minute = minute;
+	}
+
+	public String getMonth() {
+		return month;
+	}
+
+	public void setMonth(String month) {
+		this.month = month;
+	}
+
+	public String getSecond() {
+		return second;
+	}
+
+	public void setSecond(String second) {
+		this.second = second;
+	}
+
+	public String getYear() {
+		return year;
+	}
+
+	public void setYear(String year) {
+		this.year = year;
+	}
+
+	public Date getNextTimeout() {
+		return nextTimeout;
+	}
+
+	public String getNextTimeoutStr() {
+		String str = null;
+		// avoid the others thread assess and read dirty date.
+/*		synchronized (this) {
+			str = sdf2.format(nextTimeout);
+		}*/
+		return str;
+	}
+
+	public void setNextTimeout(Date nextTimeout) {
+		this.nextTimeout = nextTimeout;
+	}
+
+	public boolean isPersistent() {
+		return persistent;
+	}
+
+	public void setPersistent(boolean persistent) {
+		this.persistent = persistent;
+	}
+
+	public boolean isNewRecord() {
+		return newRecord;
+	}
+
+	public void setNewRecord(boolean newRecord) {
+		this.newRecord = newRecord;
+	}
+
+	
+	/*
+	 * Expression of the schedule set in the object
+	 */
+	public String getExpression() {
+		return "sec=" + second + ";min=" + minute + ";hour=" + hour
+				+ ";dayOfMonth=" + dayOfMonth + ";month=" + month + ";year="
+				+ year + ";dayOfWeek=" + dayOfWeek;
+	}
+
+	@Override
+	public boolean equals(Object anotherObj) {
+		if (anotherObj instanceof TaskInfoBean) {
+			return taskId.equals(((TaskInfoBean) anotherObj).taskId);
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return this.taskId.hashCode();
+	}
+
+	@Override
+	public String toString() {
+		return taskId + "-" + taskName + "-" + taskClassName;
+	}
+}

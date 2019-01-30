@@ -1,0 +1,86 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.quote.ejb.ConvertQuoteSB;
+import com.avnet.emasia.webquote.quote.vo.QuoteItemVo;
+
+
+//@Named("copyQuoteMB")
+@ManagedBean
+@SessionScoped
+public class ConvertProgramQuoteMB implements Serializable {
+	
+	private static final long serialVersionUID = 3250816810076633986L;
+
+	private static final Logger LOG =Logger.getLogger(ConvertProgramQuoteMB.class.getName());
+	
+	@EJB
+	transient ConvertQuoteSB convertQuoteSB;
+	
+	private List<QuoteItemVo> quoteItemVos;
+	
+	private List<QuoteItemVo> selectedQuoteItemVos;
+	
+	private List<QuoteItemVo> filteredQuoteItemVos;
+	
+	private boolean finished;
+	
+
+	@EJB
+	protected EJBCommonSB ejbCommonSB;
+	
+	public void checkCopyQuoteItem(List<QuoteItemVo> quoteItemVos){
+		this.quoteItemVos = quoteItemVos;
+		int i = 1;
+		for(QuoteItemVo vo : quoteItemVos){
+			vo.setSeq2(i++);
+		}
+		selectedQuoteItemVos = quoteItemVos;
+	}	
+
+	public String convert(){
+		return ejbCommonSB.convert(selectedQuoteItemVos, convertQuoteSB, "convertProgramQuoteMB", finished);
+	}
+	//Getters, Setters
+	public List<QuoteItemVo> getQuoteItemVos() {
+		return quoteItemVos;
+	}
+
+	public void setQuoteItemVos(List<QuoteItemVo> quoteItemVos) {
+		this.quoteItemVos = quoteItemVos;
+	}
+
+	public List<QuoteItemVo> getSelectedQuoteItemVos() {
+		return selectedQuoteItemVos;
+	}
+
+	public void setSelectedQuoteItemVos(List<QuoteItemVo> selectedQuoteItemVos) {
+		this.selectedQuoteItemVos = selectedQuoteItemVos;
+	}
+	
+	public boolean isFinished() {
+		return finished;
+	}
+
+	public void setFinished(boolean finished) {
+		this.finished = finished;
+	}
+
+	public List<QuoteItemVo> getFilteredQuoteItemVos() {
+		return filteredQuoteItemVos;
+	}
+
+	public void setFilteredQuoteItemVos(List<QuoteItemVo> filteredQuoteItemVos) {
+		this.filteredQuoteItemVos = filteredQuoteItemVos;
+	}
+	
+}
+                    

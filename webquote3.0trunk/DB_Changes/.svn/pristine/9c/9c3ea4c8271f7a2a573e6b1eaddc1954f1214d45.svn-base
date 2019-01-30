@@ -1,0 +1,3 @@
+update exchange_rate set EXCHANGE_RATE_TYPE ='CUSTOMER_FIXED_RATE' where SOLD_TO_CODE is not null;
+update  exchange_rate set EXCHANGE_RATE_TYPE ='COMPANY_RATE' where SOLD_TO_CODE is  null;
+COMMIT;

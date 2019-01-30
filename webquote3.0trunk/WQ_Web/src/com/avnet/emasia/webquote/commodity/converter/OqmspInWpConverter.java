@@ -1,0 +1,101 @@
+package com.avnet.emasia.webquote.commodity.converter;
+
+import java.util.Arrays;
+import java.util.List;
+
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
+import javax.faces.convert.Converter;
+import javax.faces.convert.FacesConverter;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import com.avnet.emasia.webquote.commodity.helper.ProgRfqSubmitHelper;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.ProgramPricer;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.exception.WebQuoteRuntimeException;
+import com.avnet.emasia.webquote.quote.ejb.MaterialSB;
+import com.avnet.emasia.webquote.vo.Oqmsp;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+
+/**
+ * @author Tonmy Li
+ * Created on 2013-4-10
+ */
+
+@FacesConverter("webquote.commodity.OqmspInWp")
+public class OqmspInWpConverter implements Converter {
+
+	private MaterialSB materialSB; 
+	
+	private void initialize(){
+		
+		try {
+			Context context = new InitialContext();
+			materialSB = (MaterialSB) context.lookup("java:app/WQ_EJB_Quote/MaterialSB!com.avnet.emasia.webquote.quote.ejb.MaterialSB");
+		} catch (NamingException ne) {
+			throw new WebQuoteRuntimeException(ne.getMessage(), new RuntimeException(ne));
+		}
+		
+	}
+
+	
+
+	@Override
+	public Object getAsObject(FacesContext arg0, UIComponent arg1, String arg2) {
+
+		return null;
+		
+	}
+	//&lt;br /&gt;
+	@Override
+	public String getAsString(FacesContext arg0, UIComponent arg1, Object arg2) {
+		
+		if(materialSB == null){
+			initialize();
+		}
+
+		StringBuffer sb = new StringBuffer();
+//		WorkingPlatformItemVO vo = (WorkingPlatformItemVO)arg2;
+		
+		QuoteItem item = (QuoteItem)arg2;
+		Material material = item.getQuotedMaterial();
+		
+		if(material != null){
+			material = materialSB.findMaterialByPK(material.getId());
+			
+//			//PROGRM PRICER ENHANCEMENT
+//			//ProgramMaterial pm = vo.getQuoteItem().getQuotedMaterial().getProgramMaterial();
+//			String costIndicator = vo.getCostIndicatorStr();
+//			
+//			ProgramMaterial pm = material.getSpecifiedValidProgMatByBizUintAndCostIndicator(vo.getBizUnitStr(), costIndicator);
+			String costIndicator = item.getCostIndicator();
+			ProgramPricer pm = materialSB.getSpecifiedValidProgMatByBizUintAndCostIndicator(material,item.getQuote().getBizUnit().getName(), costIndicator);
+			
+			if(pm != null){
+				List<Oqmsp> opmspList = ProgRfqSubmitHelper.getOpmspList(pm);
+				String[] mspList=null;
+				if(opmspList!=null && opmspList.size()>0)
+				{
+					sb.append("<div style='width:100%'>");
+					for(Oqmsp o : opmspList)
+					{
+						mspList = o.getMsp().split(QuoteConstant.INDICATOR_SUBSTR);
+						sb.append("<div style='float:left;width:25%'>").append(o.getOq());
+						int displayLength = mspList.length < 3 ? mspList.length : 3;
+						for(int i = 0; i < displayLength; i++) {
+							sb.append("</div><div style='float:left;width:25%' >").append(mspList[displayLength]);
+						}
+						sb.append("</div>");
+					}
+					sb.append("</div>");
+				}
+			}
+		}
+        return sb.toString();
+	}
+	
+
+}

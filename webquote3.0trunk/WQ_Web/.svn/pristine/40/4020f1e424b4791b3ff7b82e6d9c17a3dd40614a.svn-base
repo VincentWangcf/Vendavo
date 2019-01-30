@@ -1,0 +1,18 @@
+<ui:composition
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+<!-- new BMT columns start -->
+			<p:column headerText="#{dbResource['wq.label.BmtFlag']}" sortBy="#{vo.quoteItem.quoteItemDesign.bmtFlag.description}" filterBy="#{vo.quoteItem.quoteItemDesign.bmtFlag.description}" filterMatchMode="contains" styleClass="column_rfqStatus">
+				<h:outputText value="#{vo.quoteItem.quoteItemDesign.bmtFlag.description}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.pendAtCaps']}" sortBy="#{vo.disPendingAt}" filterBy="#{vo.disPendingAt}" filterMatchMode="contains" styleClass="column_rfqStatus">
+				<h:outputText value="#{vo.disPendingAt}"/>
+			</p:column>
+			
+			<!-- new BMT columns end -->
+</ui:composition>

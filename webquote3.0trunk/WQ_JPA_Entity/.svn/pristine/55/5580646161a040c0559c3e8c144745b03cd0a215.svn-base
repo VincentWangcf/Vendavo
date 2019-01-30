@@ -1,0 +1,123 @@
+/**
+ * 
+ */
+package com.avnet.emasia.webquote.entity.util;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+
+/**
+ * @author 042659
+ *
+ */
+public class AppDateUtil {
+	
+	private static final Logger LOGGER = Logger.getLogger(AppDateUtil.class.getName());
+	
+	
+	public static Date shiftDate(Date date, int shift){
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		cal.add(Calendar.DATE, shift);
+		return cal.getTime();
+	}
+	
+	public static Date getCurrentTime() {
+		return new Date();
+	}	
+	public static Date getEndOfDay(Date date) {
+	    Calendar calendar = Calendar.getInstance();
+	    calendar.setTime(date);
+	    calendar.set(Calendar.HOUR_OF_DAY, 23);
+	    calendar.set(Calendar.MINUTE, 59);
+	    calendar.set(Calendar.SECOND, 59);
+	    calendar.set(Calendar.MILLISECOND, 999);
+	    return calendar.getTime();
+	}
+
+	public static Date getStartOfDay(Date date) {
+	    Calendar calendar = Calendar.getInstance();
+	    calendar.setTime(date);
+	    calendar.set(Calendar.HOUR_OF_DAY, 0);
+	    calendar.set(Calendar.MINUTE, 0);
+	    calendar.set(Calendar.SECOND, 0);
+	    calendar.set(Calendar.MILLISECOND, 0);
+	    return calendar.getTime();
+	}	
+	
+	public static Date calculateQuoteExpiryDate(Date date, String materialType){
+		Calendar cal = Calendar.getInstance();
+		cal.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+		cal.setTime(date);
+		if(materialType.equals(QuoteSBConstant.MATERIAL_TYPE_NORMAL))
+			cal.add(Calendar.DATE, QuoteSBConstant.QUOTE_EXPIRY_DATE_SHIFT_NORMAL);
+		else if(materialType.equals(QuoteSBConstant.MATERIAL_TYPE_PROGRAM))
+			cal.add(Calendar.DATE, QuoteSBConstant.QUOTE_EXPIRY_DATE_SHIFT_PROGRAM);
+		cal.set(Calendar.HOUR_OF_DAY, 15);
+		return cal.getTime();
+	}
+	
+	public static List<String> getPastFourQuarter(){
+		List<String> quarters = new ArrayList<String>();
+		Calendar cal = Calendar.getInstance();
+		quarters.add(convertToQuarter(cal));
+		cal.add(Calendar.MONTH, -3);
+		quarters.add(convertToQuarter(cal));
+		cal.add(Calendar.MONTH, -3);
+		quarters.add(convertToQuarter(cal));
+		cal.add(Calendar.MONTH, -3);
+		quarters.add(convertToQuarter(cal));
+		return quarters;
+	}
+	
+	public static String convertToQuarter(Calendar cal){
+		String quarter = "";
+		int month = cal.get(Calendar.MONTH)+1;		
+		int year  = cal.get(Calendar.YEAR);		
+		if(month >= 7 && month <= 9) { quarter = "Q1"; year++; }
+		else if(month >= 10 && month <= 12) { quarter = "Q2"; year++; }
+		else if(month >= 1 && month <= 3) quarter = "Q3";
+		else if(month >= 4 && month <= 6) quarter = "Q4";
+		return "FY"+String.valueOf(year).substring(2)+quarter;
+	}
+
+	public static String[] generateLatest24Month(String pattern){
+		String[] months = new String[25];
+		try {
+			SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+			Calendar now = Calendar.getInstance();
+			now.add(Calendar.MONTH, -1);
+			months[0] = sdf.format(now.getTime()).toUpperCase();
+			for(int i=1; i<=24; i++){
+				now.add(Calendar.MONTH, 1);
+				months[i] = sdf.format(now.getTime()).toUpperCase();
+				//months[i] = now.getTime();
+			}
+		} catch (Exception ex) {
+			 LOGGER.log(Level.SEVERE, "Exception occurred for pattern: "+pattern+", Exception message: "+ex.getMessage(), ex);
+		}
+		return months;
+	}
+
+
+	/**   
+	* @Description: TODO
+	* @author 042659
+	* @param args      
+	* @return void    
+	* @throws  
+	*/
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+	}
+
+}

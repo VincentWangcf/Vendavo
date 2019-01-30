@@ -1,0 +1,158 @@
+package com.avnet.emasia.webquote.utilities.schedule;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.Resource;
+import javax.ejb.DuplicateKeyException;
+import javax.ejb.LocalBean;
+import javax.ejb.ScheduleExpression;
+import javax.ejb.Stateless;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerConfig;
+import javax.ejb.TimerService;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+import com.avnet.emasia.webquote.utilities.bean.TaskInfoBean;
+
+/**
+ * 
+ * @author 914975
+ */
+@Stateless
+@LocalBean
+public class TaskScheduleManager {
+
+	private static final Logger LOG = Logger
+			.getLogger(TaskScheduleManager.class.getName());
+	@Resource
+	TimerService timerService;
+
+	private Timer getTimer(TaskInfoBean taskInfoBean) {
+		Timer timer = null;
+		Collection<Timer> timers = timerService.getTimers();
+		for (Timer tmr : timers) {
+			if (taskInfoBean.equals((TaskInfoBean) tmr.getInfo())) {
+				timer = tmr;
+			}
+		}
+
+		LOG.info("get the indicated timer successfully!");
+		return timer;
+	}
+
+	/**
+	 * create a task.
+	 * 
+	 * @param taskInfoBean
+	 * @return
+	 * @throws WebQuoteException 
+	 */
+	public TaskInfoBean createTask(TaskInfoBean taskInfoBean) throws WebQuoteException {
+		if (getTimer(taskInfoBean) != null) {
+			LOG.severe("task already exist!");
+			throw new WebQuoteException(CommonConstants.COMMON_TASK_ALREADY_EXIST);
+		}
+		TimerConfig timerAConf = new TimerConfig(taskInfoBean, true);
+		ScheduleExpression scheduExp = new ScheduleExpression();
+		scheduExp.start(taskInfoBean.getStartDate());
+		scheduExp.end(taskInfoBean.getEndDate());
+		scheduExp.second(taskInfoBean.getSecond());
+		scheduExp.minute(taskInfoBean.getMinute());
+		scheduExp.hour(taskInfoBean.getHour());
+		scheduExp.dayOfMonth(taskInfoBean.getDayOfMonth());
+		scheduExp.month(taskInfoBean.getMonth());
+		scheduExp.year(taskInfoBean.getYear());
+		scheduExp.dayOfWeek(taskInfoBean.getDayOfWeek());
+		System.out.println("scheduler expression: " + scheduExp.toString());
+		Timer newTimer = timerService
+				.createCalendarTimer(scheduExp, timerAConf);
+		taskInfoBean.setNextTimeout(newTimer.getNextTimeout());
+		LOG.info("create a timer successfully!");
+		return taskInfoBean;
+	}
+
+	/*
+	 * Returns a list of taskInfoBean for the active timers
+	 */
+	public List<TaskInfoBean> getTaskList() {
+		List<TaskInfoBean> taskList = new ArrayList<TaskInfoBean>();
+		Collection<Timer> timers = timerService.getTimers();
+		for (Timer t : timers) {
+			TaskInfoBean taskInfoBean = (TaskInfoBean) t.getInfo();
+			taskInfoBean.setNextTimeout(t.getNextTimeout());
+			taskList.add(taskInfoBean);
+		}
+		LOG.info("get all exist task successfully!");
+		return taskList;
+	}
+
+	/*
+	 * Returns the updated taskInfo from the timer
+	 */
+	public TaskInfoBean getTaskInfo(TaskInfoBean taskInfoBean) {
+		Timer t = getTimer(taskInfoBean);
+		if (t != null) {
+			TaskInfoBean j = (TaskInfoBean) t.getInfo();
+			j.setNextTimeout(t.getNextTimeout());
+			LOG.info("get the indicated task successfully!");
+			return j;
+		}
+
+		LOG.severe("get the indicated task failed!");
+		return null;
+	}
+
+	/*
+	 * Updates a timer with the given taskInfo
+	 */
+	public TaskInfoBean updateTask(TaskInfoBean taskInfoBean) throws WebQuoteException  {
+		Timer t = getTimer(taskInfoBean);
+		if (t != null) {
+			t.cancel();
+			TaskInfoBean taskInfo = createTask(taskInfoBean);
+			LOG.info("update task successfully!");
+			return taskInfo;
+		}
+
+		LOG.severe("update task failed!");
+		return null;
+	}
+
+	/*
+	 * Remove a timer with the given TaskInfo
+	 */
+	public void deleteTask(TaskInfoBean taskInfoBean) {
+		Timer t = getTimer(taskInfoBean);
+		if (t != null) {
+			t.cancel();
+		}
+	}
+
+	/**
+	 * set the schedule timeout.
+	 * 
+	 * @param timer
+	 */
+	@Timeout
+	public void timeout(Timer timer) {
+		LOG.info("Timer: " + timer.getInfo() + "ended at: " + new Date());
+		try {
+			TaskInfoBean taskInfoBean = (TaskInfoBean) timer.getInfo();
+			IScheduleTask batchTask = (IScheduleTask) InitialContext
+					.doLookup(taskInfoBean.getTaskClassName());
+			batchTask.executeTask(timer);
+			LOG.info("timer execute successfully!");
+		} catch (Exception e) {
+			LOG.log(Level.SEVERE, "Exception occured while Timer initated in timeout Method" + e.getMessage(),e);
+		}
+	}
+}

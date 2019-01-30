@@ -1,0 +1,227 @@
+package com.avnet.emasia.webquote.commodity.dto;
+
+import java.io.Serializable;
+import java.util.List;
+
+import com.avnet.emasia.webquote.entity.Country;
+import com.avnet.emasia.webquote.entity.DataAccess;
+
+
+/**
+ * @author Tonmy,Li(906893)
+ * @Created on 2013-02-20
+ * program materila search criterial bean.
+ */
+
+public class PISearchBean implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2849583759751396662L;
+	List<String> mfrAndFullMFRPartList=null;
+	String mfrPart = null;
+	String mfr=null;
+	List<String> programTypeList= null;
+	List<String> productGroupList= null;
+	List<String> mfrList= null;
+	List<String> mfrPartList=null;
+	String enableActiveChecking=null;
+	String enableUpdateChecking=null;
+	String exact = null;
+	String active = null;
+    Country country = null;
+	private boolean dataAccessCheckRequired = false;
+	private List<DataAccess> dataAccesses ; 
+	private String bizUnit ;
+	private int firstPage;
+	private int pageSize;
+	private String sortField;
+	private String sortOrder;	
+	
+	public boolean isDataAccessCheckRequired() {
+		return dataAccessCheckRequired;
+	}
+	public void setDataAccessCheckRequired(boolean dataAccessCheckRequired) {
+		this.dataAccessCheckRequired = dataAccessCheckRequired;
+	}
+	public List<DataAccess> getDataAccesses() {
+		return dataAccesses;
+	}
+	public void setDataAccesses(List<DataAccess> dataAccesses) {
+		this.dataAccesses = dataAccesses;
+	}
+	public String getMfrPart() {
+		return mfrPart;
+	}
+	public void setMfrPart(String mfrPart) {
+		this.mfrPart = mfrPart;
+	}
+	public List<String> getProgramTypeList() {
+		return programTypeList;
+	}
+	public void setProgramTypeList(List<String> programTypeList) {
+		this.programTypeList = programTypeList;
+	}
+	public List<String> getProductGroupList() {
+		return productGroupList;
+	}
+	public void setProductGroupList(List<String> productGroupList) {
+		this.productGroupList = productGroupList;
+	}
+	public List<String> getMfrList() {
+		return mfrList;
+	}
+	public void setMfrList(List<String> mfrList) {
+		this.mfrList = mfrList;
+	}
+
+	
+	
+	
+	public Country getCountry() {
+		return country;
+	}
+	public void setCountry(Country country) {
+		this.country = country;
+	}
+	public void reset()
+	{
+		this.mfrPart = null;
+		this.programTypeList= null;
+		this.productGroupList= null;
+		this.mfrList= null;
+		this.mfrPartList=null;
+	}
+	
+	
+	
+	public void setProgramList(List<String> programTypeList, boolean emptyIsNull) {
+		if(programTypeList!=null)
+    	{
+    		if(programTypeList.size()==0 && emptyIsNull)
+    			programTypeList = null;
+    	}
+		this.programTypeList = programTypeList;
+	}
+	public void setProductGroupList(List<String> productGroupList, boolean emptyIsNull) {
+		if(productGroupList!=null)
+    	{
+    		if(productGroupList.size()==0 && emptyIsNull)
+    			productGroupList = null;
+    	}
+		this.productGroupList = productGroupList;
+	}
+	public void setMfrList(List<String> mfrList, boolean emptyIsNull) {
+		if(mfrList!=null)
+    	{
+    		if(mfrList.size()==0 && emptyIsNull)
+    			mfrList = null;
+    	}
+		this.mfrList = mfrList;
+	}
+	public List<String> getMfrPartList() {
+		return mfrPartList;
+	}
+	public void setMfrPartList(List<String> mfrPartList) {
+		this.mfrPartList = mfrPartList;
+	}
+	public String getMfr() {
+		return mfr;
+	}
+	public void setMfr(String mfr) {
+		this.mfr = mfr;
+	}
+	public String getActive() {
+		return active;
+	}
+	public void setActive(String active) {
+		this.active = active;
+	}
+
+
+	public String getEnableActiveChecking() {
+		return enableActiveChecking;
+	}
+	public void setEnableActiveChecking(String enableActiveChecking) {
+		this.enableActiveChecking = enableActiveChecking;
+	}
+	public String getEnableUpdateChecking() {
+		return enableUpdateChecking;
+	}
+	public void setEnableUpdateChecking(String enableUpdateChecking) {
+		this.enableUpdateChecking = enableUpdateChecking;
+	}
+	public String getExact() {
+		return exact;
+	}
+	public void setExact(String exact) {
+		this.exact = exact;
+	}
+	
+	public int getFirstPage()
+	{
+		return firstPage;
+	}
+	public void setFirstPage(int firstPage)
+	{
+		this.firstPage = firstPage;
+	}
+	public int getPageSize()
+	{
+		return pageSize;
+	}
+	public void setPageSize(int pageSize)
+	{
+		this.pageSize = pageSize;
+	}
+	public List<String> getMfrAndFullMFRPartList() {
+		return mfrAndFullMFRPartList;
+	}
+	public void setMfrAndFullMFRPartList(List<String> mfrAndFullMFRPartList) {
+		this.mfrAndFullMFRPartList = mfrAndFullMFRPartList;
+	}
+	
+	public String getBizUnit() {
+		return bizUnit;
+	}
+	public void setBizUnit(String bizUnit) {
+		this.bizUnit = bizUnit;
+	}
+
+	public String getSortField()
+	{
+		return sortField;
+	}
+	public void setSortField(String sortField)
+	{
+		this.sortField = sortField;
+	}
+	public String getSortOrder()
+	{
+		return sortOrder;
+	}
+	public void setSortOrder(String sortOrder)
+	{
+		this.sortOrder = sortOrder;
+	}
+	@Override
+	public String toString()
+	{
+		return "PISearchBean [mfrAndFullMFRPartList=" + mfrAndFullMFRPartList
+				+ ", mfrPart=" + mfrPart + ", mfr=" + mfr
+				+ ", programTypeList=" + programTypeList
+				+ ", productGroupList=" + productGroupList + ", mfrList="
+				+ mfrList + ", mfrPartList=" + mfrPartList
+				+ ", enableActiveChecking=" + enableActiveChecking
+				+ ", enableUpdateChecking=" + enableUpdateChecking + ", exact="
+				+ exact + ", active=" + active + ", country=" + country
+				+ ", dataAccessCheckRequired=" + dataAccessCheckRequired
+				+ ", dataAccesses=" + dataAccesses + ", bizUnit=" + bizUnit
+				+ ", firstPage=" + firstPage + ", pageSize=" + pageSize
+				+ ", sortField=" + sortField + ", sortOrder=" + sortOrder + "]";
+	}
+	
+	
+
+}

@@ -1,0 +1,46 @@
+package com.avnet.emasia.webquote.quote.vo;
+
+import java.io.Serializable;
+
+
+public class PartMasterCriteria implements Serializable{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7598698506517901517L;
+	public PartMasterCriteria() {
+		// TODO Auto-generated constructor stub
+	}
+    
+	private String mfr ; 
+	private String partNumber;
+	private int start;
+	private int end;
+	
+	public String getMfr() {
+		return mfr;
+	}
+	public void setMfr(String mfr) {
+		this.mfr = mfr;
+	}
+	public String getPartNumber() {
+		return partNumber;
+	}
+	public void setPartNumber(String partNumber) {
+		this.partNumber = partNumber;
+	}
+	public int getStart() {
+		return start;
+	}
+	public void setStart(int start) {
+		this.start = start;
+	}
+	public int getEnd() {
+		return end;
+	}
+	public void setEnd(int end) {
+		this.end = end;
+	}
+	
+}

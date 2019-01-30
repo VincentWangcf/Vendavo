@@ -1,0 +1,1077 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.faces.model.SelectItem;
+import javax.persistence.Tuple;
+
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.StreamedContent;
+
+import com.avnet.emasia.webquote.commodity.ejb.ProgramMaterialSB;
+import com.avnet.emasia.webquote.commodity.util.StringUtils;
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.entity.Attachment;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.CustomerAddress;
+import com.avnet.emasia.webquote.entity.CustomerSale;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.NormalPricer;
+import com.avnet.emasia.webquote.entity.Pricer;
+import com.avnet.emasia.webquote.entity.QtyBreakPricer;
+import com.avnet.emasia.webquote.entity.QuantityBreakPrice;
+import com.avnet.emasia.webquote.entity.Quote;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+import com.avnet.emasia.webquote.quote.ejb.MaterialSB;
+import com.avnet.emasia.webquote.quote.ejb.QuoteSB;
+import com.avnet.emasia.webquote.quote.ejb.QuoteToSoPendingSB;
+import com.avnet.emasia.webquote.quote.ejb.SAPWebServiceSB;
+import com.avnet.emasia.webquote.quote.ejb.SapMaterialSB;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.DeploymentConfiguration;
+import com.avnet.emasia.webquote.utilites.web.util.DownloadUtil;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.DateUtils;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.vo.PricerInfo;
+import com.avnet.emasia.webquote.web.quote.cache.AccountGroupCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.CostIndicatorCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.SalesOrgCacheManager;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.quote.job.FileUtil;
+import com.avnet.emasia.webquote.web.quote.vo.PartModel;
+import com.avnet.emasia.webquote.web.quote.vo.PartPopupModel;
+import com.avnet.emasia.webquote.web.quote.vo.QuotationEmailVO;
+import com.avnet.emasia.webquote.web.quote.vo.SearchPartVO;
+
+public class CommonBean implements Serializable {
+
+	private static final long serialVersionUID = 84061462581444102L;
+
+	private static final int INT_ZERO = 0;
+	private static final double DOUBLE_ZERO = 0d;
+	@EJB
+	MaterialSB materialSB;
+	
+	@EJB
+	
+	ProgramMaterialSB programMaterialSB;
+	
+	@EJB
+	UserSB userSB;
+	
+	@EJB
+	protected MailUtilsSB mailUtilsSB;
+	
+	@EJB
+	SAPWebServiceSB sapWebServiceSB;	
+	
+	@EJB
+	private QuoteSB quoteSB;
+	
+	@EJB
+	QuoteToSoPendingSB quoteToSoPendingSB;
+	
+	@EJB
+	protected SysConfigSB sysConfigSB;
+	
+	@EJB
+	protected SystemCodeMaintenanceSB sysMaintSB;
+	
+	@EJB
+	SapMaterialSB sapMaterialSB;
+	
+	@EJB
+	EJBCommonSB ejbCommonSB;
+	
+	protected String validationSearchMfr;
+	protected String validationSearchFullMfrPartNumber;
+	
+	protected int searchPartsCount = 0;
+		
+	protected List<PricerInfo> searchParts;
+	protected List<PricerInfo> selectedSearchParts;
+	protected SearchPartVO selectedSearchPart;
+	
+	protected PartModel partModel;   
+	protected PartPopupModel partPopupModel;
+	
+	
+	protected SelectItem[] qtyIndicatorOptions;
+	protected SelectItem[] rfqStatusOptions;
+	protected SelectItem[] yesNoOptions;
+
+	protected BizUnit bizUnit;
+	
+	protected List<Attachment> attachments;	
+	protected transient StreamedContent downloadAttachment;
+	protected int attachmentCount;
+	
+	private String initialize = "";
+	
+	
+	
+	private static final Logger LOGGER = Logger.getLogger(CommonBean.class.getName());
+	
+	protected DecimalFormat df2 = new DecimalFormat("#");
+	protected DecimalFormat df5 = new DecimalFormat("#");
+	
+    protected BizUnit salesBizUnit; 
+    
+	public String getInitialize() {
+		return initialize;
+	}
+
+	public void setInitialize(String initialize) {
+		this.initialize = initialize;
+	}
+
+	public CommonBean() {
+
+		df2.setMaximumFractionDigits(2);
+		df2.setMinimumFractionDigits(2);
+		df2.setMinimumIntegerDigits(1);
+		df5.setMaximumFractionDigits(5);
+		df5.setMinimumFractionDigits(5);
+		df5.setMinimumIntegerDigits(1);
+		
+		qtyIndicatorOptions = QuoteUtil.createFilterOptions(QuoteConstant.QTY_INDICATORS, QuoteConstant.QTY_INDICATORS, false, false);
+		
+		rfqStatusOptions = QuoteUtil.createFilterOptions(QuoteConstant.RFQ_STATUS_INDICATORS, QuoteConstant.RFQ_STATUS_INDICATORS, false, false, true);
+		String[] yesNo = new String[2];
+		yesNo[0] = "1";
+		yesNo[1] = "0";
+		yesNoOptions = QuoteUtil.createFilterOptions(QuoteConstant.YES_NO, QuoteConstant.YES_NO, false ,false, true);
+	}
+	
+	public boolean isEmpty(String value){
+		return QuoteUtil.isEmpty(value);
+	}
+	
+	public void createQuoteToSo(QuoteItem quoteItem){
+		List<QuoteItem> items = new ArrayList<QuoteItem>();
+		items.add(quoteItem);
+		try {
+			ejbCommonSB.createQuoteToSo(items);
+		} catch (Exception ex){
+			LOGGER.log(Level.SEVERE, "Exception in creating quote to SO , Quote number"+quoteItem.getQuoteNumber()+" , exception message : "+ex.getMessage(),ex);
+		}
+	}
+	
+	public String convertDecimalToString(Double value){
+		if(value != null){
+			DecimalFormat df = new DecimalFormat("######.#####");		
+			return df.format(value);
+		}
+		return null;
+	}
+
+	public String convertDecimalToString(String value){
+		if(!QuoteUtil.isEmpty(value)){
+			DecimalFormat df = new DecimalFormat("######.#####");		
+			return df.format(value);
+		}
+		return null;
+	}
+
+	public String getCustomerFullName(Customer customer){
+		return DownloadUtil.getCustomerFullName(customer);
+	}
+
+	public String getCustomerFullName(CustomerAddress customerAddress){
+		if(customerAddress != null){
+			String customerName = customerAddress.getCustomerName1();
+			if(customerName != null && customerAddress.getCustomerName2() != null){
+				customerName += customerAddress.getCustomerName2();
+			}
+			return customerName;
+		}
+		return null;
+	}
+
+	public boolean fieldValidityChecked(QuoteItem quoteItem){
+		boolean cannotGo = (
+				(quoteItem.getMpq() == null || quoteItem.getMpq().intValue()==INT_ZERO) 
+				|| ((quoteItem.getMoq() == null || quoteItem.getMoq().intValue()==INT_ZERO) && (quoteItem.getMov() == null || quoteItem.getMov().intValue()==INT_ZERO)) 
+				|| quoteItem.getPriceValidity() == null || quoteItem.getCostIndicator() == null || quoteItem.getQtyIndicator() == null 
+				|| (quoteItem.getCost() == null || quoteItem.getCost().doubleValue()==DOUBLE_ZERO)  
+				|| quoteItem.getLeadTime() == null 
+				|| quoteItem.getMinSellPrice() == null 
+				|| (quoteItem.getMinSellPrice() != null && quoteItem.getMinSellPrice() <= 0));
+		
+//		logger.info("quoteItem.getMpq():"+quoteItem.getMpq());
+//		logger.info("quoteItem.getMoq():"+quoteItem.getMoq());
+//		logger.info("quoteItem.getMov() :"+quoteItem.getMov() );
+//		logger.info("quoteItem.getPriceValidity() :"+quoteItem.getPriceValidity() );
+//		logger.info("quoteItem.getCost():"+quoteItem.getCost());
+//		logger.info("quoteItem.getCostIndicator():"+quoteItem.getCostIndicator());
+//		logger.info("quoteItem.getQtyIndicator():"+quoteItem.getQtyIndicator());
+//		logger.info("quoteItem.getLeadTime():"+quoteItem.getLeadTime());
+//		logger.info("quoteItem.getNormSellPrice():"+quoteItem.getNormSellPrice());
+//		logger.info("quoteItem.getTargetResale():"+quoteItem.getTargetResale());
+
+		//Updated by Tonmy on 19 Aug 2013. remove the condition  shipment validity is null that can not AQ quote.
+//		boolean cannotGo = (quoteItem.getMpq() == null || (quoteItem.getMoq() == null && quoteItem.getMov() == null)
+//				|| quoteItem.getPriceValidity() == null || quoteItem.getCostIndicator() == null || quoteItem.getQtyIndicator() == null
+//				|| quoteItem.getCost() == null || quoteItem.getLeadTime() == null || quoteItem.getNormSellPrice() == null 
+//				|| (quoteItem.getNormSellPrice() != null && quoteItem.getNormSellPrice() <= 0)
+//				|| (quoteItem.getTargetResale() != null && quoteItem.getNormSellPrice() != null && quoteItem.getTargetResale() < quoteItem.getNormSellPrice())
+//				|| quoteItem.getShipmentValidity() == null);
+		//logger.info("1cannotGo:"+cannotGo);
+		if(!cannotGo){
+			//logger.info("quoteItem.getShipmentValidity().:"+quoteItem.getShipmentValidity());
+			if(quoteItem.getShipmentValidity() != null && quoteItem.getShipmentValidity().before(QuoteUtil.getCurrentTime())){
+				cannotGo = true;
+			}
+		}
+		//logger.info("2cannotGo:"+cannotGo);
+		if(!cannotGo){
+			quoteItem.getPriceValidity();
+			//logger.info("priceValidity:"+priceValidity);
+			Date validity = null;
+			if(quoteItem.getPriceValidity().matches("[0-9]{1,}")){
+				int shift = Integer.parseInt(quoteItem.getPriceValidity());
+				validity = QuoteUtil.shiftDate(quoteItem.getSentOutTime(), shift);
+			} else {
+				SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+				try {
+					validity = sdf.parse(quoteItem.getPriceValidity());
+				} catch (ParseException e) {
+					LOGGER.log(Level.WARNING, "Exception in parsing price validity date : "+quoteItem.getPriceValidity()+" , exception message : "+e.getMessage());
+				}
+			}
+			if(quoteItem.getMaterialTypeId()!=null)
+			{
+				validity = QuoteUtil.shitDateByProgramType(validity, quoteItem.getMaterialTypeId());
+			}
+			else
+			{
+				validity = QuoteUtil.shitDateByProgramType(validity, QuoteSBConstant.MATERIAL_TYPE_NORMAL);
+			}
+			Date currentDate = QuoteUtil.getCurrentDateZeroHour();
+			if(validity != null && (validity.compareTo(currentDate)<0)){
+				cannotGo = true;
+			}
+		}
+		//logger.info("3cannotGo:"+cannotGo);
+		return cannotGo;
+	}
+	
+	
+	public void updateDownloadAttachment(int rowIndex) throws WebQuoteException {
+		Attachment attachment = attachments.get(rowIndex);
+		byte[] fileByteArray = attachment.getFileImage();
+		
+		if(fileByteArray == null || !(fileByteArray.length > 0)) {
+			// modified by Yang,Lenon for read attachments from host server(2015.12.30)
+			String fileRootPath = sysConfigSB.getProperyValue(QuoteSBConstant.ATTACHMENT_ROOT_PATH);
+			String realFilePath = fileRootPath + File.separator + attachment.getFilePath() + File.separator + attachment.getFileNameActual();
+			fileByteArray = FileUtil.file2Byte(realFilePath);
+		} 
+		
+		
+		//byte[] bytes = attachment.getFileImage();
+		String mimeType = DownloadUtil.getMimeType(attachment.getFileName());
+		
+		String escapedFilename = "Unrecognized!!!";
+        try {
+            // Encoding
+            escapedFilename = URLEncoder.encode(attachment.getFileName(), "UTF-8").replaceAll("\\+", "%20");
+        } catch (UnsupportedEncodingException e1) {         
+            LOGGER.log(Level.WARNING, "Error occured when encoding file name " + attachment.getFileName() + " for attachment:  ID " + attachment.getId());
+        }
+		
+		downloadAttachment = new DefaultStreamedContent(new ByteArrayInputStream(fileByteArray), mimeType, escapedFilename);		
+	}
+	
+	public XSSFWorkbook getPendingListXSSFWorkbook(){
+		FileInputStream fileIn;
+		XSSFWorkbook wb = null;
+		String filePath = DeploymentConfiguration.configPath+File.separator +QuoteConstant.PENDING_LIST_TEMPLATE_LOCATION;
+		try {
+			fileIn = new FileInputStream(filePath);
+			wb = new XSSFWorkbook(fileIn);
+		}catch (IOException e) {
+			 FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+					 ResourceMB.getText("wq.message.downloadfail")+".", ""));
+			LOGGER.log(Level.SEVERE, "Exception in getting getting file , exception message : "+e.getMessage());
+		}
+		return wb;
+	}
+	
+    public static String getQuotationFileName(Quote quote)
+	{
+	     StringBuffer  returnStr = new StringBuffer();
+	     if(quote!=null)
+	     {
+		     returnStr.append("Quotation - (Ref ");
+		     if(StringUtils.isNotEmpty(quote.getYourReference())){
+ 				if(quote.getYourReference().length() > 50)
+ 					returnStr.append(quote.getYourReference().substring(0, 50));
+				else
+					returnStr.append(quote.getYourReference());
+		     }
+		     returnStr.append(" )- ");
+		     //INC0018065, INC0018819
+		     //returnStr.append(quote.getSoldToCustomer().getCustomerName1());
+		     returnStr.append(quote.getSoldToCustomerName());
+		     returnStr.append(" ");
+		     returnStr.append(DateUtils.getDefaultDateStrEmailTimeStamp());
+	     }
+	     return StringUtils.removeCommaFilter(returnStr.toString());
+
+	}	
+	
+	public void sendQuotationEmail(QuotationEmailVO vo){
+		ejbCommonSB.sendQuotationEmail(vo);
+	}	
+	
+	public SelectItem[] convertToSelectItem(List<String> lists){
+		if(lists != null)
+			return QuoteUtil.createFilterOptions(lists.toArray(new String[lists.size()]));
+		return new SelectItem[0];
+	}
+	
+	/*
+	public SelectItem[] convertSuggestMaterialToSelectItem(Material material){
+		if(material != null){
+			List<Material> materials = MaterialCacheManager.getSuggestMaterial(material.getManufacturer().getName(), material.getFullMfrPartNumber());
+    		if(materials != null){
+    			List<String> partNumbers = new ArrayList<String>();
+    			for(Material m : materials){
+    				partNumbers.add(m.getFullMfrPartNumber());
+    			}   			
+    			return QuoteUtil.createFilterOptions(partNumbers.toArray(new String[partNumbers.size()]), partNumbers.toArray(new String[partNumbers.size()]), false, false, true);    			
+    		} else {
+    			materials = materialSB.findSuggestedMaterial(material, bizUnit);
+    			MaterialCacheManager.putSuggestMaterial(material.getManufacturer().getName(), material.getFullMfrPartNumber(), materials);
+    			List<String> partNumbers = new ArrayList<String>();
+    			for(Material m : materials){
+    				partNumbers.add(m.getFullMfrPartNumber());
+    			}
+    			return QuoteUtil.createFilterOptions(partNumbers.toArray(new String[partNumbers.size()]), partNumbers.toArray(new String[partNumbers.size()]), false, false, true);    			    			
+    		}						
+		}
+		return null;
+	}
+	*/	
+
+	public SelectItem[] convertCostIndicatorToSelectItem(Material material){
+		List<String> costIndicators = new ArrayList<String>();
+		if(material != null)
+		{
+			//get material details method change.
+			//List<MaterialDetail> materialDetails = material.getMaterialDetails();
+			List<Pricer> materialDetails = materialSB.findMaterialsDetailByMaterialId(material.getId());
+			if(materialDetails != null){
+				for(Pricer materialDetail : materialDetails){
+					if(materialDetail.getCostIndicator() != null){
+						costIndicators.add(materialDetail.getCostIndicator().getName());
+					}					
+				}
+			}
+		}
+		return QuoteUtil.createFilterOptions(costIndicators.toArray(new String[costIndicators.size()]), costIndicators.toArray(new String[costIndicators.size()]), false, false);    			
+	}	
+
+	public SelectItem[] convertCostIndicatorToSelectItem(){
+		List<String> costIndicators = CostIndicatorCacheManager.getCostIndicator();
+		return QuoteUtil.createFilterOptions(costIndicators.toArray(new String[costIndicators.size()]), costIndicators.toArray(new String[costIndicators.size()]), false, false);    			
+	}	
+	
+	public String checkNA(String value){
+		if(QuoteUtil.isEmpty(value)){
+			return QuoteConstant.DEFAULT_NA;
+		}
+		return value;
+	}
+	
+	public void postProcessXLS(Object document) {
+		XSSFWorkbook wb = (XSSFWorkbook) document;
+		XSSFSheet sheet = wb.getSheetAt(0);
+		XSSFRow header = sheet.getRow(0);
+		
+		XSSFCellStyle cellStyle = wb.createCellStyle();  
+		//cellStyle.setFillForegroundColor(XSSFColor.GREEN.index);
+		cellStyle.setFillPattern(XSSFCellStyle.SOLID_FOREGROUND);
+		
+		for(int i=0; i < header.getPhysicalNumberOfCells();i++) {
+			XSSFCell cell = header.getCell(i);	
+			cell.setCellStyle(cellStyle);
+		}
+	}  
+	
+	public String convertCustomerSalesToSalesOrg(List<CustomerSale> customerSales, String bizUnitName){
+		String salesOrg = "";
+		if(customerSales != null){
+			List<String> salesOrgCodes = SalesOrgCacheManager.getSalesOrgCodesByBizUnit(bizUnitName);			
+			for(CustomerSale customerSale : customerSales){
+				if(salesOrgCodes.contains(customerSale.getSalesOrgBean().getName())){
+					if(salesOrg.length() > 0)
+						salesOrg += " "+QuoteConstant.SALES_ORG_SEPARATER+" ";
+					salesOrg += customerSale.getSalesOrgBean().getName();
+				}
+			}
+		}
+		return salesOrg;
+	}
+	
+	public String convertAccountGroupToName(String accountGroup){
+		return AccountGroupCacheManager.getAccountGroup(accountGroup);
+	}
+	
+	public static String convertDoubleToString(Double value){
+		return QuoteUtil.convertDoubleToString(value);
+	}
+	
+	public String convertNumber(String value){
+		return QuoteUtil.convertNumber(value);
+	}
+
+	public Integer convertToInteger(String value){
+		return QuoteUtil.convertToInteger(value);
+	}
+	
+	public String convertToStringAsInteger(String value){
+		return QuoteUtil.convertToStringAsInteger(value);
+	}	
+	
+	public String convertScheduleDate(Date value){
+		try {
+			SimpleDateFormat sdf = new SimpleDateFormat("MMM-yy");
+			return sdf.format(value);
+		} catch (Exception ex) {
+			LOGGER.log(Level.SEVERE, "Exception in converting date 'MMM-yy format' for date: "+value.toString()+" , exception message : "+ex.getMessage());
+		}
+		return null;		
+	}
+	
+	public String convertDateToString(Date value){
+		return QuoteUtil.convertDateToString(value);	
+	}	
+	
+	public String convertDateTimeToString(Date value){
+		if(value != null){
+			try {
+				SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+				return sdf.format(value);
+			} catch (Exception ex) {
+				LOGGER.log(Level.SEVERE, "Error occured in coversion for date: "+value.toString()+", "
+						+ "Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(ex),ex);
+			}
+		}
+		return null;		
+	}	
+	
+	public String convertDateToString(Date value,String format){
+		if(value != null){
+			try {
+				SimpleDateFormat sdf = new SimpleDateFormat(format);
+				return sdf.format(value);
+			} catch (Exception ex) {
+				LOGGER.log(Level.SEVERE, "Exception in converting date to '"+ format+"'format , exception message : "+ex.getMessage(),ex);
+			}
+		}
+		return null;		
+	}	
+	
+	public SelectItem[] getQtyIndicatorOptions() {
+		return qtyIndicatorOptions;
+	}
+
+	public void setQtyIndicatorOptions(SelectItem[] qtyIndicatorOptions) {
+		this.qtyIndicatorOptions = qtyIndicatorOptions;
+	}
+
+	public SelectItem[] getRfqStatusOptions() {
+		return rfqStatusOptions;
+	}
+
+	public void setRfqStatusOptions(SelectItem[] rfqStatusOptions) {
+		this.rfqStatusOptions = rfqStatusOptions;
+	}
+
+	public SelectItem[] getYesNoOptions() {
+		return yesNoOptions;
+	}
+
+	public void setYesNoOptions(SelectItem[] yesNoOptions) {
+		this.yesNoOptions = yesNoOptions;
+	}
+	
+
+    
+    /**
+	 * fill the exchange rate to the excel if the rate not exist, then remove this row
+	 * @param quote
+	 * @param sheet
+	 */
+	public void fillRateToXLS(Quote quote,HSSFSheet sheet) {
+		ejbCommonSB.fillRateToXLS(quote, sheet);
+	}
+	
+    
+	/**
+	 * @param soldToCustomer
+	 * @param quote
+	 * @param isUseExpiryDate
+	 * @return
+	 */
+	public HSSFWorkbook getQuoteTemplateBySoldTo(Customer soldToCustomer, Quote quote,boolean isUseExpiryDate){
+		return ejbCommonSB.getQuoteTemplateBySoldTo(this, soldToCustomer, quote, isUseExpiryDate);
+	}
+	
+	
+	protected String getUrl(){
+		return ejbCommonSB.getUrl();
+	}
+	
+	protected String getDomain() {
+		String urlPath = sysConfigSB.getProperyValue(QuoteConstant.WEBQUOTE2_DOMAIN);
+		int slash = urlPath.lastIndexOf("/");
+		String domain = urlPath.substring(slash+1, urlPath.length());
+		return domain;
+	}
+	
+	public String getValidationSearchMfr() {
+		return validationSearchMfr;
+	}
+
+	public void setValidationSearchMfr(String validationSearchMfr) {
+		this.validationSearchMfr = validationSearchMfr;
+	}
+
+	public String getValidationSearchFullMfrPartNumber() {
+		return validationSearchFullMfrPartNumber;
+	}
+
+	public void setValidationSearchFullMfrPartNumber(
+			String validationSearchFullMfrPartNumber) {
+		this.validationSearchFullMfrPartNumber = validationSearchFullMfrPartNumber;
+	}
+
+	public int getSearchPartsCount() {
+		return searchPartsCount;
+	}
+
+	public void setSearchPartsCount(int searchPartsCount) {
+		this.searchPartsCount = searchPartsCount;
+	}
+
+	public List<PricerInfo> getSearchParts() {
+		return searchParts;
+	}
+
+	public void setSearchParts(List<PricerInfo> searchParts) {
+		this.searchParts = searchParts;
+	}
+
+	public List<PricerInfo> getSelectedSearchParts() {
+		return selectedSearchParts;
+	}
+
+	public void setSelectedSearchParts(List<PricerInfo> dselectedSearchParts) {
+		this.selectedSearchParts = dselectedSearchParts;
+	}
+
+	public SearchPartVO getSelectedSearchPart() {
+		return selectedSearchPart;
+	}
+
+	public void setSelectedSearchPart(SearchPartVO selectedSearchPart) {
+		this.selectedSearchPart = selectedSearchPart;
+	}
+
+	public BizUnit getBizUnit() {
+		return bizUnit;
+	}
+
+	public void setBizUnit(BizUnit bizUnit) {
+		this.bizUnit = bizUnit;
+	}    
+
+	public List<Attachment> getAttachments() {
+		return attachments;
+	}
+
+	public void setAttachments(List<Attachment> attachments) {
+		this.attachments = attachments;
+	}
+	
+	public StreamedContent getDownloadAttachment() {
+		return downloadAttachment;
+	}
+
+	public void setDownloadAttachment(StreamedContent downloadAttachment) {
+		this.downloadAttachment = downloadAttachment;
+	}
+
+	public int getAttachmentCount() {
+		return attachmentCount;
+	}
+
+	public void setAttachmentCount(int attachmentCount) {
+		this.attachmentCount = attachmentCount;
+	}
+
+	public PartModel getPartModel() {
+		return partModel;
+	}
+
+	public void setPartModel(PartModel partModel) {
+		this.partModel = partModel;
+	}	
+	
+	
+	public PartPopupModel getPartPopupModel()
+	{
+		return partPopupModel;
+	}
+
+	public void setPartPopupModel(PartPopupModel partPopupModel)
+	{
+		this.partPopupModel = partPopupModel;
+	}
+
+	public List<Material> joinTwoList(List<Material> list1 , List<Material> list2)
+	{
+//		 logger.info("@@@ call joinTwoList ");
+		 List<Material> returnList = new ArrayList<Material>();
+		 Map<Long,Material> tempMap = new HashMap<Long,Material>();
+		 for(Material mm : list1)
+		 {
+			 tempMap.put(new Long(mm.getId()), mm);
+		 }
+		 for(Material m : list2)
+		 {
+
+			 if(!tempMap.containsKey(new Long(m.getId())))
+			 {
+				 tempMap.put(new Long(m.getId()), m);
+			 }
+			 
+		 }
+		 
+		 List<Map.Entry<Long, Material>> idMap =
+				    new ArrayList<Map.Entry<Long, Material>>(tempMap.entrySet());
+			
+		 Collections.sort(idMap, new Comparator<Map.Entry<Long, Material>>() {   
+			    public int compare(Map.Entry<Long, Material> o1, Map.Entry<Long, Material> o2) { 
+			    	Material m1 = o1.getValue();
+			    	Material m2 = o2.getValue();
+			        int res = m1.getFullMfrPartNumber().compareTo(m2.getFullMfrPartNumber());
+			        if(res !=0 )
+			        return res;
+			        else
+			        {
+			        	 res = m1.getManufacturer().getName().compareTo(m2.getManufacturer().getName());
+						 return res;
+			        }
+			    }
+			});
+		
+		 String maxResultStr = sysConfigSB.getProperyValue("MAX_SEARCH_RESULT");
+		 int maxResult = Integer.valueOf(maxResultStr);
+		 if(maxResult > idMap.size())
+			 maxResult = idMap.size();
+		 
+		 for(int i =0 ; i <maxResult; i++)
+         {
+			 Map.Entry<Long, Material> temp =idMap.get(i);
+        	 returnList.add(temp.getValue());
+         }
+		 return returnList;
+		
+	}
+
+	public BizUnit getSalesBizUnit()
+	{
+		return salesBizUnit;
+	}
+
+	public void setSalesBizUnit(BizUnit salesBizUnit)
+	{
+		this.salesBizUnit = salesBizUnit;
+	}
+	
+	public XSSFWorkbook getPendingListExport(List<List<String>> data){
+		XSSFWorkbook wb = null; 
+		XSSFCellStyle lockedStyle = null;
+		XSSFCellStyle mandatoryStyle = null;
+		XSSFCellStyle generalMandatoryStyle = null;
+		XSSFCellStyle optionalStyle = null;
+		XSSFCellStyle wrapTextStyle = null;
+        DataFormat format = null;
+        
+		if(data != null){
+			
+			wb = getPendingListXSSFWorkbook();
+	        format = wb.createDataFormat();
+	        lockedStyle = wb.createCellStyle();
+	        mandatoryStyle = wb.createCellStyle();
+	        generalMandatoryStyle = wb.createCellStyle();
+	        optionalStyle = wb.createCellStyle();
+	        wrapTextStyle = wb.createCellStyle();
+	        
+//	        lockedStyle.setWrapText(true);
+//	        mandatoryStyle.setWrapText(true);
+//	        optionalStyle.setWrapText(true);
+	        
+	        lockedStyle.setDataFormat(format.getFormat("@"));
+	        mandatoryStyle.setDataFormat(format.getFormat("@"));
+	        optionalStyle.setDataFormat(format.getFormat("@"));
+	        generalMandatoryStyle.setDataFormat(format.getFormat("@"));
+	        
+	        lockedStyle.setBorderTop((short) 1);
+	        lockedStyle.setBorderBottom((short) 1);
+	        lockedStyle.setBorderLeft((short) 1);
+	        lockedStyle.setBorderRight((short) 1);
+	        
+	        wrapTextStyle.setBorderTop((short) 1);
+	        wrapTextStyle.setBorderBottom((short) 1);
+	        wrapTextStyle.setBorderLeft((short) 1);
+	        wrapTextStyle.setBorderRight((short) 1);
+	        wrapTextStyle.setWrapText(true);
+
+	        mandatoryStyle.setBorderTop((short) 1);
+	        mandatoryStyle.setBorderBottom((short) 1);
+	        mandatoryStyle.setBorderLeft((short) 1);
+	        mandatoryStyle.setBorderRight((short) 1);
+	        
+	        generalMandatoryStyle.setBorderTop((short) 1);
+	        generalMandatoryStyle.setBorderBottom((short) 1);
+	        generalMandatoryStyle.setBorderLeft((short) 1);
+	        generalMandatoryStyle.setBorderRight((short) 1);
+
+	        optionalStyle.setBorderTop((short) 1);
+	        optionalStyle.setBorderBottom((short) 1);
+	        optionalStyle.setBorderLeft((short) 1);
+	        optionalStyle.setBorderRight((short) 1);
+	        
+	        lockedStyle.setLocked(true);
+	        mandatoryStyle.setLocked(false);
+	        optionalStyle.setLocked(false);
+	        wrapTextStyle.setLocked(true);
+	        generalMandatoryStyle.setLocked(false);
+
+	        optionalStyle.setFillForegroundColor(new XSSFColor(new java.awt.Color(242, 220, 219)));
+	        optionalStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
+	        mandatoryStyle.setFillForegroundColor(new XSSFColor(new java.awt.Color(251, 236, 136)));
+	        mandatoryStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
+
+	        generalMandatoryStyle.setFillForegroundColor(new XSSFColor(new java.awt.Color(251, 236, 136)));
+	        generalMandatoryStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
+	        generalMandatoryStyle.setDataFormat((short)0);
+	        
+			XSSFSheet sheet = wb.getSheetAt(0);
+			int rowStart = 1;
+			for(List<String> items : data){
+				XSSFRow row = sheet.createRow(rowStart);
+				for(int i=0; i <items.size(); i++){
+					XSSFCell cell = row.createCell(i);
+					cell.setCellValue(items.get(i));
+					if( i == 5
+						|| i == 6
+						|| i == 9
+						|| i == 12
+						|| i == 19
+						|| i == 27
+						|| i == 33
+						|| i == 34
+						|| i == 35
+						|| i == 36
+						|| i == 59
+						){
+						cell.setCellStyle(mandatoryStyle);
+					} else if(i == 8
+								|| i == 10
+								|| i == 11
+								|| i == 13
+								|| i == 14
+								|| i == 15
+								|| i == 17
+								|| i == 18
+								|| i == 20
+								|| i == 37
+								|| i == 38
+								|| i == 39
+								|| i == 40
+							){
+						cell.setCellStyle(optionalStyle);
+					} else if(i==31 || i==32)
+					{
+						cell.setCellStyle(wrapTextStyle);
+					}
+					 else if(i==7 || i==28)
+					{
+						cell.setCellStyle(generalMandatoryStyle);
+					}
+					else {
+						cell.setCellStyle(lockedStyle);							
+					}
+					
+//					if(i==7 || i==28)
+//					{
+//						cell.setCellType(Cell.)
+//					}
+				}
+				rowStart++;
+			}
+		}				
+		return wb;
+		
+	}
+	
+	
+	public boolean isAbleToAutoQuote(Integer mpq, Integer moq, Integer mov, String leadTime, Double normSellPrice ,Double cost, String costIndicator, 
+			String priceValidity, String qtyIndicator, Date shipmentValidity, Double targetResale, Date sendOutTime, String materialType)
+	{
+//			logger.info("mpq:"+mpq);
+//			logger.info("moq:"+moq);
+//			logger.info("mov :"+mov);
+//			logger.info("leadTime:"+leadTime);
+//			logger.info("normSellPrice:"+normSellPrice);
+//			
+//			logger.info("cost:"+cost);
+//			logger.info("costIndicator:"+costIndicator);
+//			logger.info("priceValidity:"+priceValidity);
+//			logger.info("qtyIndicator:"+qtyIndicator);
+//			logger.info("shipmentValidity:"+shipmentValidity);
+//			logger.info("targetResale:"+targetResale);
+//			logger.info("sendOutTime:"+sendOutTime);
+			
+		    //MPQ, MOQ, MOV, LeadTime
+			if(mpq == null || mpq.intValue()==INT_ZERO)
+			{
+//				logger.info("AutoQuote false: mpq");
+				return false;
+			}
+				
+			if((moq == null || moq.intValue()==INT_ZERO) && (mov == null || mov.intValue()==INT_ZERO))
+			{
+//				logger.info("AutoQuote false: moq mov");
+				return false;
+			}
+				
+			if(leadTime == null)
+			{
+//				logger.info("AutoQuote false: leadTime");
+				return false;
+			}
+				
+			//NormSell
+			if(normSellPrice == null)
+			{
+//				logger.info("AutoQuote false: normSellPrice is null");
+				return false;
+			}
+				
+			if(normSellPrice != null && normSellPrice <= 0)
+			{
+//				logger.info("AutoQuote false: normSellPrice");
+				return false;
+			}
+				
+			//Cost
+			if(cost == null  ||  cost.doubleValue()==DOUBLE_ZERO)
+			{
+//				logger.info("AutoQuote false: cost");
+				return false;
+			}
+				
+			//priceValidity, costIndicator, QtyIndicator
+			if(costIndicator == null)
+			{
+//				logger.info("AutoQuote false: costIndicator");
+				return false;
+			}
+				
+			if(priceValidity == null)
+			{
+//				logger.info("AutoQuote false: priceValidity");
+				return false;
+			}
+				
+			if(qtyIndicator == null)
+			{
+//				logger.info("AutoQuote false: qtyIndicator");
+//				return false;	
+				if((moq == null || moq==0 ) && (mov == null || mov==0 )){
+					return false;
+				}
+			}
+					
+			if(shipmentValidity != null && shipmentValidity.before(QuoteUtil.getCurrentTime()))
+			{
+//				logger.info("AutoQuote false: shipmentValidity");
+				return false;
+			}
+		
+			Date validity = null;
+			if(priceValidity.matches("[0-9]{1,}"))
+			{
+				int shift = Integer.parseInt(priceValidity);
+				validity = QuoteUtil.shiftDate(sendOutTime, shift);
+			} 
+			else 
+			{
+				SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+				try 
+				{
+					validity = sdf.parse(priceValidity);
+				} catch (ParseException e) {
+					LOGGER.log(Level.SEVERE, "EXception in parsing price validity date : "+priceValidity+", exception message : "+e.getMessage(),e);
+				}
+			}	
+			if(materialType!=null)
+			{
+				validity = QuoteUtil.shitDateByProgramType(validity, materialType);
+			}
+			else
+			{
+				validity = QuoteUtil.shitDateByProgramType(validity, QuoteSBConstant.MATERIAL_TYPE_NORMAL);
+			}
+			
+			Date currentDate = QuoteUtil.getCurrentDateZeroHour();
+			if(validity != null && (validity.compareTo(currentDate)<0)){
+				  return false;
+			}
+	
+			
+			if(targetResale!=null && targetResale!=DOUBLE_ZERO)
+			{
+				  if(normSellPrice!=null && normSellPrice >DOUBLE_ZERO)
+				  {
+						  if(targetResale>= normSellPrice)
+						  {
+							  return true;      
+						  }
+				  }
+			 }
+			 else
+			 {
+				 if(normSellPrice!=null && normSellPrice >DOUBLE_ZERO)
+				 {
+					 return true;
+				 }
+			 }
+//			logger.info("AutoQuote false: targetResale");
+		    return false;
+	}
+	
+	
+	public String getMandatoryKey(String mfr, String costIndicator, String customerNumbeer)
+	{
+		StringBuffer sb = new StringBuffer();
+		sb.append(mfr).append("|")
+		.append(costIndicator).append("|")
+				.append(customerNumbeer);
+		return sb.toString();
+	}
+	
+	private transient ConcurrentHashMap<String, List<Tuple> > sapPartNumberCache = new ConcurrentHashMap<String, List<Tuple>>();
+	
+	public SelectItem[] convertSapPartNumberToSelectItem(String requestedMfr ,String requestPartNumber){	
+		if(QuoteUtil.isEmpty(requestedMfr)||QuoteUtil.isEmpty(requestPartNumber))
+			return QuoteUtil.createFilterOptions(new String[]{});
+		if(sapPartNumberCache==null){//avoid nullpointerException on special case
+			sapPartNumberCache = new ConcurrentHashMap<String, List<Tuple>>();
+		}
+		String key = requestPartNumber + requestedMfr + bizUnit.getName();
+		List<Tuple> sapPartNumberTuples   = sapPartNumberCache.get(key);
+		if(sapPartNumberTuples==null){
+			sapPartNumberTuples  = materialSB.findSapPartNumbersByPNandMfrName(requestPartNumber, requestedMfr, bizUnit, true);				
+			sapPartNumberCache.put(key, sapPartNumberTuples);
+		}
+		
+		return QuoteUtil.convertSapPartNumberToSelectItem(requestedMfr, requestPartNumber, sapPartNumberTuples);
+	}
+
+	/**   
+	* @Description: encase Quantity Break Price in QuoteItem
+	* @author 042659
+	* @param quoteItem      
+	* @return void    
+	* @throws  
+	*/  
+	public void encapsulateQuoteItemWithQtyBPrice(QuoteItem quoteItem) {
+		// TODO Auto-generated method stub
+		QtyBreakPricer QtyBreakPricer = getQBreakPriceByPricerId(quoteItem.getPricerId());
+		if (QtyBreakPricer != null) {
+			quoteItem.setOrderQties(QtyBreakPricer.calQtyBreakRange());
+		}
+
+	}
+
+	public List<QuantityBreakPrice> getQutyPriceList(QuoteItem quoteItem) {
+		// TODO Auto-generated method stub
+		
+		QtyBreakPricer QtyBreakPricer = getQBreakPriceByPricerId(quoteItem.getPricerId());
+		if (QtyBreakPricer != null) {
+			quoteItem.setOrderQties(QtyBreakPricer.calQtyBreakRange());
+		}else {
+			quoteItem.setOrderQties(new ArrayList<QuantityBreakPrice>());
+		}
+		return quoteItem.getOrderQties();
+	}
+	/**
+	* @Description: TODO
+	* @author 042659
+	* @param pricerId      
+	* @return void    
+	* @throws  
+	*/  
+	protected QtyBreakPricer getQBreakPriceByPricerId(long pricerId) {
+		if (pricerId == 0L) {
+			return null;
+		}
+		List<QtyBreakPricer> QtyBreakPricerLst = programMaterialSB.findQBreakPriceByPricerId(pricerId);
+
+		if (QtyBreakPricerLst == null || QtyBreakPricerLst.size() == 0) {
+			return null;
+		}
+
+		return QtyBreakPricerLst.get(0);
+
+	}	
+	
+}

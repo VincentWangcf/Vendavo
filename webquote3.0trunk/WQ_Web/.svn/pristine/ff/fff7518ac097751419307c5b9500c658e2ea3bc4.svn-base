@@ -1,0 +1,226 @@
+package com.avnet.emasia.webquote.dp;
+
+import java.io.File;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.Resource;
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
+import javax.jms.Message;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.transaction.UserTransaction;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.PrefixFileFilter;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.jboss.as.server.CurrentServiceContainer;
+import org.jboss.msc.service.ServiceController;
+
+import com.avnet.emasia.webquote.entity.DpMessage;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.utilities.schedule.HATimerService;
+import com.avnet.emasia.webquote.utilities.schedule.IScheduleTask;
+
+
+@LocalBean
+@Stateless
+@TransactionManagement(TransactionManagementType.BEAN)
+public class DpMDB implements IScheduleTask {
+
+	@PersistenceContext(unitName = "Server_Source")
+	private EntityManager em;
+
+	@Resource
+	public UserTransaction ut;
+
+	@EJB
+	private DpRfqProcessSB dpRfqProcessSB;
+
+	@EJB
+	private MailUtilsSB mailUtilsSB;
+
+	@EJB
+	private SysConfigSB sysConfigSB;
+	
+	@EJB
+	protected EJBCommonSB ejbCommonSB;
+
+	private static final Logger LOGGER = Logger.getLogger(DpRfqProcessSB.class.getName());
+
+	public DpMDB() {
+
+	}
+
+	public List<QuoteItem> onMessage(Message message) {
+
+		String createRfqXml = null;
+
+		try {
+
+			String inboundPath = sysConfigSB.getProperyValue("DP_INBOUND_PATH");
+			String inboundFileName = sysConfigSB.getProperyValue("DP_INBOUND_FILE_NAME");;
+			Collection<File> inboundFiles = FileUtils.listFiles(new File(inboundPath), new PrefixFileFilter(inboundFileName),null);
+
+				for (File file : inboundFiles) {
+					try{
+						LOGGER.info("read inbound file from DP:" + file.getName());
+						
+						createRfqXml = FileUtils.readFileToString(file);
+						
+						LOGGER.info("processing createRfqMessage from DP:\r\n" + createRfqXml);
+						
+						String inboundBackupPath = getBackupFilePath();
+
+						File destinationFile = new File(inboundBackupPath + File.separator + file.getName());
+						if(destinationFile.exists()){
+							destinationFile.delete();
+						}
+						FileUtils.moveFileToDirectory(file, new File(inboundBackupPath), true);
+						LOGGER.info("move file " + file.getName() + " from " + inboundPath + " to " + inboundBackupPath);
+						
+						DpMessage dpMessage = new DpMessage();
+						dpMessage.setCreateRfqMessage(createRfqXml);
+						dpMessage.setCreateRfqTime(new Timestamp((new Date()).getTime()));
+		
+						ut.begin();
+						em.persist(dpMessage);
+						ut.commit();
+						
+						dpRfqProcessSB.onMessage(dpMessage);
+					
+					}catch(Exception e){
+						LOGGER.log(Level.SEVERE, "Exception occured for message: "+message+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+						sendEmail(e, createRfqXml);
+					}finally {
+						
+					}
+			}
+
+
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "fail to read file");
+			
+			MailInfoBean mailInfoBean = new MailInfoBean();
+
+			mailInfoBean.setMailSubject("DP RFQ Processing Error");
+			setMailSenderAndReceiver(mailInfoBean);
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("JBoss Node: ").append(System.getProperty(HATimerService.JBOSS_NODE_NAME)).append("<br/><br/>");
+			sb.append(ExceptionUtils.getStackTrace(e));
+
+			mailInfoBean.setMailContent(sb.toString());
+
+			
+			try {
+				mailUtilsSB.sendHtmlMail(mailInfoBean);
+			} catch (Exception ep) {
+				LOGGER.log(Level.WARNING, "Exception occured for email, sender: "+mailInfoBean.getMailFrom()+", Subject: "+mailInfoBean.getMailSubject()
+						+ "Email Sending Error : " + MessageFormatorUtil.getParameterizedStringFromException(ep));
+			}
+		}
+
+		return new ArrayList<QuoteItem>();
+	}
+
+	
+	private String getBackupFilePath(){
+		
+		String inboundBackupPath = sysConfigSB.getProperyValue("DP_INBOUND_BACKUP_PATH");
+		
+		Calendar cal = Calendar.getInstance();
+		String year = String.valueOf(cal.get(Calendar.YEAR));
+		String month = String.valueOf(cal.get(Calendar.MONTH) + 1);
+		if (month.length() == 1){
+			month = "0" + month;
+		}
+		return inboundBackupPath + File.separator + year + month;
+
+	}
+	
+	
+	
+	@Override
+	public void executeTask(Timer timer) {
+		
+//		ServiceController<?> service = CurrentServiceContainer.getServiceContainer().getService(HATimerService.SINGLETON_SERVICE_NAME);
+//		
+//		LOGGER.info("SERVICE " + service);
+//		if (service != null) {
+//			LOGGER.info("service.getValue(): " + service.getValue());
+//			if (ejbCommonSB.isRanOnThisServer((String) service.getValue())) {
+				LOGGER.info("DP process inbound xml job begin");
+				onMessage(null);
+				LOGGER.info("DP process inbound xml job end");
+//			}
+//		} 
+		
+	}	
+	
+	private void setMailSenderAndReceiver(MailInfoBean mailInfoBean){
+		
+		String sender = sysConfigSB.getProperyValue(QuoteSBConstant.ERROR_EMAIL_FROM_ADDRESS);
+		String recipients = sysConfigSB.getProperyValue(QuoteSBConstant.ERROR_EMAIL_TO_ADDRESS);
+		List<String> to = new ArrayList<String>();
+		if (!recipients.isEmpty()) {
+			String[] tos = recipients.split(";");
+			for (String recipient : tos) {
+				if (null != recipient && !recipient.trim().isEmpty())
+					to.add(recipient);
+			}
+		}
+		
+		mailInfoBean.setMailFrom(sender);
+		mailInfoBean.setMailTo(to);
+		
+	}
+	
+	public void sendEmail(Exception e , String createRfqXml){
+		LOGGER.log(Level.WARNING, "fail to process message", e);
+		
+		MailInfoBean mailInfoBean = new MailInfoBean();
+		//add by Lenon.Yang(043044) 2016/05/23
+		String jbossNodeName = System.getProperty(HATimerService.JBOSS_NODE_NAME);
+		String subject = "DP RFQ Processing Error";
+		if(org.apache.commons.lang.StringUtils.isNotBlank(jbossNodeName)) {
+			subject += "(Jboss Node:" + jbossNodeName + ")";
+		}
+		mailInfoBean.setMailSubject(subject);
+		
+		setMailSenderAndReceiver(mailInfoBean);
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("JBoss Node: ").append(jbossNodeName).append("<br/><br/>");
+		sb.append("Create RFQ XML").append("<br/><br/>");
+		sb.append(StringUtils.replaceEach(createRfqXml, new String[]{"&", "\"", "<", ">"}, new String[]{"&amp;", "&quot;", "&lt;", "&gt;"}));
+		sb.append("<br/><br/>");
+		sb.append(ExceptionUtils.getStackTrace(e));
+		
+		mailInfoBean.setMailContent(sb.toString());
+		
+		try {
+			mailUtilsSB.sendHtmlMail(mailInfoBean);
+		} catch (Exception ep) {
+			LOGGER.log(Level.WARNING, "Email Sending Error : " + ep);
+		}
+	}
+	
+}

@@ -1,0 +1,537 @@
+*{
+	font: 12px calibri;
+	word-wrap: break-word;
+}
+
+.confirmData {
+	font-weight:bold;
+	font-size:14px;
+	text-decoration:underline;
+	padding:0px 0px 0px 0px !important;
+	margin:0px 0px 0px 0px !important;
+}
+
+.tdtag {
+	font-weight:bold;
+	background-color:rgb(224, 234, 243) !important;	
+}
+
+.tdmandatoryvalue {
+	font-weight:bold;
+	background-color:rgb(251, 236, 136) !important;	
+}
+
+.baseWidth {
+	width:1300px !important;
+}
+
+.wp_baseWidth {
+	width:1600px !important;
+}
+.wp_baseWidth_left {
+	width:800px !important;
+	float:left;	
+}
+
+.wp_baseWidth_right {
+	width:800px !important;
+	float:left;	
+}
+
+.iconLink {
+	border:0px;
+}
+
+.ajaxStatus {	
+	font-size:14px;
+	font-weight:bold;
+}
+/*
+.ui-selectonemenu {
+	display: inline-block;
+	position: relative;
+	width: auto;
+	zoom: 1 !important;
+	cursor: pointer;
+	overflow: hidden;
+	*display: inline;
+}
+
+.ui-selectonemenu .ui-selectonemenu-trigger {
+	border-right: none;
+	border-top: none;
+	border-bottom: none;
+	cursor: pointer;
+	width: 10px !important;
+	height: 70%;
+	position: absolute;
+	right: 0;
+	top: 0;
+	padding: 0 0px;
+}
+
+.ui-selectonemenu .ui-selectonemenu-trigger  .ui-icon {
+	margin: 0px, 0px, 0px, 0px !important;
+	padding: 0px, 0px, 0px, 0px !important;
+}
+*/
+.ui-widget-content {
+	border:1px solid rgb(153, 188, 232) !important;
+	background-color:rgb(216, 228, 242) !important;
+}
+
+.ui-panel .ui-panel-content {
+	padding:0px 0px 0px 0px !important;
+}
+
+.ui-datatable th div.ui-dt-c, .ui-datatable .ui-datatable-data td div.ui-dt-c, .ui-datatable .ui-datatable-data-empty td div.ui-dt-c, .ui-datatable tfoot td div.ui-dt-c {
+	padding:0px 0px 0px 0px !important;
+	margin:0px 0px 0px 0px !important;
+	text-align:center;
+}
+
+.ui-datatable th {
+	vertical-align:bottom;
+	padding:0px 0px 0px 0px !important;
+	margin:0px 0px 0px 0px !important;
+	border-bottom:3px solid rgb(153, 188, 232) !important;
+}
+
+.ui-inputfield {
+	color:rgb(0, 0, 0);
+	font: 12px calibri !important;
+	padding:2px 2px 2px 2px !important;
+}
+
+.ui-datatable .ui-inputfield {
+	padding:0px 0px 0px 0px !important;
+}
+
+.ui-datatable .ui-column-filter {
+	width:100%; 
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
+	text-align: center;
+}
+
+.ui-growl {
+    position:absolute !important;
+    top:50% !important;
+    left:50% !important;
+    z-index:9999 !important;
+}
+
+ .ui-autocomplete {
+ 	 width:96% !important;
+ }
+ 
+.menubar {
+	z-index:200;
+}
+
+.input_text {
+	height:100%;
+	width:96%;
+	/*height:2em;*/
+}
+
+.input_text_half {
+	width:70px !important;
+}
+
+.input_5digit {
+	width:40px !important;
+}
+
+.input_5char {
+	width:40px !important;
+}
+.input_8digit {
+	width:70px !important;
+}
+
+.input_8char {
+	width:70px !important;
+}
+
+.input_50char {
+	width:120px !important;
+}
+
+.tdhighlight {
+	background-color:rgb(226, 92,95) !important;	
+	color:rgb(0, 0, 0) !important;	
+}
+
+.tdhighlightborder {
+	border:2px rgb(182,59,60) solid !important;
+	color:rgb(0, 0, 0) !important;
+}
+
+.inputInRFQDetailDataNumber {
+	width:100%;
+	/*background-color:rgb(226, 92,95) !important;*/	
+	border-width:0px !important;
+	/*border-color:rgb(226, 92,95) !important;*/
+	line-height: auto;
+	color:rgb(0, 0, 0) !important;
+	font: 12px calibri !important;
+	padding:0px 0px 0px 0px !important;	
+	
+}
+
+.inputInRFQDetailDataText {
+	width:100%;
+	/*background-color:rgb(226, 92,95) !important;*/
+	border-width:0px !important;
+	/*border-color:rgb(226, 92,95) !important;*/
+	color:rgb(0, 0, 0) !important;
+	font: 12px calibri !important;
+	padding:0px 0px 0px 0px !important;		
+}
+
+.popup_table th {
+	padding:2px 2px 2px 2px !important;
+	margin:0px 0px 0px 0px !important;
+	text-align:center;
+	border-top:3px solid rgb(186, 52, 52) !important;
+	border-bottom:3px solid rgb(186, 52, 52) !important;
+	border-left:1px solid rgb(186, 52, 52) !important;
+	border-right:1px solid rgb(186, 52, 52) !important;
+}
+
+.popup_table th div.ui-dt-c {
+	padding:2px 2px 2px 2px !important;
+	margin:0px 0px 0px 0px !important;
+	text-align:center;
+	color:#ffffff;
+	background-color:rgb(226, 92, 92) !important;
+}
+
+.popup_table td {
+	padding:2px 2px 2px 2px !important;
+	margin:0px 0px 0px 0px !important;
+	text-align:center;
+	border:1px solid rgb(186, 52, 52) !important;
+	background-color:rgb(255, 255, 255) !important;
+}
+
+.alignTop {
+	vertical-align:top;
+}
+
+.drmsSuggestPart tr {
+	border:1px solid rgb(186, 52, 52) !important;
+	background-color:rgb(186, 52, 52) !important;	
+}
+
+.drmsSuggestPart td {
+	background-color:rgb(144, 244, 52) !important;	
+}
+
+.ui-datatable .ui-datatable-data .ui-state-highlight td {
+	background-color:rgb(255, 255, 255);
+	color:rgb(215, 0, 0);
+}
+
+.readOnlyCell {
+	background-color:rgb(234, 244, 253) !important;	
+}
+
+.editCell {
+	background-color:rgb(255, 255, 255);	
+}
+
+.popup {
+	padding:2px 2px 2px 2px !important;
+	margin:0px 0px 0px 0px !important;
+}
+
+.column_mfr_wp	{width:80px;}
+.column_rfqStatus_wp	{width:80px;}
+.column_quotedPartNumber_wp	{width:180px;}
+.column_status_sq	{width:100px;}
+
+.column_allocationFlag	{width:60px;}
+.column_bmtChecked	{width:55px;}
+.column_bom	{width:40px;}
+.column_stage	{width:60px;}
+.column_fsas	{width:40px;}
+.column_icon	{width:50px;}
+.column_loa	{width:40px;}
+.column_multiUsage	{width:60px;}
+.column_orderOnHand	{width:40px;}
+.column_transferred	{width:40px;}
+.column_readyForOrder	{width:40px;}
+.column_specialPriceIndicator	{width:40px;}
+
+.column_application	{width:410px;}
+.column_assemblyQty	{width:80px;}
+.column_attachmentId	{width:70px;}
+.column_avnetRegionalDemandCreation	{width:100px;}
+.column_bomNumber	{width:100px;}
+.column_bomRemarks	{width:100px;}
+.column_cancellationWindow	{width:100px;}
+.column_competitorInformation	{width:200px;}
+.column_copyToCs	{width:100px;}
+.column_coreId	{width:50px;}
+.column_cost	{width:80px;}
+.column_costIndicator	{width:190px;}
+.column_country	{width:100px;}
+.column_creationDate	{width:80px;}
+.column_currency	{width:80px;}
+.column_customerType	{width:80px;}
+.column_description	{width:200px;}
+.column_designLocation	{width:130px;}
+.column_designRegion    {width:90px;}
+.column_designRegistrationNumber	{width:100px;}
+.column_drmsNumber	{width:100px;}
+.column_drPrice	{width:50px;}
+.column_eau	{width:90px;}
+.column_employeeName	{width:100px;}
+.column_endCustomerName	{width:130px;}
+.column_endCustomerNumber	{width:80px;}
+.column_enquirySegment	{width:160px;}
+.column_fae	{width:80px;}
+.column_formNumber	{width:80px;}
+.column_fullMfrPart	{width:130px;}
+.column_internalComment	{width:150px;}
+.column_itemRemarks	{width:200px;}
+.column_lastResale	{width:80px;}
+.column_leadTime	{width:70px;}
+.column_message	{width:250px;}
+.column_messageBox {width:370px;}
+.column_mfr	{width:95px;}
+.column_minSell	{width:80px;}
+.column_normSell	{width:80px;}
+.column_moq	{width:60px;}
+.column_mov	{width:60px;}
+.column_mpq	{width:60px;}
+.column_mpSchedule	{width:80px;}
+.column_nedaId	{width:80px;}
+.column_partMask	{width:100px;}
+.column_pmoq	{width:60px;}
+.column_poExpiryDate	{width:80px;}
+.column_ppSchedule	{width:80px;}
+.column_priceListRemark	{width:200px;}
+.column_productCategory	{width:100px;}
+.column_productGroup	{width:80px;}
+.column_productionDate	{width:80px;}
+.column_program	{width:100px;}
+.column_projectId	{width:80px;}
+.column_projectName	{width:200px;}
+.column_qtyIndicator	{width:75px;}
+.column_qtyPerBoard	{width:80px;}
+.column_quoteCentreComment	{width:150px;}
+.column_quotedMargin	{width:60px;}	
+.column_quotedPartNumber	{width:130px;}
+.column_quotedPrice	{width:80px;}
+.column_quotedQty	{width:70px;}
+.column_quoteExpiryDate	{width:80px;}
+.column_reasonForCopy	{width:100px;}
+.column_reasonForNotReadyForOrder	{width:100px;}
+.column_reasonForRefresh	{width:120px;}
+.column_referenceMargin	{width:60px;}
+.column_refreshAttachmentId	{width:100px;}
+.column_remarks	{width:150px;}
+.column_requiredQty	{width:60px;}
+.column_resalesIndicator	{width:80px;}
+.column_resalesMax	{width:50px;}
+.column_resalesMin	{width:50px;}
+.column_reschedulingWindow	{width:100px;}
+.column_revertVersion	{width:70px;}
+.column_rfqCode	{width:85px;}
+.column_rfqStatus	{width:40px;}
+.column_salesEmployeeName	{width:100px;}
+.column_salesEmployeeNumber	{width:60px;}
+.column_salesOrg	{width:60px;}
+.column_sentOutTime	{width:130px;}
+.column_shipmentValidity	{width:80px;}
+.column_shipToCustomerName	{width:130px;}
+.column_shipToCustomerNumber	{width:60px;}
+.column_soldToCustomerName	{width:130px;}
+.column_soldToCustomerNumber	{width:90px;}
+.column_supplierBidNoDpaNo	{width:100px;}
+.column_supplierDrNumber	{width:80px;}
+.column_supplierName	{width:200px;}
+.column_systemQuoteReference	{width:100px;}
+.column_targetPriceMargin	{width:60px;}
+.column_targetResale	{width:95px;}
+.column_team	{width:100px;}
+.column_termsAndConditions	{width:200px;}
+.column_uploadTime	{width:130px;}
+.column_validity	{width:80px;}
+.column_validRfq	{width:50px;}
+.column_vendorDebitNumber	{width:100px;}
+.column_vendorQuoteQty	{width:70px;}
+.column_vendorQuoteNumber	{width:100px;}
+.column_version	{width:50px;}
+.column_yourReference	{width:100px;}
+
+.column_mfrCode	{width:40px;}
+.column_quarter	{width:320px;}
+.column_quarterBlank	{width:420px;}
+.column_min	{width:80px;}
+.column_mean	{width:80px;}
+.column_max	{width:80px;}
+.column_salesQty	{width:80px;}
+
+.column_pos_customer	{width:250px;}
+
+.southPanel{
+	vertical-align:top;
+	width:100% !Important; 
+	height:100% !Important; 
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
+}
+
+.southPanel_column_filterPanel {
+	align:left;
+	vertical-align:top;
+	width:200px;
+	height:100% !Important; 
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
+}
+.southPanel_column_programPanel {
+	align:left;
+	vertical-align:top;
+	width:auto !Important; 
+	height:100% !Important; 
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
+}
+.southPanel_filterPanel {
+	width:210px;
+	height:330px; 
+	overflow: scroll;
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
+}
+
+.webpromo_announcmentPanel {
+	vertical-align:top;
+	width: 55%;
+}
+.webpromo_promotionItemPanel {
+	vertical-align:top;
+	width: 45%;
+}
+.announceTable {
+
+}
+.promotionItemTable {
+
+}
+.noBorder tr,.noBorder td 
+{
+    border: none !important;
+}
+
+.orderQtyMinSellPrice
+{
+	width: 100%;
+	padding: 0px 0px 0px 0px;
+    margin: 0px 0px 0px 0px;
+     
+}
+.orderQtyMinSellPrice tr,.orderQtyMinSellPrice td 
+{
+    border: none !important;
+    border-collapse:collapse;
+    border-spacing:0;
+    padding: 0px 0px 0px 0px;
+    margin: 0px 0px 0px 0px;
+}
+
+.img-button-attachment-add { 
+	background-image: url('../../resources/images/icon_upload.png') !important; 
+}
+.img-button-attachment-add { 
+	background-image: url('../../resources/images/icon_magnifier.png') !important; 
+}
+.img-button-item-delete { 
+	background-image: url('../../resources/images/icon_cross.png') !important; 
+}
+.img-button-item-getQuote { 
+	background-image: url('./../../resources/images/getQuote.png') !important; 
+}
+
+.webpromoMaintance_button{
+	width: 20px;
+	height: 20px;
+}
+.webpromo_search_button {
+    width: 50px;
+	height: 22px;
+}
+
+.bottom_noBorder
+{
+	width:100%;
+}
+.bottom_noBorder tr,.bottom_noBorder td 
+{
+    border: none !important;
+}
+.bottom_noBorder_leftColumn
+{
+	align:left;
+	text-align:left;
+}
+.bottom_noBorder_rightColumn
+{
+	align:right;
+	text-align:right;
+}
+
+
+.webpromo_standardTCsPanel {
+	vertical-align:top;
+	width: 50%;
+	height: 100%;
+}
+.webpromo_specialTCsPanel {
+	vertical-align:top;
+	width: 50%;
+	height: 100%;
+}
+.submissionTable{
+	width: 100%;
+}
+
+.redRow
+{
+   background-image: none !important;
+   background-color: rgb(160, 0, 0) !important;
+   color: #3D3D3D;
+}
+
+.align_center
+{
+text-align:center
+}
+
+/* 
+.ui-layout, .ui-layout-doc, .ui-layout-unit, .ui-layout-wrap, .ui-layout-bd, .ui-layout-hd{
+    border: 0;
+}
+
+.ui-widget-content{
+	background-color:white !important; border: 0pt none !important;
+}
+	background: url('../../resources/images/error_icon.jpg') !important; 
+	background-image: url('../../resources/images/error_icon.jpg') !important; 
+		background: url("#{resource['primefaces:growl/images/error.png']}") no-repeat;
+*/
+
+.ui-growl-image-error
+{
+	background: url('../resources/images/error_icon.jpg') no-repeat !important;
+
+}
+.ui-growl-image-warn
+{
+	background: url('../resources/images/warn_icon.jpg') no-repeat !important; 
+}

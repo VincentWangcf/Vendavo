@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:cc="http://java.sun.com/jsf/composite" xmlns:p="http://primefaces.org/ui">
+
+<cc:interface>
+	<cc:attribute name="value" default="#{dbResource['wq.button.download']}" />
+<!-- TODO:	<cc:attribute name="showIcon" default="false" type="java.lang.Boolean"/> -->
+	<cc:attribute name="attachment" type="com.avnet.emasia.webquote.entity.Attachment" required="true" />
+</cc:interface>
+
+<cc:implementation>
+	<p:commandLink value="#{cc.attrs.value}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">
+		<p:fileDownload value="#{attachmentDownloadMB.getStreamedContent(cc.attrs.attachment)}" />
+	</p:commandLink>
+</cc:implementation>
+</html>

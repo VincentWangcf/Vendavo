@@ -1,0 +1,8 @@
+package com.avnet.emasia.webquote.rowdata;
+
+import java.io.InputStream;
+import java.util.List;
+
+public interface RowDataConverter<T extends Bean> {
+	List<T> convertAndValidate (InputStream is, FileType type,  BeanDefinition<T> beanDef);
+}

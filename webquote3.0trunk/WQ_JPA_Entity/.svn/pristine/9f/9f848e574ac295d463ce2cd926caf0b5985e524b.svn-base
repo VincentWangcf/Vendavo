@@ -1,0 +1,228 @@
+package com.avnet.emasia.webquote.entity.util;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger; 
+
+import org.apache.commons.lang.StringUtils;
+import org.eclipse.persistence.descriptors.DescriptorEvent;
+import org.eclipse.persistence.descriptors.DescriptorEventAdapter;
+import org.eclipse.persistence.queries.SQLCall;
+import org.eclipse.persistence.sessions.UnitOfWork;
+
+import com.avnet.emasia.webquote.entity.Attachment;
+import com.avnet.emasia.webquote.entity.Quote;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+
+
+/**
+ * 
+ * <p>Listenter For Attachment</p>
+ * @author Yang, Lenon(043044) 
+ * @date 2015-12-29
+ * @version 1.0
+ *
+ */
+public class AttachmentListenter extends DescriptorEventAdapter{
+	
+	public AttachmentListenter() {
+	}
+	
+	public static String rootPath = "";
+	
+	private static final Logger LOGGER = Logger.getLogger(AttachmentListenter.class
+			.getName());
+	
+	public static final String ATTACHMENT_TYPE_QBUILDER = "QBuilder_Form_Attachment";
+
+	
+	public void preInsert(DescriptorEvent event) {
+		Attachment attachment = (Attachment)event.getSource();
+		LOGGER.info("*****************AttachmentListenter preInsert Start***************** ");
+		Quote quote = attachment.getQuote();
+		if (quote == null) {
+			QuoteItem quoteItem = attachment.getQuoteItem();
+			if (quoteItem != null) {
+				quote = quoteItem.getQuote();
+			}
+		}
+		if (quote != null) {
+			String realFileName = getRealFileName(attachment.getFileName(),attachment.getId());
+			String relativePath = getRelativePath(quote.getCreatedOn(), quote.getBizUnit().getName());
+			attachment.setFileNameActual(realFileName);
+			attachment.setFilePath(relativePath);
+		}
+		LOGGER.info("*****************AttachmentListenter preInsert End***************** ");
+	}
+
+
+	public void aboutToInsert(DescriptorEvent event) {
+		Attachment attachment = (Attachment)event.getSource();
+		LOGGER.info("*****************AttachmentListenter prePersist Start***************** ");
+		Quote quote = attachment.getQuote();
+		if (quote == null) {
+			QuoteItem quoteItem = attachment.getQuoteItem();
+			if (quoteItem != null) {
+				quote = quoteItem.getQuote();
+			}
+		}
+		/*if (quote != null) {
+			String realFileName = getRealFileName(attachment.getFileName(),attachment.getId());
+			String relativePath = getRelativePath(quote.getCreatedOn(), quote.getBizUnit().getName());
+			attachment.setFileNameActual(realFileName);
+			attachment.setFilePath(relativePath);
+		}*/
+		
+		try{
+			if((ATTACHMENT_TYPE_QBUILDER.equals(attachment.getType()) || "RFQ Form Attachment".equals(attachment.getType())) 
+					&& attachment.getQuote() != null 
+					&& (attachment.getQuote().getFormAttachmentFlag() == null || !attachment.getQuote().getFormAttachmentFlag())){
+				String sql =  "update QUOTE set FORM_ATTACHMENT_FLAG = 1 where id = "+quote.getId();
+				UnitOfWork uow = event.getSession().acquireUnitOfWork();
+				uow.executeNonSelectingCall(new SQLCall(sql));
+				uow.commit();
+			} else if(attachment.getQuoteItem() != null){
+				QuoteItem item =attachment.getQuoteItem();
+				StringBuffer attachmentStr = new StringBuffer(item.getAttachmentFlag());
+				if(StringUtils.equals("RFQ Item Attachment",attachment.getType())){
+					attachmentStr.replace(4, 5, "1");
+				}else if(StringUtils.equals("Refresh Attachment",attachment.getType())){
+					attachmentStr.replace(3, 4, "1");
+				}else if(StringUtils.equals("PM Attachment",attachment.getType())){
+					attachmentStr.replace(2, 3, "1");
+				}else if(StringUtils.equals("QC Attachment",attachment.getType())){
+					attachmentStr.replace(1, 2, "1");
+				}else if(StringUtils.equals("BMT Attachment",attachment.getType())){
+					attachmentStr.replace(0, 1, "1");
+				}
+					
+				if(!item.getAttachmentFlag().equals(attachmentStr)){
+					UnitOfWork uow = event.getSession().acquireUnitOfWork();
+					String sql = "update quote_item set ATTACHMENT_FLAG = '" + attachmentStr.toString() + "' where id = " + item.getId();
+					uow.executeNonSelectingCall(new SQLCall(sql));
+					uow.commit();
+				}
+			}
+		}catch(Exception e){
+			LOGGER.log(Level.SEVERE, "AttachmentListenter postPersist Exception:"+e.getMessage(), e);
+		}
+		LOGGER.info("*****************AttachmentListenter prePersist End***************** ");
+	}
+
+	public void postInsert(DescriptorEvent event){
+		LOGGER.info("*****************AttachmentListenter postPersist Start*****************");
+		Attachment attachment = (Attachment)event.getSource();
+		try {
+			if (StringUtils.isNotBlank(rootPath)) {
+					outputFile(rootPath, attachment);
+			}
+			
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "AttachmentListenter postPersist Exception:"+e.getMessage(), e);
+			deleteFile(rootPath, attachment);
+//			throw new Exception("Write File Error!");
+			return;
+		}
+	}
+	
+
+	public static void setRootPath(String rootPath) {
+		AttachmentListenter.rootPath = rootPath;
+	}
+
+	
+	private void deleteFile(String rootPath, Attachment attachment) {
+		String relativePath = rootPath + File.separator + attachment.getFilePath();
+		createDirectory(relativePath);
+		String realFileName = relativePath + File.separator + attachment.getFileNameActual();
+		File file = new File(realFileName);
+		if (file.exists()) {
+			file.delete();
+		}
+	}
+
+
+	private void outputFile(String rootPath, Attachment attachment) throws IOException  {
+		if(attachment.getFileImage() != null && attachment.getFileImage().length > 0) {
+			LOGGER.info("*****************AttachmentListenter outputFile Start ***************** ");
+			OutputStream out = null;
+			InputStream in = null;
+			String relativePath = rootPath + File.separator + attachment.getFilePath();
+			LOGGER.info("*****************AttachmentListenter Create File Directory :" + relativePath);
+			createDirectory(relativePath);
+			String realFileName = relativePath + File.separator + attachment.getFileNameActual();
+			LOGGER.info("*****************AttachmentListenter Create File  :" + realFileName);
+			File file = new File(realFileName);
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+			
+			LOGGER.info("*****************AttachmentListenter Create File End ***************** ");
+			in = new ByteArrayInputStream(attachment.getFileImage());
+			byte[] buf = new byte[1024];
+			int bytesIn = 0;
+			out = new FileOutputStream(file);
+			while ((bytesIn = in.read(buf, 0, 1024)) != -1) {
+				out.write(buf, 0, bytesIn);
+			}
+			out.flush();
+			out.close();
+			in.close();
+			LOGGER.info("*****************AttachmentListenter outputFile End ***************** ");
+		}
+
+	}
+
+	/**
+	 * 
+	 * @param directory
+	 */
+	public static void createDirectory(String directory) {
+		File dir = new File(directory);
+		if (!dir.exists()) {
+			dir.mkdirs();
+		}
+	}
+
+	private String getRealFileName(String fileName, Long id) {
+		if (fileName.contains(".")) {
+			String realFileName = fileName.substring(0,fileName.lastIndexOf("."))+ "_" + id;
+			String fileSubffix = fileName.substring(fileName.lastIndexOf("."),fileName.length());
+			return realFileName + fileSubffix;
+		} else {
+			return fileName + "_" + id;
+		}
+
+	}
+
+	private String getRelativePath(java.util.Date uploadTime, String region) {
+		String relativePath = "";
+		DateFormat df = new SimpleDateFormat("yyyy/MM");
+		if (uploadTime != null && StringUtils.isNotBlank(region)) {
+			String dateString = df.format(uploadTime);
+			relativePath = region + "/" + dateString;
+		}
+		if (StringUtils.isBlank(relativePath)) {
+			relativePath = StringUtils.isBlank(region) ? ("DEFAULT/" + df
+					.format(new Date())) : (region + "/" + df.format(new Date()));
+		}
+		return relativePath;
+	}
+ 
+	public void  postDelete(DescriptorEvent event) {
+		Attachment attachment = (Attachment)event.getSource();
+		LOGGER.info("*****************AttachmentListenter postRemove Start***************** ");
+		if(StringUtils.isNotBlank(rootPath) && attachment != null) {
+			deleteFile(rootPath, attachment);
+		}
+		LOGGER.info("*****************AttachmentListenter postRemove End***************** ");
+	}
+}

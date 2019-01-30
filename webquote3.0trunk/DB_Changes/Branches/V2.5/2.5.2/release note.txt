@@ -1,0 +1,18 @@
+1)send email to user admin or web dev team when the email addresses of receiver's is invalid -- add by Lenon(043044) 2016/07/14
+2)add DB script to remove JMS QUEUE NAME AND Email configuration information --- June Guo 2016/07/14
+3) Fix defect 241,216,218  ---June Guo 2016/07/14
+
+4) defect 243, update Design Location, Design Region & Design-In Cat color to pink on bmt page, also updated export file (by Jason) 2016/07/14
+5) defect 236, add Pull down list to QC external and internal comment in QC download excel (by Jason) 2016/07/14
+6) defect 235, update status count on QC working platform when status updated (by Jason) 2016/07/14
+7) defect 226, add BMT flag in RFQ detail on QC working platform page (by Jason) 2016/07/14
+8) defect 220, fixed QC attachment upload issue in RFQ detail on QC working platform page (by Jason) 2016/07/14
+9) defect 217, add design region when Alternative part RFQ on QC working platform page (by Jason) 2016/07/14
+10)             add xls and xlsx format upload template support on QC & BMT working platform page (by Jason) 2016/07/14
+11)             fix decimal on BMT data (by Jason) 2016/07/14
+12)             update audit_quote_item update_date data to GMT+8 (by Jason) 2016/07/14
+
+13)add validation when the design region is not null and design location is null ,Show error message "Since Design Region is filled, Design Location cannot be empty".---Demon Chen 2016/07/14
+14)fixed "EndCustomeNme is null but the EndCustomeNumber is not null when submit RFQ". ----by Demon Chen 2016/07/14
+15)fixed "turn  the status of RFQ whose Region is not Asia/blank and EndCustomer is not null  to QC when Auto set SPR to true ".--by Demon Chen 2016/07/14
+16)Fixed Offline report error(Jboss Node:alero1:webquote-rptServer) issue ---June Guo 201607/14

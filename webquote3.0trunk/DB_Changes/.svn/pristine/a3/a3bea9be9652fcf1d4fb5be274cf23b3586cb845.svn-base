@@ -1,0 +1,12 @@
+--1.UPDATE RECORDS IN TABLE APP_LABEL
+ UPDATE APP_LABEL T SET T.MESSAGE='RFQ Currency' WHERE T.LOCALE_ID='en' AND T.MESSAGE_CODE='wq.label.refExchCurr';
+ 
+ Insert into APP_LABEL (ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) values((select max(id)+1 from APP_LABEL),'en','wq.label.dollarLink','$Link');
+ Insert into APP_LABEL (ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) values((select max(id)+1 from APP_LABEL),'en','wq.label.rfqCurr','RFQ Currency');
+
+ 
+ 
+--2.APP_MESSAGES
+ 
+Insert into APP_MESSAGES (ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) values((select max(id)+1 from APP_MESSAGES),'en','wq.message.rfqCurrMustBeUSD','Row #<{0}> : RFQ Currency must be in USD since you have checked the $Link checkbox');
+

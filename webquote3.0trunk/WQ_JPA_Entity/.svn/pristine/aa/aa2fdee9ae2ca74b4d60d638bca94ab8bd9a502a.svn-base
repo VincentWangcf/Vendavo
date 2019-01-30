@@ -1,0 +1,149 @@
+package com.avnet.emasia.webquote.quote.ejb.constant;
+
+import com.avnet.emasia.webquote.constants.StatusEnum;
+
+
+public class QuoteSBConstant {
+
+	public static final int VALIDATION_RULE_YES = 1;
+	public static final int VALIDATION_RULE_NO = 0;
+	
+	public static final String LANGUAGE_CODE_CHINESE_C = "C";
+	public static final String LANGUAGE_CODE_CHINESE_M = "M";
+	public static final String LANGUAGE_CODE_CHINESE_1 = "1";
+	
+	public static final String ROLE_SALES = "ROLE_SALES";
+	public static final String ROLE_INSIDE_SALES = "ROLE_INSIDE_SALES";
+	public static final String ROLE_QC_OPERATION = "ROLE_QC_OPERATION";
+	public static final String ROLE_QC_PRICING = "ROLE_QC_PRICING";
+	public static final String ROLE_CS = "ROLE_CS";
+	public static final String ROLE_PM = "ROLE_PM";
+	public static final String ROLE_CM = "ROLE_CM";
+	public static final String ROLE_BMT = "ROLE_BMT";
+	public static final String ROLE_CM_MANAGER = "ROLE_CM_MANAGER";
+	public static final String ROLE_QCP_MANAGER = "ROLE_QCP_MANAGER";
+	public static final String ROLE_QCO_MANAGER = "ROLE_QCO_MANAGER";
+	public static final String ROLE_QC_DIRECTOR = "ROLE_QC_Director";
+	public static final String ROLE_SALES_MANAGER = "ROLE_SALES_MANAGER";
+	public static final String ROLE_SALES_DIRECTOR = "ROLE_SALES_DIRECTOR";
+	public static final String ROLE_SALES_GM = "ROLE_SALES_GM";
+	public static final String ROLE_CS_MANAGER = "ROLE_CS_MANAGER";
+	public static final String ROLE_PM_SPM = "ROLE_PM_SPM";
+	public static final String ROLE_PM_BUM = "ROLE_PM_BUM";
+	public static final String ROLE_PM_MD = "ROLE_PM_MD";
+	
+	public static final String ATTACHMENT_ROOT_PATH = "ATTACHMENT_ROOT_PATH";
+	
+	
+	public static final String ACCOUNT_GROUP_SOLDTO = "0001";
+	public static final String ACCOUNT_GROUP_SHIPTO = "0002";
+	public static final String ACCOUNT_GROUP_ENDCUSTOMER = "Z004";
+	public static final String ACCOUNT_GROUP_PROSPECTIVE_CUSTOMER = "0005";
+	public static final String ACCOUNT_GROUP_CPD = "CPD";
+
+	public static final String PARTNER_FUNCTION_SOLDTO = "SP";
+	public static final String PARTNER_FUNCTION_SHIPTO = "SH";
+	public static final String PARTNER_FUNCTION_ENDCUSTOMER = "EC";
+
+	public static final String QUOTE_STAGE_DRAFT = "DRAFT";
+	public static final String QUOTE_STAGE_PENDING = "PENDING";
+	public static final String QUOTE_STAGE_FINISH = "FINISH";
+	public static final String QUOTE_STAGE_INVALID = "INVALID";
+	public static final String QUOTE_STATE_PROG_DRAFT = "PROG_DRAFT";
+
+	public static final String RFQ_STATUS_AQ = "AQ";
+	public static final String RFQ_STATUS_IT = "IT";
+	public static final String RFQ_STATUS_RIT = "RIT";
+	public static final String RFQ_STATUS_RBQ = StatusEnum.RBQ.name();
+	public static final String RFQ_STATUS_RBIT= StatusEnum.RBIT.name();
+	public static final String RFQ_STATUS_SQ = "SQ";
+	public static final String RFQ_STATUS_QC = "QC";
+	public static final String RFQ_STATUS_DQ = "DQ";
+	public static final String RFQ_STATUS_BQ = "BQ"; 
+	public static final String RFQ_STATUS_BIT = "BIT";
+	
+	public static final String MATERIAL_TYPE_PROGRAM = "PROGRAM";
+	public static final String MATERIAL_TYPE_NORMAL = "NORMAL";
+	
+	public static final String DOC_TYPE_FORM = "FRM";
+	public static final String DOC_TYPE_QUOTE = "QUO";
+	
+	public static final String ALL = "All";
+	
+	public static final String MULTIPLE_SELECTED = "Multiple Selected";
+	
+	public static final String ATTACHMENT_TYPE_QUOTE = "RFQ Form Attachment";
+	public static final String ATTACHMENT_TYPE_QUOTE_ITEM = "RFQ Item Attachment";
+	public static final String ATTACHMENT_TYPE_REFRESH = "Refresh Attachment";
+	public static final String ATTACHMENT_TYPE_INTERNAL_TRANSFER = "PM Attachment";
+	public static final String ATTACHMENT_TYPE_QC = "QC Attachment";
+	public static final String ATTACHMENT_TYPE_BMT = "BMT Attachment";
+	
+	public static final String ATTACHMENT_TYPE_QUOTEBUILDER = "Quote Builder Attachment";
+	
+	public static final int SUGGEST_MATERIAL_LIMIT = 5;
+	public static final int QUOTE_EXPIRY_DATE_SHIFT_NORMAL = -4;
+	public static final int QUOTE_EXPIRY_DATE_SHIFT_PROGRAM = -1;
+	public static final String DEFAULT_RESALE_INDICATOR = "00AA";
+	public static final Double DEFAULT_RESALE_INDICATOR_MIN = 0.0;
+	public static final Double DEFAULT_RESALE_INDICATOR_MAX = 999999.0;
+	public static final Boolean DEFAULT_ALLOCATION_FLAG = false;
+	public static final String DEFAULT_DIVISION = "10";
+	public static final String DEFAULT_DISTRIBUTION_CHANNEL = "10";
+	public static final String DEFAULT_REVERT_VERISON ="0A";
+		
+	public static final String QTY_INDICATOR_EXACT = "EXACT"; 
+	
+	public static final String SEPERATOR="|";
+	
+	public static final String A_BOOK_COST="A-Book Cost";
+	public static final double DOUBLE_ZERO = 0d;
+	public static final String SIGN_LIKE = "%";
+	public static final String SIGN_BLANK_SPACE = " ";
+	
+	public static final String DEFAULT_QC_EXTERNAL_COMMENT= "Pending for Part Number verification.";
+	public static final String DEFAULT_QC_INTERNAL_COMMENT="Please confirm with PM and resubmit RFQ";
+
+	public static final int COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND = 1; //Follow own data. If no own data, use data from A Book Cost
+	public static final int COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY = 2; //Use data from A Book Cost directly
+	public static final int COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND = 3; //Follow own data. If no own data, blank the fields
+	public static final int COST_INDICATOR_RULE_BLANK_DIRECTLY = 4; //Blank the fields no matter there is own data
+	
+	public static final String COST_INDICATOR_RULE_MPQ = "MPQ";
+	public static final String COST_INDICATOR_RULE_MOQ = "MOQ";
+	public static final String COST_INDICATOR_RULE_MOV = "MOV";
+	
+	public static final String RFQ_COST_INDICATOR_TYPE_N= "N";
+	public static final String RFQ_COST_INDICATOR_TYPE_C= "C";
+	public static final String RFQ_COST_INDICATOR_TYPE_P= "P";
+
+	public static final String DESIGN_IN_CAT_LOCAL_DR= "Local DR";
+	public static final String DESIGN_IN_CAT_BMT_DR= "BMT DR";
+	public static final String DESIGN_IN_CAT_NON_BMT_DR	= "BMT Non-DR";
+	
+	public static final String PRICE_TYPE_NORMAL = "Normal";
+	public static final String PRICE_TYPE_PROGRAM = "Program";
+	public static final String PRICE_TYPE_CONTRACT = "Contract";
+	
+	public static final String CREATE_CUSTOMER_TYPE_END_CUSTOMER = "Z004";
+	public static final String CREATE_CUSTOMER_TYPE_CUSTOMER = "0005";
+	
+	public static final String PROGRAM_SIGNATURE_EMAIL_ADDRESS ="PROGRAM_EMAIL_FROM_COMMODITY";
+	public static final String EMAIL_SIGNATURE_EMAIL_ADDRESS ="EMAIL_SIGNATURE_EMAIL_ADDRESS";
+	public static final String EMAIL_SIGNATURE_NAME ="EMAIL_SIGNATURE_NAME";
+	public static final String EMAIL_SIGNATURE_CONTENT ="EMAIL_SIGNATURE_CONTENT";
+	public static final String EMAIL_SIGNATURE_HOTLINE ="EMAIL_SIGNATURE_HOTLINE";
+
+	public static final String QUOTATION_TEMPLATE_TYPE ="QUOTATION_TEMPLATE_TYPE";
+	
+	public static final String ERROR_EMAIL_TO_ADDRESS ="ERROR_EMAIL_TO_ADDRESS";
+	public static final String ERROR_EMAIL_FROM_ADDRESS ="ERROR_EMAIL_FROM_ADDRESS";
+	public static final int QUOTE_RATE_COUNT = 30;
+	
+	public static final String MYQUOTE_SEARCH_ACTION_OFFLINE="offline";
+	public static final String MYQUOTE_SEARCH_ACTION_PAGE="page";
+	
+	public static final String RFQ_SUBMISSION_TEMPLATE ="RFQ_SUBMISSION_TEMPLATE";
+	public static final String WORKINGPLATFORM_ACTION_OFFLINE="offline";
+	
+}

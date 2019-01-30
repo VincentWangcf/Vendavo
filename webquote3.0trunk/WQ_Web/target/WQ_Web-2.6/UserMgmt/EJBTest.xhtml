@@ -1,0 +1,84 @@
+
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+
+
+	<ui:define name="windowTitle">
+		EJB Test
+	</ui:define>
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+		<p:panel header="EJB call testing">
+			<h:form id="form3">
+				<p:inputText value="#{ejbTestMB.batchRef}" />
+				<p:inputText value="#{ejbTestMB.region}" />
+				<p:commandButton value="Uplaod User" actionListener="#{ejbTestMB.callUserEJB}" />
+				<p:commandButton value="Upload Quote" actionListener="#{ejbTestMB.callQuoteEJB}" />
+				<p:commandButton value="Upload Attachment" actionListener="#{ejbTestMB.callQuoteEJBForAttachment}" />
+				<p:commandButton value="Upload All" actionListener="#{ejbTestMB.uploadAll}" />
+				<p:commandButton value="Call MFR Detail EJB" actionListener="#{ejbTestMB.callMfrDetailsEJB}" />
+				<p:commandButton value="Call SystemCode EJB" actionListener="#{ejbTestMB.callSystemCodeEJB}" />
+			</h:form>
+
+			<h:form enctype="multipart/form-data">
+				<p:fileUpload fileUploadListener="#{ejbTestMB.handleFileUpload}" multiple="f" />
+				<p:commandButton value="Submit" ajax="false" />
+			</h:form>
+
+			<h:form enctype="multipart/form-data">
+				<p:fileUpload value="#{ejbTestMB.file}" mode="simple" />
+				<p:commandButton value="Submit" ajax="false" />
+			</h:form>
+
+		</p:panel>
+		
+		
+		<p:panel header="Download">
+					
+			<p:dialog modal="true" widgetVar="statusDialog" header="Please Wait ..." draggable="false" closable="false" resizable="false">
+			    <p:graphicImage value="/design/ajaxloadingbar.gif" />
+			</p:dialog>
+			
+			<h:form id="form2">
+			
+			<p:commandButton id="downloadLink" value="Download" ajax="false"  
+			        icon="ui-icon-arrowthichk-s">
+			    <p:fileDownload value="#{ejbTestMB.file2}" />
+			</p:commandButton>
+			
+			<p:commandButton value="web servcie -customer" ajax="false" action="#{ejbTestMB.createProspectiveCustomer}"/>  
+			<p:commandButton value="web servcie -quote" ajax="false" action="#{ejbTestMB.createQuote}"/>
+			    
+			
+			
+			</h:form>
+			
+			<script type="text/javascript">
+				function start() {
+				    statusDialog.show();
+				}
+				
+				function stop() {
+				    statusDialog.hide();
+				}
+	        </script>
+		
+		
+		</p:panel>		
+		
+		
+	</ui:define>
+
+
+
+</ui:composition>
+
+
+

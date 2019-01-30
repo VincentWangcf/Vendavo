@@ -1,0 +1,616 @@
+package com.avnet.emasia.webquote.web.pricerupload;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.model.SelectItem;
+import javax.jms.JMSException;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.primefaces.model.StreamedContent;
+
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadTemplateBean;
+import com.avnet.emasia.webquote.commodity.constant.PRICER_TYPE;
+import com.avnet.emasia.webquote.commodity.constant.PricerConstant;
+import com.avnet.emasia.webquote.commodity.ejb.ContractPriceUploadSB;
+import com.avnet.emasia.webquote.commodity.ejb.PricerEnquirySB;
+import com.avnet.emasia.webquote.commodity.ejb.PricerUploadVerifySB;
+import com.avnet.emasia.webquote.commodity.util.PricerUtils;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.ProductCategory;
+import com.avnet.emasia.webquote.entity.ProductGroup;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.ManufacturerSB;
+import com.avnet.emasia.webquote.quote.ejb.MaterialSB;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.user.ejb.ProductGroupSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.common.CacheUtil;
+import com.avnet.emasia.webquote.utilites.web.util.PricerUploadHelper;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.web.quote.cache.CostIndicatorCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.MfrCacheManager;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+@ManagedBean
+@SessionScoped
+public class PartMasterDownloadMB implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8590580279148890440L;
+
+	private SelectItem[] bizUnitSelectList;
+	private SelectItem[] mfrSelectList;
+	private SelectItem[] productGroup2List;
+	private SelectItem[] productCategoryList;
+	private transient StreamedContent downloadAll;
+	private transient StreamedContent downloadSelected;
+
+	private transient List<Material> beans;
+	private transient List<Material> selectedBeans = null;
+	private Material criteria;
+
+	@EJB
+	MaterialSB materialSB;
+
+	@EJB
+	private ProductGroupSB productGroupSB;
+
+	@EJB
+	private ManufacturerSB manufacturerSB;
+
+	@EJB
+	protected MailUtilsSB mailUtilsSB;
+
+	@EJB
+	private SystemCodeMaintenanceSB sysCodeMaintSB;
+	
+	@EJB
+	private CacheUtil cacheUtil;
+
+	private static final Logger LOG = Logger.getLogger(PartMasterDownloadMB.class.getName());
+
+	private PricerDownLoadStrategy downloadSrategy = null;
+
+	private String bizName = null;
+	// MANUFACTURER
+	private String[] selectedManufacturer;
+	private String partNumber = null;
+	private String[] selectedGroup2;
+	private String[] selectedCategory;
+	private String[] selectedMfr;
+	private String[] selectedGroup1;
+
+	private String templateName;
+
+	public String[] getSelectedGroup1() {
+		return selectedGroup1;
+	}
+
+	public void setSelectedGroup1(String[] selectedGroup1) {
+		this.selectedGroup1 = selectedGroup1;
+	}
+
+	private String[] selectedManu;
+
+	private User user = null;
+	private transient Method lastSearchMethod;
+
+	@PostConstruct
+	public void postContruct() {
+		user = UserInfo.getUser();
+		this.bizName = null != user.getDefaultBizUnit() ? user.getDefaultBizUnit().getName() : null;
+
+		downloadSrategy = new PricerDownLoadStrategy();
+		templateName = "Part Master Template.xlsx";
+
+		// get bizUnit Information for this logic user
+		List<BizUnit> bizUnitLst = user.getBizUnits();
+		List<String> bus = new ArrayList<String>();
+		if (bizUnitLst != null) {
+			for (BizUnit bu : bizUnitLst)
+				bus.add(bu.getName());
+		}
+		this.bizUnitSelectList = QuoteUtil.createFilterOptions(bus.toArray(new String[bus.size()]), true, false, true);
+
+		// get MFR list
+		this.initilizeMFRList(bizName);
+
+		// Get Product Group 2 List
+		this.initilizeProductGroup2List();
+
+		// Get Product Category List
+		this.initilizeProductCategoryList();
+
+	}
+
+	/**
+	 * Searchs pricer(normal,program, contract).
+	 */
+	public void search() {
+		LOG.info("Part Master Download Page search Start...");
+		long start = System.currentTimeMillis();
+		try {
+
+			beans = searchMaterial(true);
+
+		} catch (Exception e) {
+			LOG.log(Level.SEVERE, "Part Master Download Search failed!  for Region :" + bizName + "; MFR : "
+							+ MessageFormatorUtil.getConactenatedStringFromArray(selectedMfr) + "; MFR P/N : "
+							+ partNumber+", Exception message: "+MessageFormatorUtil.getParameterizedStringFromException(e),
+					e);
+		}
+
+		try {
+			lastSearchMethod = this.getClass().getDeclaredMethod("search", null);
+		} catch (Exception e) {
+			LOG.log(Level.SEVERE,
+					"Error occured for Region :" + bizName + "; MFR : "
+							+ MessageFormatorUtil.getConactenatedStringFromArray(selectedMfr) + "; MFR P/N : "
+							+ partNumber + ";when get search Method with reflection in PricerEnquiryMB"+", Exception message: "+MessageFormatorUtil.getParameterizedStringFromException(e),
+					e);
+		}
+		long end = System.currentTimeMillis();
+		LOG.info("Part Master Download Search end,takes " + (end - start) + " ms");
+	}
+
+	private List<Material> searchMaterial(boolean isOnLine) {
+		String[] mfrs;
+		String[] groups;
+		String[] categorys;
+
+		if (this.selectedMfr.length == this.mfrSelectList.length) {
+			mfrs = null;
+		} else {
+			mfrs = this.selectedMfr;
+		}
+
+		if (this.selectedGroup2.length == this.productGroup2List.length) {
+			groups = null;
+		} else {
+			groups = this.selectedGroup2;
+		}
+
+		if (this.selectedCategory.length == this.productCategoryList.length) {
+			categorys = null;
+		} else {
+			categorys = this.selectedCategory;
+		}
+
+		List<Material> materials = this.materialSB.findMaterialBy(mfrs, this.partNumber, groups, categorys, isOnLine, 0,
+				500);
+		return materials;
+	}
+
+	private List<Material> searchMaterial(boolean isOnLine, int startRow, int endRow) {
+		String[] mfrs;
+		String[] groups;
+		String[] categorys;
+
+		if (this.selectedMfr.length == this.mfrSelectList.length) {
+			mfrs = null;
+		} else {
+			mfrs = this.selectedMfr;
+		}
+
+		if (this.selectedGroup2.length == this.productGroup2List.length) {
+			groups = null;
+		} else {
+			groups = this.selectedGroup2;
+		}
+
+		if (this.selectedCategory.length == this.productCategoryList.length) {
+			categorys = null;
+		} else {
+			categorys = this.selectedCategory;
+		}
+
+		List<Material> materials = this.materialSB.findMaterialBy(mfrs, this.partNumber, groups, categorys, isOnLine,
+				startRow, endRow);
+		return materials;
+	}
+
+	public StreamedContent getDownloadAll() {
+		try {
+			long start = System.currentTimeMillis();
+			/*
+			 * if (beans==null||beans.size() == 0) {
+			 * FacesContext.getCurrentInstance().addMessage(null, new
+			 * FacesMessage(FacesMessage.SEVERITY_ERROR, " no data download !",
+			 * "")); return null; }
+			 */
+
+			String[] mfrs;
+			String[] groups;
+			String[] categorys;
+
+			if (this.selectedMfr.length == this.mfrSelectList.length) {
+				mfrs = null;
+			} else {
+				mfrs = this.selectedMfr;
+			}
+
+			if (this.selectedGroup2.length == this.productGroup2List.length) {
+				groups = null;
+			} else {
+				groups = this.selectedGroup2;
+			}
+
+			if (this.selectedCategory.length == this.productCategoryList.length) {
+				categorys = null;
+			} else {
+				categorys = this.selectedCategory;
+			}
+			SXSSFWorkbook wb = new SXSSFWorkbook(-1); // turn off auto-flushing
+														// and accumulate all
+														// rows in memory
+
+			int range = 10000;
+			int startRow = 0;
+			int endRow = range;
+
+			// List<Material> materials
+			// =this.materialSB.FindMaterialBy(mfrs,this.partNumber,groups,categorys,isOnLine,startRow,endRow);
+			for (int i = 0; i < 12; i++) {
+				long start1 = System.currentTimeMillis();
+				startRow = range * i;
+				//TODO
+				List<Material> materials = null;
+						this.materialSB.findMaterialBy(mfrs, this.partNumber, groups, categorys,
+						true, startRow, range);
+				if (materials == null || materials.size() == 0) {
+					break;
+				} else {
+					this.generateExcelFile(materials, wb);
+				}
+
+				long end1 = System.currentTimeMillis();
+				long diff1 = end1 - start1;
+
+				long days1 = diff1 / (1000 * 60 * 60 * 24);
+				long hour1 = diff1 / (1000 * 60 * 60);
+
+				long m1 = (diff1 - hour1 * 1000 * 60 * 60) / (60 * 1000);
+
+				long s1 = (diff1 - hour1 * 1000 * 60 * 60 - m1 * 60 * 1000) / 1000;
+
+				LOG.log(Level.INFO, "days difference ==>> " + days1);
+				LOG.log(Level.INFO, "Generate File " + i + "==>>  hour is==>> " + hour1 + " hour " + m1 + " minutes "
+						+ s1 + " seconds ");
+			}
+
+			FileOutputStream out = new FileOutputStream("D:\\WQ_EXPORT\\Part Mast Download.xlsx");
+			wb.write(out);
+			out.close();
+
+			// dispose of temporary files backing this workbook on disk
+			wb.dispose();
+
+			long end = System.currentTimeMillis();
+			long diff = end - start;
+
+			long days = diff / (1000 * 60 * 60 * 24);
+			long hour = diff / (1000 * 60 * 60);
+
+			long m = (diff - hour * 1000 * 60 * 60) / (60 * 1000);
+
+			long s = (diff - hour * 1000 * 60 * 60 - m * 60 * 1000) / 1000;
+
+			LOG.log(Level.INFO, "days difference ==>> " + days);
+			LOG.log(Level.INFO, "Total ==>>  hour is==>> " + hour + " hour " + m + " minutes " + s + " seconds ");
+
+			// downloadAll = downloadSrategy.getDownloadFile(this.bizName,
+			// materials, templateName);
+
+			/*
+			 * if (downloadAll == null) {
+			 * FacesContext.getCurrentInstance().addMessage(null, new
+			 * FacesMessage(FacesMessage.SEVERITY_ERROR, " download error!",
+			 * "")); return null; }
+			 */
+		} catch (IOException e) {
+			LOG.log(Level.SEVERE, "Download failed for for Region :" + bizName + "; MFR : "
+							+ MessageFormatorUtil.getConactenatedStringFromArray(selectedMfr) + "; MFR P/N : "
+							+ partNumber+", Message : "+e.getMessage(), e);
+		}
+
+		return downloadAll;
+	}
+
+	public void generateExcelFile(List<Material> materials, SXSSFWorkbook wb) {
+		/*try {
+
+			Sheet sh = wb.createSheet();
+			for (int rownum = 0; rownum < materials.size(); rownum++) {
+				Material m = materials.get(rownum);
+				Row row = sh.createRow(rownum);
+				Cell cellMfr = row.createCell(0);
+				String mfr = new CellReference(m.getManufacturer().getName()).formatAsString();
+				cellMfr.setCellValue(m.getManufacturer().getName());
+
+				Cell cellPN = row.createCell(1);
+				// String pn = new
+				// CellReference(m.getFullMfrPartNumber()).formatAsString();
+				String pn = null == m.getFullMfrPartNumber() ? "" : m.getFullMfrPartNumber();
+				// LOG.log(Level.INFO, "pn==="+pn);;
+				cellPN.setCellValue(pn);
+
+				Cell cellGroup = row.createCell(2);
+				// String group = new
+				// CellReference(m.getProductGroup2().getName()).formatAsString();
+				String group = null == m.getProductGroup2() ? ""
+						: null == m.getProductGroup2().getName() ? "" : m.getProductGroup2().getName();
+				cellGroup.setCellValue(group);
+
+				Cell cellCategory = row.createCell(3);
+				// String category = new
+				// CellReference(m.getProductCategory().getCategoryCode()).formatAsString();
+				String category = null == m.getProductCategory() ? ""
+						: null == m.getProductCategory().getCategoryCode() ? ""
+								: m.getProductCategory().getCategoryCode();
+				cellCategory.setCellValue(category);
+
+				// manually control how rows are flushed to disk
+				if (rownum % 1000 == 0) {
+					((SXSSFSheet) sh).flushRows();
+				}
+
+			}
+
+		} catch (IOException e) {
+			LOG.log(Level.SEVERE, "Generate EXcel file failed for for Region :" + bizName + "; MFR : "
+					+ MessageFormatorUtil.getConactenatedStringFromArray(selectedMfr) + "; MFR P/N : "
+					+ partNumber+", Message : "+e.getMessage(), e);
+		} // retain 100 last rows and flush all others
+*/
+	}
+
+	public StreamedContent getDownloadSelected() {
+
+		if (downloadSelected == null) {
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, " "+ResourceMB.getText("wq.message.downloadError")+"!", ""));
+			return null;
+		}
+		return downloadSelected;
+	}
+
+	private void initilizeProductCategoryList() {
+		List<ProductCategory> categorys = this.materialSB.findAllProductCategory();
+
+		List<String> codes = new ArrayList<String>();
+		if (categorys != null) {
+			for (ProductCategory c : categorys)
+				codes.add(c.getCategoryCode());
+		}
+		this.productCategoryList = QuoteUtil.createFilterOptions(codes.toArray(new String[codes.size()]),
+				codes.toArray(new String[codes.size()]), true, false, true);
+
+		this.selectedCategory = codes.toArray(new String[codes.size()]);
+
+	}
+
+	private void initilizeProductGroup2List() {
+		List<ProductGroup> groups = this.productGroupSB.findAll();
+
+		List<String> codes = new ArrayList<String>();
+		if (groups != null) {
+			for (ProductGroup g : groups)
+				codes.add(g.getName());
+		}
+		this.productGroup2List = QuoteUtil.createFilterOptions(codes.toArray(new String[codes.size()]),
+				codes.toArray(new String[codes.size()]), true, false, true);
+
+		this.selectedGroup2 = codes.toArray(new String[codes.size()]);
+
+	}
+
+	public void changeRegion() {
+		beans = null;
+		String newBu = this.bizName;
+		this.initilizeMFRList(newBu);
+	}
+
+	public void selectProductGroup() {
+
+	}
+
+	private void initilizeMFRList(String bu) {
+		//Bryan Start
+		//List<Manufacturer> manufacturers = MfrCacheManager.getMfrListByBizUnit(bu);
+		List<Manufacturer> manufacturers = cacheUtil.getMfrListByBizUnit(bu);
+		//Bryan End
+		List<String> codes = new ArrayList<String>();
+		List<String> mfrs = new ArrayList<String>();
+		if (manufacturers != null) {
+			for (Manufacturer manufacturer : manufacturers) {
+				codes.add(manufacturer.getName());
+				if (!QuoteUtil.isEmpty(manufacturer.getName()))
+					mfrs.add(manufacturer.getName());
+			}
+
+		}
+		this.mfrSelectList = QuoteUtil.createFilterOptions(codes.toArray(new String[codes.size()]),
+				codes.toArray(new String[codes.size()]), true, false, true);
+
+		this.selectedMfr = mfrs.toArray(new String[mfrs.size()]);
+	}
+
+	public SelectItem[] getBizUnitSelectList() {
+		return bizUnitSelectList;
+	}
+
+	public void setBizUnitSelectList(SelectItem[] bizUnitSelectList) {
+		this.bizUnitSelectList = bizUnitSelectList;
+	}
+
+	public SelectItem[] getMfrSelectList() {
+		return mfrSelectList;
+	}
+
+	public void setMfrSelectList(SelectItem[] mfrSelectList) {
+		this.mfrSelectList = mfrSelectList;
+	}
+
+	public SelectItem[] getProductGroup2List() {
+		return productGroup2List;
+	}
+
+	public void setProductGroup2List(SelectItem[] productGroup2List) {
+		this.productGroup2List = productGroup2List;
+	}
+
+	public SelectItem[] getProductCategoryList() {
+		return productCategoryList;
+	}
+
+	public void setProductCategoryList(SelectItem[] productCategoryList) {
+		this.productCategoryList = productCategoryList;
+	}
+
+	public List<Material> getBeans() {
+		return beans;
+	}
+
+	public void setBeans(List<Material> beans) {
+		this.beans = beans;
+	}
+
+	public Material getCriteria() {
+		return criteria;
+	}
+
+	public void setCriteria(Material criteria) {
+		this.criteria = criteria;
+	}
+
+	public MaterialSB getMaterialSB() {
+		return materialSB;
+	}
+
+	public void setMaterialSB(MaterialSB materialSB) {
+		this.materialSB = materialSB;
+	}
+
+	public ProductGroupSB getProductGroupSB() {
+		return productGroupSB;
+	}
+
+	public void setProductGroupSB(ProductGroupSB productGroupSB) {
+		this.productGroupSB = productGroupSB;
+	}
+
+	public String getBizName() {
+		return bizName;
+	}
+
+	public void setBizName(String bizName) {
+		this.bizName = bizName;
+	}
+
+	public String getPartNumber() {
+		return partNumber;
+	}
+
+	public void setPartNumber(String partNumber) {
+		this.partNumber = partNumber;
+	}
+
+	public String[] getSelectedGroup2() {
+		return selectedGroup2;
+	}
+
+	public void setSelectedGroup2(String[] selectedGroup2) {
+		this.selectedGroup2 = selectedGroup2;
+	}
+
+	public String[] getSelectedCategory() {
+		return selectedCategory;
+	}
+
+	public void setSelectedCategory(String[] selectedCategory) {
+		this.selectedCategory = selectedCategory;
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+
+	public Method getLastSearchMethod() {
+		return lastSearchMethod;
+	}
+
+	public void setLastSearchMethod(Method lastSearchMethod) {
+		this.lastSearchMethod = lastSearchMethod;
+	}
+
+	public void setDownloadAll(StreamedContent downloadAll) {
+		this.downloadAll = downloadAll;
+	}
+
+	public void setDownloadSelected(StreamedContent downloadSelected) {
+		this.downloadSelected = downloadSelected;
+	}
+
+	public List<Material> getSelectedBeans() {
+		return selectedBeans;
+	}
+
+	public void setSelectedBeans(List<Material> selectedBeans) {
+		this.selectedBeans = selectedBeans;
+	}
+
+	public String[] getSelectedManufacturer() {
+		return selectedManufacturer;
+	}
+
+	public void setSelectedManufacturer(String[] selectedManufacturer) {
+		this.selectedManufacturer = selectedManufacturer;
+	}
+
+	public String[] getSelectedMfr() {
+		return selectedMfr;
+	}
+
+	public void setSelectedMfr(String[] selectedMfr) {
+		this.selectedMfr = selectedMfr;
+	}
+
+	public String[] getSelectedManu() {
+		return selectedManu;
+	}
+
+	public void setSelectedManu(String[] selectedManu) {
+		this.selectedManu = selectedManu;
+	}
+
+}

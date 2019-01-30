@@ -1,0 +1,19 @@
+package com.avnet.emasia.webquote.component.show.config;
+
+import java.util.function.Predicate;
+
+public enum LogicConnector {
+	AND {
+		@Override
+		boolean test(Predicate<Boolean> p1, Predicate<Boolean> p2) {
+			return p1.and(p2).test(MATCH);
+		}
+	},OR {
+		@Override
+		boolean test(Predicate<Boolean> p1, Predicate<Boolean> p2) {
+			return p1.or(p2).test(MATCH);
+		}
+	};
+	private final static boolean MATCH = true;
+	abstract boolean test(Predicate<Boolean> p1, Predicate<Boolean> p2);
+}

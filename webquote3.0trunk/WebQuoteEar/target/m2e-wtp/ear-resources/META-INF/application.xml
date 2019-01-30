@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/application_6.xsd" version="6">
+  <display-name>WebQuoteEar</display-name>
+  <module>
+    <web>
+      <web-uri>WQ_Web.war</web-uri>
+      <context-root>/webquote</context-root>
+    </web>
+  </module>
+  <module>
+    <ejb>WQ_EJB_AuditTrail.jar</ejb>
+  </module>
+  <module>
+    <ejb>WQ_EJB_Commodity.jar</ejb>
+  </module>
+  <module>
+    <ejb>WQ_EJB_MasterData.jar</ejb>
+  </module>
+  <module>
+    <ejb>WQ_EJB_Quote.jar</ejb>
+  </module>
+  <module>
+    <ejb>WQ_EJB_Reports.jar</ejb>
+  </module>
+  <module>
+    <ejb>WQ_EJB_UserAndAuthor.jar</ejb>
+  </module>
+  <module>
+    <ejb>WQ_EJB_Utility.jar</ejb>
+  </module>
+  <module>
+    <ejb>WQ_JPA_Entity.jar</ejb>
+  </module>
+  <library-directory>lib</library-directory>
+</application>

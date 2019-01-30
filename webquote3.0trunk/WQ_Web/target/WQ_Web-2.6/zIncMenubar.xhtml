@@ -1,0 +1,98 @@
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible"  content="IE=edge"/>
+            <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+			<meta http-equiv="Cache-Control" Content="no-cache"/>
+			<meta http-equiv="Pragma" Content="no-cache"/>
+			<meta http-equiv="Expires" Content="0"/>            
+            <title>#{dbResource['wq.title.webQuoteVersion']}</title>
+        </f:facet>    
+        <f:view locale="#{userMB.user.userLocale}"></f:view>
+    </h:head>
+<h:body>
+<img src="./../resources/images/top.png" border="0"/>
+<h:form>
+    <p:growl id="messages" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" />
+    <p:menubar styleClass="menubar">
+    	<p:submenu label="#{dbResource['wq.label.home']}" icon="ui-icon-document" style="width:80px;">
+    	</p:submenu>    
+    	<p:submenu label="#{dbResource['wq.label.sales']}" icon="ui-icon-document" style="width:80px;">
+	        <p:menuitem value="#{dbResource['wq.header.rfqSubmission']}" url="RFQSubmissionLayout.jsf" icon="ui-icon-document" />        
+	        <p:menuitem value="#{dbResource['wq.label.myQuote']}" url="MyQuoteListForSalesLayout.jsf" icon="ui-icon-document" />        
+	        <p:submenu label="#{dbResource['wq.label.xlsRFQUpload']}" url="#" icon="ui-icon-document">        
+		        <p:menuitem value="#{dbResource['wq.label.single']}" url="#" icon="ui-icon-document" />             
+	    	</p:submenu>   
+	        <p:menuitem value="#{dbResource['wq.header.instantPriceCheck']}" url="InstantPriceCheckLayout.jsf" icon="ui-icon-document" />        
+	        <p:menuitem value="#{dbResource['wq.label.RFQSearch']}" url="#" icon="ui-icon-document" />  
+	        <p:submenu label="#{dbResource['wq.label.commodityManagement']}" icon="ui-icon-document">   
+	        	<p:menuitem value="#{dbResource['wq.label.webPromoItems']}" url="CommodityManagementLayout.jsf" icon="ui-icon-document" />  
+	        	<p:menuitem value="#{dbResource['wq.label.maintainWebPromo']}" url="CommodityMaintainLayout.jsf" icon="ui-icon-document" /> 
+	            <p:menuitem value="#{dbResource['wq.label.uploadProgramItem']}" url="ProgramItemUploadLayout.jsf" icon="ui-icon-document" />
+	            <p:menuitem value="#{dbResource['wq.label.removeProgramItem']}" url="ProgramItemRemoveLayout.jsf" icon="ui-icon-document" />
+            </p:submenu>
+        </p:submenu>
+    	<p:submenu label="#{dbResource['wq.label.cs']}" icon="ui-icon-document" style="width:80px;">
+	        <p:menuitem value="#{dbResource['wq.header.rfqSubmission']}" url="RFQSubmissionLayout.jsf" icon="ui-icon-document" />        
+	        <p:menuitem value="#{dbResource['wq.label.myQuote']}" url="MyQuoteListForCSLayout.jsf" icon="ui-icon-document" />        
+	        <p:menuitem value="#{dbResource['wq.label.myTargetList']}" url="MyTargetListLayout.jsf" icon="ui-icon-document" />        
+        </p:submenu>
+    	<p:submenu label="#{dbResource['wq.label.pm']}" icon="ui-icon-document" style="width:80px;">
+	        <p:menuitem value="#{dbResource['wq.label.myQuote']}" url="MyQuoteListForPMLayout.jsf" icon="ui-icon-document" />
+	        <p:menuitem value="#{dbResource['wq.label.respIT']}" url="ResponseInternalTransferLayout.jsf" icon="ui-icon-document" />        
+       	</p:submenu>        
+    	<p:submenu label="#{dbResource['wq.label.quoteCentre']}" icon="ui-icon-document" style="width:130px;">
+	        <p:menuitem value="#{dbResource['wq.header.rfqSubmission']}" url="RFQSubmissionLayout.jsf" icon="ui-icon-document" />        
+	        <p:submenu label="#{dbResource['wq.label.xlsRFQUpload']}" url="#" icon="ui-icon-document">        
+		        <p:menuitem value="#{dbResource['wq.label.single']}" url="#" icon="ui-icon-document" />        
+		        <p:menuitem value="#{dbResource['wq.label.mul']}" url="#" icon="ui-icon-document" />        
+	    	</p:submenu>
+	        <p:menuitem value="#{dbResource['wq.label.workingPlateForm']}" url="/WorkingPlatform/WorkingPlatformLayout.jsf" icon="ui-icon-document" />          
+	        <p:submenu label="#{dbResource['wq.label.myQuote']}" url="#" icon="ui-icon-document">        
+		        <p:menuitem value="#{dbResource['wq.label.formLevel']}" url="MyFormListLayout.jsf" icon="ui-icon-document" />        
+		        <p:menuitem value="#{dbResource['wq.header.itemLevel']}" url="MyQuoteListForQCLayout.jsf" icon="ui-icon-document" />        
+		    </p:submenu>
+	        <p:submenu label="#{dbResource['wq.label.price']}" url="#" icon="ui-icon-document">        
+		        <p:menuitem value="#{dbResource['wq.label.contractPriceUpload']}" url="ContractPriceUploadLayout.jsf" icon="ui-icon-document" />        
+		        <p:menuitem value="#{dbResource['wq.label.bookPriceUpload']}" url="PriceBookUploadLayout.jsf" icon="ui-icon-document" />        
+	    	</p:submenu>
+	        <p:menuitem value="#{dbResource['wq.label.vendorReport']}" url="VendorReportUploadLayout.jsf" icon="ui-icon-document" />
+	        <p:menuitem value="#{dbResource['wq.label.quoteSOReport']}" url="QuoteToSoReportLayout.jsf" icon="ui-icon-document" />
+        </p:submenu>
+		<p:submenu label="#{dbResource['wq.label.admin']}" icon="ui-icon-document"
+			style="width:160px;">
+			<p:submenu label="#{dbResource['wq.label.userProfile']}" url="UserProfileLayout.jsf"
+				icon="ui-icon-document">
+				<p:menuitem value="#{dbResource['wq.label.createUser']}" url="UserCreationLayout.jsf" icon="ui-icon-document" />
+				<p:menuitem value="#{dbResource['wq.label.modifyUser']}" url="UserMaintainLayout.jsf" icon="ui-icon-document" />
+				<p:menuitem value="#{dbResource['wq.label.viewUser']}" url="UserViewLayout.jsf" icon="ui-icon-document"/>
+				<p:menuitem value="#{dbResource['wq.label.myProfile']}" url="ViewMyProfileLayout.jsf" icon="ui-icon-document"/>
+				
+			</p:submenu>
+			<p:submenu label="#{dbResource['wq.label.roleProfile']}"
+				icon="ui-icon-document">
+				<p:menuitem value="#{dbResource['wq.label.createRole']}" url="RoleCreationLayout.jsf" icon="ui-icon-document" />
+				<p:menuitem value="#{dbResource['wq.label.maintainRole']}" url="RoleMaintainLayout.jsf" icon="ui-icon-document" />
+			</p:submenu>
+			<p:submenu label="#{dbResource['wq.label.groupProfile']}"
+				icon="ui-icon-document">
+				<p:menuitem value="#{dbResource['wq.label.createGroup']}" url="GroupCreationLayout.jsf" icon="ui-icon-document" />
+				<p:menuitem value="#{dbResource['wq.label.maintainGroup']}" url="GroupMaintainLayout.jsf" icon="ui-icon-document" />
+			</p:submenu>
+			
+			<p:menuitem value="#{dbResource['wq.header.auditTrail']}" url="ATCollapsableLayout.jsf" icon="ui-icon-document" />		
+			
+		</p:submenu> 
+        <f:facet name="options">  
+            <h:outputText value="Welcome, Peter" style="margin-right:10px"/>  
+            <p:commandButton type="button" value="Logout" url="#" icon="ui-icon-extlink" />  
+        </f:facet> 		
+    </p:menubar>
+</h:form>
+
+</h:body>
+</html>

@@ -1,0 +1,213 @@
+package com.avnet.emasia.webquote.utilities.schedule;
+
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Resource;
+import javax.ejb.AccessTimeout;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.EJB;
+import javax.ejb.ScheduleExpression;
+import javax.ejb.Singleton;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerConfig;
+import javax.ejb.TimerService;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import org.jboss.logging.Logger;
+
+import com.avnet.emasia.webquote.entity.TaskInfo;
+import com.avnet.emasia.webquote.utilities.ejb.TaskInfoSB;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+
+//@Singleton
+//@ConcurrencyManagement(ConcurrencyManagementType.CONTAINER)
+public class SchedulerSB implements Serializable {
+
+	private static final long serialVersionUID = 1682849496034356707L;
+	private static final Logger LOG = Logger.getLogger(SchedulerSB.class.getName());
+
+	@Resource
+	private TimerService timerService;
+	@EJB
+	private TaskInfoSB taskInfoSB;
+
+	private String getNodeName() {
+		return System.getProperty(HATimerService.JBOSS_NODE_NAME);
+	}
+
+//	@Timeout
+//	@AccessTimeout(unit = TimeUnit.MINUTES, value = 30)
+	public void scheduler(Timer timer) {
+		TaskInfo ti = (TaskInfo) timer.getInfo();
+		try {
+			// excuest timer
+			if (null != ti) {
+				LOG.info("\n\n\n---HATimeout TaskId: " + ti.getId() + " TaskName: " + ti.getTaskName() + " \n\n\n");
+				ti = taskInfoSB.find(ti.getId());
+				if (!ti.getEnable()) {
+					timer.cancel();
+					ti.setLastRunStatus("canceled by db");
+					ti.setStatus("Stoped");
+				} else {
+					ti.setNextTimeout(timer.getNextTimeout());
+					ti.setLastRunStatus("normal");
+				}
+
+				IScheduleTask batchTask = (IScheduleTask) InitialContext.doLookup(ti.getTaskClassName());
+				batchTask.executeTask(timer);
+
+				// todo: other field
+				LOG.info("HATimeout: " + ti.getTaskClassName());
+			} else {
+				timer.cancel();
+			}
+		} catch (Exception e) {
+			if (ti != null) {
+				ti.setLastRunStatus("error");
+			}
+			LOG.error("---HATimeout error---" + e.getMessage());
+		}
+
+		if (ti != null) {
+			taskInfoSB.update(ti);
+		}
+	}
+
+	public void stopAll() {
+		LOG.info("---call stop all timer----");
+		try {
+			if (timerService != null && !timerService.getTimers().isEmpty()) {
+				for (Timer timer : timerService.getTimers()) {
+					LOG.info("------------Stop  HASingleton timer: " + timer.getInfo() + "\nTimezone: "
+							+ timer.getSchedule().getTimezone());
+
+					timer.cancel();
+				}
+				taskInfoSB.setAllStatusToStoped();
+			}
+		} catch (Exception e) {
+			// LOG.info("---Stop HASingleton timer error: " + e.getMessage());
+			throw e;
+		}
+	}
+
+	/**
+	 * @deprecated
+	 * @param taskInfo
+	 * @return public FacesMessage stop(TaskInfo taskInfo) { LOG.info("---call
+	 *         stop timer----"); FacesMessage outcome = new
+	 *         FacesMessage(FacesMessage.SEVERITY_INFO, "stop task timer",
+	 *         "sucess"); try { for (Timer timer : timerService.getTimers()) {
+	 *         if (((TaskInfo)
+	 *         timer.getInfo()).getId().equals(taskInfo.getId())) {
+	 *         timer.cancel(); taskInfo.setStatus("Stoped");
+	 *         taskInfoSB.update(taskInfo); LOG.info("---Stop HASingleton timer:
+	 *         " + taskInfo); break; } } } catch (Exception e) {
+	 *         outcome.setSeverity(FacesMessage.SEVERITY_ERROR);
+	 *         outcome.setDetail(e.getMessage()); LOG.info("---Stop HASingleton
+	 *         timer error: " + taskInfo); } return outcome; }
+	 * 
+	 */
+	public Collection<Timer> getTimers() {
+		return timerService.getTimers();
+	}
+
+	public void start() {
+		try {
+			taskInfoSB.setAllStatusToStoped();
+			List<TaskInfo> tis = taskInfoSB.findEnableTask();
+			for (TaskInfo info : tis) {
+				createTimer(info);
+			}
+		} catch (Exception e) {
+			LOG.error("---init timer error: " + e.getMessage());
+		}
+	}
+
+	private void createTimer(TaskInfo info) {
+		try {
+			// TODO: check duplicate timer
+			TimerConfig timerConfig = new TimerConfig(info, false);
+			ScheduleExpression se = getScheduleExpression(info);
+
+			Timer timer = timerService.createCalendarTimer(se, timerConfig);
+			info.setNextTimeout(timer.getNextTimeout());
+			info.setNode(getNodeName());
+			info.setStatus("Create");
+			LOG.info("---[create timer successful:]----\n" + info);
+		} catch (Exception e) {
+			// LOG.error("---create timer error: " + e.getMessage() + "
+			// TaskInfo:\n" + info);
+			throw e;
+		}
+		taskInfoSB.update(info);
+	}
+
+	public void updateAllNodeTimer() {
+		stopAll();
+		startAllNodeTimer();
+	}
+
+	public void startAllNodeTimer() {
+		List<TaskInfo> tis = taskInfoSB.findEnableAllNodeTask();
+		for (TaskInfo info : tis) {
+			TimerConfig timerConfig = new TimerConfig(info, false);
+			ScheduleExpression se = getScheduleExpression(info);
+			Timer timer = timerService.createCalendarTimer(se, timerConfig);
+			LOG.info("---[startAllNodeTimer successful:]----\n" + info);
+		}
+	}
+
+	private ScheduleExpression getScheduleExpression(TaskInfo taskInfo) {
+		ScheduleExpression scheduExp = new ScheduleExpression();
+
+		if (null != taskInfo.getStartTime()) {
+			scheduExp.start(taskInfo.getStartTime());
+		}
+
+		if (null != taskInfo.getEndTime()) {
+			scheduExp.end(taskInfo.getEndTime());
+		}
+
+		if (!QuoteUtil.isEmpty(taskInfo.getSecond())) {
+			scheduExp.second(taskInfo.getSecond());
+		}
+
+		if (!QuoteUtil.isEmpty(taskInfo.getMinute())) {
+			scheduExp.minute(taskInfo.getMinute());
+		}
+
+		if (!QuoteUtil.isEmpty(taskInfo.getHour())) {
+			scheduExp.hour(taskInfo.getHour());
+		}
+
+		if (!QuoteUtil.isEmpty(taskInfo.getDayOfMonth())) {
+			scheduExp.dayOfMonth(taskInfo.getDayOfMonth());
+		}
+
+		if (!QuoteUtil.isEmpty(taskInfo.getMonth())) {
+			scheduExp.month(taskInfo.getMonth());
+		}
+
+		if (!QuoteUtil.isEmpty(taskInfo.getYear())) {
+			scheduExp.year(taskInfo.getYear());
+		}
+
+		if (!QuoteUtil.isEmpty(taskInfo.getDayOfWeek())) {
+			scheduExp.dayOfWeek(taskInfo.getDayOfWeek());
+		}
+
+		return scheduExp;
+	}
+
+	public void restartTimers() {
+		stopAll();
+		start();
+	}
+}

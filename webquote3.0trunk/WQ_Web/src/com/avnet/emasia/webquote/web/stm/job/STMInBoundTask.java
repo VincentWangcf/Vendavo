@@ -1,0 +1,156 @@
+package com.avnet.emasia.webquote.web.stm.job;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+
+import org.apache.cxf.common.util.StringUtils;
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.stm.constant.StmConstant;
+import com.avnet.emasia.webquote.stm.dto.ExceptionVo;
+import com.avnet.emasia.webquote.stm.dto.InBoundVo;
+import com.avnet.emasia.webquote.stm.ejb.STMExceptionReportSB;
+import com.avnet.emasia.webquote.stm.ejb.StmDataSyncSB;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.utilities.schedule.IScheduleTask;
+import com.avnet.emasia.webquote.web.stm.util.StmUtil;
+
+@Stateless 
+public class STMInBoundTask implements IScheduleTask {
+
+	private static final Logger LOG = Logger.getLogger(STMInBoundTask.class.getName());
+	@EJB
+	private SystemCodeMaintenanceSB systemCodeMaintenanceSB;
+    @EJB
+    private BizUnitSB bizutSB;	
+    @EJB
+    private UserSB userSb;
+    @EJB
+    private MailUtilsSB mailUtilsSB;
+    @EJB
+    private StmDataSyncSB stmDataSyncSB;
+    @EJB  
+    private STMExceptionReportSB  stmExceptionReportSB;
+    
+    @EJB
+	protected EJBCommonSB ejbCommonSB;
+    
+	@Override
+	@Asynchronous
+    @TransactionTimeout(value = 20000, unit = TimeUnit.SECONDS) 
+	public void executeTask(Timer timer) {
+		LOG.info("STM project inBound job beginning...");
+		try {
+
+					String stmReceivePath = systemCodeMaintenanceSB.getStmReceivePath();					
+					//stmReceivePath="C:\\app\\inbound";
+					stmReceivePath="C:\\Users\\046755\\Desktop\\excel\\STMIN";
+					File dirFile = new File(stmReceivePath);
+					File[] files = dirFile.listFiles();
+					if(files.length==0) return;
+					
+					String stmFileBackupPath = systemCodeMaintenanceSB.getStmFileBackupPath();
+					//stmFileBackupPath="C:\\app\\b2bfiles";
+					stmFileBackupPath="C:\\Users\\046755\\Desktop\\excel\\backup\\";
+					for(int i = 0;i<files.length;i++){
+						
+						File file = files[i];
+						String tempStmReceiveFile = file.getPath();
+						
+						if(!StmUtil.isValidInBoundFileName(file.getName())){
+							String message ="invalid inBound file:"+tempStmReceiveFile;
+							sendExceptionMail(file.getName(),message,null);
+							String stmExceptionPath = systemCodeMaintenanceSB.getStmExceptionPath();
+							StmUtil.copyFileToExceptionDir(file,stmExceptionPath);
+							continue;
+						}
+						HashMap<String, Object> hashMap = StmUtil.inbound(tempStmReceiveFile);
+						if(!(boolean) hashMap.get(StmConstant.RETURN_BOOL)){
+							String message =(String)hashMap.get(StmConstant.RETURN_MESSAGE);
+							sendExceptionMail(file.getName(),message,null);
+							String stmExceptionPath = systemCodeMaintenanceSB.getStmExceptionPath();
+							StmUtil.copyFileToExceptionDir(file,stmExceptionPath);
+							continue;
+						}else{
+							InBoundVo vo = (InBoundVo) hashMap.get(StmConstant.RETURN_OBJECT);
+							String bizUnitName = stmDataSyncSB.getRegionByPrefixAvnetQuoteNumber(vo.getRfqCode());
+							if(!StringUtils.isEmpty(bizUnitName)) {
+								
+								/**insert InBoundVo 2 database **/
+								boolean receiveDate = stmDataSyncSB.receiveDate2Db(vo);
+								
+								if(receiveDate){
+									boolean autoLink = stmDataSyncSB.autoLinkToQuoteItem(vo);
+									if(!autoLink){
+										String stmExceptionPath = systemCodeMaintenanceSB.getStmExceptionPath();
+										StmUtil.copyFileToExceptionDir(file,stmExceptionPath);
+										String message = "autoLinkToQuoteItem failed:" +vo.toString();
+										sendExceptionMail(file.getName(),message,vo);
+										continue;
+									}
+									
+									boolean isPersistSuccess = stmDataSyncSB.autoLinkToVendorReport(vo);								
+									if(!isPersistSuccess){
+										String stmExceptionPath = systemCodeMaintenanceSB.getStmExceptionPath();
+										StmUtil.copyFileToExceptionDir(file,stmExceptionPath);
+										String message ="autoLinkToVendorReport failed:" +vo.toString();
+										sendExceptionMail(file.getName(),message,vo);
+										continue;
+									}
+																	
+									StmUtil.copyFileToBackUpDir(file,stmFileBackupPath);
+								}else{
+									String stmExceptionPath = systemCodeMaintenanceSB.getStmExceptionPath();
+									StmUtil.copyFileToExceptionDir(file,stmExceptionPath);
+									String message ="insert data to Mfr_Feedback_Info table failed:" +vo.toString();
+									sendExceptionMail(file.getName(),message,vo);
+									continue;
+								}
+							}else {
+								String stmExceptionPath = systemCodeMaintenanceSB.getStmExceptionPath();
+								StmUtil.copyFileToExceptionDir(file,stmExceptionPath);
+								String message ="Biz Unit Name cannot find according to rfq code : " +vo.getRfqCode();
+								sendExceptionMail(file.getName(),message,vo);
+								continue;
+							}
+						}
+					}
+
+		} catch (Exception e) {
+			
+			sendExceptionMail(null,StmUtil.printStackTrace2String(e),null);
+			LOG.log(Level.SEVERE, "Exception Occoured in STM project inBound job : "+e.getMessage(), e);
+		}
+
+		LOG.info("STM project inBound job ended");
+	}
+
+	private void sendExceptionMail(String fileName, String message, InBoundVo vo){
+		ExceptionVo exception = new ExceptionVo();
+		exception.setAction(StmConstant.ACTION_INBOUND);
+		exception.setFileName(fileName);
+		exception.setInBoundVo(vo);
+		exception.setOutBoundVo(null);
+		exception.setMessage(message);
+		if(vo!=null&&vo.getCurrentUser()!=null){
+			exception.setUser(vo.getCurrentUser());
+			exception.setRegion(vo.getCurrentUser().getDefaultBizUnit().getName());
+		}
+		
+		stmExceptionReportSB.sendException(exception);
+	}
+	
+
+}

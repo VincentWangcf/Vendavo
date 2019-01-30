@@ -1,0 +1,109 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.avnet.emasia</groupId>
+		<artifactId>webquote</artifactId>
+		<version>2.6</version>
+		<relativePath>../webquote/pom.xml</relativePath>
+	</parent>
+
+  <artifactId>WebQuoteRptEar</artifactId>
+  <packaging>ear</packaging>
+
+	<dependencies>
+	
+	<dependency>
+		<groupId>com.avnet.emasia</groupId>
+		<artifactId>WQ_EJB_Quote</artifactId>
+		<type>ejb</type>
+		<scope>compile</scope>
+	</dependency>
+	
+	<dependency>	
+		<groupId>com.avnet.emasia</groupId>
+		<artifactId>WQ_JPA_Entity</artifactId>
+		<type>ejb</type>
+		<scope>compile</scope>
+	</dependency>
+	
+	<dependency>
+		<groupId>com.avnet.emasia</groupId>
+		<artifactId>WQ_EJB_Utility</artifactId>
+		<type>ejb</type>
+		<scope>compile</scope>
+	</dependency>
+	
+	<dependency>
+		<groupId>com.avnet.emasia</groupId>
+		<artifactId>WQ_EJB_UserAndAuthor</artifactId>
+		<type>ejb</type>
+		<scope>compile</scope>
+	</dependency>
+	
+	<dependency>
+		<groupId>com.avnet.emasia</groupId>
+		<artifactId>WQ_EJB_Commodity</artifactId>
+		<type>ejb</type>
+		<scope>compile</scope>
+	</dependency>
+	
+	<dependency>
+		<groupId>com.avnet.emasia</groupId>
+		<artifactId>WQ_EJB_Reports</artifactId>
+		<type>ejb</type>
+		<scope>compile</scope>
+	</dependency>
+	
+	</dependencies>
+
+
+  <description>!!!EAR resources from the root directory need to be moved under src/main/application!!!</description>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-ear-plugin</artifactId>
+        <version>2.10</version>
+        <configuration>
+          <version>6</version>
+          <defaultLibBundleDir>lib</defaultLibBundleDir>
+			<fileNameMapping>no-version</fileNameMapping>
+			<finalName>WebQuoteRptEar</finalName>
+        
+        </configuration>
+      </plugin>
+      
+      <plugin>
+			<groupId>org.codehaus.mojo</groupId>
+			<artifactId>wagon-maven-plugin</artifactId>
+			<version>1.0</version>
+			<configuration>
+				<serverId>ftp-repository</serverId>
+				<fromFile>${project.build.directory}/WebQuoteRptEar.ear</fromFile>
+				<url>scp://albany1.avnet.com/app/eap70/webquote-rpt/ears</url>
+				<commands>
+					<command>sudo -u jboss /app_mgmt/redhat/buildScripts/scripts/eap70/manage_application70.ksh update webquote-rptapp /app/eap70/webquote-rpt/ears/WebQuoteRptEar.ear webquote-rpt</command>
+				</commands>
+				<displayCommandOutputs>true</displayCommandOutputs>
+			</configuration>
+			<executions>
+				<execution>
+					<id>ftp-to-server</id>
+					<phase>deploy</phase>
+					<goals>
+						<goal>upload-single</goal>
+					</goals>
+				</execution>
+				<execution>
+					<id>execute-deploy-commands</id>
+					<phase>deploy</phase>
+					<goals>
+						<goal>sshexec</goal>
+					</goals>
+				</execution>
+			</executions>
+		</plugin>
+		
+    </plugins>
+  </build>
+</project>

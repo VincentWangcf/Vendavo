@@ -1,0 +1,48 @@
+package com.avnet.emasia.webquote.quote.strategy.interfaces;
+
+import java.util.List;
+
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.quote.vo.QuoteItemVo;
+
+/**
+ * <p> Drms validation interface </p>
+ * @author Lenon.Yang(043044)
+ * @version 1.0
+ * @date 2016-11-30
+ *
+ */
+public interface DrmsValidationUpdateStrategy {
+	/**
+	 * compare QGP And AGP
+	 * @param item
+	 * @return
+	 */
+	public String compareQGPAndAGP(QuoteItem item);
+	
+	/**
+	 * 1.Region CHINA no need to set Sap Reason code 
+	 * @param item
+	 * @return
+	 */
+	public QuoteItem getUpdateSapReasonCodeItem(QuoteItem item);
+	
+	/**
+	 * 1.Region CHINA no need to do validation AGP
+	 * @return
+	 */
+	public boolean isValidationAGP();
+	
+	/**
+	 * 1.update AGP reason
+	 * @return
+	 */
+	public void updateAuthGpReasonInEntity(List<QuoteItemVo> selectedQuoteItemVos);
+	
+	/**
+	 * 1.CHINA no need to update “QC internal Comment”
+	 * @param item
+	 * @return
+	 */
+	public String getInternalComment(QuoteItem item);
+}

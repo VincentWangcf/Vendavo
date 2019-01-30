@@ -1,0 +1,302 @@
+
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="style-005.css" />
+	<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>	
+
+
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+	<h:form id="form">
+	<p:panel header="#{dbResource['wq.header.instantPriceCheck']}">
+	<p:growl  id="growl" for="growl_1" sticky="#{growlPropertyMB.sticky}" showSummary="#{growlPropertyMB.showSummary}" showDetail="true" globalOnly="true" escape="#{growlPropertyMB.escape}"    />
+	<p:growl id="messages" autoUpdate="true" closable="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" />
+	<p:wizard widgetVar="wiz" flowListener="#{instantPriceCheckMB.onFlowProcess}" style="font-size:8pt" showNavBar='true' nextLabel="#{dbResource['wq.button.next']}" backLabel="#{dbResource['wq.button.back']}" >
+		<p:tab id="instantPriceCheck_searchCriteria" title="1. #{dbResource['wq.label.searchCriteria']}" >	
+			    		
+			    <p:dataTable	var="item"
+								value="#{instantPriceCheckMB.instantPriceCheckItems}"     
+			    				rowKey="#{rowIndex}" 
+			    				rowIndexVar="rowIndex"
+			                 	id="datatable_instantpricecheck"
+			                 	filteredValue="#{instantPriceCheckMB.filteredInstantPriceCheckItems}"
+			                 	editable="true"
+			                 	editMode="cell"
+			                 	cellEditEvent="click"
+			                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+			        <p:column headerText="#{dbResource['wq.label.no']}" id="rowNumber" width="10">
+				        #{rowIndex+1}
+			        </p:column>
+			        
+			        <p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{item.mfr}" style="width:5%" styleClass="input_text">
+						<p:inputText id="input_mfr" value="#{item.mfr}" onclick="updateDetailPanel(#{rowIndex}, #{rowIndex});"/>
+			        </p:column>
+			
+			        <p:column headerText="#{dbResource['wq.label.requested']} P/N*" sortBy="#{item.fullMfrPart}" style="width:15%">
+			        	<p:inputText value="#{item.fullMfrPart}" onclick="updateDetailPanel(#{rowIndex}, #{rowIndex});"/>
+			        </p:column>
+			        
+			         <p:column headerText="#{dbResource['wq.label.reqQty']}" sortBy="#{item.requestQty}" style="width:10%">
+			         	<p:inputText  value="#{item.requestQty}" onclick="updateDetailPanel(#{rowIndex}, #{rowIndex});" >	     
+			         	</p:inputText>
+			        </p:column>
+			        
+			         <p:column headerText="#{dbResource['wq.label.custmrName']}&lt;br/&gt;(#{dbResource['wq.label.soldToParty']})" sortBy="#{item.soldToParty}" style="width:25%">
+						<p:autoComplete minQueryLength="3" maxResults="10" value="#{item.soldToParty}" completeMethod="#{instantPriceCheckMB.autoCompleteSoldToCustomerNameLabelList}" style="width:100%" >							
+							<p:ajax event="itemSelect" update=":form:datatable_instantpricecheck" listener="#{instantPriceCheckMB.updateSoldToCustomer(rowIndex)}"/>
+							   <p:ajax event="query" global="false"/>
+						</p:autoComplete>
+			        </p:column>
+
+			         <p:column headerText="#{dbResource['wq.label.SoldToCode']}" sortBy="#{item.soldToCode}" style="width:10%">
+			         	<p:inputText value="#{item.soldToCode}" onclick="updateDetailPanel(#{rowIndex}, #{rowIndex});"/>
+			        </p:column>
+			        
+			         <p:column headerText="#{dbResource['wq.label.endCust']}" sortBy="#{item.endCustomer}" style="width:25%">
+	                    <p:autoComplete minQueryLength="3" maxResults="10" value="#{item.endCustomer}" completeMethod="#{instantPriceCheckMB.autoCompleteEndCustomerNameLabelList}" style="width:100%" >							
+							<p:ajax event="itemSelect" update=":form:datatable_instantpricecheck" listener="#{instantPriceCheckMB.updateEndCustomer(rowIndex)}"/>	
+							   <p:ajax event="query" global="false"/>
+						</p:autoComplete>
+			        </p:column>
+			        
+
+			         <p:column headerText="#{dbResource['wq.label.endCust']} #{dbResource['wq.label.code']}" sortBy="#{item.endCustomerCode}" style="width:10%">
+			            <p:inputText value="#{item.endCustomerCode}" onclick="updateDetailPanel(#{rowIndex}, #{rowIndex});"/>
+			        </p:column>			        
+			        
+			        <f:facet name="footer">
+			        	<p:selectOneMenu value="#{instantPriceCheckMB.selectedBizUnit}" >
+    					<p:ajax listener="#{instantPriceCheckMB.handleChange}" />
+						    <f:selectItems value="#{instantPriceCheckMB.bizUnitSelection}" var="emp"
+						                   itemLabel="#{emp}" itemValue="#{emp}" />
+						</p:selectOneMenu>
+			        	<p:commandButton value="#{dbResource['wq.label.addOneMore']}" update=":form:datatable_instantpricecheck" icon="ui-icon-plusthick" actionListener="#{instantPriceCheckMB.addOneItem}"/>  
+			        	<p:commandButton value="#{dbResource['wq.label.addFiveMore']}" update=":form:datatable_instantpricecheck" icon="ui-icon-plusthick" actionListener="#{instantPriceCheckMB.addFiveItem}"/>  
+			        	<p:commandButton value="#{dbResource['wq.header.clear']}" update=":form:datatable_instantpricecheck, :form:datatable_instantpricecheckresult" actionListener="#{instantPriceCheckMB.clearSearchCriteria}"/>
+			        </f:facet>
+			        
+			    </p:dataTable>
+			
+	    </p:tab>
+   		<p:tab id="instantPriceCheck_result" title="2. #{dbResource['wq.header.searchResult']}">	
+   		
+			    <p:dataTable	var="item"
+			    				value="#{instantPriceCheckMB.instantPriceCheckResults}" 
+			    				rowKey="#{item.seq}" 
+			    				paginator="true"
+			    				rowIndexVar="rowIndex"
+			    				rows="10"
+			    				rowsPerPageTemplate="10,20,50"
+			                 	selection="#{instantPriceCheckMB.selectedResults}" 			                 	
+			                 	id="datatable_instantpricecheckresult"
+			                 	filteredValue="#{instantPriceCheckMB.filteredInstantPriceCheckResults}"
+			                 	paginatorPosition="top"
+			                 	scrollable="true"
+			                 	modal="false"
+			                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+					
+					<p:column selectionMode="multiple" width="30"/> 
+					
+					
+			        <p:column headerText="#{dbResource['wq.label.mfrCode']}" sortBy="#{item.mfr}" width="100">
+			        	<h:outputText value="#{item.mfr}"/>
+			        </p:column>
+			
+			        <p:column headerText="#{dbResource['wq.label.mfrP']}" sortBy="#{item.fullMfrPart}" width="100">
+			            <h:outputText value="#{item.fullMfrPart}"/>
+			        </p:column>
+			
+			        <p:column headerText="#{dbResource['wq.header.priceType']}" sortBy="#{item.priceType}" width="100">
+				        <h:outputText value="#{item.priceType}"/>
+			        </p:column> 
+			        
+			        <p:column headerText="#{dbResource['wq.label.reqQty']}" sortBy="#{item.requiredQty}" width="100">
+			        	<h:outputText value="#{item.requiredQty}"/>   
+			        </p:column>
+			        
+			          
+			        
+			        <p:column headerText="#{dbResource['wq.label.MPQ']}" sortBy="#{item.mpq}" styleClass="align_right" width="80">
+			            <h:outputText value="#{item.mpq}">
+			            	<f:convertNumber  pattern="#,###" />
+			            </h:outputText>
+			        </p:column>
+			
+			        <p:column headerText="#{dbResource['wq.label.moq']}" sortBy="#{item.moq}" styleClass="align_right" width="80">
+			            <h:outputText value="#{item.moq}">
+			            	<f:convertNumber  pattern="#,###" />
+			            </h:outputText>
+			        </p:column>
+			
+			        <p:column headerText="#{dbResource['wq.header.normSellPrice']}" sortBy="#{item.targetResale}" styleClass="align_right" width="120">
+			            
+			            <h:outputText value="#{dbResource['wq.message.getQuote']}" rendered="#{item.targetResale == 0 or item.targetResale == null}" />
+			            
+			            <h:outputText value="#{item.targetResale}" rendered="#{item.targetResale != 0}" width="100">
+			            	<f:convertNumber pattern="#,##0.00000" minFractionDigits="5"/>
+			            </h:outputText>
+			        </p:column>                                    
+			
+			        <p:column headerText="#{dbResource['wq.label.costIndicator']}" sortBy="#{item.costIndicator}" width="150">
+				        <h:outputText value="#{item.costIndicator}"/>
+			        </p:column>   
+			          
+			        <p:column headerText="#{dbResource['wq.message.QuotationEffectiveDate']}" sortBy="#{item.quotationEffectiveDate}" width="160">
+				         <h:outputText value="#{item.quotationEffectiveDate}">
+				        	<f:convertDateTime  pattern="dd/MM/yyyy"  />
+				        </h:outputText>
+			        </p:column>   
+			                
+			        <p:column headerText="#{dbResource['wq.label.quoteExpiryDate']}" sortBy="#{item.quoteExpiryDate}" width="120">
+				        <h:outputText value="#{item.quoteExpiryDate}">
+				        	<f:convertDateTime  pattern="dd/MM/yyyy"  />
+				        </h:outputText>
+			        </p:column>        
+			
+			        <p:column headerText="#{dbResource['wq.label.leadTimeWKS']}" sortBy="#{item.leadTime}" width="120">
+				        <h:outputText value="#{item.leadTime}"/>
+			        </p:column>
+
+			        <p:column headerText="#{dbResource['wq.label.description']}" sortBy="#{item.description}" width="120">
+				        <h:outputText value="#{item.description}"/>
+			        </p:column>
+			        
+			        <p:column headerText="#{dbResource['wq.header.soldToCustomerCode']}" sortBy="#{item.soldToCustomerCode}" width="150">
+				        <h:outputText value="#{item.soldToCustomerCode}"/>
+			        </p:column>  
+			        
+			         <p:column headerText="#{dbResource['wq.header.soldToCustomerName']}" sortBy="#{item.soldToCustomerName}" width="200">
+				        <h:outputText value="#{item.soldToCustomerName}"/>
+			        </p:column>  
+			        
+			        <p:column headerText="#{dbResource['wq.label.region']}" sortBy="#{item.bizUnit}" width="80">
+				        <h:outputText value="#{item.bizUnit}"/>
+			        </p:column>                       
+			                                
+			         
+			        <f:facet name="footer">
+			        	<p:commandButton value="#{dbResource['wq.header.convertToRFQFrom']}" update=":form:datatable_instantpricecheckresult" action="#{instantPriceCheckMB.convertToRfqForm}"/>  
+			        </f:facet>
+			        		         
+			    </p:dataTable>    
+			  	
+   		</p:tab>
+	</p:wizard>
+	
+</p:panel>		
+  
+			    <p:dialog styleClass="popup" header="#{dbResource['wq.label.restrictedCustList']}" widgetVar="restrictedCustomer_dialog" resizable="true">  
+						    <p:dataTable	var="restrictedCustomer_popup"
+						                    value="#{instantPriceCheckMB.restrictedCustomerPopupModel}"
+						    				rowIndexVar="requiredPartNumber_popup_rowIndex"			    				
+						                 	id="datatable_restrictedCustomer_popup"
+						    				paginator="true" 
+						    				rows="5"
+						    				rowsPerPageTemplate="5,10"
+						    				paginatorPosition="top"
+						                 	style="margin:10px 0px 0px 0px;"
+						                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">		
+						                 
+                                
+						        <p:column headerText="#{dbResource['wq.label.mfr']}" id="requiredPartNumber_mfr">
+							        #{restrictedCustomer_popup.mfr}
+						        </p:column>	
+						        
+						        <p:column headerText="#{dbResource['wq.label.pn']} " id="requiredPartNumber_sapPart">
+							        #{restrictedCustomer_popup.partNumber}
+						        </p:column>			        				        					        					        					        
+
+                                <p:column headerText="#{dbResource['wq.label.costIndicator']}" id="restrictedCustomer_costIndicator">
+									#{restrictedCustomer_popup.costIndicator}
+						        </p:column>	
+						        
+						        <p:column headerText="#{dbResource['wq.label.proGroup']} 1" id="restrictedCustomer_productGroup1">
+							        #{restrictedCustomer_popup.productGroup1}
+						        </p:column>			        				        					        					        					        
+						        
+						         <p:column headerText="#{dbResource['wq.label.proGroup']} 2" id="restrictedCustomer_productGroup2">
+							        #{restrictedCustomer_popup.productGroup2}
+						        </p:column>	
+						        
+						         <p:column headerText="#{dbResource['wq.label.proGroup']} 3" id="restrictedCustomer_productGroup3">
+							        #{restrictedCustomer_popup.productGroup3}
+						        </p:column>	
+						        
+						         <p:column headerText="#{dbResource['wq.label.proGroup']} 4" id="restrictedCustomer_productGroup4">
+							        #{restrictedCustomer_popup.productGroup4}
+						        </p:column>			        
+
+						        <p:column headerText="#{dbResource['wq.label.SoldToCode']}" id="restrictedCustomer_soldToCode">
+									#{restrictedCustomer_popup.soldToCode}
+						        </p:column>	
+						        <p:column headerText="#{dbResource['wq.label.soldToCodeCustomer']}" id="restrictedCustomer_soldToName">
+									#{restrictedCustomer_popup.soldToName}
+						        </p:column>										        								        					       					        
+						    </p:dataTable>  
+
+					</p:dialog>  
+		   <p:dialog id="futurePrice_confirmDialog"
+				header="#{dbResource['wq.diglog.header.confirm']}" severity="alert" widgetVar="futurePrice_confirmDialog" modal="false" > 
+				<h:panelGrid cellpadding="0"
+						style="padding:0px 3px 0px 3px; width:100%;" columns="1">
+				<h:outputText value="#{dbResource['wq.message.quotationEffectiveDateExt']}"></h:outputText>
+				</h:panelGrid>
+				<p:commandButton value="#{dbResource['wq.button.yes']}" action="#{instantPriceCheckMB.confirmToConvertRfqForm}" />
+				<p:commandButton value="#{dbResource['wq.button.no']}" onclick="PF('futurePrice_confirmDialog.hide()"
+					type="button" />
+			</p:dialog>		                
+<script type="text/javascript">
+		/**
+		 * Primefaces 3.4 fix/override 
+		 */
+		PrimeFaces.widget.DataTable.prototype.bindSelectionEvents = function()
+		{
+			var a = this;
+	        this.rowSelector = this.jqId + " tbody.ui-datatable-data > tr.ui-widget-content:not(.ui-datatable-empty-message)";
+	        if (this.cfg.selectionMode != "checkbox") {
+	            this.bindRowHover();
+	            $(document).off("click.datatable", this.rowSelector).on("click.datatable", this.rowSelector, null, function (b) {
+	                a.onRowClick(b, this)
+	            })
+	        } else {
+	            this.bindRadioEvents()
+	        } if (this.isCheckboxSelectionEnabled()) {
+	            this.bindCheckboxEvents();
+	            this.updateHeaderCheckbox()
+	        }
+	        if (this.hasBehavior("rowDblselect")) {
+	            $(document).off("dblclick.datatable", this.rowSelector).on("dblclick.datatable", this.rowSelector, null, function (b) {
+	                a.onRowDblclick(b, $(this))
+	            })
+	        }
+		};
+</script>
+<h:outputScript library="javascript" name="disableRowSelection.js" />
+</h:form>  	
+		<script type="text/javascript">
+
+	var previousQuoteItemId = 0;
+
+	function updateDetailPanel(currentNumber, rowInd){
+		if(currentNumber != previousQuoteItemId){
+			datatable_rit.unselectAllRows();
+			datatable_rit.selectRow(rowInd);
+			previousQuoteItemId = currentNumber;
+		}	
+	}
+	
+</script>	
+	</ui:define>
+
+</ui:composition>
+

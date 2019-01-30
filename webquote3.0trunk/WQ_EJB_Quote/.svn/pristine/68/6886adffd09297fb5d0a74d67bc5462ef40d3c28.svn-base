@@ -1,0 +1,223 @@
+package com.avnet.emasia.webquote.columndata;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.MessageFormat;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.logging.Level;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.apache.cxf.common.util.StringUtils;
+import org.apache.poi.openxml4j.exceptions.OpenXML4JException;
+import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.xssf.eventusermodel.ReadOnlySharedStringsTable;
+import org.apache.poi.xssf.eventusermodel.XSSFReader;
+import org.apache.poi.xssf.model.StylesTable;
+import org.springframework.util.Assert;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
+public class ExcelFileColumnDataSource implements ColumnDataSource {
+	private int seq = 0;
+	private OPCPackage xlsxPackage;
+	private int sheetNo;
+	private int minColumns = 100;
+	private int headRowIndex;
+	private String fileName;
+	private Map<String, Integer> headNameMapColIndex = new LinkedHashMap<String, Integer>();
+	private int columnStartIndex;
+	private int dataContentStartRowIndex;
+	private int columnCounts = -1;
+	private final List<String[]> datas = new LinkedList<String[]>();
+	private Iterator<String[]> iterator = null;
+	private String[] currentData = null;
+
+	public ExcelFileColumnDataSource(InputStream stream, ResolveInfo info) {
+		Assert.notNull(stream);
+		Assert.isInstanceOf(DefaultExcelResolveInfo.class, info);
+		initFrom((DefaultExcelResolveInfo) info);
+		initFrom(stream);
+	}
+
+	/*****
+	 * Use info init the properties of ExcelFileColumnDataSource
+	 *****/
+	private void initFrom(DefaultExcelResolveInfo info) {
+		this.dataContentStartRowIndex = info.getDataContentStartRowIndex();
+		this.headRowIndex = info.getHeadRowIndex();
+		this.sheetNo = info.getSheetNo();
+		this.fileName = info.getResolvedFileName();
+		this.columnStartIndex = info.getColStartIndex();
+		this.seq = info.getHeadCount();
+		LOG.info(this.toString());
+	}
+
+	/*********
+	 * get head to map; and get datacontent to list ; and init the iterator
+	 ******/
+	private void initFrom(InputStream stream) {
+		try {
+			this.xlsxPackage = OPCPackage.open(stream);
+			this.process(this.getSheetNo());
+		} catch (Exception ex) {
+			LOG.log(Level.SEVERE, "exception in excel sheer number reading, sheet number : " + sheetNo
+					+ " , upload file: " + this.getFileName() + " exception message : " + ex.getMessage(), ex);
+		} finally {
+			this.iterator = this.datas.iterator();
+		}
+
+	}
+
+	String getStrValue(Cell cell) {
+		return cell.getStringCellValue();
+	}
+
+	private int getColumnStartIndex() {
+		return this.columnStartIndex;
+	}
+
+	private int getHeadRowIndex() {
+		return this.headRowIndex;
+	}
+
+	private String getFileName() {
+		return this.fileName;
+	}
+
+	/*
+	 * public int getDataContentStartRowIndex() { return
+	 * this.dataContentStartRowIndex; }
+	 */
+
+	private void process(int sheetNo)
+			throws IOException, OpenXML4JException, ParserConfigurationException, SAXException {
+
+		ReadOnlySharedStringsTable strings = new ReadOnlySharedStringsTable(this.xlsxPackage);
+		XSSFReader xssfReader = new XSSFReader(this.xlsxPackage);
+
+		StylesTable styles = xssfReader.getStylesTable();
+		XSSFReader.SheetIterator iter = (XSSFReader.SheetIterator) xssfReader.getSheetsData();
+		int index = 0;
+		while (iter.hasNext()) {
+			InputStream stream = iter.next();
+			if (index == sheetNo) {
+				processSheet(styles, strings, stream);
+				stream.close();
+				break;
+			}
+			++index;
+		}
+	}
+
+	private int getDataContentStartRowIndex() {
+		return this.dataContentStartRowIndex;
+	}
+
+	private void processSheet(StylesTable styles, ReadOnlySharedStringsTable strings, InputStream sheetInputStream)
+			throws IOException, ParserConfigurationException, SAXException {
+
+		InputSource sheetSource = new InputSource(sheetInputStream);
+		SAXParserFactory saxFactory = SAXParserFactory.newInstance();
+		SAXParser saxParser = saxFactory.newSAXParser();
+		XMLReader sheetParser = saxParser.getXMLReader();
+		ContentHandler handler = new XSSFSheetHandler(styles, strings, this.minColumns,
+				new CommonProcessSheetInterface(), minColumns);
+		sheetParser.setContentHandler(handler);
+		sheetParser.parse(sheetSource);
+	}
+
+	/***** call back when resolve excel ***/
+	private class CommonProcessSheetInterface implements ProcessSheetInterface {
+		private String[] currentDataArrays = null;
+		ExcelFileColumnDataSource topDataSource = ExcelFileColumnDataSource.this;
+
+		@Override
+		public void processEachRecord(int column, int row, String value) {
+			// currentRow = row;
+			if (row >= topDataSource.getDataContentStartRowIndex()) {
+				if (currentDataArrays == null) {
+					topDataSource.datas.add(currentDataArrays = new String[topDataSource.columnCounts]);
+				}
+				if (column < topDataSource.columnCounts)
+					currentDataArrays[column] = value;
+
+			} else if (row == this.topDataSource.getHeadRowIndex() && !StringUtils.isEmpty(value)) {
+				topDataSource.headNameMapColIndex.put(value, column);
+			}
+		}
+
+		@Override
+		public void rowCompleted() {
+			if (topDataSource.columnCounts < 0) {
+				if (topDataSource.headNameMapColIndex.size() < 1) {
+					LOG.info(MessageFormat.format(
+							"This mean no get any head name, and then can not get any data. "
+									+ "File content is empty or set wrong [headRowIndex]=[{0}] ?",
+							topDataSource.getHeadRowIndex()));
+					topDataSource.columnCounts = 0;
+				} else {
+					Optional<Integer> op = topDataSource.headNameMapColIndex.values().stream().filter(a -> a != null)
+							.max(java.util.Comparator.comparing((a) -> {
+								return a;
+							}));
+					topDataSource.columnCounts = op.get() + 1;
+				}
+			}
+			// the next array should init from processEachRecord
+			currentDataArrays = null;
+		}
+	}
+
+	@Override
+	public int getSeq() {
+		return seq;
+	}
+
+	@Override
+	public boolean hasNext() {
+		return this.iterator.hasNext();
+	}
+
+	@Override
+	public void next() {
+		this.currentData = this.iterator.next();
+		seq++;
+	}
+
+	@Override
+	public String getColumnValue(String columnName) {
+		if (!this.headNameMapColIndex.containsKey(columnName)) {
+			LOG.info(MessageFormat.format(
+					"no found head name[{0}] in file[{1}] , current has register head name " + ":[{2}]", columnName,
+					this.getFileName(), this.headNameMapColIndex.keySet()));
+			return null;
+		}
+		if (this.currentData != null) {
+			return this.currentData[this.headNameMapColIndex.get(columnName)];
+		}
+		return null;
+	}
+
+	private int getSheetNo() {
+		return sheetNo;
+	}
+
+	@Override
+	public String toString() {
+		return "ExcelFileColumnDataSource [seq=" + seq + ", sheetNo=" + sheetNo + ", headRowIndex=" + headRowIndex
+				+ ", fileName=" + fileName + ", columnStartIndex=" + columnStartIndex + ", dataContentStartRowIndex="
+				+ dataContentStartRowIndex + "]";
+	}
+
+}

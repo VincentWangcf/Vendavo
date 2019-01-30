@@ -1,0 +1,1 @@
+Insert into app_resource (RESOURCE_TYPE,ID,PATH,APP_FUNCTION_ID,PATH_ORDER,VERSION) values ('SCREEN',WQ_SEQ.NEXTVAL,'/RFQ/QuoteBuilder.jsf',(select t.id from app_function t where t.NAME='QuoteBuilder'),1,1);

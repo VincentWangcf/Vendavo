@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+
+	
+		<p:dialog header="#{dbResource['wq.header.rfqSubmission']}" widgetVar="submitRfqResultDialog" id="submitRfqResultDialogId" closable="false"
+			position="center" style="width:930px;height:500px;overflow-y:510px;" modal="true" appendTo="@(body)"> 
+			    <h:form id="form_result">
+			    <span style="font-style:bold;">1. #{dbResource['wq.label.reviewRFQ']} </span><span> >> 2. #{dbResource['wq.label.checkOutQtn']}</span> 
+			    <p:scrollPanel style="width:920px;height:450px;padding:0px 0px 0px 0px !important;margin:0px 0px 0px 0px !important;">
+						<p:panel id="resultHeaderPanel" header="#{dbResource['wq.header.headerLevel']}" style="width:900px;padding:0px 0px 0px 0px !important;margin:0px 0px 0px 0px !important;" toggleable="true">
+							<p:panelGrid style="width:100%;;padding:0px 0px 0px 0px !important;margin:0px 0px 0px 0px !important;"> 
+									<p:row>  
+							            <p:column>
+							                <h:outputLabel value="#{dbResource['wq.label.form']} : " /><h:outputText value="#{progRfqSubmitMB.resultQuote.formNumber}" styleClass="confirmData" />
+								    	</p:column>
+								    	<p:column>
+									    	<h:outputText value="#{dbResource['wq.label.salesmanName']}: " /><h:outputText value="#{progRfqSubmitMB.resultQuote.sales.name}" styleClass="confirmData" />
+									    </p:column>
+								    </p:row>
+							        <p:row>  
+							            <p:column>
+										    <h:outputText  value="#{dbResource['wq.label.custmrName']} : " /><h:outputText value="#{progRfqSubmitMB.resultQuote.soldToCustomer.customerFullName}" styleClass="confirmData" />
+								    	</p:column>
+								    	<p:column>
+									    	<h:outputText  value="#{dbResource['wq.label.salesmanEmail']} : " />
+									    	<h:outputText value="#{progRfqSubmitMB.resultQuote.sales.emailAddress}" styleClass="confirmData" />
+									    </p:column>
+								    </p:row>
+								     <p:row>  
+								    	<p:column>
+									    	<h:outputText value="#{dbResource['wq.label.SoldToCode']} : " /><h:outputText value="#{progRfqSubmitMB.resultQuote.soldToCustomer.customerNumber}" styleClass="confirmData" />
+									    </p:column>
+									    <p:column>
+										    <h:outputText value="#{dbResource['wq.label.salesmanPhone']} : " /><h:outputText value="#{progRfqSubmitMB.resultQuote.sales.phoneNumber}" styleClass="confirmData" />
+								    	</p:column>
+								    </p:row>
+								    <p:row> 
+								        <p:column colspan="2">
+											<h:outputLabel  value="#{dbResource['wq.label.remrkCustmr']}  " />
+											<h:outputText value="#{progRfqSubmitMB.resultQuote.remarksToCustomer}" styleClass="confirmData" />
+										</p:column>
+									</p:row>
+							</p:panelGrid>
+						</p:panel>
+						<p:panel header="#{dbResource['wq.header.itemLevel']}"  id="resultBody" position="center" style="width:900px;;padding:0px 0px 0px 0px !important;margin:0px 0px 0px 0px !important;" toggleable="true">
+							<p:dataTable id="resultTable" widgetVar="resultTableWidget"
+							         var="item"		
+							 	     value="#{progRfqSubmitMB.resultQuote.quoteItems}"
+					                 paginator="true" rows="25"
+					                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+					                 rowsPerPageTemplate="25,50,100"
+					                 paginatorPosition="bottom"
+					                 rowIndexVar="rowIndex"                 	
+					                 style="width:100%"
+					                 emptyMessage="#{dbResource['wq.message.noRecordWidCriteria']}" 
+					                 scrollable="true"
+			                 	     scrollHeight="150"
+			                 	     scrollWidth="895">					      
+									<p:column headerText="#{dbResource['wq.label.no']}" id="rsSequenceNumber"  width="40">
+										<h:outputText value="#{rowIndex+1}" /> 
+									</p:column>
+									<p:column headerText="#{dbResource['wq.label.avnetQuote']} #" id="rsAvnetQuotePart"  width="170">
+										<h:outputText value="#{item.hiddenWR?'':item.quoteNumber}" /> 
+									</p:column>
+									<p:column headerText="#{dbResource['wq.label.mfr']}" id="rsMfr"  width="50">
+								        <h:outputText value="#{item.requestedMfr.name}" /> 
+							        </p:column>
+									<p:column headerText="#{dbResource['wq.label.reqPN']}" id="rsRequestedPn" width="170" >
+								        <h:outputText value="#{item.requestedPartNumber}" /> 
+							        </p:column>
+							        <p:column headerText="#{dbResource['wq.label.avnetQPN']}" id="reAvnetQuotePn" width="170" >
+								        <h:outputText value="#{item.hiddenWR?'':item.quotedMaterial.fullMfrPartNumber}" /> 
+							        </p:column>
+							        <p:column headerText="#{dbResource['wq.label.remarks']}" id="reRemarks"  width="200" escape="false">
+								        <h:outputText value="#{item.qcComment}" /> 
+							        </p:column>
+									<p:column headerText="#{dbResource['wq.label.reqQty']}" id="rsRequriedQty"   width="180">
+								        <h:outputText value="#{item.requestedQty}">
+								              <f:convertNumber   pattern="#,###" />
+										</h:outputText>
+							        </p:column>
+							        <p:column headerText="#{dbResource['wq.label.PMOQ']}" id="rsPmoq"   width="180">
+								        <h:outputText value="#{item.pmoq}" /> 
+							        </p:column>
+							        <p:column headerText="#{dbResource['wq.label.MPQ']}" id="rsMpq"   width="180">
+								        <h:outputText value="#{item.mpq}"> 
+								         	<f:convertNumber  pattern="#,###"  />
+										</h:outputText>
+							        </p:column>
+							        <p:column headerText="#{dbResource['wq.label.moq']}" id="rsMoq"   width="180">
+								        <h:outputText value="#{item.moq}" >
+								       		 <f:convertNumber  pattern="#,###"  />
+										</h:outputText> 
+							        </p:column>
+							        <p:column headerText="#{dbResource['wq.label.avnetPrice']}" id="rsAvnetPrice"   width="90">
+								         <h:outputText value="#{item}"  converter="webquote.commodity.AvnetPrice" escape="false"> 
+									     </h:outputText>
+							        </p:column>
+							        <p:column headerText="#{dbResource['wq.label.priceValidity']}" id="rsPriceValidity"   width="100">
+								         <h:outputText value="#{item.priceValidity}" /> 
+							        </p:column>
+							        <p:column headerText="#{dbResource['wq.label.shipmentVal']}" id="rsShipmentValidity"   width="100">
+								         <h:outputText value="#{item.shipmentValidity}" > 
+								             <f:convertDateTime pattern="dd/MM/yyyy" />
+								         </h:outputText>
+							        </p:column>
+									<p:column headerText="#{dbResource['wq.label.leadTime']}" id="rsLeadTime"  width="80">
+										 <h:outputText  value="#{item.leadTime}" /> 
+							        </p:column>
+							</p:dataTable>
+							<h:panelGrid columns="2" columnClass="webpromo_standardTCsPanel,webpromo_specialTCsPanel" >
+							    <p:column>
+							        <p:panel style="height:200px;">
+										<p:dataTable id="standardTermsAndConsTable" var="item" 
+										value="#{progRfqSubmitMB.standTermsAndCons}" scrollable="true" scrollWidth="435" 
+										emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+									        <p:column style="text-align:left;vertical-align:top;" width="430">  
+									             <h:outputText id="item"   value="#{item}" escape="false" style="align:left"/>
+									        </p:column> 
+										</p:dataTable> 
+									</p:panel>     
+								</p:column>
+								<p:column>
+								     <p:panel style="height:200px;">
+						                <p:dataTable id="specialTermsAndConsTable" 
+						                var="item" value="#{progRfqSubmitMB.specTermsAndCons}" scrollable="true" scrollWidth="435" 
+						                emptyMessage="#{dbResource['wq.message.noRecordFound']}." >  
+							                <p:column style="text-align:left;vertical-align:top;" >  
+										           <p:column style="text-align:left;" width="430" >  
+										             <h:outputText id="item"   value="#{item}" escape="false" style="align:left"/>
+										          </p:column>  
+										    </p:column> 
+									    </p:dataTable>
+									 </p:panel>
+				                </p:column>
+					      </h:panelGrid>
+						</p:panel>
+				</p:scrollPanel>
+				<p:commandButton value="#{dbResource['wq.button.download']}" ajax="false" >
+		        		<p:fileDownload value="#{progRfqSubmitMB.file}" />  	   
+				</p:commandButton>
+				<p:spacer width="20" height="10" /> 
+				<p:commandButton value="#{dbResource['wq.button.close']}" 
+						      update=":form:systemInfo" onclick="PF('submitRfqResultDialog').hide();" >
+				</p:commandButton>
+				</h:form>
+				
+		</p:dialog>	
+</html>

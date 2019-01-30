@@ -1,0 +1,75 @@
+package com.avnet.emasia.webquote.masterData.ejb;
+
+
+import java.util.List;
+import java.util.logging.Logger;
+
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import com.avnet.emasia.webquote.entity.DataSyncError;
+import com.avnet.emasia.webquote.utilities.DateUtils;
+
+/**
+ * @author Tonmy,Li(906893)
+ * @Created on 2013-02-4
+ * 
+ */
+@Stateless
+public class DataSyncErrorSB {
+	
+    @PersistenceContext(unitName = "Server_Source")
+    private EntityManager em;
+    private static Logger logger = Logger.getLogger(DataSyncErrorSB.class.getName());
+    public DataSyncErrorSB() {
+
+	}
+    
+    /*
+     * Persist Error message.
+     */
+    public void createErrorMsg(String errorMsg,String fileName, String funcCode, int record)
+    {
+    	logger.info("call CheckErrorMsg method");
+    	DataSyncError dse = new DataSyncError();
+    	dse.setCreatingDate(DateUtils.getCurrentAsiaDateObj());
+    	dse.setErrorMessage(errorMsg);
+    	dse.setFileName(fileName);
+    	dse.setFunctionCode(funcCode);
+    	dse.setErrorRecord(String.valueOf(record));
+        em.persist(dse);
+    }
+    
+    /*
+     * Persist Error message.
+     */
+    public void createErrorMsg(DataSyncError dse)
+    {
+    	logger.info("call createErrorMsg method");
+        em.persist(dse);
+        em.flush();
+    	em.clear();
+    }
+    
+    
+    /*
+     * Persist Error message.
+     */
+    public void persistError(List<DataSyncError> errorList )
+    {
+    	
+    	logger.fine("call persistError");
+    	if(errorList!=null && errorList.size()>0)
+		{
+			for(int i = 0 ; i < errorList.size() ; i ++)
+			{
+				em.persist(errorList.get(i));
+				em.flush();
+		    	em.clear();
+			}
+		}
+
+    }
+
+  
+}

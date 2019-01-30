@@ -1,0 +1,686 @@
+<ui:composition template="/templates/MasterLayoutAutoFit.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:avnet="http://emasia.avnet.com"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	<ui:define name="windowTitle">
+		#{dbResource['wq.title.webQuoteVersion']}
+	</ui:define>
+	<f:metadata>         
+	   
+	</f:metadata>
+	<ui:define name="content"> 
+	
+			    <p:growl id="growl_submit" autoUpdate="true" showDetail="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" />
+			    <h:form id="form_submit" enctype="multipart/form-data" onkeypress="if (event.keyCode == 13) { document.getElementById('form_submit:basicDetails_soldToCustomerNumber').blur(); document.getElementById('form_submit:basicDetails_endCustomerNumber').blur();return false; }">
+	            <!-- <p:commandLink id="asd" value="asdas">
+	            	<avnet:convertBreakList2   target="asd"  targetField="das" />
+	            </p:commandLink> -->
+	             <p:column>
+					 <h:outputText id="systemInfo" value="#{progRfqSubmit.systemInfo}" /> 
+			     </p:column>
+				<p:panel id="submissionHeaderPanel" header="#{dbResource['wq.header.headerLevel']}" style="width:100%;" toggleable="true">
+				  <p:messages id="messages_submit" for="messages_submit_target" autoUpdate="true" closable="true" showDetail="true"  escape="false" /> 
+				    <p:panelGrid style="width:100%"> 
+				     <p:row>
+				      	<p:column>
+				      		<h:outputText value="#{dbResource['wq.label.region']}:"  escape="false" />
+							<h:selectOneMenu id="region"  value="#{progRfqSubmitMB.region}" style="width:110px;">
+								<f:selectItems value="#{progRfqSubmitMB.regionList}" />
+								<p:ajax event="change" update=":menu_form:shoppingCartInfoLink,form_submit"
+									listener="#{progRfqSubmitMB.regionChanged}"
+									oncomplete="stop();" global="false" onstart="start();"
+									onerror="stopWithError();" />
+							</h:selectOneMenu>
+				      	</p:column>
+					 </p:row>
+					 <c:choose> 
+					 	<c:when test="#{!progRfqSubmitMB.salesRole}">
+					 		 <p:row>  
+				            <p:column>
+					            <h:outputText value="#{dbResource['wq.label.salesmanEmpCode']}" style="padding:0px 0px 0px 3px"/>
+								<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+								<h:outputText value=":" style="padding:0px 3px 0px 0px"/>
+								<p:autoComplete id="salesEmployeeNumber" queryDelay="300" cache="false" cacheTimeout="30000" minQueryLength="3" maxResults="10" value="#{progRfqSubmitMB.quote.sales.employeeId}" 
+									completeMethod="#{progRfqSubmitMB.autoCompleteSalesNumber}" >							
+									<p:ajax event="itemSelect" update=":growl_submit,:form_submit:salesEmployeeName,:form_submit:salesEmployeeNumber,:form_submit:salesTeam,
+											:form_submit:uploadBtn,
+											:form_submit:basicDetails_soldToCustomerNumber,
+											:form_submit:soldToCustSearch,
+											:form_submit:crtNewSoldToCustmr,
+											:form_submit:basicDetails_endCustomerNumber,
+											:form_submit:endCustSearch,
+											:form_submit:crtNewEndCust,
+											:form_submit:submissionTable" listener="#{progRfqSubmitMB.updateSalesName}"  />															
+								</p:autoComplete>
+								<h:outputText value="#{dbResource['wq.label.salesman']}" style="padding:0px 0px 0px 3px"/>
+								<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+								<h:outputText value=":" style="padding:0px 3px 0px 0px"/>							
+								<p:autoComplete id="salesEmployeeName" queryDelay="300" cache="true" cacheTimeout="30000" minQueryLength="5" maxResults="10" value="#{progRfqSubmitMB.quote.sales.name}" 
+									completeMethod="#{progRfqSubmitMB.autoCompleteSalesName}">								
+									<p:ajax event="itemSelect" update=":growl_submit,:form_submit:salesEmployeeNumber,:form_submit:salesEmployeeName,:form_submit:salesTeam,:form_submit:uploadBtn,
+											:form_submit:uploadBtn,
+											:form_submit:basicDetails_soldToCustomerNumber,
+											:form_submit:soldToCustSearch,
+											:form_submit:crtNewSoldToCustmr,
+											:form_submit:basicDetails_endCustomerNumber,
+											:form_submit:endCustSearch,
+											:form_submit:crtNewEndCust,
+											:form_submit:submissionTable" listener="#{progRfqSubmitMB.updateSalesNumber}"  />															
+								</p:autoComplete>
+				                <h:outputText value="#{dbResource['wq.label.team']}:" style="padding:0px 3px 0px 3px"/>
+							    <p:inputText id="salesTeam" value="#{progRfqSubmitMB.quote.team.name}" styleClass="input_text_half" readonly="true"  style="width:250px !important;color: black;background-color: #dddddd;"/>
+
+							
+				                
+				                
+				                <ui:remove>
+				                <h:outputText value="#{dbResource['wq.label.salesmanName']}" style="padding:0px 3px 0px 3px"/> 
+				                <h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+				                <h:outputText value=":" style="padding:0px 3px 0px 0px"/>	
+						    	<p:selectOneMenu id="salesmanName" value="#{progRfqSubmitMB.quote.sales.name}" style="width:130px;" >
+						    	     <f:selectItem itemValue="" itemLabel="-Select-" /> 
+								     <f:selectItems value="#{progRfqSubmitMB.salesList}" var="sales" itemValue="#{sales.name}" itemLabel="#{sales.name}"/>
+								     <p:ajax event="change"  update=":form_submit:employeeId" listener="#{progRfqSubmitMB.updateSalesman}" />
+							    </p:selectOneMenu>	
+                                <p:spacer width="30" height="10" /> 
+						    	<h:outputText for="employeeId" value="#{dbResource['wq.label.EmpID']} : " />
+						    	<h:outputText id="employeeId"  value="#{progRfqSubmitMB.quote.sales.employeeId}" />
+						    	</ui:remove>
+						    </p:column>
+					    	</p:row>
+					 	</c:when>
+					 	<c:otherwise>
+					 	 <p:row>  
+				            <p:column>
+					 		 <h:outputText value="#{dbResource['wq.label.salesmanEmpCode']}" style="padding:0px 0px 0px 3px"/>
+							<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+							<h:outputText value=":" style="padding:0px 3px 0px 0px"/>
+							<p:inputText id="salesEmployeeNumber" value="#{progRfqSubmitMB.quote.sales.employeeId}" styleClass="input_text_half" readonly="true"  style="height:20px;width:100px !important;color: black;background-color: #dddddd;"/>
+							 
+							<h:outputText value="#{dbResource['wq.label.salesman']}" style="padding:0px 0px 0px 3px"/>
+							<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+							<h:outputText value=":" style="padding:0px 3px 0px 0px"/>
+							<p:inputText id="salesEmployeeName" value="#{progRfqSubmitMB.quote.sales.name}" styleClass="input_text_half" readonly="true"  style="height:20px;width:150px !important;color: black;background-color: #dddddd;"/>							
+							 
+			                <h:outputText value="#{dbResource['wq.label.team']}:" style="padding:0px 3px 0px 3px"/>
+						    <p:inputText id="salesTeam" value="#{progRfqSubmitMB.quote.team.name}" styleClass="input_text_half" readonly="true"  style="height:20px;width:200px !important;color: black;background-color: #dddddd;"/>
+					 		</p:column>
+					    	</p:row>
+					 	</c:otherwise>
+					 </c:choose>
+					 
+					 </p:panelGrid>
+					
+					<p:panelGrid style="width:100%;"> 
+					        <p:row>  
+					            <p:column>
+					    	        <h:outputText value="#{dbResource['wq.label.SoldToCode']}" style="padding:0px 0px 0px 3px"/>
+							    	<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+									<h:outputText value=":" style="padding:0px 3px 0px 0px"/>	
+									<p:inputText id="basicDetails_soldToCustomerNumber"
+										value="#{progRfqSubmitMB.quote.soldToCustomer.customerNumber}" disabled="#{progRfqSubmitMB.emptySalesMan()}" > 
+										 <p:ajax event="valueChange" update=":growl_submit,:form_submit:messages_submit,:form_submit:basicDetails_soldToCustomerName" listener="#{progRfqSubmitMB.updateSoldToCustomerName}" />															
+									</p:inputText> 
+		                            <p:spacer width="10" height="10" /> 
+									<h:outputText value="#{dbResource['wq.label.SoldToParty']}" style="padding:0px 0px 0px 3px"/>
+									<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+									<h:outputText value=":" style="padding:0px 3px 0px 0px"/>
+									<p:inputText id="basicDetails_soldToCustomerName"  value="#{progRfqSubmitMB.quote.soldToCustomer.customerFullName}" 
+									      readonly="true" style="color: black;background-color: #dddddd;" >	
+									      <p:tooltip id="toolForbasicDetails_soldToCustomerName" for="basicDetails_soldToCustomerName" value="#{progRfqSubmitMB.quote.soldToCustomer.customerFullName}"/> 									
+									</p:inputText>
+									<p:spacer width="10" height="10" /> 
+									<p:commandLink id="basicDetails_soldToDelete" rendered="#{progRfqSubmitMB.deleteCustomer}">
+								        <h:graphicImage url="./../resources/images/iconCross.gif" styleClass="iconLink"/>				        	
+						        	</p:commandLink>	
+						        	<p:commandLink id="soldToCustSearch" update=":form_customer_search:customerSearch_panel" action="#{progRfqSubmitMB.changeToSoldToCodeSearch}" oncomplete="PF('customer_dialog').show();stop();" global="false"
+												onstart="start();" onerror="stopWithError();" disabled="#{progRfqSubmitMB.emptySalesMan()}">
+						        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>		        	
+						        	</p:commandLink> 	
+									<p:spacer width="10" height="10" /> 																	
+									<h:outputText value="" style="padding:0px 3px 0px 3px"/>
+						        	<p:commandButton id="crtNewSoldToCustmr" value="#{dbResource['wq.label.crtNewCustmr']}"  disabled="#{!progRfqSubmitMB.createProspectiveCustomerButtonDisplay or progRfqSubmitMB.emptySalesMan()}" actionListener="#{progRfqSubmitMB.updateNewProspectiveCustomer}" oncomplete="PF('newProspectiveCustomer_dialog').show()" update="newProspectiveCustomer_dialog"/>  											
+					    	       
+					    	        <p:spacer width="30" height="10" /> 
+					    	        <h:outputText value="#{dbResource['wq.label.EndCustomerCode']}" style="padding:0px 0px 0px 3px"/>
+									<h:outputText value=":" style="padding:0px 3px 0px 0px"/>
+										
+									<ui:remove><p:inputText id="basicDetails_endCustomerNumber" 
+									value="#{progRfqSubmitMB.quote.endCustomer.customerNumber}"  
+									disabled="#{progRfqSubmitMB.emptySalesMan()}" > 
+										<p:ajax event="blur" update=":growl_submit,:form_submit:basicDetails_endCustomerName,:form_submit:basicDetails_endCustomerNumber" listener="#{progRfqSubmitMB.updateEndCustomerName}"/>															
+									</p:inputText>
+									</ui:remove>
+									<p:autoComplete id="basicDetails_endCustomerNumber"
+										disabled="#{progRfqSubmitMB.emptySalesMan()}"
+										queryDelay="300" cache="false" cacheTimeout="30000"
+										minQueryLength="3" maxResults="10"
+										forceSelection="true"
+										emptyMessage="#{dbResource['wq.message.noRecordFound']}."
+										value="#{progRfqSubmitMB.quote.endCustomer.customerNumber}" size="18"
+										update=":growl_submit,:form_submit:basicDetails_endCustomerName,:form_submit:basicDetails_endCustomerNumber"
+										completeMethod="#{progRfqSubmitMB.autoCompleteEndCustomerNumberLabelList}">
+											<p:ajax event="itemSelect"
+											update=":growl_submit,:form_submit:basicDetails_endCustomerName,:form_submit:basicDetails_endCustomerNumber"
+											listener="#{progRfqSubmitMB.updateEndCustomerName}" />
+											<p:ajax event="change" listener="#{progRfqSubmitMB.setNeedSave(true)}" /> 
+									</p:autoComplete>
+									<p:spacer width="15" height="10" /> 
+									<h:outputText value="#{dbResource['wq.label.endCust']}" style="padding:0px 0px 0px 3px"/>
+									<h:outputText value=":" style="padding:0px 3px 0px 0px"/>
+									<p:inputText id="basicDetails_endCustomerName"  value="#{progRfqSubmitMB.quote.endCustomer.customerFullName}" 
+									      readonly="true" style="color: black;background-color: #dddddd;">	
+									      <p:tooltip id="toolForbasicDetails_endCustomerName" for="basicDetails_endCustomerName" value="#{progRfqSubmitMB.quote.endCustomer.customerFullName}"/> 									
+									</p:inputText>
+									<p:spacer width="10" height="10" /> 
+									<p:commandLink id="basicDetails_endDelete" rendered="#{progRfqSubmitMB.deleteCustomer}">
+								        <h:graphicImage url="./../resources/images/iconCross.gif" styleClass="iconLink"/>				        	
+						        	</p:commandLink>	
+						        	 
+						        	<p:commandLink id="endCustSearch" update=":form_customer_search:customerSearch_panel" 
+						        		action="#{progRfqSubmitMB.changeToEndCustomerCodeSearch}" oncomplete="PF('customer_dialog').show();stop();" global="false"
+												onstart="start();" onerror="stopWithError();" disabled="#{progRfqSubmitMB.emptySalesMan()}">
+					        			<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>		        	
+						        	</p:commandLink>	
+									<p:spacer width="10" height="10" /> 																	<!-- :form_customer_new -->
+									<h:outputText value="" style="padding:0px 3px 0px 3px"/>
+						        	<p:commandButton id="crtNewEndCust" value="#{dbResource['wq.label.crtEndCust']}" disabled="#{!progRfqSubmitMB.createProspectiveCustomerButtonDisplay or progRfqSubmitMB.emptySalesMan()}" actionListener="#{progRfqSubmitMB.updateNewProspectiveEndCustomer}" oncomplete="PF('newProspectiveCustomer_dialog').show()" update="newProspectiveCustomer_dialog"/>  											
+						       </p:column>
+						    </p:row>
+						    
+						    
+						    <p:row> 
+						        <p:column>
+									<h:outputLabel for="remarksToCustomer" value="#{dbResource['wq.label.remarks']}" />
+									<h:outputText value=":" style="padding:0px 3px 0px 0px"/>
+									<p:inputTextarea  id="remarksToCustomer" value="#{progRfqSubmitMB.quote.remarks}"  rows="2" cols="35" >
+										<p:ajax event="change"  listener="#{progRfqSubmitMB.remarksChange}"/>
+									</p:inputTextarea>
+									&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;		
+								   <h:outputText value="#{dbResource['wq.label.refExchCurr']}:"  escape="false" />
+									<h:selectOneMenu id="exChange_Currency" value="#{progRfqSubmitMB.rfqCurr}">							
+				                        <f:selectItems value="#{progRfqSubmitMB.exCurrencyList}" />
+									</h:selectOneMenu>
+										
+								</p:column>
+							</p:row>
+							<p:row> 
+						        <p:column>
+									<p:commandButton value="#{dbResource['wq.button.updateToItem']}" update=":form_submit:submissionTable"
+						     			action="#{progRfqSubmitMB.updateSoldToAndEndCustomerToItem}"/>
+								</p:column>
+							</p:row>
+					</p:panelGrid>
+				</p:panel>
+				<p:panel header="#{dbResource['wq.header.itemLevel']}"  id="submissionBody" position="center" style="margin:0 auto;width:100%;" toggleable="true">
+					<p:contextMenu for="submissionTable" widgetVar="cMenu">      
+					   <p:menuitem value="#{dbResource['wq.header.editCell']}" icon="ui-icon-search" onclick="PF('submissionTableWidget').showCellEditor();return false;"/>     
+					   <p:menuitem value="#{dbResource['wq.header.hideMenu']}" icon="ui-icon-close" onclick="PF('cMenu').hide()"/>     
+					</p:contextMenu> 
+					<p:dataTable id="submissionTable" widgetVar="submissionTableWidget"
+					         var="item"		
+					 	     value="#{progRfqSubmitMB.quote.quoteItems}"
+					 	     styleClass="submissionTable"
+	                 	     rowStyleClass="#{item.error ? 'redRow' : null}"
+			                 paginator="true" rows="25"
+			                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+			                 rowsPerPageTemplate="25,50,100"
+			                 paginatorPosition="bottom"
+			                 rowIndexVar="rowIndex"
+			                 emptyMessage="#{dbResource['wq.message.noRecordWidCriteria']}" 
+			                 scrollable="true"
+	                 	     scrollHeight="200"
+	                 	     selection="#{progRfqSubmitMB.selectedQuoteItem}"
+	                 	     editable="true" editMode="cell" 
+	                 	      >
+					         
+					        <p:ajax event="cellEdit" listener="#{progRfqSubmitMB.onCellEdit}" update=":growl_submit" />  
+					      
+							<p:column headerText="#{dbResource['wq.label.no']}" id="sequenceNumber"  width="40">
+								<h:outputText value="#{rowIndex+1}" /> 
+							</p:column>
+							 <p:column headerText="" id="delete"  width="40">
+				                <p:commandLink id="deleteItem"  
+									  action="#{progRfqSubmitMB.removeRfqItemAction}" update=":form_submit:submissionTable">
+									 <h:graphicImage url="./../resources/images/iconCross.gif" styleClass="iconLink"/>
+									 <f:setPropertyActionListener value="#{rowIndex}" target="#{progRfqSubmitMB.selectedRowIndex}" />
+								</p:commandLink>
+						     </p:column>
+							<p:column headerText="#{dbResource['wq.label.mfr']}" id="mfr"  width="50" styleClass="tdmandatoryvalue readOnlyCell">
+						        <h:outputText value="#{item.requestedMfr.name}" /> 
+					        </p:column>
+							<p:column headerText="#{dbResource['wq.label.reqPN']}" id="requestedPn" styleClass="tdmandatoryvalue readOnlyCell column_fullMfrPart">
+						        <h:outputText value="#{item.requestedPartNumber}" /> 
+					   		</p:column>
+				            <p:column headerText="#{dbResource['wq.header.soldToCustomerCode']}&#042;" sortBy="#{item.soldToCustomer.customerNumber}"
+				            	 styleClass="editCell tdmandatoryvalue column_soldToCustomerNumber" >
+						        <p:cellEditor>  
+							        <f:facet name="output">
+							        	<h:outputText value="#{item.soldToCustomer.customerNumber}"/>
+							        </f:facet>
+							        <f:facet name="input">
+						                <p:inputText style="width:80px" value="#{item.soldToCustomer.customerNumber}" id="soldToCustomerNumber_in" disabled="#{progRfqSubmitMB.emptySalesMan()}"  >
+						                	 <p:ajax event="change" update=":growl_submit,submissionTable" listener="#{progRfqSubmitMB.updateSoldToCustomerNameInProgRfqItemList(rowIndex)}" />
+						                </p:inputText>
+							         </f:facet>
+						          </p:cellEditor> 
+					        </p:column>
+					        
+					         <p:column headerText="#{dbResource['wq.header.soldToCustomerName']}" width="200"  styleClass="readOnlyCell column_soldToCustomerChineseName" >
+						        <h:outputText value="#{item.soldToCustomerFullName}"/>
+					        </p:column> 
+					        
+					        <p:column headerText="#{dbResource['wq.label.EndCustomerCode']}" sortBy="#{item.endCustomer.customerNumber}" 
+					         styleClass="column_endCustomerNumber  editCell" >
+						        <p:cellEditor>  
+							        <f:facet name="output">
+						        		<h:outputText value="#{item.endCustomer.customerNumber}"/>
+						        	</f:facet>
+							         <f:facet name="input">
+							            <p:autoComplete id="basicDetails_endCustomerNumber"
+											disabled="#{progRfqSubmitMB.emptySalesMan()}"
+											style="width:70px;margin-left:-0px"
+											queryDelay="300" cache="false" cacheTimeout="30000"
+											minQueryLength="3" maxResults="10"
+											value="#{item.endCustomer.customerNumber}" size="10"
+											forceSelection="true"
+											emptyMessage="#{dbResource['wq.message.noRecordFound']}."
+											update=":growl_submit,:form_submit:submissionTable"
+											completeMethod="#{progRfqSubmitMB.autoEndCustomerNumberLabelListForItem}">
+												<p:ajax event="itemSelect"
+												update=":growl_submit,:form_submit:submissionTable"
+												listener="#{progRfqSubmitMB.updateEndCustomerNameInProgRfqItemList(rowIndex)}" />
+												<p:ajax event="change" listener="#{progRfqSubmitMB.setNeedSave(true)}" /> 
+										</p:autoComplete>
+							         </f:facet>
+						          </p:cellEditor>
+					        </p:column>  
+					        
+					         <p:column headerText="#{dbResource['wq.label.endCustName']}" sortBy="#{item.endCustomerFullName}" width="200" styleClass="readOnlyCell">
+						        <h:outputText value="#{item.endCustomerFullName}"/>
+					        </p:column>
+					        <p:column headerText="#{dbResource['wq.label.MPQ']}" id="mpq"  width="80" styleClass="readOnlyCell column_mpq">
+						        <h:outputText value="#{item.mpq}" > 
+									<f:convertNumber  pattern="#,###"/>
+								</h:outputText>
+					        </p:column>
+							<p:column headerText="#{dbResource['wq.label.moq']}" id="moq"   width="80" styleClass="readOnlyCell column_moq">
+						        <h:outputText value="#{item.moq}" >
+						        	<f:convertNumber  pattern="#,###" />
+								</h:outputText> 
+					        </p:column>
+					        <p:column headerText="#{dbResource['wq.label.reqQty']}&#042;" id="requiredQty"   width="80" styleClass="editCell tdmandatoryvalue" >
+						        <p:cellEditor>  
+					                <f:facet name="output">
+					                      <h:outputText id="requiredQtyProg_out" value="#{item.requestedQty}" >
+							                      <f:convertNumber  pattern="#,###" />
+										  </h:outputText>
+					                </f:facet>  
+					                <f:facet name="input">
+					                		<p:inputText value="#{item.requestedQty}" style="width:65px" id="requiredQtyProg_in"  required="true" onkeyup="updateProgRequiredQty(#{rowIndex})">
+					                        </p:inputText>
+					                </f:facet>  
+					            </p:cellEditor>
+					        </p:column>
+					        <p:column headerText="#{dbResource['wq.label.trgResale']}" id="targetResale"   width="80">
+						         <p:cellEditor>  
+					                <f:facet name="output">
+						                 <h:outputText id="targetResaleProg_out" value="#{item.targetResale}" >
+						                    	<f:convertNumber minFractionDigits="5"  pattern="#,##0.00000"  />
+									     </h:outputText>
+					                </f:facet>  
+					                <f:facet name="input">
+						                <p:inputText value="#{item.targetResale}" style="width:65px" id="targetResaleProg_in" onkeyup="updateProgTargetResale(#{rowIndex})">
+						                </p:inputText>
+						            </f:facet>  
+					            </p:cellEditor> 
+					        </p:column>
+					        
+					        <ui:remove>
+						        <p:column headerText="#{dbResource['wq.label.finalPrice']}" id="finalPrice"   width="80">
+							         <p:cellEditor>  
+						                <f:facet name="output">
+							                 <h:outputText id="finalPriceProg_out" value="#{item.finalQuotationPrice}" >
+							                    	<f:convertNumber minFractionDigits="5"  pattern="#,##0.00000"  />
+										     </h:outputText>
+						                </f:facet> 
+						                <f:facet name="input">
+							                <p:inputText value="#{item.finalQuotationPrice}" id="finalPriceProg_in" onkeyup="updateProgFinalPrice(#{rowIndex})">
+							                </p:inputText>
+							            </f:facet>  
+						            </p:cellEditor> 
+						        </p:column>
+					        </ui:remove>
+					        
+							<p:column headerText="#{dbResource['wq.message.orderQty']}"  width="110" styleClass="readOnlyCell">
+						        <h:outputText id="orderQtys"  value="#{progRfqSubmitMB.getOrderQties(item)}"  escape="false">
+									<avnet:convertBreakList targetField="CVT_BREAKINT" />
+								</h:outputText>
+					        </p:column>
+					        
+					 		<p:column headerText="#{dbResource['wq.label.salesCost']}" styleClass="readOnlyCell" width="75">
+					            <h:outputText value="#{progRfqSubmitMB.getOrderQties(item)}"  escape="false">
+					            	<avnet:convertBreakList targetField="CVT_SALESCOST" />
+								</h:outputText>
+					        </p:column>
+					        
+					        <p:column headerText="#{dbResource['wq.label.suggestedResale']}" styleClass="readOnlyCell" width="75">
+					           <h:outputText value="#{progRfqSubmitMB.getOrderQties(item)}"  escape="false">
+									<avnet:convertBreakList targetField="CVT_SUGGESTSALE" />
+								</h:outputText>
+					        </p:column>
+					        
+					        <p:column headerText="#{dbResource['wq.header.normSellPrice']}" styleClass="readOnlyCell" width="75">
+					            <h:outputText value="#{progRfqSubmitMB.getDisplayCurrMinSell(item)}"  width="100" rendered="#{item.minSellPrice!=null and item.minSellPrice>0}" >
+					            	<f:convertNumber pattern="#,##0.00000" minFractionDigits="5"/>
+					            </h:outputText>
+								<h:outputText id="orderQtysMinSellPrice"  value="#{progRfqSubmitMB.getOrderQties(item)}" escape="false" rendered="#{!(item.minSellPrice != null and item.minSellPrice>0)}" >
+									<avnet:convertBreakList targetField="CVT_NORMSELL" />
+								</h:outputText>
+					        </p:column> 
+							<p:column headerText="#{dbResource['wq.label.itmRemark']}" id="itemRemarks"  width="120">
+							    <p:cellEditor>  
+					                <f:facet name="output"><h:outputText value="#{item.remarks}" /></f:facet>  
+					                <f:facet name="input"><p:inputText value="#{item.remarks}" style="width:100px" id="itemRemarksInput" /></f:facet>  
+					            </p:cellEditor>
+					        </p:column>
+					        <p:column headerText="#{dbResource['wq.label.attachment']}" id="attachment" width="80">
+					                <p:commandLink id="addAtt" 
+					                    actionListener="#{progRfqSubmitMB.updateAttachmentAction}" 
+					                    onclick="PF('attachment_upload_dialog').show()" >
+						        		<f:attribute name="selectedPm" value="#{rowIndex}" />	
+						        		<h:graphicImage url="./../resources/images/icon_upload.png" styleClass="iconLink"/>	
+						        	</p:commandLink>
+						        	<p:spacer width="10" height="5" /> 	        				        						        
+						        	<p:commandLink id="lookAtt"  rendered="#{item.attachments!=null and !item.attachments.isEmpty()}" update=":form_att_list:attachment_panel" actionListener="#{progRfqSubmitMB.updateAttachmentAction}" onclick="PF('attachment_list_dialog').show()" >
+						        	    <f:attribute name="selectedPm" value="#{rowIndex}" />
+						        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>			        	
+						        	</p:commandLink> 
+					        </p:column>
+					       
+					</p:dataTable>
+					<f:facet name="footer">  
+						<p:commandButton value="#{dbResource['wq.label.reset']}"
+						     update=":growl_submit,:form_submit:submissionTable,:form_submit:submissionHeaderPanel"
+						     action="#{progRfqSubmitMB.resetAction}">
+							</p:commandButton>
+						 
+						<p:spacer width="20" height="10" /> 
+						<p:commandButton value="#{dbResource['wq.button.delAll']}" 
+						      update=":form_submit" action="#{progRfqSubmitMB.deleteAllAction}" >
+						</p:commandButton>
+						<p:spacer width="20" height="10" /> 
+						<p:commandButton id="saveCart" value="#{dbResource['wq.button.saveCart']}"
+						     update=":growl_submit,:form_submit:messages_submit,:form_submit:submissionTable,:menu_form:shoppingCartInfoLink,:form_submit:systemInfo"
+						     action="#{progRfqSubmitMB.saveAsCartAction}"  style="#{progRfqSubmitMB.needSave ? 'background:orange' : ''}" >
+						</p:commandButton>
+						<p:spacer width="20" height="10" /> 
+						<p:commandButton  id="downloadAll" value="#{dbResource['wq.header.exportAll']}" ajax="false" update=":growl_submit,:form_submit:messages_submit" onclick="PrimeFaces.monitorDownload(start, stop)" >  
+		        			<p:fileDownload value="#{progRfqSubmitMB.downloadAll}" /> 
+		        		</p:commandButton>
+		        		<p:spacer width="20" height="10" /> 
+						<p:fileUpload label="#{dbResource['wq.button.chooseFile']}" value="#{progRfqSubmitMB.uploadFile}" allowTypes="/(\.|\/)(xls|xlsx|XLS|XLSX)$/" mode="simple" skinSimple="true"/>	
+						<p:commandButton id="uploadBtn" value="#{dbResource['wq.button.upload']}" icon="ui-icon-circle-check" 
+							update=":growl_submit,:form_submit:messages_submit,:form_submit:submissionTable,:form_submit:systemInfo" 
+							actionListener="#{progRfqSubmitMB.handleFileUpload}" onclick="PrimeFaces.monitorDownload(start, stop)" disabled="#{progRfqSubmitMB.emptySalesMan()}" ajax="false" />
+						<p:spacer width="20" height="10" />
+						<p:commandButton value="#{dbResource['wq.button.submit']}" 
+						     update=":growl_submit,:form_submit:messages_submit,:form_submit,:form_submit:systemInfo"
+						     action="#{progRfqSubmitMB.submitAction}">
+						</p:commandButton>
+						<p:spacer width="20" height="10" /> 
+						<ui:remove><p:commandButton value="#{dbResource['wq.button.close']}" 
+						      action="#{progRfqSubmitMB.closeAction}" >
+						     </p:commandButton>
+						</ui:remove>
+						
+	                </f:facet>
+				</p:panel>
+		</h:form>		
+		
+		<p:confirmDialog id="cLoseConfirmDialog" message="#{dbResource['wq.dialog.closeConfirm']}"  
+                header="#{dbResource['wq.digform:systemInfolog.header.save']}" severity="alert" widgetVar="closeConfirmation" appendTo="@(body)">  
+		        <p:commandButton id="confirmClose" value="#{dbResource['wq.button.yes']}" update=":growl_submit,:form_submit:systemInfo" oncomplete="PF('closeConfirmation').hide()"  
+		                    actionListener="#{progRfqSubmitMB.saveAsCartActionForClose}" />  
+		        <p:commandButton id="decline" value="#{dbResource['wq.button.no']}" onclick="PF('closeConfirmation').hide();PF('submitRfqDialog').hide();" update=":form_submit:systemInfo" type="button" />    
+        </p:confirmDialog>  
+        
+       
+        <p:dialog id="newProspectiveCustomer_dialog" header="#{dbResource['wq.header.new']} #{progRfqSubmitMB.newCustomerTitle} #{dbResource['wq.header.ifNeed']}"
+        		 widgetVar="newProspectiveCustomer_dialog" resizable="false" modal="true"  appendTo="@(body)" >
+					 <h:form id="form_customer_new">
+						<p:growl id="newProspectiveCustomerGrowl"  showDetail="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" /> 	
+						<h:panelGrid columns="4" cellpadding="0" style="padding:4px 3px 4px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.custmrName']}" style="padding:0px 3px 0px 3px"/>
+							<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+							<h:outputText value=":" style="padding:0px 3px 0px 0px"/>							
+							<p:inputText id="newProspectiveCustomer_customerName" value="#{progRfqSubmitMB.newProspectiveCustomerName1}" maxlength ="40"  />
+
+						</h:panelGrid>	
+						<h:panelGrid id="countryCityPanelGrid" columns="12" cellpadding="0" style="padding:4px 3px 4px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.country']}" style="padding:0px 3px 0px 3px"/>
+							<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+							<h:outputText value=":" style="padding:0px 3px 0px 0px"/>							
+							<p:selectOneMenu value="#{progRfqSubmitMB.newProspectiveCustomerCountry}">
+								<f:selectItems value="#{progRfqSubmitMB.countrySelectList}" />
+							</p:selectOneMenu>
+							
+			                <h:outputText value="#{dbResource['wq.label.city']}" style="padding:0px 3px 0px 3px"/>
+							<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+							<h:outputText value=":" style="padding:0px 3px 0px 0px"/>							
+							<p:inputText value="#{progRfqSubmitMB.newProspectiveCustomerCity}" maxlength ="35"  style="width:160px"/>
+										
+							<h:outputText value="#{dbResource['wq.label.salsOrg']}" style="padding:0px 3px 0px 3px"/>
+							<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+							<h:outputText value=":" style="padding:0px 3px 0px 0px"/>							
+							<p:selectOneMenu value="#{progRfqSubmitMB.newProspectiveCustomerSalesOrg}">
+								<f:selectItems value="#{progRfqSubmitMB.salesOrgSelectList}" />  
+							</p:selectOneMenu>
+							
+						</h:panelGrid>	
+						<h:panelGrid columns="5" cellpadding="0" style="padding:4px 3px 4px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.address']}" style="padding:0px 3px 0px 3px"/>
+							<h:outputText value="" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+							<h:outputText value=":" style="padding:0px 3px 0px 0px"/>							
+							<p:inputText value="#{progRfqSubmitMB.newProspectiveCustomerAddress3}" maxlength ="35" style="width:300px"/>
+
+						</h:panelGrid>	
+					 	<p:commandButton id="newProspectiveCustomer_okButton" value="#{dbResource['wq.button.ok']}" update="customer_confirmation_dialog,:form_customer_new:newProspectiveCustomerGrowl" action="#{progRfqSubmitMB.createProspectiveCustomerWithoutForcing}" style="margin:0px 0px 10px 0px"/>
+					 	<p:commandButton id="newProspectiveCustomer_cancelButton" value="#{dbResource['wq.button.cancel']}" style="margin:0px 0px 10px 0px" oncomplete="PF('newProspectiveCustomer_dialog').hide();"/>
+
+	         </h:form>
+			</p:dialog>
+		 
+		  	<!-- :form_customer_confirm:prospectiveCustomerConfirmation, -->
+		 <p:dialog id="customer_confirmation_dialog" header="#{dbResource['wq.header.new']} #{progRfqSubmitMB.newCustomerTitle} #{dbResource['wq.header.ifNeed']}" widgetVar="customer_confirmation_dialog" resizable="true" modal="true" appendTo="@(body)">
+		   		<h:form id="form_customer_confirm">
+				 <h:panelGrid id="prospectiveCustomerConfirmation" columns="1">
+						<h:panelGrid columns="1" cellpadding="0" style="padding:4px 10px 4px 10px;" rendered="#{!progRfqSubmitMB.newProspectiveCustomerDuplicated}">
+							<h2>The #{progRfqSubmitMB.newCustomerTitle}
+							#{progRfqSubmitMB.duplicatedCustomerCode}
+							#{dbResource['wq.label.sapCreation']}</h2>
+						</h:panelGrid>
+						<h:panelGrid columns="1" cellpadding="0" style="padding:4px 10px 4px 10px;" rendered="#{progRfqSubmitMB.newProspectiveCustomerDuplicated}">
+							<h2>#{dbResource['wq.label.duplicateCustSAP']}.</h2>
+						</h:panelGrid>				
+						<h:panelGrid columns="1" cellpadding="0" style="padding:4px 10px 4px 10px;" rendered="#{progRfqSubmitMB.newProspectiveCustomerDuplicated}">
+							<h:outputText value="#{dbResource['wq.label.custmrCode']} #{progRfqSubmitMB.duplicatedCustomerCode}" />
+							<h:outputText value="#{dbResource['wq.label.custmrName']} : #{progRfqSubmitMB.duplicatedCustomerName}" />
+							<h:outputText value="#{dbResource['wq.label.custmrType']} #{progRfqSubmitMB.duplicatedCustomerType}" />
+							<h:outputText value="#{dbResource['wq.label.country']} : #{progRfqSubmitMB.duplicatedCountry}" />
+							<h:outputText value="#{dbResource['wq.label.city']} : #{progRfqSubmitMB.duplicatedCity}" />
+							<h:outputText value="#{dbResource['wq.label.salsOrg']} : #{rprogRfqSubmitMB.duplicatedSalesOrg}" />
+						</h:panelGrid>
+						
+						<h:panelGrid columns="1" cellpadding="0" style="padding:4px 10px 4px 10px;" rendered="#{progRfqSubmitMB.newProspectiveCustomerDuplicated}">
+							<h2>#{dbResource['wq.header.contCreatNewCust']}</h2>
+						</h:panelGrid>
+						<h:panelGrid columns="2" cellpadding="0" style="padding:4px 10px 4px 10px;" rendered="#{progRfqSubmitMB.newProspectiveCustomerDuplicated}">
+						 	<p:commandButton id="duplicateCustomer_yesButton" value="#{dbResource['wq.button.yes']}" update=":form_customer_confirm:prospectiveCustomerConfirmation" actionListener="#{progRfqSubmitMB.createProspectiveCustomerWithForcing}" style="margin:0px 0px 10px 0px"/>
+						 	<p:commandButton id="duplicateCustomer_noButton" value="#{dbResource['wq.button.no']}" style="margin:0px 0px 10px 0px" oncomplete="PF('customer_confirmation_dialog').hide(); PF('newProspectiveCustomer_dialog').hide();"/>
+						</h:panelGrid>
+						<h:panelGrid columns="1" cellpadding="0" style="padding:4px 10px 4px 10px;" rendered="#{!progRfqSubmitMB.newProspectiveCustomerDuplicated}">
+						 	<p:commandButton id="duplicateCustomer_okButton" update=":form_submit:basicDetails_soldToCustomerNumber,:form_submit:basicDetails_soldToCustomerName,:form_submit:basicDetails_endCustomerNumber,:form_submit:basicDetails_endCustomerName" value="#{dbResource['wq.button.ok']}" actionListener="#{progRfqSubmitMB.updateNewSoldToCode}" style="margin:0px 0px 10px 0px" oncomplete="PF('customer_confirmation_dialog').hide(); PF('newProspectiveCustomer_dialog').hide();"/>
+						 </h:panelGrid>
+				 </h:panelGrid>
+			</h:form> 
+		</p:dialog>
+		 	
+		<p:dialog header="#{dbResource['wq.header.cutsmrSearch']}" widgetVar="customer_dialog" resizable="true"  modal="true" appendTo="@(body)">
+				<h:form id="form_customer_search">	
+					<p:panel header="#{resourceMB.getParameterizedText('wq.header.srchCustmrCount' ,progRfqSubmitMB.searchCustomersCount)}" id="customerSearch_panel" style="font-size:12pt">						
+						<p:messages for="message_customer_search_mandatory_is_empty" showDetail="true" autoUpdate="true" closable="true" />
+						<h:panelGrid columns="9" cellpadding="0" style="padding:4px 10px 4px 10px;">
+
+							<h:outputText value="#{dbResource['wq.label.custmrName']}" style="padding:0px 0px 0px 3px"/>
+							<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+							<h:outputText value=":" style="padding:0px 3px 0px 0px"/>								
+							<p:inputText value="#{progRfqSubmitMB.customerNameSearch}" />								 
+							<p:spacer width="30" height="5" />
+							
+							<ui:remove>
+							<h:outputText value="#{dbResource['wq.label.custmrType']}" style="padding:0px 0px 0px 3px"/>
+							<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+							<h:outputText value=":" style="padding:0px 3px 0px 0px"/>
+							<p:selectOneMenu value="#{progRfqSubmitMB.customerTypeSearch}">
+								<f:selectItems value="#{progRfqSubmitMB.customerTypeSearchSelectList}" />  
+							</p:selectOneMenu>																
+							</ui:remove>		
+
+						 	<p:commandButton id="customer_expansion_SearchButton" value="#{dbResource['wq.button.search']}" update=":form_customer_search:customerSearch_panel" actionListener="#{progRfqSubmitMB.searchCustomersAction}" style="margin:0px 0px 0px 0px"/>
+                            <p:defaultCommand target="customer_expansion_SearchButton" /> 
+						</h:panelGrid>
+						
+					    <p:dataTable	var="search_customer"
+					    				value="#{progRfqSubmitMB.searchCustomers}"
+					    				selection="#{progRfqSubmitMB.selectedSearchCustomer}"
+					    				rowKey="#{search_customer.customerNumber}" 		
+					    				rowIndexVar="search_customer_rowIndex"
+					                 	id="datatable_search_customer"
+					    				paginator="true" 
+					    				rows="10"
+					    				rowsPerPageTemplate="5,10,20"
+					                 	paginatorPosition="top"						    										                 	
+					                 	style="margin:5px 0px 0px 0px;"
+					                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">		
+               		 
+					        <p:column headerText="#{dbResource['wq.label.no']}">
+						        #{search_customer_rowIndex + 1}
+					        </p:column>						      				       
+									
+							<p:column selectionMode="single" styleClass="column_icon" /> 
+					        
+					        <p:column headerText="#{dbResource['wq.label.custmrName']}">
+						        #{search_customer.customerFullName}
+					        </p:column>	
+					        
+					        <p:column headerText="#{dbResource['wq.label.custmrType']}">
+						        #{search_customer.customerType}
+					        </p:column>	
+
+					        <p:column headerText="#{dbResource['wq.label.custmrCode']}">
+						        #{search_customer.customerNumber}
+					        </p:column>	
+
+					        <p:column headerText="#{dbResource['wq.label.salsOrg']}">
+						        #{progRfqSubmitMB.convertCustomerSalesToSalesOrg(search_customer.customerSales)}
+					        </p:column>							        
+
+					        <p:column headerText="#{dbResource['wq.label.accGroup']}">
+						        #{progRfqSubmitMB.convertAccountGroupToName(search_customer.accountGroup)}
+					        </p:column>	
+					        
+					    </p:dataTable>
+					
+					 	<p:commandButton id="customer_submitButton" value="#{dbResource['wq.button.select']}" update=":form_submit:submissionHeaderPanel,:form_customer_search:customerSearch_panel" actionListener="#{progRfqSubmitMB.updateCustomer}" style="margin:0px 0px 10px 0px" oncomplete="PF('customer_dialog').hide();"/>  
+					    <p:commandButton value="#{dbResource['wq.label.crtNewCustmr']}" onclick="PF('newProspectiveCustomer_dialog').show()"/>  											
+					    	
+					</p:panel>
+				</h:form>
+		</p:dialog>
+					
+		<p:dialog header="#{dbResource['wq.header.attchmntList']}" widgetVar="attachment_list_dialog" resizable="true"  appendTo="@(body)">
+		           <h:form id="form_att_list">	
+						<p:panel header="#{dbResource['wq.header.attachments']}" id="attachment_panel" style="font-size:12pt">						
+						    <p:dataTable	var="attachment"
+						    				value="#{progRfqSubmitMB.attachments}"
+						    				rowKey="#{attachment.id}" 		
+						    				rowIndexVar="attachment_rowIndex"
+						                 	id="datatable_attachment"
+						                 	style="margin:5px 0px 0px 0px;"
+						                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">		
+                		 
+						        <p:column headerText="#{dbResource['wq.label.no']}">
+							        #{attachment_rowIndex + 1}
+						        </p:column>					
+						        <p:column headerText="#{dbResource['wq.label.fileName']}">
+							        #{attachment.fileName}
+						        </p:column>	
+						        
+						        <p:column styleClass="column_icon">
+						        	<p:commandLink update=":form_att_list:attachment_panel"  onclick="PF('confirmDialog_det_att').show();" >
+						        		<h:graphicImage url="./../resources/images/iconCross.gif" styleClass="iconLink"/>
+                                        <f:setPropertyActionListener value="#{attachment_rowIndex}" target="#{progRfqSubmitMB.seletedDeletedAttachementRowId}" />			        	
+						        	</p:commandLink> 						        				        						        
+						        </p:column>	
+						        
+						        <p:column styleClass="column_icon">
+						        	<p:commandLink actionListener="#{progRfqSubmitMB.updateDownloadAttachment(attachment_rowIndex)}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">
+						        		<h:graphicImage url="./../resources/images/icon_download.png" styleClass="iconLink"/>		
+						        		<p:fileDownload value="#{progRfqSubmitMB.downloadAttachment}" />		        	
+						        	</p:commandLink> 						        				        						        
+						        </p:column>			
+						    </p:dataTable>
+						</p:panel>
+				 </h:form>
+		</p:dialog>
+
+	
+		
+	    <p:dialog header="#{dbResource['wq.header.attchmntUpload']}" widgetVar="attachment_upload_dialog" resizable="true" appendTo="@(body)" modal="true" >
+			<h:form id="form_att_upload" enctype="multipart/form-data">
+			
+			    <p:fileUpload fileUploadListener="#{progRfqSubmitMB.uploadAttachmentAction}"
+			            mode="advanced" 
+			            sizeLimit="5242880" 
+			            allowTypes="/(\.|\/)(xls|xlsx|zip|doc|docx|msg|pdf|txt|jpg|png|ppt|pptx|7z|XLS|XLSX|ZIP|DOC|DOCX|MSG|PDF|TXT|JPG|PNG|PPT|PPTX|7Z)$/"
+			            style="width:500px"
+			            update=":form_att_upload:messages_att,:form_submit:submissionTable" 
+			            cancelLabel="#{dbResource['wq.button.cancel']}" label="#{dbResource['wq.button.choose']}" uploadLabel="#{dbResource['wq.button.upload']}" 
+			            invalidFileMessage="#{dbResource['wq.error.invalidFileType']}" invalidSizeMessage="#{dbResource['wq.message.invalidFileSize']}" />
+			
+			    <p:growl id="messages_att" showDetail="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" />
+			
+			</h:form>		
+		</p:dialog>
+		<ui:remove>
+	        <p:confirmDialog id="confirmDialog_delete_id" message="#{dbResource['wq.dialog.confirmDel']}"  
+		                header="#{dbResource['wq.diglog.header.confirm']}" severity="alert" widgetVar="confirmDialog_delete" appendTo="@(body)"> 
+		            <p:commandButton id="confirm_delete" value="#{dbResource['wq.button.yes']}" oncomplete="PF('confirmDialog_delete').hide()" update=":form_submit:submissionTable" action="#{progRfqSubmitMB.removeRfqItemAction}"  >  
+					</p:commandButton>
+		            <p:commandButton id="decline_delete" value="#{dbResource['wq.button.no']}" onclick="PF('confirmDialog_delete').hide()" type="button" />             
+		    </p:confirmDialog>  
+		    
+		     <p:confirmDialog id="confirmDialog_delete_all_id" message="#{dbResource['wq.dialog.confirmDelAll']}"  
+		                header="#{dbResource['wq.diglog.header.confirm']}" severity="alert" widgetVar="confirmDialog_delete_all" appendTo="@(body)"> 
+		            <p:commandButton id="confirm_delete_all" value="#{dbResource['wq.button.yes']}" oncomplete="PF('confirmDialog_delete_all').hide()" update=":form_submit:submissionTable" action="#{progRfqSubmitMB.deleteAllAction}"  >  
+					</p:commandButton>
+		            <p:commandButton id="decline_delete_all" value="#{dbResource['wq.button.no']}" onclick="PF('confirmDialog_delete_all').hide()" type="button" />             
+		    </p:confirmDialog> 
+	    </ui:remove>
+		<p:confirmDialog id="confirmDialog_det_att_id" message="#{dbResource['wq.dialog.confirmDelAttchmnt']}" 
+		            header="#{dbResource['wq.diglog.header.confirm']}" severity="alert" widgetVar="confirmDialog_det_att" appendTo="@(body)">
+				<p:commandButton value="#{dbResource['wq.button.yes']}" actionListener="#{progRfqSubmitMB.removeAttachment}" 
+				        update=":form_att_list:attachment_panel,:form_submit:submissionTable" oncomplete="PF('confirmDialog_det_att').hide()" />
+				<p:commandButton value="#{dbResource['wq.button.no']}" onclick="PF('confirmDialog_det_att').hide()" type="button" />
+		</p:confirmDialog>
+	
+	</ui:define>
+</ui:composition>

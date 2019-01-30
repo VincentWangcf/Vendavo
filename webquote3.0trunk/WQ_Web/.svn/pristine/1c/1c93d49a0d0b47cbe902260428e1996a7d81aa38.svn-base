@@ -1,0 +1,124 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:func="http://emasia.avnet.com/functions">
+	
+
+	<ui:define name="content">
+		<p:ajaxStatus onstart="start();" onsuccess="stop();"
+			onerror="stopWithError();" />
+		<h2>
+			<h:outputText value="#{dbResource['wq.header.quoteBuilder']}" />
+		</h2>
+		<h:form>
+			<p:messages id="msgId" for="msgId" severity="error" showDetail="true" autoUpdate="true" closable="true" />
+			<p:growl id="growl" severity="info, warn" showDetail="true" sticky="#{growlPropertyMB.sticky}" autoUpdate="true" showSummary="#{growlPropertyMB.showSummary}" escape="#{growlPropertyMB.escape}"/>
+					 
+			</h:form>		 
+		
+		<h:form id="quoteBuilderForm" enctype="multipart/form-data">
+
+			<p:panel header="#{dbResource['wq.button.upload']}"
+				style="font-size:12pt;margin-left:10px;">
+				
+				<h:panelGrid columns="8" cellpadding="0" style="margin-left:20px;">
+					<h:outputText value="Choose a Quote File."
+						style="font-size:12pt;padding:0px 2px 0px 3px" />
+					<h:outputText value="(Max.no.of records:1000)"
+						style="font-size:12pt;padding:0px 2px 0px 3px" />
+
+				</h:panelGrid>
+			
+				<h:panelGrid columns="8" cellpadding="0" style="margin-left:20px;" id="attachment_panel">
+					<h:outputText value="#{dbResource['wq.label.quoteType']}"
+						style="font-size:12pt;padding:0px 2px 0px 3px" />
+					<h:outputText value="&#042;"
+						style="color:#ff0000; padding:0px 0px 0px 0px" />
+					<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+					<h:selectOneMenu id="uploadQuoteType"
+						value="#{quoteBuilderMB.quoteCostType}">
+						<f:selectItem itemLabel="-select-" itemValue="0" />
+						<f:selectItems value="#{quoteBuilderMB.quoteCostTypeList}" />
+					</h:selectOneMenu>
+					<p:panelGrid columns="0" >
+						<p:commandLink onclick="PF('form_attachment_upload_dialog').show()">
+							<h:graphicImage url="./../resources/images/icon_upload.png"
+								styleClass="iconLink" />
+						</p:commandLink>
+						  <p:commandLink id="attachment_doc" rendered="#{quoteBuilderMB.hasQuoteAttachment}" onclick="return false;" style="padding:0px 3px 0px 3px">
+						        		<h:graphicImage url="./../resources/images/ic_document.png" styleClass="iconLink"/>				        	
+						  </p:commandLink>
+					</p:panelGrid>
+
+				</h:panelGrid>
+
+				<h:panelGrid columns="8" cellpadding="0" style="margin-left:20px;" >
+
+					<p:fileUpload label="#{dbResource['wq.button.chooseFile']}"
+						value="#{quoteBuilderMB.uploadQuoteFile}"
+						allowTypes="/(\.|\/)(xls|xlsx|XLS|XLSX)$/" mode="simple"
+						skinSimple="true"  />
+
+					<h:outputText id="uploadFileName"
+						value="#{quoteBuilderMB.uploadQuoteFileName}" />
+					
+				</h:panelGrid>
+
+
+				<h:panelGrid columns="8" cellpadding="0" style="margin-left:20px;">
+
+
+					<p:commandButton value="#{dbResource['wq.button.upload']}"
+						icon="ui-icon-circle-check" 
+						actionListener="#{quoteBuilderMB.handleUploadQuoteFile}"
+						onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false" />
+
+					<p:panelGrid columns="1" style="margin-left:30px;">
+						<p:commandLink
+							value="#{dbResource['wq.label.downloadQuoteBuilderTemplate']}"
+							onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">
+							<p:fileDownload value="#{quoteBuilderMB.quoteTemplate}" />
+						</p:commandLink>
+
+					</p:panelGrid>
+				</h:panelGrid>
+
+
+
+
+			</p:panel>
+			
+			
+
+		
+		</h:form>
+		<h:form id="attachment_upload_form" enctype="multipart/form-data">
+			<p:dialog id="form_attachment_upload_dialog"
+				header="#{dbResource['wq.header.attchmntUpload']}"
+				widgetVar="form_attachment_upload_dialog" resizable="true">
+				<p:fileUpload
+					fileUploadListener="#{quoteBuilderMB.uploadQuoteAttachment}"
+					mode="advanced" update="messages" sizeLimit="5242880"
+					allowTypes="/(\.|\/)(xls|xlsx|zip|doc|docx|msg|pdf|txt|jpg|png|ppt|pptx|7z|XLS|XLSX|ZIP|DOC|DOCX|MSG|PDF|TXT|JPG|PNG|PPT|PPTX|7Z)$/"
+					style="width:500px" cancelLabel="#{dbResource['wq.button.cancel']}"
+					label="#{dbResource['wq.button.choose']}"
+					uploadLabel="#{dbResource['wq.button.upload']}"
+					invalidFileMessage="#{dbResource['wq.error.invalidFileType']}"
+					invalidSizeMessage="#{dbResource['wq.message.invalidFileSize']}" />
+
+				<p:growl id="messages" for="messages_1" showDetail="true"
+					sticky="{growlPropertyMB.getSticky()}"
+					showSummary="#{growlPropertyMB.getShowSummary()}"
+					escape="#{growlPropertyMB.getEscape()}" life="3000" />
+
+			</p:dialog>
+		
+		
+		</h:form>
+
+	</ui:define>
+</ui:composition>

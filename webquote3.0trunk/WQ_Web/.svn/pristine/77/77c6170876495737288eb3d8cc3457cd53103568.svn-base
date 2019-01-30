@@ -1,0 +1,97 @@
+
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="style-005.css" />
+	<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+	<h:form id="form">
+
+	<p:panel header="#{dbResource['wq.header.markedUsedResult']}" style="font-size:12pt">
+		<p:messages id="messages" showDetail="true" autoUpdate="true" closable="true" escape="false"/>
+
+	    <p:dataTable	var="vo"
+	    				value="#{copyQuoteMB.quoteItemVos}" 
+	    				rowKey="#{vo.quoteItem.quoteNumber}" 
+	    				rowIndexVar="rowIndex"
+	                 	id="datatable_copiedquotelist"                 
+	                 	scrollable="true"
+	                 	rows="10"
+	                 	paginator="true" 
+    					rowsPerPageTemplate="10,20,50"
+	                 	resizableColumns="true"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">	                   	              
+
+			<p:column headerText="#{dbResource['wq.label.no']}" sortBy="#{vo.seq2}" filterBy="#{vo.seq2}"  filterMatchMode="contains" styleClass="myquote_column_seq readOnlyCell">
+			#{vo.seq2}
+			</p:column>
+  			<p:column headerText="#{dbResource['wq.label.used']}" sortBy="#{vo.quoteItem.usedFlag}" filterBy="#{vo.quoteItem.usedFlag}" filterMatchMode="contains" styleClass="myquote_column_quoteNumber readOnlyCell" >			
+			#{vo.quoteItem.usedFlag? dbResource['wq.button.yes']:dbResource['wq.button.no']}
+			</p:column>	
+			<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quote']}#" sortBy="#{vo.quoteItem.quoteNumber}" filterBy="#{vo.quoteItem.quoteNumber}"  filterMatchMode="contains" styleClass="myquote_column_quoteNumber readOnlyCell">
+			#{vo.quoteItem.quoteNumber}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.form']}" sortBy="#{vo.quoteItem.quote.formNumber}" filterBy="#{vo.quoteItem.quote.formNumber}" styleClass="myquote_column_formNumber readOnlyCell">
+			#{vo.quoteItem.quote.formNumber}
+			</p:column>		
+
+			<p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{vo.quoteItem.requestedMfr.name}" filterBy="#{vo.quoteItem.requestedMfr.name}" styleClass="myquote_column_manufacturerName readOnlyCell">
+			#{vo.quoteItem.requestedMfr.name}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.custNameSP']}" sortBy="#{vo.quoteItem.soldToCustomer.customerFullName}" filterBy="#{vo.quoteItem.soldToCustomer.customerFullName}" styleClass="myquote_column_soldToCustomerName readOnlyCell">
+			#{vo.quoteItem.soldToCustomer.customerFullName}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.soldTo']}&lt;br/&gt;#{dbResource['wq.label.code']}" sortBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}" filterBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}" filterMatchMode="contains" styleClass="myquote_column_soldToCustomerNumber readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quote.soldToCustomer.customerNumber}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.requested']}&lt;br/&gt;#{dbResource['wq.label.part']}  #" sortBy="#{vo.quoteItem.requestedPartNumber}" filterBy="#{vo.quoteItem.requestedPartNumber}" styleClass="myquote_column_quotedPartNumber readOnlyCell">
+			#{vo.quoteItem.requestedPartNumber}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}" sortBy="#{vo.quoteItem.requestedQty}" filterBy="#{vo.quoteItem.requestedQty}" styleClass="myquote_column_requestedQty align_right readOnlyCell">
+				<h:outputText value="#{vo.quoteItem.requestedQty}">
+					<f:convertNumber pattern="#,###"  />
+				</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.EAU']}" sortBy="#{vo.quoteItem.eau}" filterBy="#{vo.quoteItem.eau}" styleClass="myquote_column_eau align_right readOnlyCell">
+				<h:outputText value="#{vo.quoteItem.eau}">
+					<f:convertNumber pattern="#,###"  />
+				</h:outputText>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.target']}&lt;br/&gt;#{dbResource['wq.label.resale']}" sortBy="#{vo.quoteItem.targetResale}" filterBy="#{vo.quoteItem.targetResale}" id="targetResale" styleClass="myquote_column_targetResale align_right readOnlyCell">
+				<h:outputText value="#{vo.quoteItem.targetResale}">
+					<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5"/>
+				</h:outputText>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.end']}&lt;br/&gt;#{dbResource['wq.label.cust']}" sortBy="#{vo.quoteItem.endCustomer.customerFullName}" filterBy="#{vo.quoteItem.endCustomer.customerFullName}" styleClass="myquote_column_endCustomerName readOnlyCell">
+			#{vo.quoteItem.endCustomer.customerFullName}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.endCust']}&lt;br/&gt;#{dbResource['wq.label.code']}" sortBy="#{vo.quoteItem.endCustomer.customerNumber}" filterBy="#{vo.quoteItem.endCustomer.customerNumber}" filterMatchMode="contains" styleClass="myquote_column_endCustomerNumber readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.endCustomer.customerNumber}"/>
+			</p:column>
+				
+			<f:facet name="footer">
+	        	<p:commandButton value="#{dbResource['wq.button.BackMyQuoteSearch']}" icon="ui-icon ui-icon-circle-arrow-w" action="#{myQuoteSearchMB.getMyQuotePage}" ajax="false"/>
+	        </f:facet>											 	                            
+	    </p:dataTable>	    
+	</p:panel>         	
+	</h:form>		
+	</ui:define>
+</ui:composition>

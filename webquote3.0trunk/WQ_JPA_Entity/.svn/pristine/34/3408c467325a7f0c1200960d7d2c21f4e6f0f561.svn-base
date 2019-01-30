@@ -1,0 +1,190 @@
+package mymoney;
+
+import java.math.BigDecimal;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.cache.ICacheUtil;
+import com.avnet.emasia.webquote.constants.Constants;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Currency;
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.ExchangeRate;
+import com.avnet.emasia.webquote.entity.Money;
+import com.avnet.emasia.webquote.entity.QuantityBreakPrice;
+
+public class Money2 implements Comparable<Money2> {
+	
+	final static Logger logger = Logger.getLogger(Money2.class.getName());
+	
+	private Currency currency;
+
+	private BigDecimal amount;
+	
+	private MoneyConvertStrategy strategy;
+
+	private Money2(BigDecimal amount, Currency curr) {
+		this.amount = amount;
+		this.currency = curr;
+	}
+
+	static Money2 of(String amount, String curr) {
+		if (StringUtils.isEmpty(amount) || StringUtils.isEmpty(curr)) {
+			return null;
+		}
+		try {
+			return new Money2(new BigDecimal(amount), Currency.valueOf(curr));
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	 static Money2 of(BigDecimal amount, Currency curr) {
+		if (amount == null || curr == null) {
+			return null;
+		}
+		return new Money2(amount, curr);
+	}
+
+	 static Money2 of(Double amount, Currency curr) {
+		if (amount == null || curr == null) {
+			return null;
+		}
+		try {
+			return new Money2(new BigDecimal(amount), curr);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	static Money2 of(Double amount, String curr) {
+		if (amount == null || StringUtils.isEmpty(curr)) {
+			return null;
+		}
+		try {
+			return new Money2(new BigDecimal(amount), Currency.valueOf(curr));
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	Currency getCurrency() {
+		return currency;
+	}
+
+	BigDecimal getAmount() {
+		return amount;
+	}
+
+	public  void setCacheUtil(ICacheUtil cacheUtil) {
+		MoneyConvertStrategy.setCacheUtil(cacheUtil);
+	}
+
+	
+	
+	// no setters allowed
+
+	
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((amount == null) ? 0 : amount.hashCode());
+		result = prime * result + ((currency == null) ? 0 : currency.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Money2 other = (Money2) obj;
+		if (amount == null) {
+			if (other.amount != null)
+				return false;
+		} else if (!amount.equals(other.amount))
+			return false;
+		if (currency != other.currency)
+			return false;
+		return true;
+	}
+	
+	
+
+	@Override
+	public String toString() {
+		return "Money2 [currency=" + currency.name() + ", amount=" + amount + "]";
+	}
+	
+	void setFindExRateStrategy(MoneyConvertStrategy strategy) {
+		this.strategy = strategy;
+	}
+	
+	public Money2 convertTo(Currency toCurrency, BizUnit bizUnit, Customer soldToCustomer, Date date, int ... scale) {
+		if (toCurrency == null || bizUnit == null || date == null) {
+			throw new IllegalArgumentException();
+		}
+		
+		BigDecimal[] rates = findExchangeRate(this.currency, toCurrency, bizUnit, soldToCustomer, date);
+		
+		if (rates[0] == null || rates[1] == null) {
+			return null;
+		} else {
+			int i = scale.length == 0 ? Constants.SCALE : scale[0];
+			Money2 money = Money2.of(getAmount().multiply(rates[1]).divide(rates[0], i , Constants.ROUNDING_MODE), toCurrency);
+			money.setFindExRateStrategy(strategy);
+			return money;
+		}
+	}
+
+	 
+	
+	
+	public void print() {
+		MoneyConvertStrategy.print();
+	
+	}
+
+	@Override
+	public int compareTo(Money2 obj) {
+		// only has the same currency then can compare ;
+		if(this.currency != obj.currency) {
+			throw new IllegalArgumentException("Money2 must be compared in same currency"); 
+		}
+		return this.amount.compareTo(obj.amount);
+	}
+	
+	/*public BigDecimal[] getExchangeRate(Currency fromCurr, Currency toCurr, BizUnit bizUnit, Customer soldToCustomer, Date date) {
+		return findExchangeRate(fromCurr, toCurr, bizUnit, soldToCustomer, date);
+	}*/
+	
+	private BigDecimal[] findExchangeRate(Currency fromCurr, Currency toCurr, BizUnit bizUnit, Customer soldToCustomer, Date date) {
+		return strategy.findExchangeRate(fromCurr, toCurr, bizUnit, soldToCustomer, date);
+	}
+	
+	/*public  BigDecimal[] getExchangeRate(String fromCurr, String toCurr, String bizUnit, Customer soldToCustomer, Date date) {
+		 if(fromCurr==null || toCurr==null || bizUnit==null || date ==null) {
+			 //throw new IllegalArgumentException();
+			 return null;
+		 }
+		return getExchangeRate(Currency.valueOf(fromCurr) , Currency.valueOf(toCurr), new BizUnit(bizUnit), soldToCustomer, date);
+	}*/
+	
+	
+}

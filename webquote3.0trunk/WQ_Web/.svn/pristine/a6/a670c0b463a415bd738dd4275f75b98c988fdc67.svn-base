@@ -1,0 +1,138 @@
+package com.avnet.emasia.webquote.web.pricerupload;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.List;
+import java.util.logging.Logger;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.streaming.SXSSFCell;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jboss.logmanager.Level;
+
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadTemplateBean;
+import com.avnet.emasia.webquote.commodity.constant.PricerConstant;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.DeploymentConfiguration;
+import com.avnet.emasia.webquote.utilites.web.util.POIUtils;
+import com.avnet.emasia.webquote.utilites.web.util.PricerUploadHelper;
+import com.avnet.emasia.webquote.utilities.bean.ExcelAliasBean;
+import com.avnet.emasia.webquote.web.maintenance.DownLoadStrategy;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+
+public class PricerDownLoadStrategy extends DownLoadStrategy{
+	static final Logger LOG = Logger.getLogger(PricerDownLoadStrategy.class.getSimpleName());
+
+	private static final long serialVersionUID = 2983421593443475281L;
+
+	@Override
+	public void setDateTosheet(XSSFWorkbook wb, List<?> data) {
+		XSSFCell cell = null;
+		XSSFSheet sheet = wb.getSheetAt(0);
+
+		List<ExcelAliasBean> excelAliasTreeSet = PricerUploadHelper.getPricerExcelAliasAnnotation();
+
+		if(data != null){
+			for(int j=0; j<data.size(); j++){
+				XSSFRow row = sheet.createRow(PricerConstant.PRICER_TEMPLATE_HEADER_ROW_NUMBER+j);
+				PricerUploadTemplateBean bean = (PricerUploadTemplateBean) data.get(j);
+					
+				for(ExcelAliasBean excelAliasBean:excelAliasTreeSet){					
+					cell = row.createCell(excelAliasBean.getCellNum()-1);
+					cell.setCellType(Cell.CELL_TYPE_STRING);
+	
+					if(cell!=null){
+						cell.setCellValue(POIUtils.getter(bean,excelAliasBean.getFieldName()));
+					}	
+				}
+			}
+		}		
+	}
+	
+	/**
+	 * offline down A large amount of data  
+	 * @param bizUnitName
+	 * @param datas
+	 * @param templateName
+	 * @return
+	 */
+	public SXSSFWorkbook getDownloadFileOffline(String bizUnitName,List<?> datas,String templateName) {
+		XSSFWorkbook wb = null;
+		SXSSFWorkbook sxssfwb = null; 
+		FileInputStream input = null;
+		try {
+			String filePath = DeploymentConfiguration.configPath + File.separator
+					+ templateName;
+			input = new FileInputStream(filePath);
+			wb = new XSSFWorkbook(input);
+			if(datas!=null){
+				//this.setDateTosheet(wb, datas);
+			
+				/**use pio3.10 support the huge amounts of data to  write*/
+				sxssfwb = setDateTosheetOffline( wb, datas);
+			}
+		} catch (IOException e) {
+			 FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+					 ResourceMB.getText("wq.message.downloadfail")+".", ""));
+			LOG.log(Level.SEVERE, "Exception in downloading file offline for file : "+templateName+", Exception message"+e.getMessage(), e);
+			return sxssfwb;
+		}finally{
+			try {
+				if(input!=null){
+					input.close();
+				}
+			} catch (IOException e) {
+				LOG.log(Level.SEVERE, "Exception in closing stream , Exception message : "+e.getMessage(), e);
+			}
+			input = null;
+		}
+		return sxssfwb;
+	}
+	
+	public SXSSFWorkbook setDateTosheetOffline(XSSFWorkbook wb, List<?> data)  {
+
+		int lastRowNum = wb.getSheetAt(0).getLastRowNum();
+	
+		SXSSFWorkbook sxssfwb = null;
+		
+		List<ExcelAliasBean> excelAliasTreeSet = PricerUploadHelper.getPricerExcelAliasAnnotation();
+
+		if(data != null){
+			
+			sxssfwb = new SXSSFWorkbook(wb,100);
+			SXSSFSheet sheet = (SXSSFSheet) sxssfwb.getSheet("pricer");
+			SXSSFCell cell = null;
+			for(int j=0; j<data.size(); j++){
+				Row row  =  sheet.createRow(lastRowNum+j+1);
+				
+				PricerUploadTemplateBean bean = (PricerUploadTemplateBean) data.get(j);
+					
+				for(ExcelAliasBean excelAliasBean:excelAliasTreeSet){					
+					cell = (SXSSFCell)row.createCell(excelAliasBean.getCellNum()-1);
+					cell.setCellType(Cell.CELL_TYPE_STRING);
+	
+					if(cell!=null){
+						cell.setCellValue(POIUtils.getter(bean,excelAliasBean.getFieldName()));
+					}	
+				}
+				try {
+					sheet.flushRows();
+				} catch (IOException e) {
+					LOG.log(Level.SEVERE, "Exception in flush rows for sheet: "+sheet.getSheetName()+", exception message : "+e.getMessage(), e);
+				}
+			}
+		}
+		return sxssfwb;
+	}
+}

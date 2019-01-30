@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://java.sun.com/jsf/core" xmlns:cc="http://java.sun.com/jsf/composite" xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:l="http://java.sun.com/jsf/composite/l" xmlns:h="http://java.sun.com/jsf/html" xmlns:p="http://primefaces.org/ui">
+
+<cc:interface>
+	<cc:attribute name="header" default="#{dbResource['wq.label.uploadFile']}" />
+	<cc:attribute name="items" type="java.util.List" required="true" shortDescription="List&lt;Attachment&gt;" />
+	<cc:attribute name="widgetVarForDialog" default="attachmentUploadDialog" />
+
+	<cc:attribute name="canDownload" default="false" type="java.lang.Boolean" />
+	<cc:attribute name="canDelete" default="true" type="java.lang.Boolean" />
+	<cc:attribute name="fileUploadListener" method-signature="void actionListener(org.primefaces.event.FileUploadEvent)" required="true" />
+	<cc:attribute name="forObject" required="true" shortDescription="file for which Object"/>
+	<cc:attribute name="rowIndex" default="0" shortDescription="will update which row if in datatable"/>
+	<cc:attribute name="deleteActionListener" />
+	<cc:attribute name="update" default="uploadedPanel"/>
+	<cc:attribute name="deleteUpdate" default="uploadedPanel"/>
+	<cc:attribute name="sizeLimit" default="5242880" />
+	<cc:attribute name="allowTypes" default="/(\.)(gif|jpe?g|png|xls|xlsx|zip|doc|docx|msg|pdf|txt|ppt|7z|pptx|XLS|XLSX|ZIP|DOC|DOCX|MSG|PDF|TXT|JPG|PNG|PPT|PPTX|7Z)$/" />
+	<cc:attribute name="invalidFileMessage" default="#{dbResource['wq.error.invalidFileType']}" />
+</cc:interface>
+
+<cc:implementation>
+	<p:dialog widgetVar="attachmentUploadDialog" modal="true" header="#{cc.attrs.header}">
+		<h:panelGroup id="upload_atts_panel">
+			<p:fileUpload multiple="true" id="uploadAtts" mode="advanced" fileUploadListener="#{cc.attrs.fileUploadListener}" update="#{cc.attrs.update}"
+				sizeLimit="#{cc.attrs.sizeLimit}" invalidFileMessage="#{cc.attrs.invalidFileMessage}" allowTypes="#{cc.attrs.allowTypes}" label="#{dbResource['wq.button.choose']}" uploadLabel="#{dbResource['wq.button.upload']}" cancelLabel="#{dbResource['wq.button.cancel']}"
+			     invalidSizeMessage="#{dbResource['wq.message.invalidFileSize']}">
+				<f:attribute name="forObject" value="#{cc.attrs.forObject}"/>
+				<f:attribute name="rowIndex" value="#{cc.attrs.rowIndex}"/>
+			</p:fileUpload>
+			<p:panelGrid id="uploadedPanel" style="width:100%;">
+				<c:forEach items="#{cc.attrs.items}" var="file">
+					<p:row>
+						<p:column headerText="#{dbResource['wq.label.fileName']}">
+							<h:outputText value="#{file.fileName}" />
+						</p:column>
+						<p:column rendered="#{cc.attrs.canDownload}">
+							<l:download attachment="#{file}" />
+						</p:column>
+						<p:column rendered="#{cc.attrs.canDelete}">
+							<p:commandButton value="#{dbResource['wq.label.delete']}" process="@this" update="#{cc.attrs.deleteUpdate}" actionListener="#{cc.attrs.items.remove(file)}" />
+						</p:column>
+					</p:row>
+				</c:forEach>
+			</p:panelGrid>
+		</h:panelGroup>
+	</p:dialog>
+</cc:implementation>
+</html>

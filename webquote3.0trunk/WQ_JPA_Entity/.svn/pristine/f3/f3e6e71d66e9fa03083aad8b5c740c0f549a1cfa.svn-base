@@ -1,0 +1,476 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.math.BigDecimal;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Logger;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+
+import com.avnet.emasia.webquote.entity.util.StringUtils;
+import com.avnet.emasia.webquote.vo.PricerInfo;
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+
+@Entity
+public abstract class QtyBreakPricer extends Pricer {
+	private static final Logger LOG = Logger.getLogger(QtyBreakPricer.class.getName());
+	@JoinColumn(name = "PROGRAM_TYPE_ID")
+	protected ProgramType programType;
+	
+	@Column(name = "DISPLAY_ON_TOP")
+	private Integer displayOnTop;
+	
+	@Column(name = "PROGRAM_SPECIAL_ITEM_FLAG")
+	private Integer specialItemFlag;
+	
+	@Column(name = "PROGRAM_AVAILABLE_TO_SELL_QTY")
+	private Integer availableToSellQty;
+	
+	@Column(name = "QTY_INDICATOR")
+	protected String qtyIndicator;
+	
+	@Column(name = "NEW_PROGRAM_MATERIAL_INDICATOR")
+	private boolean newItemIndicator;
+	
+	@Column(name = "ALLOCATION_FLAG", length = 1)
+	protected boolean allocationFlag;
+	
+	@Column(name = "PROGRAM_AQ_FLAG")
+	private boolean aqFlag;
+	
+	@OneToMany(mappedBy = "materialDetail", cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	protected List<QuantityBreakPrice> qtyBreakPrices;
+
+	public QtyBreakPricer() {
+		super();
+	}
+
+	public ProgramType getProgramType() {
+		return programType;
+	}
+
+	public void setProgramType(ProgramType programType) {
+		this.programType = programType;
+	}
+
+	public Integer getDisplayOnTop() {
+		return displayOnTop;
+	}
+
+	public void setDisplayOnTop(Integer displayOnTop) {
+		this.displayOnTop = displayOnTop;
+	}
+
+	public Integer getSpecialItemFlag() {
+		return specialItemFlag;
+	}
+
+	public void setSpecialItemFlag(Integer specialItemFlag) {
+		this.specialItemFlag = specialItemFlag;
+	}
+
+	public Integer getAvailableToSellQty() {
+		return availableToSellQty;
+	}
+
+	public void setAvailableToSellQty(Integer availableToSellQty) {
+		this.availableToSellQty = availableToSellQty;
+	}
+
+	public String getQtyIndicator() {
+		return qtyIndicator;
+	}
+
+	public void setQtyIndicator(String qtyIndicator) {
+		this.qtyIndicator = qtyIndicator;
+	}
+
+	public boolean getNewItemIndicator() {
+		return newItemIndicator;
+	}
+
+	public void setNewItemIndicator(boolean newItemIndicator) {
+		this.newItemIndicator = newItemIndicator;
+	}
+
+	public boolean getAllocationFlag() {
+		return allocationFlag;
+	}
+
+	public void setAllocationFlag(boolean allocationFlag) {
+		this.allocationFlag = allocationFlag;
+	}
+
+	public boolean getAqFlag() {
+		return aqFlag;
+	}
+
+	public void setAqFlag(boolean aqFlag) {
+		this.aqFlag = aqFlag;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public List<QuantityBreakPrice> getQuantityBreakPrices() {
+		List<QuantityBreakPrice> sorted = new ArrayList<QuantityBreakPrice>(qtyBreakPrices);
+		Collections.sort(sorted,
+				new Comparator(){
+					 @Override
+					 public int compare(Object o1, Object o2) 
+					 {
+						 int sortByAgeFlag=((QuantityBreakPrice)o1).getQuantityBreak().compareTo(((QuantityBreakPrice)o2).getQuantityBreak());
+						 return sortByAgeFlag;
+					 }
+				}
+	    );
+		return sorted;
+	}
+
+	public void setQuantityBreakPrices(List<QuantityBreakPrice> quantityBreakPrices) {
+		this.qtyBreakPrices = quantityBreakPrices;
+	}
+	
+	/*
+	@Override
+	String calQtyIndicator() {
+		return qtyIndicator;
+	}*/	
+
+	@Override
+	boolean allowOverride() {
+		return true;
+	}
+
+	@Override
+	boolean isCustomerMatched(Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers) {
+		return true;
+	}
+
+	@Override
+	Date calQuoteExpiryDate() {
+		if (calPriceValidityDate() == null) {
+			return null;
+		}
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(calPriceValidityDate());
+		calendar.add(Calendar.DATE, -4);
+		return calendar.getTime();
+	}
+
+	public List<QuantityBreakPrice> calQtyBreakRange() {
+		List<QuantityBreakPrice> result = new ArrayList<>();
+		for (int i = 0 ; i < getQuantityBreakPrices().size() ; i++ ) {
+			if (i < (getQuantityBreakPrices().size() - 1)) {
+				QuantityBreakPrice qtyBreakPrice = new QuantityBreakPrice(getQuantityBreakPrices().get(i));
+				qtyBreakPrice.setRoundedQuantityBreak(roundUp(getQuantityBreakPrices().get(i).getQuantityBreak()));
+				qtyBreakPrice.setQuantityBreakTo(getQuantityBreakPrices().get(i+1).getQuantityBreak()-1);
+				qtyBreakPrice.setRoundedQuantityBreakTo(roundDown(getQuantityBreakPrices().get(i+1).getQuantityBreak()));
+				qtyBreakPrice.setQtyRange(qtyBreakPrice.getRoundedQuantityBreak() + "-" + qtyBreakPrice.getRoundedQuantityBreakTo());
+				result.add(qtyBreakPrice);
+			} else {
+				if (calPrice(getQuantityBreakPrices().get(i)) != null) {
+					QuantityBreakPrice qtyBreakPrice = new QuantityBreakPrice(getQuantityBreakPrices().get(i));
+					qtyBreakPrice.setRoundedQuantityBreak(roundUp(getQuantityBreakPrices().get(i).getQuantityBreak()));
+					qtyBreakPrice.setQuantityBreakTo(Integer.MAX_VALUE);
+					qtyBreakPrice.setRoundedQuantityBreakTo(Integer.MAX_VALUE);
+					qtyBreakPrice.setQtyRange(qtyBreakPrice.getRoundedQuantityBreak() + "+");
+					result.add(qtyBreakPrice);
+				}
+			}
+		}
+		return result;
+	}
+	
+	private List<QuantityBreakPrice> switchToOtherCurrency(List<QuantityBreakPrice> qPrices,
+			Currency targetCurr, Customer soldTo) {
+		if(this.getCurrency() == targetCurr) return qPrices;
+		List<QuantityBreakPrice> resultPrices = new ArrayList<QuantityBreakPrice> ();
+		Date date = new Date();
+		for(QuantityBreakPrice qp : qPrices) {
+			resultPrices.add(qp);
+			if(qp.getSalesCost() != null) {
+				Money money = getAmountbySwitch(qp.getSalesCost(),targetCurr, soldTo, date);
+				if(money != null) {
+					qp.setSalesCost(money.getAmount());
+				} else {
+					qp.setSalesCost(null);
+					LOG.warning(MessageFormat.format("No get money for QuantityBreakPrice id:[{0}],[{1}]. For"
+							+ " Pramaters of getting are targetCurr:[{2}], region:[{3}], soldTo[4],"
+							+ " date:[{5}], buy-curr:[{6}]", 
+							qp.getId(),"SalesCost", targetCurr, this.getBizUnitBean(), soldTo,
+							date, this.getCurrency()));
+				}
+			}
+			
+			//
+			if(qp.getQuantityBreakPrice() != null) {
+				Money money = getAmountbySwitch(new BigDecimal(qp.getQuantityBreakPrice()), 
+						targetCurr, soldTo, date);
+				if(money != null) {
+					qp.setQuantityBreakPrice(money.getAmount().doubleValue());
+					logger.info("for Pricer get converted quantityBreakPrice Money::" + money.toString());
+				} else {
+					qp.setQuantityBreakPrice(null);
+					LOG.warning(MessageFormat.format("No get money for QuantityBreakPrice id:[{0}],[{1}]. For"
+							+ " Pramaters of getting are targetCurr:[{2}], region:[{3}], soldTo[4],"
+							+ " date:[{5}], buy-curr:[{6}]", 
+							qp.getId(),"QuantityBreakPrice", targetCurr, this.getBizUnitBean(), soldTo,
+							date, this.getCurrency()));
+				}
+			}
+			
+			if(qp.getSuggestedResale() != null) {
+				Money money = getAmountbySwitch(qp.getSuggestedResale(), 
+						targetCurr, soldTo, date);
+				if(money != null) {
+					qp.setSuggestedResale(money.getAmount());
+				} else {
+					qp.setSuggestedResale(null);
+					LOG.warning(MessageFormat.format("No get money for QuantityBreakPrice id:[{0}],[{1}]. For"
+							+ " Pramaters of getting are targetCurr:[{2}], region:[{3}], soldTo[4],"
+							+ " date:[{5}], buy-curr:[{6}]", 
+							qp.getId(),"SuggestedResale", targetCurr, this.getBizUnitBean(),soldTo,
+							date, this.getCurrency()));
+				}
+			}
+			
+		}
+		return resultPrices;
+		
+	}
+	
+	private Money getAmountbySwitch(BigDecimal amount, Currency targetCurr, Customer soldTo, Date date) {
+		return Money.of(amount, this.getCurrency())
+				.convertTo(targetCurr, this.getBizUnitBean(), 
+						soldTo, date);	
+	}
+	
+	abstract Object calPrice(QuantityBreakPrice quantityBreakPrice);
+/*
+	@Override
+	Integer calQuotedQty(Integer requiredQty) {
+		
+		if (requiredQty == null || qtyIndicator == null) {
+			return null;
+		}
+		
+		if (qtyIndicator.equalsIgnoreCase("MOQ")) {
+			if (super.getMoq() != null) {
+				return calQuotedQty(requiredQty, super.getMoq(), null, null);
+			} else if (super.getMov() != null && super.getCost() != null && super.getMpq() != null) {
+				return calQuotedQty(requiredQty, null, super.getMov(), super.getCost());
+			}
+			
+		} else if (qtyIndicator.equalsIgnoreCase("MOV")) {
+			if (super.getMov() != null && super.getCost() != null && super.getMpq() != null) {
+				return calQuotedQty(requiredQty, null, super.getMov(), super.getCost());
+			}
+			
+		} else if (qtyIndicator.equalsIgnoreCase("EXACT")) {
+			return requiredQty;
+			
+		} else if (qtyIndicator.equalsIgnoreCase("LIMIT")) {
+			return roundUp(requiredQty);
+
+		} else if (qtyIndicator.contains("%") || qtyIndicator.equalsIgnoreCase("MPQ")) {
+			return  calQuotedQty(requiredQty, super.getMoq(), super.getMov(), super.getCost());
+			
+		}
+		return null;
+	}
+	
+	private Integer calQuotedQty(Integer requiredQty, Integer moq, Integer mov, Double cost) {
+		if (mov == null || cost == null || cost==0d) {
+			if (moq == null) {
+				return null;
+			} else if (moq > requiredQty) {
+				return moq;
+			} else {
+				return roundUp(requiredQty);
+			}
+		} else {
+			if (moq == null) {
+				if (mov/cost > requiredQty) {
+					return roundUp((int)Math.ceil(super.getMov()/super.getCost()));
+				} else {
+					return roundUp(requiredQty);
+				}
+			} else {
+				if (moq >= mov/cost && moq >= requiredQty) {
+					return moq;
+				} else if (mov/cost >= moq && mov/cost >= requiredQty) {
+					return roundUp((int)Math.ceil(super.getMov()/super.getCost()));
+				} else if (requiredQty >= moq && requiredQty >= mov/cost) {
+					return roundUp(requiredQty);
+				}
+			}
+			
+		}
+		return null;
+		
+	}
+*/
+	
+	/*
+	@Override
+	String calPmoq(Integer requiredQty) {
+		
+		if (qtyIndicator.equalsIgnoreCase("MOQ")) {
+			if (calMoq() != null) {
+				return calMoq() +  "+";
+			}
+		} if (qtyIndicator.equalsIgnoreCase("MOV")) {
+			if (super.getMov() != null && super.getCost() != null && super.getMpq() != null) {
+				return roundUp((int)Math.ceil(super.getMov()/super.getCost())) + "+";
+			}
+		} else if (qtyIndicator.equalsIgnoreCase("MPQ")) {
+			return super.getMpq() + "+";
+		} else if (qtyIndicator.contains("%")) {
+			if (calQuotedQty(requiredQty) ==  null) {
+				return null;
+			}
+			try {
+				return roundUp((int)Math.ceil(calQuotedQty(requiredQty) * Double.parseDouble(qtyIndicator.substring(0, qtyIndicator.length()-1)) / 100)) + "+";
+			} catch (Exception e) {
+				//to do
+				e.printStackTrace();
+			}
+			
+			
+		} else if (qtyIndicator.equalsIgnoreCase("EXACT")) {
+			//to do, need roundUp?
+			return String.valueOf(requiredQty);
+			
+		} else if (qtyIndicator.equalsIgnoreCase("LIMIT")) {
+			QuantityBreakPrice qtyBreakPrice = getQtyBreakPrice(requiredQty);
+			if (qtyBreakPrice != null) {
+				return qtyBreakPrice.getQtyRange();
+			}
+		}
+		
+		return null;
+	}
+	*/
+	@Override
+	void fillPmoq(RfqItemVO rfqItem) {
+		
+		if (StringUtils.isEmpty(rfqItem.getQtyIndicator())) {
+			return ;
+		}
+		
+		if (! rfqItem.getQtyIndicator().equalsIgnoreCase("LIMIT")) {
+			super.fillPmoq(rfqItem);
+			
+		} else {
+			QuantityBreakPrice qtyBreakPrice = getQtyBreakPrice(rfqItem.getRequiredQtyAsInt());
+			if (qtyBreakPrice != null) {
+				rfqItem.setPmoq(qtyBreakPrice.getQtyRange());
+			}
+		}
+	}
+	
+	/*
+	@Override
+	public String calPmoq(Integer requiredQty, Integer quotedQty, Integer mpq, String qtyIndicator) {
+		
+		if (StringUtils.isEmpty(qtyIndicator)) {
+			return null;
+		}
+		
+		if (! qtyIndicator.equalsIgnoreCase("LIMIT")) {
+			return super.calPmoq(requiredQty, quotedQty, mpq, qtyIndicator);
+			
+		} else {
+			QuantityBreakPrice qtyBreakPrice = getQtyBreakPrice(quotedQty);
+			if (qtyBreakPrice != null) {
+				return qtyBreakPrice.getQtyRange();
+			}
+			return null;
+		}
+
+	}
+	*/
+	
+	
+	QuantityBreakPrice getQtyBreakPrice(Integer qty) {
+		if (qty == null) {
+			return null;
+		}
+		List<QuantityBreakPrice> qtyBreakPrices = calQtyBreakRange();
+		for (QuantityBreakPrice qtyBreakPrice : qtyBreakPrices) {
+			if (qty >=  qtyBreakPrice.getQuantityBreak() && qty <= qtyBreakPrice.getQuantityBreakTo()) {
+				return qtyBreakPrice;
+			}
+		}
+		return null;
+
+	}
+	
+	@Override
+	void fillInPricer(RfqItemVO rfqItem) {
+		super.fillInPricer(rfqItem);
+
+		rfqItem.setAllocationFlag(allocationFlag);
+		rfqItem.setAqFlag(aqFlag);
+		if (availableToSellQty != null && rfqItem.getRequiredQtyAsInt() != null &&  
+				availableToSellQty < rfqItem.getRequiredQtyAsInt() && availableToSellQty != -1) {
+			rfqItem.setAqFlag(false);
+		}
+
+		
+		rfqItem.setMultiUsage(true);
+		rfqItem.setProgramType(programType != null ? programType.getName() : null);
+
+		QuantityBreakPrice qtyBreakPrice = getQtyBreakPrice(rfqItem.getRequiredQtyAsInt());
+		if (qtyBreakPrice != null) {
+			qtyBreakPrice.fillInPricer(rfqItem);
+			rfqItem.setOrderQties(Arrays.asList(new QuantityBreakPrice[]{qtyBreakPrice}));
+		} else {
+			rfqItem.setOrderQties(calQtyBreakRange());
+		}
+		/***convert OrderQties to rfq currency**/
+		switchToOtherCurrency(rfqItem.getOrderQties(), Currency.valueOf(rfqItem.getRfqCurr()), rfqItem.getSoldToCustomer());
+		rfqItem.setQtyIndicator(qtyIndicator);
+		rfqItem.setQtyIndicatorFromMfrDetail(false);
+
+	}
+	
+
+	@Override
+	public void fillupPricerInfo(PricerInfo pricerInfo) {
+		super.fillupPricerInfo(pricerInfo);
+
+		pricerInfo.setAllocationFlag(allocationFlag);
+		pricerInfo.setMultiUsageFlag(true);
+		pricerInfo.setProgramType(programType != null ? programType.getName(): null);
+
+		QuantityBreakPrice qtyBreakPrice = getQtyBreakPrice(pricerInfo.getRequestedQty());
+		if (qtyBreakPrice != null) {
+			qtyBreakPrice.fillInPricer(pricerInfo);
+			pricerInfo.setOrderQties(Arrays.asList(qtyBreakPrice));
+		} else {
+			pricerInfo.setOrderQties(calQtyBreakRange());
+			
+		}
+		//if(pricerInfo.isConvertMoneyFlag())
+		//switchToOtherCurrency(pricerInfo.getOrderQties(), Currency.getByCurrencyName(pricerInfo.getRfqCurr()), pricerInfo.getSoldToCustomer());
+		//pricerInfo.qtyIndicator is set by MfrDetail first, below set is only valid when pricer.qtyIndicator is not null
+		//this is not same as AQ logic
+		if (! StringUtils.isEmpty(qtyIndicator)) {
+			pricerInfo.setQtyIndicator(qtyIndicator);
+		}
+
+	}
+
+	
+
+}

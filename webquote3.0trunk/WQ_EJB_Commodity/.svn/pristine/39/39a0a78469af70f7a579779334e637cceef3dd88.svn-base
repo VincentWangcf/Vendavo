@@ -1,0 +1,165 @@
+package com.avnet.emasia.webquote.commodity.ejb; 
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
+import javax.persistence.Column;
+import javax.persistence.Query;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadParametersBean;
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadTemplateBean;
+import com.avnet.emasia.webquote.commodity.bean.VerifyEffectiveDateResult;
+import com.avnet.emasia.webquote.commodity.constant.PRICER_TYPE;
+import com.avnet.emasia.webquote.commodity.constant.PricerConstant;
+import com.avnet.emasia.webquote.commodity.constant.QED_CHECK_STATE;
+import com.avnet.emasia.webquote.commodity.dao.PricerUploadCommonSB;
+import com.avnet.emasia.webquote.commodity.util.CommodityUtil;
+import com.avnet.emasia.webquote.commodity.util.PricerUtils;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.ContractPricer;
+import com.avnet.emasia.webquote.entity.CostIndicator;
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.MaterialRegional;
+import com.avnet.emasia.webquote.entity.NormalPricer;
+import com.avnet.emasia.webquote.entity.Pricer;
+import com.avnet.emasia.webquote.entity.ProductCategory;
+import com.avnet.emasia.webquote.entity.ProgramPricer;
+import com.avnet.emasia.webquote.entity.QuantityBreakPrice;
+import com.avnet.emasia.webquote.entity.SalesCostPricer;
+import com.avnet.emasia.webquote.entity.SimplePricer;
+import com.avnet.emasia.webquote.entity.SalesCostType;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+
+@Stateless
+@TransactionManagement(TransactionManagementType.BEAN)
+public class SimplePricerUploadSB  extends PricerUploadCommonSB {
+	
+	private static final Logger LOG =Logger.getLogger(SimplePricerUploadSB.class.getName());
+		
+	 
+	//TODO
+	public Pricer getPricerByComponentKey(Material material, PricerUploadTemplateBean bean) {
+		if(material == null ||bean == null ){
+			return null;
+		}
+		StringBuilder sql = new StringBuilder();
+		sql.append(" SELECT p FROM SimplePricer p WHERE p.material = :material ");//AND p.pricerType =:pricerType 
+		sql.append(" AND p.bizUnitBean.name = :bizUnit ");
+		Query query = em.createQuery(sql.toString());
+		query.setParameter("material", material);
+		query.setParameter("bizUnit", bean.getRegion());
+		List<SimplePricer> list = query.getResultList();
+		if(list.isEmpty()) {
+			return null;
+		}
+		//Log
+		return (SimplePricer)list.get(0);			
+	}
+	 
+	
+	
+	@Override
+	public void insertUploadOperater(List<PricerUploadTemplateBean> items, String materialTypeStr,User user, List<Manufacturer> manufacturerLst, int[] countArr, PricerUploadParametersBean puBean)  {
+		long start = System.currentTimeMillis();	
+		//need some   persist  obj to fill .
+		initPricerUploadParametersBean(items, user, manufacturerLst, puBean);
+		
+		for (PricerUploadTemplateBean bean : items) {
+			bean.setPricer(this.getPricerByComponentKey(bean.getMaterial(), bean));
+			
+			if(bean.getPricer() !=null) {
+				bean.setQedCheckState(QED_CHECK_STATE.UPDATE.getName());
+			}else {
+				bean.setQedCheckState(QED_CHECK_STATE.INSERT.getName());
+			}
+			
+			if (QED_CHECK_STATE.INSERT.getName().equals(bean.getQedCheckState())) {
+				try {
+					bean.setPricer(new SimplePricer());
+					SimplePricer pricer = PricerUtils.convert((SimplePricer)bean.getPricer(), bean, user, puBean);
+					em.persist(pricer);
+					insertQuantityBreakPrice(pricer);
+					//em.flush();
+					countArr[8]++;// addedNormalCount++;
+				} catch (Exception e) {
+					LOG.log(Level.SEVERE, "insertSimplePricer error : " + materialTypeStr
+							+ " :: user Id and name " + user.getId() + " & " + user.getName() + e.getMessage(), e);
+				}
+			}else if (QED_CHECK_STATE.UPDATE.getName().equals(bean.getQedCheckState())) {
+				try {
+					removeQuantityBreakPrice(bean);
+					SimplePricer pricer = PricerUtils.convert((SimplePricer)bean.getPricer(), bean, user, puBean);
+					insertQuantityBreakPrice(pricer);
+					em.merge(pricer);
+					countArr[9]++; // updatedNormalCount++;
+				} catch (Exception e) {
+					LOG.log(Level.SEVERE, "updateSCPricer error : " + materialTypeStr
+							+ " :: user Id and name " + user.getId() + " & " + user.getName() + e.getMessage(), e);
+				}
+			} 
+		}
+		long end = System.currentTimeMillis();
+		LOG.info("insertUploadOperater-simple,takes " + (end - start) + " ms  processed line:"+items.get(items.size()-1).getLineSeq());
+	}
+	
+	private void removeQuantityBreakPrice(PricerUploadTemplateBean pricr){
+		long materialDetailId = pricr.getPricer().getId();
+		//TODO a.materialDetail.id
+		Query query = em.createQuery("delete FROM QuantityBreakPrice a where a.materialDetail.id = :matDtlId");
+		query.setParameter("matDtlId", materialDetailId);
+		int rowCount = query.executeUpdate();
+		//LOG.info("delete QuantityBreakPrice size :"+ rowCount);
+	}
+	private void insertQuantityBreakPrice(SimplePricer pricer){
+		for (QuantityBreakPrice abp : pricer.getQuantityBreakPrices()) {
+			abp.setMaterialDetail(pricer);
+			em.persist(abp);
+		}
+	}
+	
+	
+	@Override
+	public void removeOnlyPricerOperater(List<PricerUploadTemplateBean> items, String pricerType, User user,  int[] countArr) {
+		 this.removeOnlyMaterialDetail(items, user,countArr,pricerType);		
+	}
+		
+
+	private void removeOnlyMaterialDetail( List<PricerUploadTemplateBean> beans, User user,int[] countArr,String pricerType) {
+		StringBuffer sb = new StringBuffer("(");
+		for(PricerUploadTemplateBean bean:beans){
+			sb.append(bean.getPricer().getId()).append(",");
+		}
+		sb.deleteCharAt(sb.length()-1);
+		sb.append(")");
+		String deleteQuantityBreakPrice = "DELETE FROM QuantityBreakPrice e WHERE e.materialDetail.id in " +sb.toString();
+		Query deleteQbpQuery = em.createQuery(deleteQuantityBreakPrice);
+		deleteQbpQuery.executeUpdate();
+		String hql = "DELETE FROM Pricer e WHERE e.id in " +sb.toString();
+		Query query = em.createQuery(hql);
+		int rowCount = query.executeUpdate();
+		countArr[3] = countArr[3]+rowCount;
+		LOG.info("remove only pricer - simple count :"+ countArr[3]);
+	}
+}

@@ -1,0 +1,158 @@
+package com.avnet.emasia.webquote.web.quote.job;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+
+import org.apache.commons.lang.StringUtils;
+import org.jboss.as.server.CurrentServiceContainer;
+import org.jboss.ejb3.annotation.TransactionTimeout;
+import org.jboss.logmanager.Level;
+import org.jboss.msc.service.ServiceController;
+
+import com.avnet.emasia.webquote.masterData.util.Constants;
+import com.avnet.emasia.webquote.quote.ejb.PricerTypeMappingSB;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.utilities.schedule.HATimerService;
+import com.avnet.emasia.webquote.utilities.schedule.IScheduleTask;
+
+/**
+ * @author Lennon,Yang(043044)
+ * @Created on 2016-01-13
+ */
+@Stateless
+public class InitPriceTypeMappingTask implements IScheduleTask {
+
+	private static Logger logger = Logger.getLogger(InitPriceTypeMappingTask.class.getName());
+
+	@EJB
+	private PricerTypeMappingSB pricerTypeMappingSB;
+
+	@EJB
+	private SystemCodeMaintenanceSB systemCodeMaintenanceSB;
+
+	@EJB
+	private MailUtilsSB mailUtilsSB;
+	
+	private static boolean isRun = true;
+
+	@Asynchronous
+	@TransactionTimeout(value = 20000, unit = TimeUnit.SECONDS)
+	public void executeTask(Timer timer) {
+		try {
+					if (isRun) {
+						isRun = false;
+						//By DamonChen@20180126, as table  PRICER_TYPE_MAPPING is not available
+						//pricerTypeMappingSB.callInitPriceTypePro();
+						isRun = true;
+					}
+
+			logger.info("*****End run InitPriceTypeMappingScheduleJob*****");
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "Exception in executing timer for InitPriceTypeMappingScheduleJob for timer: "+timer.getInfo()+", exception message : "+e.getMessage(), e);
+			StringWriter sw = new StringWriter();
+			
+			String errorMsg = sw.toString(); 
+			sendExceptionEmail(errorMsg);
+		}
+	}
+	
+	public boolean isRanOnThisServer(String serviceName) {
+		boolean returnB = false;
+		String hostName = null;
+		try {
+			hostName = getHostName();
+			if (StringUtils.isNotBlank(serviceName)
+					&& StringUtils.isNotBlank(hostName)
+					&& serviceName.contains(hostName)) {
+				returnB = true;
+			}
+		} catch (Exception e) {
+			logger.log(Level.WARNING, "Failed to check service is ruuning or not, Service name : "+serviceName+" Exception message : "+e.getMessage());
+			return false;
+		}
+
+		return returnB;
+
+	}
+
+	public void sendExceptionEmail(String errorMsg) {
+		try {
+			String emailFrom = systemCodeMaintenanceSB.getCofigByCategory("INIT_PRICE_TYPE_MAPPING_FROM").get(0);
+			//String emailFrom = "GIS-EM-ASIA-ECO-WEB@Avnet.com";
+			List<String> emailList = systemCodeMaintenanceSB.getCofigByCategory("INIT_PRICE_TYPE_MAPPING_TO");
+			List<String> toList = new ArrayList<String>();
+			if(emailList != null && emailList.size() > 0) {
+				String emailStr = emailList.get(0);
+				for(String emailTo : emailStr.split(",")) {
+					toList.add(emailTo);
+				}
+			}
+			//List<String> toList = new ArrayList<>();
+			//toList.add("Lenon.Yang@Avnet.com");
+			String content = getEmailContent(errorMsg);
+			MailInfoBean mib = new MailInfoBean();
+			mib.setMailFrom(emailFrom);
+			String subject = Constants.INIT_PRICE_TYPE_MAPPING_ERROR_EMAIL_SUBJECT;
+			//add by Lenon.Yang(043044) 2016/05/23
+			String jbossNodeName = System.getProperty(HATimerService.JBOSS_NODE_NAME);
+			if(org.apache.commons.lang.StringUtils.isNotBlank(jbossNodeName)) {
+				subject += "(Jboss Node:" + jbossNodeName + ")";
+			}
+			mib.setMailSubject(subject);
+			mib.setMailContent(content);
+			mib.setMailTo(toList);
+			mailUtilsSB.sendTextMail(mib);
+		} catch (Exception e)
+		{
+			logger.log(Level.SEVERE, "Send Email Failed!,for error message: "+errorMsg+" Message"+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+		}
+	}
+	
+	private String getEmailContent(String errorMsg) {
+		String serverHostName = getHostName();
+		String emailContent = " Server hostName:" + serverHostName + "\r\r" 
+							+ " Class Name:" + InitPriceTypeMappingTask.class.getName() + "\r\r" 
+							+ " Exception Message:" + errorMsg ;
+		return emailContent;
+	}
+	
+
+	private String getHostName() {
+		if (System.getenv("COMPUTERNAME") != null) {
+			return System.getenv("COMPUTERNAME");
+		} else {
+			return getHostNameForLiunx();
+		}
+	}
+
+	private String getHostNameForLiunx() {
+		try {
+			return (InetAddress.getLocalHost()).getHostName();
+		} catch (UnknownHostException uhe) {
+			logger.log(Level.WARNING, "Failed to get host name, Exception message : "+uhe.getMessage(), uhe);
+			String host = uhe.getMessage();
+			if (host != null) {
+				int colon = host.indexOf(':');
+				if (colon > 0) {
+					return host.substring(0, colon);
+				}
+			}
+			return "UnknownHost";
+		}
+	}
+
+}

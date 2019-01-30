@@ -1,0 +1,381 @@
+package com.avnet.emasia.webquote.vo;
+
+
+/**
+ * @author Tonmy,Li(906893)
+ * @Created on 2013-03-04
+ *  program material Vo. 
+ */
+public class ProgramMaterialMaintVo extends ProgramMaterialVo{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2107472453430354474L;
+	private String rowNO;
+	private String id;
+	private Integer displayOnTop;
+	private Double minimumCost;
+	private String callForQuote;
+	private Integer mov;
+	private String costIndicator;
+	private String programEffectiveDate;
+	private String programClosingDate;
+	private String validity;
+	private String shipmentValidity;
+	private String quantityIndicator;
+	private String allocationFlag;
+	private String resaleIndicator;
+	private String aqFlag;
+	private String termsandConditions;
+	private String avnetQuoteCentreComments;
+	private String lastUpdate;
+	private String lastUpdateBy;
+	private String createdOn;
+	private String createdBy;
+	
+	
+	private String quantityBreak1;
+	private String quantityBreakPrice1;
+	private String quantityBreak2;
+	private String quantityBreakPrice2;
+	private String quantityBreak3;
+	private String quantityBreakPrice3;
+	private String quantityBreak4;
+	private String quantityBreakPrice4;
+	private String quantityBreak5;
+	private String quantityBreakPrice5;
+	private String quantityBreak6;
+	private String quantityBreakPrice6;
+	private String quantityBreak7;
+	private String quantityBreakPrice7;
+	private String quantityBreak8;
+	private String quantityBreakPrice8;
+	private String quantityBreak9;
+	private String quantityBreakPrice9;
+	private String quantityBreak10;
+	private String quantityBreakPrice10;
+	
+	private String salesCost1;
+	private String suggestedResale1;
+	
+	private String salesCost2;
+	private String suggestedResale2;
+	
+	private String salesCost3;
+	private String suggestedResale3;
+	
+	private String salesCost4;
+	private String suggestedResale4;
+	
+	private String salesCost5;
+	private String suggestedResale5;
+	
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
+	public Integer getDisplayOnTop() {
+		return displayOnTop;
+	}
+	public void setDisplayOnTop(Integer displayOnTop) {
+		this.displayOnTop = displayOnTop;
+	}
+	public Double getMinimumCost() {
+		return minimumCost;
+	}
+	public void setMinimumCost(Double minimumCost) {
+		this.minimumCost = minimumCost;
+	}
+	public String getCallForQuote() {
+		return callForQuote;
+	}
+	public void setCallForQuote(String callForQuote) {
+		this.callForQuote = callForQuote;
+	}
+	public Integer getMov() {
+		return mov;
+	}
+	public void setMov(Integer mov) {
+		this.mov = mov;
+	}
+	public String getCostIndicator() {
+		return costIndicator;
+	}
+	public void setCostIndicator(String costIndicator) {
+		this.costIndicator = costIndicator;
+	}
+	public String getProgramEffectiveDate() {
+		return programEffectiveDate;
+	}
+	public void setProgramEffectiveDate(String programEffectiveDate) {
+		this.programEffectiveDate = programEffectiveDate;
+	}
+	public String getProgramClosingDate() {
+		return programClosingDate;
+	}
+	public void setProgramClosingDate(String programClosingDate) {
+		this.programClosingDate = programClosingDate;
+	}
+	public String getValidity() {
+		return validity;
+	}
+	public void setValidity(String validity) {
+		this.validity = validity;
+	}
+	public String getShipmentValidity() {
+		return shipmentValidity;
+	}
+	public void setShipmentValidity(String shipmentValidity) {
+		this.shipmentValidity = shipmentValidity;
+	}
+	public String getQuantityIndicator() {
+		return quantityIndicator;
+	}
+	public void setQuantityIndicator(String quantityIndicator) {
+		this.quantityIndicator = quantityIndicator;
+	}
+	public String getAllocationFlag() {
+		return allocationFlag;
+	}
+	public void setAllocationFlag(String allocationFlag) {
+		this.allocationFlag = allocationFlag;
+	}
+	public String getResaleIndicator() {
+		return resaleIndicator;
+	}
+	public void setResaleIndicator(String resaleIndicator) {
+		this.resaleIndicator = resaleIndicator;
+	}
+	public String getAqFlag() {
+		return aqFlag;
+	}
+	public void setAqFlag(String aqFlag) {
+		this.aqFlag = aqFlag;
+	}
+	public String getTermsandConditions() {
+		return termsandConditions;
+	}
+	public void setTermsandConditions(String termsandConditions) {
+		this.termsandConditions = termsandConditions;
+	}
+	public String getAvnetQuoteCentreComments() {
+		return avnetQuoteCentreComments;
+	}
+	public void setAvnetQuoteCentreComments(String avnetQuoteCentreComments) {
+		this.avnetQuoteCentreComments = avnetQuoteCentreComments;
+	}
+	public String getLastUpdate() {
+		return lastUpdate;
+	}
+	public void setLastUpdate(String lastUpdate) {
+		this.lastUpdate = lastUpdate;
+	}
+	public String getLastUpdateBy() {
+		return lastUpdateBy;
+	}
+	public void setLastUpdateBy(String lastUpdateBy) {
+		this.lastUpdateBy = lastUpdateBy;
+	}
+	public String getCreatedOn() {
+		return createdOn;
+	}
+	public void setCreatedOn(String createdOn) {
+		this.createdOn = createdOn;
+	}
+	public String getCreatedBy() {
+		return createdBy;
+	}
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+	public String getQuantityBreak1() {
+		return quantityBreak1;
+	}
+	public void setQuantityBreak1(String quantityBreak1) {
+		this.quantityBreak1 = quantityBreak1;
+	}
+	public String getQuantityBreakPrice1() {
+		return quantityBreakPrice1;
+	}
+	public void setQuantityBreakPrice1(String quantityBreakPrice1) {
+		this.quantityBreakPrice1 = quantityBreakPrice1;
+	}
+	public String getQuantityBreak2() {
+		return quantityBreak2;
+	}
+	public void setQuantityBreak2(String quantityBreak2) {
+		this.quantityBreak2 = quantityBreak2;
+	}
+	public String getQuantityBreakPrice2() {
+		return quantityBreakPrice2;
+	}
+	public void setQuantityBreakPrice2(String quantityBreakPrice2) {
+		this.quantityBreakPrice2 = quantityBreakPrice2;
+	}
+	public String getQuantityBreak3() {
+		return quantityBreak3;
+	}
+	public void setQuantityBreak3(String quantityBreak3) {
+		this.quantityBreak3 = quantityBreak3;
+	}
+	public String getQuantityBreakPrice3() {
+		return quantityBreakPrice3;
+	}
+	public void setQuantityBreakPrice3(String quantityBreakPrice3) {
+		this.quantityBreakPrice3 = quantityBreakPrice3;
+	}
+	public String getQuantityBreak4() {
+		return quantityBreak4;
+	}
+	public void setQuantityBreak4(String quantityBreak4) {
+		this.quantityBreak4 = quantityBreak4;
+	}
+	public String getQuantityBreakPrice4() {
+		return quantityBreakPrice4;
+	}
+	public void setQuantityBreakPrice4(String quantityBreakPrice4) {
+		this.quantityBreakPrice4 = quantityBreakPrice4;
+	}
+	public String getQuantityBreak5() {
+		return quantityBreak5;
+	}
+	public void setQuantityBreak5(String quantityBreak5) {
+		this.quantityBreak5 = quantityBreak5;
+	}
+	public String getQuantityBreakPrice5() {
+		return quantityBreakPrice5;
+	}
+	public void setQuantityBreakPrice5(String quantityBreakPrice5) {
+		this.quantityBreakPrice5 = quantityBreakPrice5;
+	}
+	public String getQuantityBreak6() {
+		return quantityBreak6;
+	}
+	public void setQuantityBreak6(String quantityBreak6) {
+		this.quantityBreak6 = quantityBreak6;
+	}
+	public String getQuantityBreakPrice6() {
+		return quantityBreakPrice6;
+	}
+	public void setQuantityBreakPrice6(String quantityBreakPrice6) {
+		this.quantityBreakPrice6 = quantityBreakPrice6;
+	}
+	public String getQuantityBreak7() {
+		return quantityBreak7;
+	}
+	public void setQuantityBreak7(String quantityBreak7) {
+		this.quantityBreak7 = quantityBreak7;
+	}
+	public String getQuantityBreakPrice7() {
+		return quantityBreakPrice7;
+	}
+	public void setQuantityBreakPrice7(String quantityBreakPrice7) {
+		this.quantityBreakPrice7 = quantityBreakPrice7;
+	}
+	public String getQuantityBreak8() {
+		return quantityBreak8;
+	}
+	public void setQuantityBreak8(String quantityBreak8) {
+		this.quantityBreak8 = quantityBreak8;
+	}
+	public String getQuantityBreakPrice8() {
+		return quantityBreakPrice8;
+	}
+	public void setQuantityBreakPrice8(String quantityBreakPrice8) {
+		this.quantityBreakPrice8 = quantityBreakPrice8;
+	}
+	public String getQuantityBreak9() {
+		return quantityBreak9;
+	}
+	public void setQuantityBreak9(String quantityBreak9) {
+		this.quantityBreak9 = quantityBreak9;
+	}
+	public String getQuantityBreakPrice9() {
+		return quantityBreakPrice9;
+	}
+	public void setQuantityBreakPrice9(String quantityBreakPrice9) {
+		this.quantityBreakPrice9 = quantityBreakPrice9;
+	}
+	public String getQuantityBreak10() {
+		return quantityBreak10;
+	}
+	public void setQuantityBreak10(String quantityBreak10) {
+		this.quantityBreak10 = quantityBreak10;
+	}
+	public String getQuantityBreakPrice10() {
+		return quantityBreakPrice10;
+	}
+	public void setQuantityBreakPrice10(String quantityBreakPrice10) {
+		this.quantityBreakPrice10 = quantityBreakPrice10;
+	}
+	public String getSalesCost1() {
+		return salesCost1;
+	}
+	public void setSalesCost1(String salesCost1) {
+		this.salesCost1 = salesCost1;
+	}
+	public String getSuggestedResale1() {
+		return suggestedResale1;
+	}
+	public void setSuggestedResale1(String suggestedResale1) {
+		this.suggestedResale1 = suggestedResale1;
+	}
+	public String getSalesCost2() {
+		return salesCost2;
+	}
+	public void setSalesCost2(String salesCost2) {
+		this.salesCost2 = salesCost2;
+	}
+	public String getSuggestedResale2() {
+		return suggestedResale2;
+	}
+	public void setSuggestedResale2(String suggestedResale2) {
+		this.suggestedResale2 = suggestedResale2;
+	}
+	public String getSalesCost3() {
+		return salesCost3;
+	}
+	public void setSalesCost3(String salesCost3) {
+		this.salesCost3 = salesCost3;
+	}
+	public String getSuggestedResale3() {
+		return suggestedResale3;
+	}
+	public void setSuggestedResale3(String suggestedResale3) {
+		this.suggestedResale3 = suggestedResale3;
+	}
+	public String getSalesCost4() {
+		return salesCost4;
+	}
+	public void setSalesCost4(String salesCost4) {
+		this.salesCost4 = salesCost4;
+	}
+	public String getSuggestedResale4() {
+		return suggestedResale4;
+	}
+	public void setSuggestedResale4(String suggestedResale4) {
+		this.suggestedResale4 = suggestedResale4;
+	}
+	public String getSalesCost5() {
+		return salesCost5;
+	}
+	public void setSalesCost5(String salesCost5) {
+		this.salesCost5 = salesCost5;
+	}
+	public String getSuggestedResale5() {
+		return suggestedResale5;
+	}
+	public void setSuggestedResale5(String suggestedResale5) {
+		this.suggestedResale5 = suggestedResale5;
+	}
+	public String getRowNO() {
+		return rowNO;
+	}
+	public void setRowNO(String rowNO) {
+		this.rowNO = rowNO;
+	}
+	
+}

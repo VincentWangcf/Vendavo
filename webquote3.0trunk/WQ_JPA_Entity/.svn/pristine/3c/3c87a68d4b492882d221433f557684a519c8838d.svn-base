@@ -1,0 +1,102 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.util.List;
+
+import javax.persistence.*;
+
+
+
+
+/**
+ * The persistent class for the MANUFACTURER database table.
+ * 
+ */
+@Entity
+@Table(name="MANUFACTURER")
+public class Manufacturer implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	@SequenceGenerator(name="MANUFACTURER_ID_GENERATOR", sequenceName="WQ_SEQ",allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="MANUFACTURER_ID_GENERATOR")
+	@Column(unique=true, nullable=false, precision=15)
+	private long id;
+
+	@Column(length=100)
+	private String description;
+
+	@Column(nullable=false, length=20)
+	private String name;
+	
+	//uni-directional many-to-many association to BizUnit
+	@ManyToMany
+	@JoinTable(
+		name="MANUFACTURER_BIZUNIT_MAPPING"
+		, joinColumns={
+			@JoinColumn(name="MANUFACTURER_ID", nullable=false)
+			}
+		, inverseJoinColumns={
+			@JoinColumn(name="BIZ_UNIT_ID", nullable=false)
+			}
+	)
+	private List<BizUnit> bizUnits;
+
+	@OneToMany(mappedBy="manufacturer")
+	private List<ManufacturerDetail> manufacturerDetails;
+	
+	public Manufacturer() {
+	}
+
+	public long getId() {
+		return this.id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getDescription() {
+		return this.description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	public String getName() {
+		return this.name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public List<BizUnit> getBizUnits() {
+		return bizUnits;
+	}
+
+	public void setBizUnits(List<BizUnit> bizUnits) {
+		this.bizUnits = bizUnits;
+	}
+
+	public List<ManufacturerDetail> getManufacturerDetails() {
+		return manufacturerDetails;
+	}
+
+	public void setManufacturerDetailList(List<ManufacturerDetail> manufacturerDetails) {
+		this.manufacturerDetails = manufacturerDetails;
+	}
+	
+	public ManufacturerDetail getManufacturerDetail(long productGroupId, long productCategoryId, String bizUnit) {
+		for (ManufacturerDetail manufacturerDetail : manufacturerDetails) {
+			if (manufacturerDetail.getProductGroup().getId() == productGroupId && 
+					manufacturerDetail.getProductCategory().getId() == productCategoryId &&
+					manufacturerDetail.getBizUnit().getName().equalsIgnoreCase(bizUnit)) {
+				return manufacturerDetail;
+			}
+		}
+		return null;
+	}
+
+
+}

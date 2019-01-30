@@ -1,0 +1,684 @@
+package com.avnet.emasia.webquote.web.quote.job;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.jboss.as.server.CurrentServiceContainer;
+import org.jboss.ejb3.annotation.TransactionTimeout;
+import org.jboss.logmanager.Level;
+import org.jboss.msc.service.ServiceController;
+
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.Role;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.reports.ejb.SalesQuoteReportSB;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.utilities.schedule.IScheduleTask;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.reports.vo.SalesQuoteReportBean;
+
+/**
+ * @author 914975
+ * @createdOn 20131218
+ */
+ @Stateless //must be stateless for timer schedule.
+//@ManagedBean
+//@SessionScoped
+public class SalesQuoteReportTask implements IScheduleTask
+{
+	private static final Logger LOG = Logger
+			.getLogger(SalesQuoteReportTask.class.getName());
+	private final static String[] COLUMN_NAME_ARR = { "Salesman", "Sales GM",
+			"Sales Team", "Total no. of item Quoted",
+			"No. of item Quote Generated with Valid DRMS #" };
+
+	@EJB
+	private SystemCodeMaintenanceSB sysCodeMaintSB;
+	@EJB
+	private SalesQuoteReportSB salesQuoteReportSB;
+	@EJB
+	private BizUnitSB bizutSB;
+	@EJB
+	private UserSB userSb;
+	@EJB
+	private MailUtilsSB mailUtilsSB;
+	@EJB
+	SysConfigSB sysConfigSB;
+	
+	@EJB
+	protected EJBCommonSB ejbCommonSB;
+	
+
+	@Override
+	@Asynchronous
+	@TransactionTimeout(value = 20000, unit = TimeUnit.SECONDS)
+	public void executeTask(Timer timer)
+	{
+		LOG.info("Sales Quote report job beginning...");
+		try
+		{
+		
+		            	setDataAndSendEmail();
+			
+		}
+		catch (Exception e)
+		{
+			LOG.log(Level.SEVERE, "Exception in executing task for Sales Quote job for timer: "+timer.getInfo().toString()+", exception message : "+e.getMessage(), e);
+		}
+
+		LOG.info("Sales Quote job ended");
+	}
+	
+	
+	private void setDataAndSendEmail() throws FileNotFoundException, IOException{
+
+		List<User> bzUserLst = new ArrayList<User>();
+		List<User> uLst = userSb.findAll();
+		if (uLst != null)
+		{
+			for (User u : uLst)
+			{
+				if (u.getActive())
+				{
+					List<Role> rLst = u.getRoles();
+					if (rLst != null)
+					{
+						boolean f = false;
+						for (Role r : rLst)
+						{
+							if (r.getName().equalsIgnoreCase(
+									QuoteConstant.ROLE_SALE_DIRECTOR)
+									|| r.getName().equalsIgnoreCase(
+											QuoteConstant.ROLE_SALE_GM))
+							{
+								f = true;
+								break;
+							}
+						}
+						if (f)
+						{
+							bzUserLst.add(u);
+						}
+					}
+				}
+			}
+		}
+		List<QuoteItem> qiLst = (List<QuoteItem>) salesQuoteReportSB
+				.findQuotItems();
+		Map<String, List<QuoteItem>> userQiMap = new HashMap<String, List<QuoteItem>>();
+		if (qiLst != null)
+		{
+			String employeeIdStr = "-1";
+			for (QuoteItem qi : qiLst)
+			{
+				boolean fg = false;
+				if (qi.getQuote() != null)
+				{		    						
+					List<Role> rLst = qi.getQuote().getSales().getRoles();
+					if (rLst != null)
+					{
+						//1.	Only Sales/Insides Sales/Sales_XXX roles should be counted in this report in 'Salesman' column, sometimes other roles may also report to Sales director, eg: QCO/QCP, they should not appear in the report.
+						for (Role r : rLst)
+						{
+							if (r != null)
+							{
+								if (r.getName().equalsIgnoreCase(QuoteConstant.ROLE_INSIDE_SALES) 
+										|| r.getName().equalsIgnoreCase(QuoteConstant.ROLE_SALES)
+										|| r.getName().equalsIgnoreCase(QuoteConstant.ROLE_SALES_MANAGER)
+										|| r.getName().equalsIgnoreCase(QuoteConstant.ROLE_SALE_DIRECTOR))
+										{
+											fg = true;
+											break;
+										}
+							}
+						}
+					}
+				}
+				if (fg)
+				{
+					employeeIdStr = qi.getQuote().getSales().getEmployeeId();
+					if (userQiMap.containsKey(employeeIdStr))
+					{
+						List<QuoteItem> qLst = userQiMap.get(employeeIdStr);
+						qLst.add(qi);
+					}
+					else
+					{
+						List<QuoteItem> qLst = new ArrayList<QuoteItem>();
+						qLst.add(qi);
+						userQiMap.put(employeeIdStr, qLst);
+					}
+				}		    					
+			}
+		}
+
+		if (bzUserLst != null)
+		{
+			for (User u : bzUserLst)
+			{
+				List<User> usbLst = userSb.findAllSubordinates(u, 10);
+				List<User> subUsbLst = new ArrayList<User>();
+				if (usbLst != null)
+				{
+					for (User uu : usbLst)
+					{
+						if(uu.getActive())
+						{
+							subUsbLst.add(uu);
+						}
+					}
+				}
+				
+				List<SalesQuoteReportBean> beanLst = convertBean(userQiMap,
+						subUsbLst, u);
+				HSSFWorkbook workbook = generateExcelFile(beanLst);
+				sendEmail(workbook, u.getEmailAddress(), u.getDefaultBizUnit().getName());
+			}
+		}        
+	
+	}
+
+	/**
+	 * Converts quoteItem to bean object.
+	 * 
+	 * @param qLst
+	 * @return
+	 */
+	public List<SalesQuoteReportBean> convertBean(
+			Map<String, List<QuoteItem>> qMap, List<User> uLst, User currentUser)
+	{
+		List<SalesQuoteReportBean> rltLst = new ArrayList<SalesQuoteReportBean>();
+		if (uLst != null)
+		{
+			boolean fg = false;
+			for (User u : uLst)
+			{
+				/////////
+				fg = false;
+				List<Role> uRoleLst = u.getRoles();
+				if (uRoleLst != null)
+				{
+					//1.	Only Sales/Insides Sales/Sales_XXX roles should be counted in this report in 鈥楽alesman鈥�column, sometimes other roles may also report to Sales director, eg: QCO/QCP, they should not appear in the report.
+					for (Role r : uRoleLst)
+					{
+						if (r != null)
+						{
+							if (r.getName().equalsIgnoreCase(QuoteConstant.ROLE_INSIDE_SALES) 
+									|| r.getName().equalsIgnoreCase(QuoteConstant.ROLE_SALES)
+									|| r.getName().equalsIgnoreCase(QuoteConstant.ROLE_SALE_GM)
+									|| r.getName().equalsIgnoreCase(QuoteConstant.ROLE_SALES_MANAGER)
+									|| r.getName().equalsIgnoreCase(QuoteConstant.ROLE_SALE_DIRECTOR))
+									{
+										fg = true;
+										break;
+									}
+						}
+					}
+				}
+				if(fg)
+				{
+					SalesQuoteReportBean s = new SalesQuoteReportBean();
+					s.setSalesmanStr(u.getName());
+					List<Role> rLst = currentUser.getRoles();
+					if (rLst != null)
+					{
+						boolean f = false;
+						for (Role r : rLst)
+						{
+							if (r.getName().equalsIgnoreCase(
+									QuoteConstant.ROLE_SALE_DIRECTOR))
+							{
+								f = true;
+								break;
+							}
+						}
+						if (f)
+						{
+							boolean fff = false;
+							List<Role> fffRoleLst = u.getRoles();
+							if (fffRoleLst != null)
+							{
+								for (Role r : fffRoleLst)
+								{
+									if(r.getName().equalsIgnoreCase(QuoteConstant.ROLE_SALE_GM))
+									{
+										fff = true;
+										break;
+									}
+								}
+							}
+							if (fff)
+							{
+								s.setSalesGMStr(u.getName());
+							}
+							else{
+								User uu = getGMName(u, currentUser);
+								if (uu.getEmployeeId().equalsIgnoreCase(
+										currentUser.getEmployeeId()))
+								{
+									s.setSalesGMStr("");
+								}
+								else
+								{
+									boolean ff = false;
+									List<Role> ffRoleLst = uu.getRoles();
+									if (ffRoleLst != null)
+									{
+										for (Role r : ffRoleLst)
+										{
+											if(r.getName().equalsIgnoreCase(QuoteConstant.ROLE_SALE_GM))
+											{
+												ff = true;
+												break;
+											}
+										}
+										if (ff)
+										{
+											s.setSalesGMStr(uu.getName());
+										}
+										else 
+										{
+											s.setSalesGMStr("");
+										}
+									}
+									else 
+									{
+										s.setSalesGMStr("");
+									}
+								}
+							}
+						}
+						else
+						{
+							s.setSalesGMStr(currentUser.getName());
+						}
+					}
+					if (u.getTeam() != null)
+					{
+						s.setSalesTeamStr(u.getTeam().getName());
+					}
+
+					List<QuoteItem> qiLst = (List<QuoteItem>) qMap.get(u
+							.getEmployeeId());
+					if (qiLst != null)
+					{
+						s.setTotalNoOfItemQuotedStr(String.valueOf(qiLst.size()));
+					}
+					else
+					{
+						s.setTotalNoOfItemQuotedStr("0");
+					}
+
+					int validDRMSCoumt = 0;
+					if (qiLst != null)
+					{
+						for (QuoteItem qi : qiLst)
+						{
+							if (qi.getDrmsNumber() != null)
+							{
+								validDRMSCoumt++;
+							}
+						}
+					}
+					s.setNoItemQuoteGeneratedValidDRMSStr(String
+							.valueOf(validDRMSCoumt));
+					rltLst.add(s);
+				}
+				////
+			}
+		}
+		SalesQuoteReportBean s = new SalesQuoteReportBean();
+		////
+		boolean ff = false;
+		List<Role> ffRoleLst = currentUser.getRoles();
+		if (ffRoleLst != null)
+		{
+			for (Role r : ffRoleLst)
+			{
+				if(r.getName().equalsIgnoreCase(QuoteConstant.ROLE_SALE_GM))
+				{
+					ff = true;
+					break;
+				}
+			}
+			if (ff)
+			{
+				s.setSalesGMStr(currentUser.getName());
+			}
+			else 
+			{
+				s.setSalesGMStr("");
+			}
+		}
+		else 
+		{
+			s.setSalesGMStr("");
+		}
+		////
+		s.setSalesmanStr(currentUser.getName());
+		if (currentUser.getTeam() != null)
+		{
+			s.setSalesTeamStr(currentUser.getTeam().getName());
+		}
+		List<QuoteItem> qiLst = (List<QuoteItem>) qMap.get(currentUser
+				.getEmployeeId());
+		if (qiLst != null)
+		{
+			s.setTotalNoOfItemQuotedStr(String.valueOf(qiLst.size()));
+			int drmsCount = 0;
+			for (QuoteItem qi : qiLst)
+			{
+				if (qi.getDrmsNumber() != null)
+				{
+					drmsCount++;
+				}
+			}
+			s.setNoItemQuoteGeneratedValidDRMSStr(String.valueOf(drmsCount));
+		}
+		else
+		{
+			s.setTotalNoOfItemQuotedStr("0");
+			s.setNoItemQuoteGeneratedValidDRMSStr("0");
+		}
+
+		rltLst.add(s);
+		
+		return rltLst;
+	}
+
+	private User getGMName(User subUser, User cUser)
+	{
+		User resultUser = null;
+		User u = subUser.getReportTo();
+		if (u != null)
+		{
+			if (!cUser.getEmployeeId().equalsIgnoreCase(u.getEmployeeId()))
+			{
+				List<Role> roleLst = u.getRoles();
+				boolean f = false;
+				if (roleLst != null)
+				{
+					for (Role r : roleLst)
+					{
+						if (r.getName().equalsIgnoreCase(
+								QuoteConstant.ROLE_SALE_GM))
+						{
+							f = true;
+						}
+					}
+				}
+				if (!f)
+				{
+					return getGMName(u, cUser);
+				}
+				else 
+				{
+					return u;
+				}
+			}
+		}
+
+		return u;
+	}
+
+	private String generateFileName()
+	{
+		DateFormat df = new SimpleDateFormat("yyyyMMdd");
+		Date startDate = com.avnet.emasia.webquote.utilities.util.QuoteUtil.getPreviousSunday();
+		Date endDate = com.avnet.emasia.webquote.utilities.util.QuoteUtil.getPreviousSatDay();
+		return "Sales Quote Weekly Summary " + df.format(startDate)
+				+ " " + df.format(endDate);
+	}
+
+	private String generateExcelTitle()
+	{
+		DateFormat df = new SimpleDateFormat("yyyyMMdd");
+		Date startDate = com.avnet.emasia.webquote.utilities.util.QuoteUtil.getPreviousSunday();
+		Date endDate = com.avnet.emasia.webquote.utilities.util.QuoteUtil.getPreviousSatDay();
+		return "Sales Quote Weekly Summary " + df.format(startDate)
+				+ " " + df.format(endDate);
+	}
+	
+	private String generateEmailSubject()
+	{
+		DateFormat df = new SimpleDateFormat("yyyyMMdd");
+		Date date = new Date();
+		return "Sales Quotation Weekly Summary " + df.format(date);
+	}
+
+	public Object reverse(byte[] rawData)
+	{
+		try
+		{
+			ByteArrayInputStream bi = new ByteArrayInputStream(rawData);
+			ObjectInputStream oi = new ObjectInputStream(bi);
+			return (oi.readObject());
+		}
+		catch (ClassNotFoundException e1)
+		{
+			LOG.log(Level.SEVERE, "Exceptin in converting to object from raw data, exception message : "+e1.getMessage(), e1);
+		}
+		catch (IOException e)
+		{
+			LOG.log(Level.SEVERE, "Exceptin in converting to object from raw data, exception message : "+e.getMessage(), e);
+		}
+
+		return null;
+
+	}
+
+	public void writeToDisc(HSSFWorkbook workbook, String fileName)
+	{
+		File file = new File(fileName);
+		try
+		{
+			FileOutputStream stream = new FileOutputStream(file);
+			workbook.write(stream);
+		}
+		catch (FileNotFoundException e)
+		{
+			LOG.log(Level.SEVERE, "Exception in writtnig file to disc, file name : "+fileName+" , exception message : "+e.getMessage(), e);
+		}
+		catch (IOException e)
+		{
+			LOG.log(Level.SEVERE, "Exception in writtnig file to disc, file name : "+fileName+" , exception message : "+e.getMessage(), e);
+		}
+	}
+
+	public void deleteFilesInDir(String directory)
+	{
+		File dir = new File(directory);
+		File[] files = dir.listFiles();
+		for (int i = 0; i < files.length; i++)
+		{
+			files[i].delete();
+		}
+	}
+
+	public void sendEmail(HSSFWorkbook workbook, String emailStr, String bzStr)
+			throws FileNotFoundException, IOException
+	{
+		LOG.info("Sends Sales Quote report email begin...");
+		File xlsFile = null;
+		File zipFile = null;
+		FileOutputStream fileOut = null;
+		String tempPath = sysConfigSB.getProperyValue(QuoteConstant.TEMP_DIR);
+		try
+		{
+			MailInfoBean mib = new MailInfoBean();
+			List<String> toList = new ArrayList<String>();
+			toList.add(emailStr);
+			String subject = generateExcelTitle();
+			mib.setMailSubject(subject);
+			mib.setMailTo(toList);
+			mib.setMailContent("");
+			mib.setMailFrom(sysCodeMaintSB.getBuzinessProperty("OFFLINE_REPORT_FROM",bzStr));
+			String fileName = generateFileName();
+			String zipFileName = tempPath+fileName + ".zip";
+			String xlsFileName = tempPath+fileName + ".xls";
+			xlsFile = new File(xlsFileName);
+			fileOut = new FileOutputStream(xlsFile);
+			workbook.write(fileOut);
+			fileOut.close();
+			zipFile = (File)QuoteUtil.doZipFile(zipFileName, xlsFileName);
+
+			mib.setZipFile(zipFile);
+
+			try
+			{
+				mailUtilsSB.sendAttachedMail(mib);
+			}
+			catch (Exception e)
+			{
+				String errStr = "Send email to " + toList.toString() + " failed! " + e.getMessage(); 
+				LOG.log(Level.SEVERE, "Exception occurred for email"+emailStr+", Bz: "+bzStr+", "+errStr, e);
+			}
+
+			LOG.info("Sends Sales Quote report email ended.");
+		}
+		catch (FileNotFoundException e)
+		{
+			throw e;
+		}
+		catch (IOException e1)
+		{
+			throw e1;
+		}
+		finally
+		{
+			if (fileOut != null)
+				fileOut = null;
+			if (xlsFile != null)
+			{
+				if (xlsFile.exists())
+					xlsFile.delete();
+			}
+			if (zipFile != null)
+			{
+				if (zipFile.exists())
+					zipFile.delete();
+			}
+		}
+	}
+	/**
+	 * Generate a report file.
+	 * 
+	 * @param resultList
+	 * @param bzStr
+	 * @return
+	 */
+	public HSSFWorkbook generateExcelFile(List resultList)
+	{
+		LOG.fine("Generate excel file!");
+		HSSFWorkbook wb = new HSSFWorkbook();
+		String sheetName = generateExcelTitle();
+		HSSFSheet sheet = wb.createSheet(sheetName);
+
+		int rowIndex = 0;
+		sheet = DownloadUtil.addSheetHeader(wb, sheet, rowIndex, COLUMN_NAME_ARR);
+		sheet.setColumnWidth(0, 6000);
+		sheet.setColumnWidth(1, 7000);
+		sheet.setColumnWidth(2, 9000);
+		sheet.setColumnWidth(3, 7000);
+		sheet.setColumnWidth(4, 14000);
+
+		int rowCount = resultList.size();
+		rowIndex =rowIndex + 1;
+		if (rowCount > 0)
+		{
+			for (int index = 0; index < rowCount; index++)
+			{
+				SalesQuoteReportBean bean = (SalesQuoteReportBean) resultList
+						.get(index);
+				HSSFRow row = null;
+				row = sheet.createRow(index + rowIndex);
+				row = addRow(wb, row, bean);
+			}
+		}
+		return wb;
+	}
+
+	/**
+	 * Adds row values.
+	 * 
+	 * @param workbook
+	 * @param row
+	 * @param b
+	 * @return
+	 */
+	private HSSFRow addRow(HSSFWorkbook workbook, HSSFRow row,
+			SalesQuoteReportBean b)
+	{
+		int i = 0;
+		try
+		{
+			HSSFCell cell = null;
+			cell = row.createCell(i++);
+			cell.setCellValue(b.getSalesmanStr());
+			cell = row.createCell(i++);
+			cell.setCellValue(b.getSalesGMStr());
+			cell = row.createCell(i++);
+			cell.setCellValue(b.getSalesTeamStr());
+			cell = row.createCell(i++);
+			cell.setCellValue(b.getTotalNoOfItemQuotedStr());
+			cell = row.createCell(i++);
+			cell.setCellValue(b.getNoItemQuoteGeneratedValidDRMSStr());
+		}
+		catch (Exception e)
+		{
+			LOG.log(Level.SEVERE, "Column number is | " + i+", Exception message: "+e.getMessage(), e);
+		}
+
+		return row;
+	}
+
+	// todo
+	public void testTask()
+	{
+		LOG.info("Sales Quote report job beginning...");
+		try
+		{
+			setDataAndSendEmail();
+		}
+		catch (Exception e)
+		{
+			
+			LOG.log(Level.SEVERE, "Exception in testing task for Sales Quote report job, exception message : "+e.getMessage(), e);
+		}
+		LOG.info("Sales Quote report job ended.");
+	}
+	
+	
+	public static void main(String[] args)
+	{
+	}
+}

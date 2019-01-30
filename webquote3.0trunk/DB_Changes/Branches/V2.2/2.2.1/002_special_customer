@@ -1,0 +1,29 @@
+Data patch :
+
+Insert into schedule_config (ID,TYPE,KEY,VALUE) values (258,'SPECIAL_CUSTOMER','CLASS_NAME','com.avnet.emasia.webquote.entity.SpecialCustomer');
+Insert into schedule_config (ID,TYPE,KEY,VALUE) values (259,'SPECIAL_CUSTOMER','FILE_NAME','WQ_SPEC_CUST_');
+Insert into schedule_config (ID,TYPE,KEY,VALUE) values (260,'SPECIAL_CUSTOMER','PARAM_TYPE','STRING|STRING|DATE|DATE');
+Insert into schedule_config (ID,TYPE,KEY,VALUE) values (261,'SPECIAL_CUSTOMER','METHODS','setSoldToCustomerNumber|setEndCustomerNumber|setValidTo|setValidFrom');
+
+
+Scheme change:
+
+ CREATE TABLE "SPECIAL_CUSTOMER" 
+   (     "ID" NUMBER(19,0), 
+         "SOLD_TO_CUSTOMER_NUMBER" VARCHAR2(10 BYTE), 
+         "END_CUSTOMER_NUMBER" VARCHAR2(10 BYTE), 
+         "VALID_FROM" TIMESTAMP (6), 
+         "VALID_TO" TIMESTAMP (6)
+   )  ;
+--------------------------------------------------------
+--  DDL for Index SPECIAL_CUSTOMER_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "SPECIAL_CUSTOMER_PK" ON "SPECIAL_CUSTOMER" ("ID") ;
+
+--------------------------------------------------------
+--  Constraints for Table SPECIAL_CUSTOMER
+--------------------------------------------------------
+
+  ALTER TABLE "SPECIAL_CUSTOMER" ADD CONSTRAINT "SPECIAL_CUSTOMER_PK" PRIMARY KEY ("ID");
+  ALTER TABLE "SPECIAL_CUSTOMER" MODIFY ("ID" NOT NULL ENABLE);

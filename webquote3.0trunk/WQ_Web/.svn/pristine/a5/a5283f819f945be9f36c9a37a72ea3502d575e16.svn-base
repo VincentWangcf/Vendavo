@@ -1,0 +1,111 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+	<p:messages id="msgId" escape="false" closable="true" autoUpdate="true"/>			
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+			<h:form id="partMasterForm">	
+				<p:accordionPanel>
+					<p:tab title="#{dbResource['wq.label.pmDownloadSearch']}">							
+						<h:panelGrid cellpadding="0" style="width:100%;" columns="10">																		
+						<h:outputText value="#{dbResource['wq.label.region']}" style="padding:0px 2px 0px 3px"/>							
+							<h:selectOneMenu id="region" value="#{partMasterDownloadMB.bizName}">
+								<f:selectItems value="#{partMasterDownloadMB.bizUnitSelectList}"/>
+								<p:ajax event="change" update=":partMasterForm" listener="#{partMasterDownloadMB.changeRegion}"/>															
+							</h:selectOneMenu>
+							
+							<h:outputText value="#{dbResource['wq.label.mfr']}:"  escape="false" />
+							 <p:selectCheckboxMenu id="manufacturer" value="#{partMasterDownloadMB.selectedMfr}" 
+								 filter="true" filterMatchMode="startsWith" panelStyle="width:550px;" label="-#{dbResource['wq.button.select']}-">
+								<f:selectItems value="#{partMasterDownloadMB.mfrSelectList}" />
+							</p:selectCheckboxMenu>
+							
+							<h:outputText value="#{dbResource['wq.label.mfrPN']}:" />
+							<p:inputText value="#{partMasterDownloadMB.partNumber}"  minQueryLength="5" global="false" />
+							
+							<h:outputText value="#{dbResource['wq.label.proGroup']} 2" />
+							<p:selectCheckboxMenu id="group2" value="#{partMasterDownloadMB.selectedGroup2}" 
+								 filter="true" filterMatchMode="startsWith" panelStyle="width:550px;" label="-#{dbResource['wq.button.select']}-">
+								<f:selectItems value="#{partMasterDownloadMB.productGroup2List}" />
+																				
+							</p:selectCheckboxMenu>
+							
+							
+							<h:outputText value="#{dbResource['wq.label.productCategory']}" />
+							<p:selectCheckboxMenu id="category" value="#{partMasterDownloadMB.selectedCategory}"  
+									filter="true" filterMatchMode="startsWith" panelStyle="width:550px" label="-#{dbResource['wq.button.select']}-" >
+								<f:selectItems value="#{partMasterDownloadMB.productCategoryList}" />
+							</p:selectCheckboxMenu>
+							
+							<h:panelGrid>&#160;&#160;</h:panelGrid>				
+						</h:panelGrid>
+						<h:panelGrid columns="2" cellpadding="0" >
+							<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search"  actionListener="#{partMasterDownloadMB.search}" update=":partMasterForm"  />					
+							
+							<p:commandButton value="#{dbResource['wq.label.reset']}"  icon="ui-icon-triangle-1-w" actionListener="#{partMasterDownloadMB.postContruct}" update=":partMasterForm" />
+						</h:panelGrid>
+					</p:tab>
+				</p:accordionPanel>	
+				
+				<ui:remove>
+				<p:commandLink value="#{dbResource['wq.button.submit']}" update=":partMasterForm:display1" />
+				<p:outputPanel id="display1" style="width:250px;padding-left:5px;margin-top:10px">
+			        <p:dataList value="#{partMasterDownloadMB.selectedGroup2}" var="grp" emptyMessage="No selected">
+			            #{grp}
+			        </p:dataList>
+			    </p:outputPanel>
+			    </ui:remove>
+    			
+		<p:panel header="#{dbResource['wq.label.partMasterList']}" style="font-size:12pt" >		
+			<h:panelGrid columns="13" cellpadding="0" >
+		        <p:commandButton value="#{dbResource['wq.button.downloadAll']}" ajax="false" onclick="PrimeFaces.monitorDownload(start, stop)" >  
+	        		<p:fileDownload value="#{partMasterDownloadMB.downloadAll}" /> 
+	        	</p:commandButton>
+	        	<p:commandButton value="#{dbResource['wq.button.downloadSel']}" ajax="false" onclick="PrimeFaces.monitorDownload(start, stop)" >  
+	        		<p:fileDownload value="#{partMasterDownloadMB.downloadSelected}" /> 
+	        	</p:commandButton>
+	        </h:panelGrid>
+			<p:dataTable var="item"
+							value="#{partMasterDownloadMB.beans}"
+							rowKey="#{item.id}" 				 		
+							rowIndexVar="rowIndex"
+							id="partMast_datatable" 
+							editable="true"
+					 		selection="#{partMasterDownloadMB.selectedBeans}" 	
+							resizableColumns="true" 
+							scrollable="true"  
+							paginator="true" 
+							rows="10" 
+							rowsPerPageTemplate="10,20,50"
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+							<p:column selectionMode="multiple" styleClass="column_checkBox" exportable="false"> </p:column>	
+							<p:column headerText="#{dbResource['wq.label.no']}" id="rowNumber" width="60">
+			        			<h:outputText value="#{rowIndex+1}"/>
+		        			</p:column>
+							<p:column headerText="#{dbResource['wq.label.mfr']}" id="mfr" width="60">
+			        			<h:outputText value="#{item.manufacturer.name}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.mfrPN']}" id="fullPart" width="200">
+								<h:outputText value="#{item.fullMfrPartNumber}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.proGroup']} 2" id="productGrp2" width="200">
+								<h:outputText value="#{item.productGroup2.name}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.productCategory']}" id="productCgt" width="200">
+								<h:outputText value="#{item.productCategory.categoryCode}"/>
+		        			</p:column>
+						</p:dataTable>
+				</p:panel>
+			</h:form>
+	</ui:define>
+</ui:composition>

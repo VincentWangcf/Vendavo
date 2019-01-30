@@ -1,0 +1,297 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.application.FacesMessage.Severity;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+
+import org.apache.commons.lang.StringUtils;
+import org.jboss.logmanager.Level;
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.FileUploadEvent;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.StreamedContent;
+import org.primefaces.model.UploadedFile;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.avnet.emasia.webquote.ejb.QuoteBuilderSB;
+import com.avnet.emasia.webquote.entity.Attachment;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.DeploymentConfiguration;
+import com.avnet.emasia.webquote.utilites.web.util.DownloadUtil;
+import com.avnet.emasia.webquote.utilites.web.util.Excel20007Reader;
+import com.avnet.emasia.webquote.utilites.web.util.NonSalesCostQuoteBuilderProcessSheet;
+import com.avnet.emasia.webquote.utilites.web.util.ProcessSheetInterface;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilites.web.util.SalesCostQuoteBuilderProcessSheet;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.quote.validator.QuoteBuiderValidator;
+import com.avnet.emasia.webquote.web.security.WQUserDetails;
+
+/**
+ * 
+ * <p>Quote Builder ManagerBean</p>
+ * @author Lenon.Yang
+ * @version 1.0
+ * @date 2017/9/22
+ *
+ */
+@ManagedBean
+@SessionScoped
+public class QuoteBuilderMB implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	private static final Logger LOG =Logger.getLogger(QuoteBuilderMB.class.getName());
+	
+	private static final Integer MAX_UPLOAD_COUNT = 1000;
+	
+	private transient UploadedFile uploadQuoteFile;
+	
+	private String uploadQuoteFileName;
+	
+	private Attachment quoteAttachment;
+	
+	private List<String> quoteCostTypeList;
+	
+	private transient StreamedContent quoteTemplate;
+	
+	private String quoteCostType;
+	
+	private User user;
+	
+	private boolean hasQuoteAttachment = false;
+	
+	private static Map<String,String> templateMap = new HashMap<String,String>();
+	
+	@EJB
+	QuoteBuilderSB quoteBuilderSB;
+	
+	@ManagedProperty(value="#{resourceMB}")
+	/** To Inject ResourceMB instance  */
+    private ResourceMB resourceMB;
+	
+	public QuoteBuilderMB() {
+		hasQuoteAttachment = false;
+		quoteAttachment = null;
+	}
+
+	@PostConstruct
+	public void postContruct(){
+		quoteCostTypeList = new ArrayList<String>();
+		templateMap.put(QuoteConstant.SALES_COST, QuoteConstant.SALES_COST_TEMPLATE);
+		templateMap.put(QuoteConstant.NON_SALES_COST, QuoteConstant.NON_SALES_COST_TEMPLATE);
+		user =((WQUserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUser();
+		if(user != null) {
+			if(user.isSalsCostAccessFlag() != null) {
+				if(user.isSalsCostAccessFlag()) {
+					quoteCostTypeList.add(QuoteConstant.SALES_COST);
+				}else {
+					quoteCostTypeList.add(QuoteConstant.NON_SALES_COST);
+				}
+			}else {
+				quoteCostTypeList.add(QuoteConstant.SALES_COST);
+				quoteCostTypeList.add(QuoteConstant.NON_SALES_COST);
+			}
+		}
+		
+	}
+	
+	public void uploadQuoteAttachment(FileUploadEvent event) {
+		long fileSize = event.getFile().getSize();
+		if (fileSize > 2 * 1024 * 1024) {
+			FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "",
+					ResourceMB.getText("wq.message.uplodAttchmntError") + ".");
+			FacesContext.getCurrentInstance().addMessage("messages_1", msg);
+		} else {
+			quoteAttachment = new Attachment();
+			String fileName = event.getFile().getFileName().substring(
+					event.getFile().getFileName().lastIndexOf("\\") + 1, event.getFile().getFileName().length());
+			quoteAttachment.setFileName(fileName);
+			quoteAttachment.setType(QuoteSBConstant.ATTACHMENT_TYPE_QUOTE);
+			quoteAttachment.setFileImage(QuoteUtil.getUploadFileContent(event.getFile()));
+			hasQuoteAttachment = true;
+			RequestContext requestContext = RequestContext.getCurrentInstance();
+			requestContext.update("quoteBuilderForm:attachment_panel");
+
+			FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "",
+					ResourceMB.getText("wq.message.uploadAttachmentSuccess") + ".");
+			FacesContext.getCurrentInstance().addMessage("messages_1", msg);
+		}
+		// logger.log(Level.INFO, "PERFORMANCE END - uploadAttachment()");
+	}
+	
+	public void handleUploadQuoteFile() {
+		try {
+			boolean isSelectQuoteCostType = QuoteBuiderValidator.isSelectQuoteCostType(quoteCostType);
+			if(!isSelectQuoteCostType) {
+				showMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.pleaseSelectQuoteCostType")+".");
+				return;	
+			}
+			
+			boolean isExcelFile = QuoteBuiderValidator.isExcelFile(uploadQuoteFile);
+			if(!isExcelFile){
+				showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.selExcelFile"));
+				return;
+			}
+			
+			boolean isValidTemplate = QuoteBuiderValidator.isValidTemplate(uploadQuoteFile, quoteCostType, templateMap.get(quoteCostType));
+			if(!isValidTemplate) {
+				showMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.pleaseSelectValidTemplate")+".");
+				return;	
+			}
+			
+			Excel20007Reader reader = new Excel20007Reader(uploadQuoteFile, 0,getBuilderSheetProcess(quoteCostType));
+			int countRows = reader.getCountrows() - 3;
+			
+			LOG.info("upload user : " + user.getName() + " upload size: " + countRows + " upload file :" + uploadQuoteFile.getFileName());
+			boolean isExceedAllowMaxNum = QuoteBuiderValidator.isExceedAllowMaxNum(countRows, MAX_UPLOAD_COUNT);
+			if (isExceedAllowMaxNum) {
+				String errMsg = ResourceMB.getText("wq.message.maximum") + " " + MAX_UPLOAD_COUNT
+						+ ResourceMB.getText("wq.message.recordsAllowed") + countRows;
+				this.showMessage(FacesMessage.SEVERITY_ERROR, errMsg);
+				return;
+			} else {
+				if (countRows == 0) {
+					this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.noDataUploadFile"));
+					return;
+				}
+			}
+			
+			List beans = reader.excel2Beans(null);
+			quoteBuilderSB.buildQuote(beans, quoteCostType,quoteAttachment,user,resourceMB.getResourceLocale());
+			hasQuoteAttachment = false;
+			RequestContext.getCurrentInstance().update("quoteBuilderForm:attachment_panel");
+			FacesContext.getCurrentInstance().addMessage("growl",
+					new FacesMessage(FacesMessage.SEVERITY_INFO, "",
+							ResourceMB.getText("wq.message.uploadSucc") + ". <br />"
+									+ ResourceMB.getText("wq.message.reportSentYourEmail") + ". <br />"
+									+ ResourceMB.getText("wq.message.withInOneH") + "."));
+			return;
+		} catch (Exception e) {
+			showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.appError"));
+			LOG.log(Level.SEVERE, "Exception occured for file: " + uploadQuoteFileName + ", Reason for failure: "
+					+ MessageFormatorUtil.getParameterizedStringFromException(e), e);
+		}
+	
+	
+	}
+	
+	private ProcessSheetInterface getBuilderSheetProcess(String quoteType) {
+		if(QuoteConstant.SALES_COST.equals(quoteType)) {
+			return new SalesCostQuoteBuilderProcessSheet();
+		}else {
+			return new NonSalesCostQuoteBuilderProcessSheet();
+		}
+	}
+
+	public UploadedFile getUploadQuoteFile() {
+		return uploadQuoteFile;
+	}
+
+	public void setUploadQuoteFile(UploadedFile uploadQuoteFile) {
+		this.uploadQuoteFile = uploadQuoteFile;
+	}
+
+
+	public Attachment getQuoteAttachment() {
+		return quoteAttachment;
+	}
+
+	public void setQuoteAttachment(Attachment quoteAttachment) {
+		this.quoteAttachment = quoteAttachment;
+	}
+
+	public List<String> getQuoteCostTypeList() {
+		return quoteCostTypeList;
+	}
+
+	public void setQuoteCostTypeList(List<String> quoteCostTypeList) {
+		this.quoteCostTypeList = quoteCostTypeList;
+	}
+
+	public StreamedContent getQuoteTemplate() {
+		String templateName = templateMap.get(quoteCostType);
+		if(StringUtils.isBlank(templateName)) {
+			showMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.pleaseSelectQuoteCostType")+".");
+			return null;
+		}
+		String filePath = DeploymentConfiguration.configPath + File.separator + templateName;
+		//String filePath = "C:/Lenon/temp" + File.separator + templateName;
+		FileInputStream in = null;
+		try {
+			in = new FileInputStream(filePath);
+			if (in != null) {
+				quoteTemplate = new DefaultStreamedContent(in,DownloadUtil.getMimeType(templateName),templateName);
+			}
+				
+		} catch (FileNotFoundException e) {
+			showMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.downloadfail")+".");
+			LOG.log(Level.SEVERE, "File on this path " + filePath + " not found, Exception message: " + e.getMessage(),e);
+		}
+		return quoteTemplate;
+	}
+	
+	private void showMessage(Severity severityError, String errMsg){
+		FacesContext.getCurrentInstance().addMessage("msgId",new FacesMessage(severityError, errMsg,""));
+	}
+
+	public void setQuoteTemplate(StreamedContent quoteTemplate) {
+		this.quoteTemplate = quoteTemplate;
+	}
+
+	public String getQuoteCostType() {
+		return quoteCostType;
+	}
+
+	public void setQuoteCostType(String quoteCostType) {
+		this.quoteCostType = quoteCostType;
+	}
+
+	public boolean isHasQuoteAttachment() {
+		return hasQuoteAttachment;
+	}
+
+	public void setHasQuoteAttachment(boolean hasQuoteAttachment) {
+		this.hasQuoteAttachment = hasQuoteAttachment;
+	}
+
+	public String getUploadQuoteFileName() {
+		return uploadQuoteFileName;
+	}
+
+	public void setUploadQuoteFileName(String uploadQuoteFileName) {
+		this.uploadQuoteFileName = uploadQuoteFileName;
+	}
+	
+
+	/**
+	 * Setter for resourceMB
+	 * @param resourceMB ResourceMB
+	 * */
+	public void setResourceMB(final ResourceMB resourceMB) {
+		this.resourceMB = resourceMB;
+	}
+	
+	
+}

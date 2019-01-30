@@ -1,0 +1,34 @@
+package mymoney;
+
+import java.util.HashMap;
+
+public class MoneyConvertService {
+	//private static String token = "_DLINK";
+	private static HashMap<String, MoneyConvertStrategy> context = new HashMap<String, MoneyConvertStrategy>(2) {
+		{
+			put("JAPAN", DiscardCustomerMoneyConvertStrategy.getInstance());
+		};
+	};
+
+	private static MoneyConvertStrategy defaultStrategy = CustomerMoneyConvertStrategy.getInstance();
+
+	
+	public static Money2 create(String amount, String curr, String region, boolean... useCustomer) {
+		Money2 money = Money2.of(amount, curr);
+		MoneyConvertStrategy s = getStrategy(region, useCustomer);
+		money.setFindExRateStrategy(s);
+		return money;
+	}
+
+	public static MoneyConvertStrategy getStrategy(String region, boolean... useCustomer) {
+		if (region == null)
+			return null;
+		String r = region.trim().toUpperCase();
+		boolean useCust = (useCustomer != null && useCustomer.length > 0 && useCustomer[0]);
+		if (!useCust) {
+			return context.getOrDefault(r, defaultStrategy);
+		} else {
+			return defaultStrategy;
+		}
+	}
+}

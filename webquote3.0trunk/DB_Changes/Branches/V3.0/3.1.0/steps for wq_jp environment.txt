@@ -1,0 +1,51 @@
+Steps:
+
+====A.For Folder 3.10
+
+1.execute 001.sql, 002.sql.
+
+2.extract records from  Asia WQ Production database 
+  1).extract records from table APP_LABEL in Asia WQ Production database to table APP_LABEL
+  2).extract records from table APP_MESSAGES in Asia WQ Production database to table APP_MESSAGES
+  Note: the source database is Asia WQ database(the first line setting)  L1nc0ln
+  select count(*) from APP_LABEL;
+select count(*) from APP_MESSAGES;
+  
+3.Handle 005.sql
+ 1).Change "/app/eap70/webquote/share/template_files" to "/app/eap70/webquote_jp/share/template_files" in 005.sql
+ 2).Execute 005.sql
+
+4.Execute 008.sql,009.sql,010.sql,011.sql,012.sql
+
+5. Handle 013.sql
+ 1).Change "/app/eap70/webquote/sapfiles/output/" to "/app/eap70/webquote_jp/sapfiles/output/" in 013.sql
+ 2) Execute 013.sql
+ 
+7.Execute 014.sql,015.sql,016.sql,017.sql,018.sql,020.sql
+  don't need execute 019.sql.
+
+8. Handle 021_missing.sql
+ 1).Change "/app/eap70/webquote/share/offlinefiles" to "/app/eap70/webquote_jp/share/offlinefiles" in 021_missing.sql
+ 2) Execute 021_missing.sql
+ 
+9.Execute 022.sql,023.sql.024.sql,0.26.sql,027.sql,028.sql
+
+10.Handle 025.sql
+  extract records from  Asia WQ Production database 
+  the three tables: excel_report,EXCEL_REPORT_COLUMN,EXCEL_REPORT_SEQ
+  1).extract records from table excel_report in Asia WQ Production database to table excel_report
+  2).extract records from table EXCEL_REPORT_COLUMN in Asia WQ Production database to table EXCEL_REPORT_COLUMN
+  3).extract records from table EXCEL_REPORT_SEQ in Asia WQ Production database to table EXCEL_REPORT_SEQ
+  Note: the source database is Asia WQ database(the first line setting)
+ 
+ 
+ 
+ ====A.For Folder 3.1.1
+  --Execute following SQL:
+  ALTER TABLE MATERIAL DROP CONSTRAINT MATERIAL_UK1;
+  DROP INDEX MATERIAL_UK1;
+ 
+ 
+ 
+ 
+ 

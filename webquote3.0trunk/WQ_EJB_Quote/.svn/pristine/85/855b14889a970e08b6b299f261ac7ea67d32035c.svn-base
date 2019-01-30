@@ -1,0 +1,32 @@
+package com.avnet.emasia.webquote.columndata;
+
+import java.io.InputStream;
+import java.util.logging.Logger;
+
+import org.springframework.util.Assert;
+
+
+public interface ColumnDataSource {
+	static final Logger LOG = Logger.getLogger(ColumnDataSource.class.getName());
+	int getSeq();
+
+	boolean hasNext();
+
+	void next();
+
+	String getColumnValue(String columnName);
+
+	static ColumnDataSource create(InputStream is, FileType type, ResolveInfo info) {
+		Assert.notNull(is);
+		switch(type) {
+		case EXCEL: 
+			if(info==null) info = new DefaultExcelResolveInfo();
+			return new ExcelFileColumnDataSource(is,info);
+		default :
+			//throw new Exception ("no fount enum FileType for " + type);
+			LOG.info("no fount enum FileType for " + type);
+			break;
+		}
+		return null; 
+	}
+}

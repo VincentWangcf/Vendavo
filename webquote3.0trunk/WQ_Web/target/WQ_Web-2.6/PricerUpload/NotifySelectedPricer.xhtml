@@ -1,0 +1,68 @@
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<f:view contentType="text/html">
+	<h:body>
+		<h:form id="notifySelected">
+		<p:dialog id="dialog" header="Notify Sales" widgetVar="dlg" modal="true">  
+			<h:form>
+				<p:dataTable value="#{pricerUploadMB.pricerModel}" var="itemSelect" paginator="true" rowIndexVar="rIndex" 
+				   selection="#{pricerUploadMB.selectedPricrArr}" rows="10" id="Prcer" emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+					<p:column selectionMode="multiple" style="width:2%" />
+					<p:column headerText="No" style="width:4px">
+						#{rIndex+1}
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="MFR" />
+						</f:facet>
+						<h:outputText value="#{itemSelect.mfr}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="Full MFR Part" />
+						</f:facet>
+						<h:outputText value="#{itemSelect.fullMfrPart}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="Program" />
+						</f:facet>
+						<h:outputText value="#{itemSelect.program}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="Product Group" />
+						</f:facet>
+						<h:outputText value="#{itemSelect.productGroup}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="Special Item Indicator" />
+						</f:facet>
+						<h:outputText value="#{itemSelect.specialItemIndicator}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="Minimum Cost" />
+						</f:facet>
+						<h:outputText value="#{itemSelect.minSell}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="Avaliable To Sell Qty" />
+						</f:facet>
+						<h:outputText value="#{itemSelect.availabletoSellQuantity}" />
+					</p:column>
+				</p:dataTable>
+				<p:spacer width="500" height="30"/>
+				<p:commandButton action="#{ProgramItemUploadCntrl.backToHome}" value="Cancel"></p:commandButton>
+				<p:commandButton action="#{ProgramItemUploadCntrl.uploadToDB}" value="Email Selected To Sales" onclick="PF('dlg').hide();PF('dlgCfm').show();"></p:commandButton>
+			</h:form>
+		</p:dialog>	
+		</h:form>
+	</h:body>
+    </f:view>
+</html>

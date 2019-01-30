@@ -1,0 +1,36 @@
+
+<ui:composition 
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<p:dialog header="#{dbResource['wq.header.searchParts']}" widgetVar="search_Parts_dialog"
+				id="search_Parts_dialog">
+		<p:panel
+					header="#{dbResource['wq.label.sapMN']}"
+					id="alternatePartSearch_panel" style="font-size:12pt">
+
+			<p:dataTable var="sapMaterial"
+						value="#{myQuoteSearchMB.sapMaterialList}"
+						paginator="true" rows="5"
+						rowsPerPageTemplate="5,10,20,50" id="datatable_searchPart"
+						paginatorPosition="top" rowIndexVar="partRowIndex" editable="true"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}." >
+
+				<p:column headerText="#{dbResource['wq.label.no']}">
+					#{partRowIndex + 1}
+			    </p:column>
+		        
+				<p:column headerText="#{dbResource['wq.label.mfr']} | #{dbResource['wq.label.sap']} #{dbResource['wq.label.materialNumber']}">
+					<h:outputText value="#{sapMaterial}"/>
+	       	 	</p:column>
+	        	
+		   </p:dataTable>
+		   
+		</p:panel>
+		
+	</p:dialog>  
+
+</ui:composition>

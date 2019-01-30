@@ -1,0 +1,180 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	<ui:define name="content">
+  
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/> 
+	<p:growl id="growl" showDetail="true" sticky="#{growlPropertyMB.sticky}" autoUpdate="true" showSummary="#{growlPropertyMB.showSummary}" escape="#{growlPropertyMB.escape}"/>
+<h:form id="form" enctype="multipart/form-data" acceptcharset="UTF-8" >
+	<p:accordionPanel  >
+		<p:tab title="#{dbResource['wq.header.dpRFQCriteria']}">
+		
+			<h:panelGrid cellpadding="0" style="width:100%;" columns="10">
+				
+				<h:outputText value="#{dbResource['wq.label.SapPN']}:" />
+				<p:inputTextarea id="criteriaSapPartNumber"  value="#{dpRfqSearchMB.criteria.sSapPartNumber}" autoResize="false" />
+
+				<h:outputText value="#{dbResource['wq.label.quoteNumber']}#:" />
+				<p:inputTextarea id="criteriaQuoteNumber"  value="#{dpRfqSearchMB.criteria.sQuoteNumber}" autoResize="false" />
+				
+
+				
+				
+				<h:outputText value="#{dbResource['wq.label.referenceID']}:" />
+				<p:inputTextarea id="criteriaReferenceId"  value="#{dpRfqSearchMB.criteria.sReferenceId}"  autoResize="false"/>
+				
+				<h:outputText value="#{dbResource['wq.label.RefLineID']}:" />
+				<p:inputTextarea  id="criteriaReferenceLineId" value="#{dpRfqSearchMB.criteria.sReferenceLineId}"  autoResize="false"/>
+				
+			</h:panelGrid>
+			
+				
+					
+			<h:panelGrid cellpadding="0"  columns="8" style="width:100%">
+				<h:outputText value="#{dbResource['wq.label.mfr']}:"/>
+				<p:inputText id="criteriaMfr"  value="#{dpRfqSearchMB.criteria.mfr}"  />
+			
+								
+				<h:outputText value="#{dbResource['wq.label.receiveTime']}"/>
+				<h:outputText value="#{dbResource['wq.header.from']}" />
+				<p:calendar value="#{dpRfqSearchMB.criteria.createRfqTimeFrom}" showOn="button" pattern="dd/MM/yyyy"/> 
+				<h:outputText value="#{dbResource['wq.header.To']}" />
+				<p:calendar value="#{dpRfqSearchMB.criteria.createRfqTimeTo}" showOn="button" pattern="dd/MM/yyyy"/>
+						
+
+												
+			
+			</h:panelGrid>	
+			
+			<h:panelGrid cellpadding="0"  columns="8" style="width:100%">
+				<h:outputText value="#{dbResource['wq.label.inboundMessage']}:"/>
+				<p:inputText id="criteriaInboundMessage"  value="#{dpRfqSearchMB.criteria.inBoundMessage}"  />
+				
+				<h:outputText value="#{dbResource['wq.label.responseTime']}" />
+				<h:outputText value="#{dbResource['wq.header.from']}" />
+				
+				<p:calendar value="#{dpRfqSearchMB.criteria.updateRfqTimeFrom}" showOn="button" pattern="dd/MM/yyyy"/> 
+				<h:outputText value="#{dbResource['wq.header.To']}"/>
+				<p:calendar value="#{dpRfqSearchMB.criteria.updateRfqTimeTo}" showOn="button" pattern="dd/MM/yyyy"/>
+				
+			
+			</h:panelGrid>				
+			
+			<h:panelGrid columns="3" cellpadding="0" >
+				<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search" actionListener="#{dpRfqSearchMB.search}" update="@form" />
+			</h:panelGrid> 
+			<p:watermark for="criteriaQuoteNumber" value="#{dbResource['wq.label.example']}:              WR0123456       WR0123457" escape="false"/>
+			<p:watermark for="criteriaSapPartNumber" value="#{dbResource['wq.label.example']}:               MAX6442KAPRTD7-T       MAX6442KAPRTD7-T2" escape="false"/>
+			<p:watermark for="criteriaReferenceId" value="#{dbResource['wq.label.example']}:                    	39501                   		 39502" escape="false"/>
+			<p:watermark for="criteriaReferenceLineId" value="#{dbResource['wq.label.example']}:                			       39503                            39504" escape="false"/>
+			
+		</p:tab> 
+		</p:accordionPanel>
+		<p:panel header="#{dbResource['wq.header.DPItemList']}" style="font-size:12pt" >
+		<h:panelGrid columns="13" cellpadding="0" >                                                                                                                   
+		       <p:commandButton value="#{dbResource['wq.button.resendToDP']}"  actionListener="#{dpRfqSearchMB.resendToDP}"  />
+				<p:commandButton value="#{dbResource['wq.label.invalidQuote']}"  actionListener="#{dpRfqSearchMB.invalidQuote}"  />
+			</h:panelGrid>
+	   <p:dataTable	var="vo"
+	    				value="#{dpRfqSearchMB.dpRfqItems}" 
+	    				rowKey="#{vo.seq}" 
+	    				paginator="true" 
+	    				rowIndexVar="rowIndex" 
+	    				rows="10" 
+    					rowsPerPageTemplate="10,20,50"
+	                 	filteredValue="#{dpRfqSearchMB.filtereddpRfqItem}"
+	                 	selection="#{dpRfqSearchMB.selectedDpRfqItems}"  
+	                 	id="dpRfqSearch_dataTable" 
+	                 	paginatorPosition="top"
+	                 	scrollable="true"
+	                 	scrollHeight="250"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">	                 	              
+		           		 
+				
+                        
+			<p:column selectionMode="multiple" styleClass="column_checkBox" exportable="false"/> 
+			  <p:column headerText="#{dbResource['wq.label.no']}" sortBy="#{vo.seq}" filterBy="#{vo.seq}" filterMatchMode="contains" styleClass="column_seq" exportable="false" >
+				<h:outputText value="#{vo.seq}" />
+			</p:column> 
+                 
+			
+			<p:column  headerText="#{dbResource['wq.label.RefLineID']}" sortBy="#{vo.referenceLineId}" filterBy="#{vo.referenceLineId}" filterMatchMode="contains"  style="width:80px;" >
+		 		<h:outputText value="#{vo.referenceLineId}" />						
+			 </p:column> 
+			
+			<p:column headerText="#{dbResource['wq.label.ReqMfr']}" sortBy="#{vo.requestedManufacturer}" filterBy="#{vo.requestedManufacturer}" filterMatchMode="contains" styleClass="column_customerType">
+			<h:outputText value="#{vo.requestedManufacturer}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.reqPart']}" sortBy="#{vo.requestedPart}" filterBy="#{vo.requestedPart}" filterMatchMode="contains" style="width:150px;">
+			<h:outputText value="#{vo.requestedPart}"/>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.quantity']}" sortBy="#{vo.quantity}" filterBy="#{vo.quantity}" filterMatchMode="contains" style="width:50px;">
+			<h:outputText value="#{vo.quantity}"/>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.trgResale']}" sortBy="#{vo.targetResale}" filterBy="#{vo.targetResale}" filterMatchMode="contains" style="width:50px;" >
+			<h:outputText value="#{vo.targetResale}"/>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.curr']}" sortBy="#{vo.currency}" filterBy="#{vo.currency}" filterMatchMode="contains" style="width:50px;">
+			<h:outputText value="#{vo.currency}"/>
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.label.lineItemNum']}" sortBy="#{vo.lineItemNumber}" filterBy="#{vo.lineItemNumber}" filterMatchMode="contains" styleClass="column_validity">
+			<h:outputText value="#{vo.lineItemNumber}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.message.quoteLineStatus']}" sortBy="#{vo.quoteLineStatus}" filterBy="#{vo.quoteLineStatus}" filterMatchMode="contains" style="width:50px;">
+			<h:outputText value="#{vo.quoteLineStatus}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.quotedQty']}" sortBy="#{vo.quotedQty}" filterBy="#{vo.quotedQty}" filterMatchMode="contains" style="width:50px;">
+			<h:outputText value="#{vo.quotedQty}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.qouteResale']}" sortBy="#{vo.quotedResale}" filterBy="#{vo.quotedResale}" filterMatchMode="contains" style="width:60px;" >
+				<h:outputText value="#{vo.quotedResale}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.rejReason']}" sortBy="#{vo.rejectionReason}" filterBy="#{vo.rejectionReason}" filterMatchMode="contains"  style="width:60px;" >
+				<h:outputText value="#{vo.rejectionReason}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.remarks']}" sortBy="#{vo.remarks}" filterBy="#{vo.remarks}" filterMatchMode="contains" styleClass="column_validity" >
+				<h:outputText value="#{vo.remarks}"/>
+			</p:column>
+						
+			<p:column headerText="#{dbResource['wq.label.expDate']}" sortBy="#{vo.expiryDate}" filterBy="#{vo.expiryDate}" filterMatchMode="contains"  style="width:80px;">
+			<h:outputText value="#{vo.expiryDate}">
+				<f:convertDateTime pattern="dd/MM/yyyy" />
+			</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.procStatus']}" sortBy="#{vo.procStatus}" filterBy="#{vo.procStatus}" filterMatchMode="contains" style="width:40px;" >
+				<h:outputText value="#{vo.procStatus}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.message.intErr']}" sortBy="#{vo.internalError}" filterBy="#{vo.internalError}" filterMatchMode="contains" style="width:140px;" >
+				<h:outputText value="#{vo.internalError}"/>
+			</p:column>
+			
+			
+    </p:dataTable>
+     
+    </p:panel>
+<h:outputScript library="javascript" name="disableRowSelection.js" />
+	</h:form>
+</ui:define>
+
+</ui:composition>

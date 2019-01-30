@@ -1,0 +1,41 @@
+package com.avnet.emasia.webquote.rowdata;
+
+import java.io.InputStream;
+import java.util.logging.Logger;
+
+import org.springframework.util.Assert;
+
+import com.avnet.emasia.webquote.rowdata.datasource.DefaultExcelResolveInfo;
+import com.avnet.emasia.webquote.rowdata.datasource.DefaultTxtResolveInfo;
+import com.avnet.emasia.webquote.rowdata.datasource.ExcelFileRowDataSource;
+import com.avnet.emasia.webquote.rowdata.datasource.ResolveInfo;
+import com.avnet.emasia.webquote.rowdata.datasource.TextFileRowDataSource;
+
+
+public interface RowDataSource {
+	static final Logger LOG = Logger.getLogger(RowDataSource.class.getName());
+	int getSeq();
+
+	boolean hasNext();
+
+	void next();
+
+	String getColumnValue(String columnName);
+
+	static RowDataSource create(InputStream is, FileType type, ResolveInfo info) {
+		Assert.notNull(is);
+		switch(type) {
+		case EXCEL: 
+			if(info==null) info = new DefaultExcelResolveInfo();
+			return new ExcelFileRowDataSource(is,info);
+		case TEXT: 
+			if(info==null) info = new DefaultTxtResolveInfo();
+			return new TextFileRowDataSource(is,info);
+		default :
+			//throw new Exception ("no fount enum FileType for " + type);
+			LOG.info("no fount enum FileType for " + type);
+			break;
+		}
+		return null; 
+	}
+}

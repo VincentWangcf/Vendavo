@@ -1,0 +1,31 @@
+package com.avnet.emasia.webquote.columndata;
+
+import java.lang.reflect.Field;
+
+public class IntConverter implements Converter<AIntConverter>{
+	
+	private AIntConverter annotation;
+	
+	public IntConverter() {
+		
+	}
+	
+
+	@Override
+	public void initialize(AIntConverter a) {
+		annotation = a;
+	}
+
+	@Override
+	public void convert(String value, Bean bean, Field field) {
+		
+		try {
+			field.set(bean, Integer.parseInt(value));
+		} catch (Exception e) {
+			bean.putConvertError(field.getName(), e.getMessage());
+		}
+		
+	}
+
+
+}

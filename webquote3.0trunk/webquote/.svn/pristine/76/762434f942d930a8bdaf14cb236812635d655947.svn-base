@@ -1,0 +1,8 @@
+--asia rpt
+sudo -u jboss /app_mgmt/redhat/buildScripts/scripts/eap70/manage_application70.ksh update webquote-rptapp /app/eap70/webquote-rpt/ears/WebQuoteRptEar.ear webquote-rpt
+--jp rpt
+sudo -u jboss /app_mgmt/redhat/buildScripts/scripts/eap70/manage_application70.ksh update webquote-rpt_jp /app/eap70/webquote-rpt_jp/ears/WebQuoteRpt_jpEar.ear webquote-rpt_jp
+--asia wp
+sudo -u jboss /app_mgmt/redhat/buildScripts/scripts/eap70/manage_application70.ksh update webquoteapp /app/eap70/webquote/ears/WebQuoteEar.ear webquote
+--jp wp
+sudo -u jboss /app_mgmt/redhat/buildScripts/scripts/eap70/manage_application70.ksh update webquote_jp /app/eap70/webquote_jp/ears/WebQuote_jpEar.ear webquote_jp

@@ -1,0 +1,65 @@
+package com.avnet.emasia.webquote.quote.vo;
+
+import java.io.Serializable;
+
+public class InstantPriceCheckItem implements Serializable {
+	
+	
+	private static final long serialVersionUID = -3441679163833448134L;
+	
+	private String mfr;
+	private String fullMfrPart;
+	private Integer requestQty;
+	private String soldToParty;
+	private String endCustomer;
+	private String soldToCode;
+	private String endCustomerCode;
+	
+	public String getMfr() {
+		return mfr;
+	}
+	public void setMfr(String mfr) {
+		this.mfr = mfr;
+	}
+	public String getFullMfrPart() {
+		return fullMfrPart;
+	}
+	public void setFullMfrPart(String fullMfrPart) {
+		this.fullMfrPart = fullMfrPart;
+	}
+	public Integer getRequestQty() {
+		if(requestQty!=null && requestQty==0)
+			requestQty = null;
+		return requestQty;
+	}
+	public void setRequestQty(Integer requestQty) {
+		this.requestQty = requestQty;
+	}
+	public String getSoldToParty() {
+		return soldToParty;
+	}
+	public void setSoldToParty(String soldToParty) {
+		this.soldToParty = soldToParty;
+	}
+	public String getEndCustomer() {
+		return endCustomer;
+	}
+	public void setEndCustomer(String endCustomer) {
+		this.endCustomer = endCustomer;
+	}
+	public String getSoldToCode() {
+		return soldToCode;
+	}
+	public void setSoldToCode(String soldToCode) {
+		this.soldToCode = soldToCode;
+	}
+	public String getEndCustomerCode() {
+		return endCustomerCode;
+	}
+	public void setEndCustomerCode(String endCustomerCode) {
+		this.endCustomerCode = endCustomerCode;
+	}
+
+	
+	
+}

@@ -1,0 +1,16 @@
+:normalEnd:
+file: \WQ_Web\src\com\avnet\emasia\webquote\web\quote\QuoteBuilderMB.java
+fromUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/trunk/WQ_Web/src/com/avnet/emasia/webquote/web/quote/QuoteBuilderMB.java
+fromRevision: 23952
+toUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/trunk/WQ_Web/src/com/avnet/emasia/webquote/web/quote/QuoteBuilderMB.java
+toRevision: 24014
+force: false
+recurse: false
+ignore: false
+depth: 0
+
+workspaceUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/trunk/WQ_Web/src/com/avnet/emasia/webquote/web/quote/QuoteBuilderMB.java
+workspaceRevision: 24083
+lowerRevision: 0
+upperRevision: 0
+merge -r23952:24014 http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/trunk/WQ_Web/src/com/avnet/emasia/webquote/web/quote/QuoteBuilderMB.java C:/Damon/webquote3.0trunk/WQ_Web/src/com/avnet/emasia/webquote/web/quote/QuoteBuilderMB.java

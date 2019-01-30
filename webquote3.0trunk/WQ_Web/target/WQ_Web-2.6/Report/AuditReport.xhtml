@@ -1,0 +1,334 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="style-005.css" />
+	<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+		<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+		<h:form id="form">
+			<p:accordionPanel>
+				<p:tab title="#{dbResource['wq.header.auditRptSrchCrt']}">
+					<h:panelGrid cellpadding="0" style="width:100%;" columns="8">												
+						<h:outputText value="#{dbResource['wq.label.formNumber']}"  escape="false" />
+						<p:inputText value="#{auditReportMB.formNumber}" style="width:80%;"/>
+						
+						<h:outputText value="#{dbResource['wq.label.quoteNumber']}"  escape="false" />
+						<p:inputText value="#{auditReportMB.quoteNumber}" style="width:80%;"/>
+											
+						<h:outputText value="#{dbResource['wq.label.QuotedMFR']}:"  escape="false" />
+						<p:inputText value="#{auditReportMB.quotedMfr}" style="width:80%;"/>	
+
+						<h:outputText value="#{dbResource['wq.label.quotedPN']}:"  escape="false" />
+						<p:inputText value="#{auditReportMB.quotedPartNumber}" style="width:80%;"/>	
+										
+						<h:outputText value="#{dbResource['wq.label.rfqCreatedForm']}:"  escape="false" />
+						<p:calendar value="#{auditReportMB.startDate}" showOn="button"  pattern="dd/MM/yyyy" />
+						
+						<h:outputText value="#{dbResource['wq.label.rfqCreated']}:"  escape="false" />
+						<p:calendar value="#{auditReportMB.endDate}" showOn="button" pattern="dd/MM/yyyy" />
+					</h:panelGrid>
+					
+					<h:panelGrid columns="3" cellpadding="0" >
+						<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search" actionListener="#{auditReportMB.search}" update="@form"/>
+						<p:commandButton value="#{dbResource['wq.label.reset']}"  icon="ui-icon-triangle-1-w" actionListener="#{auditReportMB.reset}" update="@form" />
+				        <p:commandButton value="#{dbResource['wq.button.download']}" ajax="false">  
+				        	<p:dataExporter type="xls" target=":form:auditReport_dataTable" fileName="Audit_Report" postProcessor="#{auditReportMB.postProcessXLS}"/>  	        
+				        </p:commandButton>						
+					</h:panelGrid>
+				</p:tab>
+			</p:accordionPanel>
+			 <p:dataTable	var="vo"
+	    				value="#{auditReportMB.auditQuoteItems}" 
+	    				rowKey="#{rowIndex}" 
+	    				paginator="true" 
+	    				rowIndexVar="rowIndex" 
+	    				rows="10" 
+    					rowsPerPageTemplate="10,20,50" 
+	                 	filteredValue="#{auditReportMB.filteredAuditQuoteItems}"
+	                 	id="auditReport_dataTable" 
+	                 	paginatorPosition="top"
+	                 	scrollable="true"
+	                 	scrollHeight="300"
+	                 	resizableColumns="true"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+	                 	
+				<p:column style="width:50px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.no']}"/>
+					</f:facet>
+					<h:outputText value="#{rowIndex+1}" />
+				</p:column>
+
+				<p:column sortBy="#{vo.id.updateDate}" filterBy="#{vo.id.updateDate}" filterMatchMode="contains" style="width:130px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.updateDate']} &amp; #{dbResource['wq.label.time']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.id.updateDate}">
+						<f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" />					
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.createUpdate']}" sortBy="#{vo.updateByName}" filterBy="#{vo.updateByName}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.createUpdate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.updateByName}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.createUpdateEmpID']}" sortBy="#{vo.updateById}" filterBy="#{vo.updateById}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.createUpdateEmpID']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.updateById}" />
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.formNumber']}" sortBy="#{vo.formNumber}" filterBy="#{vo.formNumber}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.formNumber']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.formNumber}" />
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.quoteNumber']}" sortBy="#{vo.quoteNumber}" filterBy="#{vo.quoteNumber}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.quoteNumber']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.quoteNumber}" />
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.stage']} #{dbResource['wq.label.old']}" sortBy="#{vo.stageOld}" filterBy="#{vo.stageOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.stage']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.stageOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.stage']} #{dbResource['wq.header.new']}" sortBy="#{vo.stageNew}" filterBy="#{vo.stageNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.stage']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.stageNew}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.status']} #{dbResource['wq.label.old']}" sortBy="#{vo.statusOld}" filterBy="#{vo.statusOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.status']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.statusOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.status']} #{dbResource['wq.header.new']}" sortBy="#{vo.statusNew}" filterBy="#{vo.statusNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.status']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.statusNew}"/>
+				</p:column>
+								
+				<p:column headerText="#{dbResource['wq.label.QuotedMFR']} #{dbResource['wq.label.old']}" sortBy="#{vo.quotedMfrNameOld}" filterBy="#{vo.quotedMfrNameOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.QuotedMFR']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.quotedMfrNameOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.QuotedMFR']} #{dbResource['wq.header.new']}" sortBy="#{vo.quotedMfrNameNew}" filterBy="#{vo.quotedMfrNameNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.QuotedMFR']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.quotedMfrNameNew}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.quotedPartNumber']} #{dbResource['wq.label.old']}" sortBy="#{vo.quotedPartNumberOld}" filterBy="#{vo.quotedPartNumberOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.quotedPartNumber']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.quotedPartNumberOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.quotedPartNumber']} #{dbResource['wq.header.new']}" sortBy="#{vo.quotedPartNumberNew}" filterBy="#{vo.quotedPartNumberNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.quotedPartNumber']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.quotedPartNumberNew}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.quotedQty']} #{dbResource['wq.label.old']}" sortBy="#{vo.quotedQtyOld}" filterBy="#{vo.quotedQtyOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.quotedQty']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.quotedQtyOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.quotedQty']} #{dbResource['wq.header.new']}" sortBy="#{vo.quotedQtyNew}" filterBy="#{vo.quotedQtyNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.quotedQty']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.quotedQtyNew}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.PMOQ']} #{dbResource['wq.label.old']}" sortBy="#{vo.pmoqOld}" filterBy="#{vo.pmoqOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.PMOQ']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.pmoqOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.PMOQ']} #{dbResource['wq.header.new']}" sortBy="#{vo.pmoqNew}" filterBy="#{vo.pmoqNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.PMOQ']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.pmoqNew}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.qtyIndicator']} #{dbResource['wq.label.old']}" sortBy="#{vo.qtyIndicatorOld}" filterBy="#{vo.qtyIndicatorOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.qtyIndicator']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.qtyIndicatorOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.qtyIndicator']} #{dbResource['wq.header.new']}" sortBy="#{vo.qtyIndicatorNew}" filterBy="#{vo.qtyIndicatorNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.qtyIndicator']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.qtyIndicatorNew}"/>
+				</p:column>																								
+
+				<p:column headerText="#{dbResource['wq.label.costIndicator']} #{dbResource['wq.label.old']}" sortBy="#{vo.costIndicatorOld}" filterBy="#{vo.costIndicatorOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.costIndicator']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.costIndicatorOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.costIndicator']} #{dbResource['wq.header.new']}" sortBy="#{vo.costIndicatorNew}" filterBy="#{vo.costIndicatorNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.costIndicator']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.costIndicatorNew}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.cost']} #{dbResource['wq.label.old']}" sortBy="#{vo.costOld}" filterBy="#{vo.costOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.cost']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.costOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.cost']} #{dbResource['wq.header.new']}" sortBy="#{vo.costNew}" filterBy="#{vo.costNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.cost']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.costNew}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.quotedPrice']} #{dbResource['wq.label.old']}" sortBy="#{vo.quotedPriceOld}" filterBy="#{vo.quotedPriceOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.quotedPrice']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.quotedPriceOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.quotedPrice']} #{dbResource['wq.header.new']}" sortBy="#{vo.quotedPriceNew}" filterBy="#{vo.quotedPriceNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.quotedPrice']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.quotedPriceNew}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.leadTime']} #{dbResource['wq.label.old']}" sortBy="#{vo.leadTimeOld}" filterBy="#{vo.leadTimeOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.leadTime']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.leadTimeOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.leadTime']} #{dbResource['wq.header.new']}" sortBy="#{vo.leadTimeNew}" filterBy="#{vo.leadTimeNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.leadTime']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.leadTimeNew}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.MPQ']} #{dbResource['wq.label.old']}" sortBy="#{vo.mpqOld}" filterBy="#{vo.mpqOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.MPQ']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.mpqOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.MPQ']} #{dbResource['wq.header.new']}" sortBy="#{vo.mpqNew}" filterBy="#{vo.mpqNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.MPQ']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.mpqNew}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.moq']} #{dbResource['wq.label.old']}" sortBy="#{vo.moqOld}" filterBy="#{vo.moqOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.moq']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.moqOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.moq']} #{dbResource['wq.header.new']}" sortBy="#{vo.moqNew}" filterBy="#{vo.moqNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.moq']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.moqNew}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.mov']} #{dbResource['wq.label.old']}" sortBy="#{vo.movOld}" filterBy="#{vo.movOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.mov']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.movOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.mov']} #{dbResource['wq.header.new']}" sortBy="#{vo.movNew}" filterBy="#{vo.movNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.mov']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.movNew}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.priceValidity']} #{dbResource['wq.label.old']}" sortBy="#{vo.priceValidityOld}" filterBy="#{vo.priceValidityOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.priceValidity']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.priceValidityOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.priceValidity']} #{dbResource['wq.header.new']}" sortBy="#{vo.priceValidityNew}" filterBy="#{vo.priceValidityNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.priceValidity']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.priceValidityNew}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.shipmentVal']} #{dbResource['wq.label.old']}" sortBy="#{vo.shipmentValidityOld}" filterBy="#{vo.shipmentValidityOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.shipmentVal']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.shipmentValidityOld}">
+						<f:convertDateTime pattern="dd/MM/yyyy" />	
+					</h:outputText>					
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.shipmentVal']} #{dbResource['wq.header.new']}" sortBy="#{vo.shipmentValidityNew}" filterBy="#{vo.shipmentValidityNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.shipmentVal']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.shipmentValidityNew}">
+						<f:convertDateTime pattern="dd/MM/yyyy" />	
+					</h:outputText>					
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.resaleIndicator']} #{dbResource['wq.label.old']}" sortBy="#{vo.resaleIndicatorOld}" filterBy="#{vo.resaleIndicatorOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.resaleIndicator']} #{dbResource['wq.label.old']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.resaleIndicatorOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.resaleIndicator']} #{dbResource['wq.header.new']}" sortBy="#{vo.resaleIndicatorNew}" filterBy="#{vo.resaleIndicatorNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.resaleIndicator']} #{dbResource['wq.header.new']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.resaleIndicatorNew}"/>
+				</p:column>	
+
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

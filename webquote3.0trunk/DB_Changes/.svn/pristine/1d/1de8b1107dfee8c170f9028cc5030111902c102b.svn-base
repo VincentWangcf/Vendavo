@@ -1,0 +1,1 @@
+alter table Team add ACTIVE NUMBER(1,0) default 1;

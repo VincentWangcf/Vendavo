@@ -1,0 +1,1789 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TimeZone;
+
+import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Transient;
+
+
+/**
+ * The persistent class for the QUOTE_ITEM_HIS database table.
+ * 
+ */
+@Entity
+@Table(name = "QUOTE_ITEM_HIS")
+public class QuoteItemHis implements Serializable {
+	//private static final long serialVersionUID = 1L;
+	
+	@Transient
+	private Map<String,Boolean> highLightMap = new HashMap<String,Boolean>();
+	
+	@EmbeddedId
+	private QuoteItemHisPK id;
+
+	@Column(name = "ALLOCATION_FLAG", length = 1)
+	private Boolean allocationFlag;
+
+	@Column(name = "ALTERNATIVE_QUOTE_NUMBER")
+	private String alternativeQuoteNumber;
+
+	@Column(name = "APPLICATION", length = 255)
+	private String application;
+
+	@Column(name = "AQCC", length = 1024)
+	private String aqcc;
+
+	@Column(name = "ARDC", length = 1)
+	private Boolean ardc;
+
+	@Column(name = "AUTH_GP")
+	private Double authGp;
+
+	@Column(name = "AUTH_GP_REASON_CODE")
+	private String authGpReasonCode;
+
+	@Column(name = "AUTH_GP_REASON_DESC")
+	private String authGpReasonDesc;
+
+	@Column(name = "AUTH_GP_REMARK")
+	private String authGpRemark;
+
+	@Column(name = "BAL_UNCONSUMED_QTY")
+	private Integer balUnconsumedQty;
+
+	@Column(name = "BMT_CHECKED_FLAG")
+	private Boolean bmtCheckedFlag;
+
+	@Column(name = "BOM_FLAG")
+	private Boolean bomFlag;
+
+	@Column(name = "BOM_NUMBER")
+	private String bomNumber;
+
+	@Column(name = "BOM_REMARKS")
+	private String bomRemarks;
+
+	@Column(name = "CANCELLATION_WINDOW")
+	private Integer cancellationWindow;
+
+	@Column(name = "COMPETITOR_INFORMATION")
+	private String competitorInformation;
+
+	@Column(name = "COST", precision = 10, scale = 5)
+	private Double cost;
+
+	@Column(name = "COST_INDICATOR")
+	private String costIndicator;
+
+	@Column(name = "CURR_FROM")
+	private String currFrom;
+
+	@Column(name = "CURR_TO")
+	private String currTo;
+
+	@Column(name = "CUSTOMER_TYPE")
+	private String customerType;
+
+	@Column(name = "DESCRIPTION", length = 1024)
+	private String description;
+
+	@Column(name = "DESIGN_IN_CAT")
+	private String designInCat;
+
+	@Column(name = "DESIGN_LOCATION")
+	private String designLocation;
+
+	@Column(name = "DESIGN_REGION")
+	private String designRegion;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "DR_EXPIRY_DATE")
+	private Date drExpiryDate;
+
+	@Column(name = "DR_NEDA_ID")
+	private Integer drNedaId;
+
+	@Column(name = "DR_NEDA_LINE_NUMBER")
+	private Integer drNedaLineNumber;
+
+	@Column(name = "DRMS_NUMBER")
+	private Integer drmsNumber;
+
+	@Column(name = "EAU")
+	private Integer eau;
+
+	@Column(name = "END_CUSTOMER_NAME")
+	private String endCustomerName;
+
+	@ManyToOne
+	@JoinColumn(name = "END_CUSTOMER_NUMBER")
+	private Customer endCustomer;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "END_DATE")
+	private Date endDate;
+
+	@Column(name = "ENQUIRY_SEGMENT")
+	private String enquirySegment;
+
+	@Column(name = "EX_RATE_FROM")
+	private BigDecimal exRateFrom;
+
+	@Column(name = "EX_RATE_TO")
+	private BigDecimal exRateTo;
+
+	@Column(name = "FINAL_QUOTATION_PRICE")
+	private Double finalQuotationPrice;
+
+	@Column(name = "FIRST_RFQ_CODE")
+	private String firstRfqCode;
+
+	@Column(name = "FIS_MTH")
+	private String fisMth;
+
+	@Column(name = "FIS_QTR")
+	private String fisQtr;
+
+	@Column(name = "FIS_YEAR")
+	private String fisYear;
+
+	@Column(name = "HANDLING")
+	private BigDecimal handling;
+
+	@Column(name = "INTERNAL_COMMENT")
+	private String internalComment;
+
+	@Column(name = "INTERNAL_TRANSFER_COMMENT")
+	private String internalTransferComment;
+
+	@Column(name = "INVALID_MFR")
+	private String invalidMfr;
+
+	@Column(name = "INVALID_PART_NUMBER")
+	private String invalidPartNumber;
+
+	@Column(name = "ITEM_ATTACHMENT_FLAG")
+	private Boolean itemAttachmentFlag;
+
+	@Column(name = "ITEM_SEQ")
+	private Integer itemSeq;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_BMT_IN_DATE")
+	private Date lastBmtInDate;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_BMT_OUT_DATE")
+	private Date lastBmtOutDate;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_IT_UPDATE_TIME")
+	private Date lastItUpdateTime;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_PM_UPDATED_ON")
+	private Date lastPmUpdatedOn;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_QC_IN_DATE")
+	private Date lastQcInDate;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_QC_OUT_DATE")
+	private Date lastQcOutDate;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_QC_UPDATED_ON")
+	private Date lastQcUpdatedOn;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_RIT_UPDATE_TIME")
+	private Date lastRitUpdateTime;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_SQ_IN_DATE")
+	private Date lastSqInDate;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_SQ_OUT_DATE")
+	private Date lastSqOutDate;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_SQ_UPDATE_TIME")
+	private Date lastSqUpdateTime;
+
+	@Column(name = "LAST_UPDATED_BY")
+	private String lastUpdatedBy;
+
+	@Column(name = "LAST_UPDATED_NAME")
+	private String lastUpdatedName;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_UPDATED_ON")
+	private Date lastUpdatedOn;
+
+	@Column(name = "LAST_UPDATED_PM")
+	private String lastUpdatedPm;
+
+	@Column(name = "LAST_UPDATED_PM_NAME")
+	private String lastUpdatedPmName;
+
+	@Column(name = "LAST_UPDATED_QC")
+	private String lastUpdatedQc;
+
+	@Column(name = "LAST_UPDATED_QC_NAME")
+	private String lastUpdatedQcName;
+
+	@Column(name = "LEAD_TIME")
+	private String leadTime;
+
+	@Column(name = "LOA_FLAG")
+	private Boolean loaFlag;
+
+	@Column(name = "MATERIAL_TYPE_ID")
+	private String materialTypeId;
+
+	@Column(name = "MIGRATION_BATCH_NUMBER")
+	private String migrationBatchNumber;
+
+	@Column(name = "BOTTOM_PRICE")
+	private Double bottomPrice;
+
+	@Column(name = "MOQ")
+	private Integer moq;
+
+	@Column(name = "MOV")
+	private Integer mov;
+
+	@Column(name = "MP_SCHEDULE")
+	private String mpSchedule;
+
+	@Column(name = "MPQ")
+	private Integer mpq;
+
+	@Column(name = "MULTI_USAGE_FLAG")
+	private Boolean multiUsageFlag;
+
+	@Column(name = "NEW_CUSTOMER_FLAG")
+	private Boolean newCustomerFlag;
+
+	@Column(name = "MIN_SELL_PRICE")
+	private Double minSellPrice;
+
+	@Column(name = "ORDER_ON_HAND_FLAG")
+	private Boolean orderOnHandFlag;
+
+	@Column(name = "ORIGINAL_AUTH_GP")
+	private Double originalAuthGp;
+
+	@Column(name = "PM_ATTACHMENT_FLAG")
+	private Boolean pmAttachmentFlag;
+
+	@Column(name = "PMOQ")
+	private String pmoq;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "PO_EXPIRY_DATE")
+	private Date poExpiryDate;
+
+	@Column(name = "PP_SCHEDULE")
+	private String ppSchedule;
+
+	@Column(name = "PRICE_LIST_REMARKS_1")
+	private String priceListRemarks1;
+
+	@Column(name = "PRICE_LIST_REMARKS_2")
+	private String priceListRemarks2;
+
+	@Column(name = "PRICE_LIST_REMARKS_3")
+	private String priceListRemarks3;
+
+	@Column(name = "PRICE_LIST_REMARKS_4")
+	private String priceListRemarks4;
+
+	@Column(name = "PRICE_VALIDITY")
+	private String priceValidity;
+
+	@ManyToOne
+	@JoinColumn(name = "PRODUCT_GROUP1_ID")
+	private ProductGroup productGroup1;
+
+	@ManyToOne
+	@JoinColumn(name = "PRODUCT_GROUP2_ID")
+	private ProductGroup productGroup2;
+
+	@Column(name = "PRODUCT_GROUP3")
+	private String productGroup3;
+
+	@Column(name = "PRODUCT_GROUP4")
+	private String productGroup4;
+
+	@Column(name = "PROGRAM_TYPE")
+	private String programType;
+
+	@Column(name = "PROJECT_NAME")
+	private String projectName;
+
+	@Column(name = "QC_COMMENT")
+	private String qcComment;
+
+	@Column(name = "QTY_INDICATOR")
+	private String qtyIndicator;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "QUOTATION_EFFECTIVE_DATE")
+	private Date quotationEffectiveDate;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "QUOTE_EXPIRY_DATE")
+	private Date quoteExpiryDate;
+
+	@Column(name = "QUOTE_NUMBER")
+	private String quoteNumber;
+
+	@Column(name = "QUOTE_TYPE")
+	private String quoteType;
+
+	@Column(name = "QUOTED_FLAG")
+	private Boolean quotedFlag;
+
+	@ManyToOne
+	@JoinColumn(name = "QUOTED_MATERIAL_ID")
+	private Material quotedMaterial;
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "QUOTED_MFR_ID")
+	private Manufacturer quotedMfr;
+
+	@Column(name = "QUOTED_PART_NUMBER")
+	private String quotedPartNumber;
+
+	@Column(name = "QUOTED_PRICE", precision = 9, scale = 5)
+	private Double quotedPrice;
+
+	@Column(name = "QUOTED_QTY")
+	private Integer quotedQty;
+
+	@Column(name = "REASON_FOR_REFRESH")
+	private String reasonForRefresh;
+
+	@Column(name = "REFERENCE_MARGIN", length = 1024)
+	private Double referenceMargin;
+
+	@Column(name = "REFRESH_ATTACHMENT_FLAG")
+	private Boolean refreshAttachmentFlag;
+
+	@Column(name = "REMARKS")
+	private String remarks;
+
+	@Column(name = "REQUESTED_MATERIAL_ID")
+	private Integer requestedMaterialId;
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "REQUESTED_MFR_ID")
+	private Manufacturer requestedMfr;
+
+	@Column(name = "REQUESTED_PART_NUMBER")
+	private String requestedPartNumber;
+
+	@Column(name = "REQUESTED_QTY")
+	private Integer requestedQty;
+
+	@Column(name = "RESALE_INDICATOR")
+	private String resaleIndicator;
+
+	@Column(name="RESALE_MARGIN", length=1024)
+	private Double resaleMargin;
+
+	@Column(name="RESALE_MAX", precision=10, scale=5)
+	private Double resaleMax;
+
+	@Column(name="RESALE_MIN", precision=10, scale=5)
+	private Double resaleMin;
+
+	@Column(name = "RESCHEDULE_WINDOW")
+	private Integer rescheduleWindow;
+
+	@Column(name = "REVERT_VERSION")
+	private String revertVersion;
+
+	@Column(name = "SAP_PART_NUMBER")
+	private String sapPartNumber;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "SENT_OUT_TIME")
+	private Date sentOutTime;
+
+	@Column(name = "SHIP_TO_CUSTOMER_NAME")
+	private String shipToCustomerName;
+
+	
+	
+	@ManyToOne
+	@JoinColumn(name="SHIP_TO_CUSTOMER_NUMBER")
+	private Customer shipToCustomer;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "SHIPMENT_VALIDITY")
+	private Date shipmentValidity;
+
+	@Column(name = "SOLD_TO_CUSTOMER_NAME")
+	private String soldToCustomerName;
+
+	@ManyToOne
+	@JoinColumn(name="SOLD_TO_CUSTOMER_NUMBER")
+	private Customer soldToCustomer;
+
+	@Column(name = "SPR_FLAG")
+	private Boolean sprFlag;
+	
+	@Column(name = "STAGE",length=10)
+	private String stage;
+
+	@Column(name = "STATUS",length=10)
+	private String status;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "SUBMISSION_DATE")
+	private Date submissionDate;
+
+	@Column(name = "SUPPLIER_DR_NUMBER")
+	private String supplierDrNumber;
+
+	@Column(name="TARGET_MARGIN", length=1024)
+	private Double targetMargin;
+
+	@Column(name="TARGET_RESALE", precision=9, scale=5)
+	private Double targetResale;
+
+	@Column(name = "TERMS_AND_CONDITIONS")
+	private String termsAndConditions;
+
+	@Column(name = "USED_FLAG")
+	private Boolean usedFlag;
+
+	@Column(name = "VALID_FLAG")
+	private String validFlag;
+
+	@Column(name="VAT")
+	private BigDecimal vat;
+
+	@Column(name = "VENDOR_DEBIT_NUMBER")
+	private String vendorDebitNumber;
+
+	@Column(name = "VENDOR_QUOTE_NUMBER")
+	private String vendorQuoteNumber;
+
+	@Column(name = "VENDOR_QUOTE_QTY")
+	private Integer vendorQuoteQty;
+
+	@Column(name = "\"VERSION\"")
+	private Integer version;
+
+	@Column(name = "WARNING")
+	private String warning;
+
+	@Column(name="LAST_UPDATED_BMT")
+	private String lastUpdatedBmt;
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_BMT_UPDATE_TIME")
+	private Date lastBmtUpdateTime;	
+	
+	@Column(name="ATTACHMENT_FLAG")
+	private String attachmentFlag;
+	
+	@Column(name = "ACTION")
+	private String action;
+
+	@Column(name="SALES_COST_FLAG")
+	private boolean salesCostFlag;
+	
+	@Column(name="SALES_COST_TYPE")
+	@Enumerated(EnumType.STRING)
+	private SalesCostType salesCostType;
+	
+	@Column(name="SALES_COST")
+	private BigDecimal salesCost;
+
+	@Column(name="SUGGESTED_RESALE")
+	private BigDecimal suggestedResale;
+
+	@Column(name="CUSTOMER_GROUP_ID")
+	private String custoemrGroupId;
+
+		
+	public QuoteItemHis() {
+	}
+
+	public QuoteItemHisPK getId() {
+		return id;
+	}
+
+	public void setId(QuoteItemHisPK id) {
+		this.id = id;
+	}
+
+	public Boolean getAllocationFlag() {
+		return allocationFlag;
+	}
+
+	public void setAllocationFlag(Boolean allocationFlag) {
+		this.allocationFlag = allocationFlag;
+	}
+
+	public String getAlternativeQuoteNumber() {
+		return alternativeQuoteNumber;
+	}
+
+	public void setAlternativeQuoteNumber(String alternativeQuoteNumber) {
+		this.alternativeQuoteNumber = alternativeQuoteNumber;
+	}
+
+	public String getApplication() {
+		return application;
+	}
+
+	public void setApplication(String application) {
+		this.application = application;
+	}
+
+	public String getAqcc() {
+		return aqcc;
+	}
+
+	public void setAqcc(String aqcc) {
+		this.aqcc = aqcc;
+	}
+
+	public Boolean getArdc() {
+		return ardc;
+	}
+
+	public void setArdc(Boolean ardc) {
+		this.ardc = ardc;
+	}
+
+	public Double getAuthGp() {
+		return authGp;
+	}
+
+	public void setAuthGp(Double authGp) {
+		this.authGp = authGp;
+	}
+
+	public String getAuthGpReasonCode() {
+		return authGpReasonCode;
+	}
+
+	public void setAuthGpReasonCode(String authGpReasonCode) {
+		this.authGpReasonCode = authGpReasonCode;
+	}
+
+	public String getAuthGpReasonDesc() {
+		return authGpReasonDesc;
+	}
+
+	public void setAuthGpReasonDesc(String authGpReasonDesc) {
+		this.authGpReasonDesc = authGpReasonDesc;
+	}
+
+	public String getAuthGpRemark() {
+		return authGpRemark;
+	}
+
+	public void setAuthGpRemark(String authGpRemark) {
+		this.authGpRemark = authGpRemark;
+	}
+
+	public Integer getBalUnconsumedQty() {
+		return balUnconsumedQty;
+	}
+
+	public void setBalUnconsumedQty(Integer balUnconsumedQty) {
+		this.balUnconsumedQty = balUnconsumedQty;
+	}
+
+	public Boolean getBmtCheckedFlag() {
+		return bmtCheckedFlag;
+	}
+
+	public void setBmtCheckedFlag(Boolean bmtCheckedFlag) {
+		this.bmtCheckedFlag = bmtCheckedFlag;
+	}
+
+	public Boolean getBomFlag() {
+		return bomFlag;
+	}
+
+	public void setBomFlag(Boolean bomFlag) {
+		this.bomFlag = bomFlag;
+	}
+
+	public String getBomNumber() {
+		return bomNumber;
+	}
+
+	public void setBomNumber(String bomNumber) {
+		this.bomNumber = bomNumber;
+	}
+
+	public String getBomRemarks() {
+		return bomRemarks;
+	}
+
+	public void setBomRemarks(String bomRemarks) {
+		this.bomRemarks = bomRemarks;
+	}
+
+	public Integer getCancellationWindow() {
+		return cancellationWindow;
+	}
+
+	public void setCancellationWindow(Integer cancellationWindow) {
+		this.cancellationWindow = cancellationWindow;
+	}
+
+	public String getCompetitorInformation() {
+		return competitorInformation;
+	}
+
+	public void setCompetitorInformation(String competitorInformation) {
+		this.competitorInformation = competitorInformation;
+	}
+
+	public Double getCost() {
+		return cost;
+	}
+
+	public void setCost(Double cost) {
+		this.cost = cost;
+	}
+
+	public String getCostIndicator() {
+		return costIndicator;
+	}
+
+	public void setCostIndicator(String costIndicator) {
+		this.costIndicator = costIndicator;
+	}
+
+	public String getCurrFrom() {
+		return currFrom;
+	}
+
+	public void setCurrFrom(String currFrom) {
+		this.currFrom = currFrom;
+	}
+
+	public String getCurrTo() {
+		return currTo;
+	}
+
+	public void setCurrTo(String currTo) {
+		this.currTo = currTo;
+	}
+
+	public String getCustomerType() {
+		return customerType;
+	}
+
+	public void setCustomerType(String customerType) {
+		this.customerType = customerType;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getDesignInCat() {
+		return designInCat;
+	}
+
+	public void setDesignInCat(String designInCat) {
+		this.designInCat = designInCat;
+	}
+
+	public String getDesignLocation() {
+		return designLocation;
+	}
+
+	public void setDesignLocation(String designLocation) {
+		this.designLocation = designLocation;
+	}
+
+	public String getDesignRegion() {
+		return designRegion;
+	}
+
+	public void setDesignRegion(String designRegion) {
+		this.designRegion = designRegion;
+	}
+
+	public Date getDrExpiryDate() {
+		return drExpiryDate;
+	}
+
+	public void setDrExpiryDate(Date drExpiryDate) {
+		this.drExpiryDate = drExpiryDate;
+	}
+
+	public Integer getDrNedaId() {
+		return drNedaId;
+	}
+
+	public void setDrNedaId(Integer drNedaId) {
+		this.drNedaId = drNedaId;
+	}
+
+	public Integer getDrNedaLineNumber() {
+		return drNedaLineNumber;
+	}
+
+	public void setDrNedaLineNumber(Integer drNedaLineNumber) {
+		this.drNedaLineNumber = drNedaLineNumber;
+	}
+
+	public Integer getDrmsNumber() {
+		return drmsNumber;
+	}
+
+	public void setDrmsNumber(Integer drmsNumber) {
+		this.drmsNumber = drmsNumber;
+	}
+
+	public Integer getEau() {
+		return eau;
+	}
+
+	public void setEau(Integer eau) {
+		this.eau = eau;
+	}
+
+	public String getEndCustomerName() {
+		return endCustomerName;
+	}
+
+	public void setEndCustomerName(String endCustomerName) {
+		this.endCustomerName = endCustomerName;
+	}
+
+	public Customer getEndCustomer() {
+		return endCustomer;
+	}
+
+	public void setEndCustomer(Customer endCustomer) {
+		this.endCustomer = endCustomer;
+	}
+
+	public Date getEndDate() {
+		return endDate;
+		
+	}
+
+	public void setEndDate(Date endDate) {
+		this.endDate = endDate;
+	}
+
+	public String getEnquirySegment() {
+		return enquirySegment;
+	}
+
+	public void setEnquirySegment(String enquirySegment) {
+		this.enquirySegment = enquirySegment;
+	}
+
+	public BigDecimal getExRateFrom() {
+		return exRateFrom;
+	}
+
+	public void setExRateFrom(BigDecimal exRateFrom) {
+		this.exRateFrom = exRateFrom;
+	}
+
+	public BigDecimal getExRateTo() {
+		return exRateTo;
+	}
+
+	public void setExRateTo(BigDecimal exRateTo) {
+		this.exRateTo = exRateTo;
+	}
+
+	public Double getFinalQuotationPrice() {
+		return finalQuotationPrice;
+	}
+
+	public void setFinalQuotationPrice(Double finalQuotationPrice) {
+		this.finalQuotationPrice = finalQuotationPrice;
+	}
+
+	public String getFirstRfqCode() {
+		return firstRfqCode;
+	}
+
+	public void setFirstRfqCode(String firstRfqCode) {
+		this.firstRfqCode = firstRfqCode;
+	}
+
+	public String getFisMth() {
+		return fisMth;
+	}
+
+	public void setFisMth(String fisMth) {
+		this.fisMth = fisMth;
+	}
+
+	public String getFisQtr() {
+		return fisQtr;
+	}
+
+	public void setFisQtr(String fisQtr) {
+		this.fisQtr = fisQtr;
+	}
+
+	public String getFisYear() {
+		return fisYear;
+	}
+
+	public void setFisYear(String fisYear) {
+		this.fisYear = fisYear;
+	}
+
+	public BigDecimal getHandling() {
+		return handling;
+	}
+
+	public void setHandling(BigDecimal handling) {
+		this.handling = handling;
+	}
+
+	public String getInternalComment() {
+		return internalComment;
+	}
+
+	public void setInternalComment(String internalComment) {
+		this.internalComment = internalComment;
+	}
+
+	public String getInternalTransferComment() {
+		return internalTransferComment;
+	}
+
+	public void setInternalTransferComment(String internalTransferComment) {
+		this.internalTransferComment = internalTransferComment;
+	}
+
+	public String getInvalidMfr() {
+		return invalidMfr;
+	}
+
+	public void setInvalidMfr(String invalidMfr) {
+		this.invalidMfr = invalidMfr;
+	}
+
+	public String getInvalidPartNumber() {
+		return invalidPartNumber;
+	}
+
+	public void setInvalidPartNumber(String invalidPartNumber) {
+		this.invalidPartNumber = invalidPartNumber;
+	}
+
+	public Boolean getItemAttachmentFlag() {
+		return itemAttachmentFlag;
+	}
+
+	public void setItemAttachmentFlag(Boolean itemAttachmentFlag) {
+		this.itemAttachmentFlag = itemAttachmentFlag;
+	}
+
+	public Integer getItemSeq() {
+		return itemSeq;
+	}
+
+	public void setItemSeq(Integer itemSeq) {
+		this.itemSeq = itemSeq;
+	}
+
+	public Date getLastBmtInDate() {
+		return lastBmtInDate;
+	}
+
+	public void setLastBmtInDate(Date lastBmtInDate) {
+		this.lastBmtInDate = lastBmtInDate;
+	}
+
+	public Date getLastBmtOutDate() {
+		return lastBmtOutDate;
+	}
+
+	public void setLastBmtOutDate(Date lastBmtOutDate) {
+		this.lastBmtOutDate = lastBmtOutDate;
+	}
+
+	public Date getLastItUpdateTime() {
+		return lastItUpdateTime;
+	}
+
+	public void setLastItUpdateTime(Date lastItUpdateTime) {
+		this.lastItUpdateTime = lastItUpdateTime;
+	}
+
+	public Date getLastPmUpdatedOn() {
+		return lastPmUpdatedOn;
+	}
+
+	public void setLastPmUpdatedOn(Date lastPmUpdatedOn) {
+		this.lastPmUpdatedOn = lastPmUpdatedOn;
+	}
+
+	public Date getLastQcInDate() {
+		return lastQcInDate;
+	}
+
+	public void setLastQcInDate(Date lastQcInDate) {
+		this.lastQcInDate = lastQcInDate;
+	}
+
+	public Date getLastQcOutDate() {
+		return lastQcOutDate;
+	}
+
+	public void setLastQcOutDate(Date lastQcOutDate) {
+		this.lastQcOutDate = lastQcOutDate;
+	}
+
+	public Date getLastQcUpdatedOn() {
+		return lastQcUpdatedOn;
+	}
+
+	public void setLastQcUpdatedOn(Date lastQcUpdatedOn) {
+		this.lastQcUpdatedOn = lastQcUpdatedOn;
+	}
+
+	public Date getLastRitUpdateTime() {
+		return lastRitUpdateTime;
+	}
+
+	public void setLastRitUpdateTime(Date lastRitUpdateTime) {
+		this.lastRitUpdateTime = lastRitUpdateTime;
+	}
+
+	public Date getLastSqInDate() {
+		return lastSqInDate;
+	}
+
+	public void setLastSqInDate(Date lastSqInDate) {
+		this.lastSqInDate = lastSqInDate;
+	}
+
+	public Date getLastSqOutDate() {
+		return lastSqOutDate;
+	}
+
+	public void setLastSqOutDate(Date lastSqOutDate) {
+		this.lastSqOutDate = lastSqOutDate;
+	}
+
+	public Date getLastSqUpdateTime() {
+		return lastSqUpdateTime;
+	}
+
+	public void setLastSqUpdateTime(Date lastSqUpdateTime) {
+		this.lastSqUpdateTime = lastSqUpdateTime;
+	}
+
+	public String getLastUpdatedBy() {
+		return lastUpdatedBy;
+	}
+
+	public void setLastUpdatedBy(String lastUpdatedBy) {
+		this.lastUpdatedBy = lastUpdatedBy;
+	}
+
+	public String getLastUpdatedName() {
+		return lastUpdatedName;
+	}
+
+	public void setLastUpdatedName(String lastUpdatedName) {
+		this.lastUpdatedName = lastUpdatedName;
+	}
+
+	public Date getLastUpdatedOn() {
+		return lastUpdatedOn;
+	}
+
+	public void setLastUpdatedOn(Date lastUpdatedOn) {
+		this.lastUpdatedOn = lastUpdatedOn;
+	}
+
+	public String getLastUpdatedPm() {
+		return lastUpdatedPm;
+	}
+
+	public void setLastUpdatedPm(String lastUpdatedPm) {
+		this.lastUpdatedPm = lastUpdatedPm;
+	}
+
+	public String getLastUpdatedPmName() {
+		return lastUpdatedPmName;
+	}
+
+	public void setLastUpdatedPmName(String lastUpdatedPmName) {
+		this.lastUpdatedPmName = lastUpdatedPmName;
+	}
+
+	public String getLastUpdatedQc() {
+		return lastUpdatedQc;
+	}
+
+	public void setLastUpdatedQc(String lastUpdatedQc) {
+		this.lastUpdatedQc = lastUpdatedQc;
+	}
+
+	public String getLastUpdatedQcName() {
+		return lastUpdatedQcName;
+	}
+
+	public void setLastUpdatedQcName(String lastUpdatedQcName) {
+		this.lastUpdatedQcName = lastUpdatedQcName;
+	}
+
+	public String getLeadTime() {
+		return leadTime;
+	}
+
+	public void setLeadTime(String leadTime) {
+		this.leadTime = leadTime;
+	}
+
+	public Boolean getLoaFlag() {
+		return loaFlag;
+	}
+
+	public void setLoaFlag(Boolean loaFlag) {
+		this.loaFlag = loaFlag;
+	}
+
+	public String getMaterialTypeId() {
+		return materialTypeId;
+	}
+
+	public void setMaterialTypeId(String materialTypeId) {
+		this.materialTypeId = materialTypeId;
+	}
+
+	public String getMigrationBatchNumber() {
+		return migrationBatchNumber;
+	}
+
+	public void setMigrationBatchNumber(String migrationBatchNumber) {
+		this.migrationBatchNumber = migrationBatchNumber;
+	}
+
+
+	public Double getBottomPrice() {
+		return bottomPrice;
+	}
+
+
+	public void setBottomPrice(Double minSellPrice) {
+		this.bottomPrice = minSellPrice;
+	}
+
+	public Integer getMoq() {
+		return moq;
+	}
+
+	public void setMoq(Integer moq) {
+		this.moq = moq;
+	}
+
+	public Integer getMov() {
+		return mov;
+	}
+
+	public void setMov(Integer mov) {
+		this.mov = mov;
+	}
+
+	public String getMpSchedule() {
+		return mpSchedule;
+	}
+
+	public void setMpSchedule(String mpSchedule) {
+		this.mpSchedule = mpSchedule;
+	}
+
+	public Integer getMpq() {
+		return mpq;
+	}
+
+	public void setMpq(Integer mpq) {
+		this.mpq = mpq;
+	}
+
+	public Boolean getMultiUsageFlag() {
+		return multiUsageFlag;
+	}
+
+	public void setMultiUsageFlag(Boolean multiUsageFlag) {
+		this.multiUsageFlag = multiUsageFlag;
+	}
+
+	public Boolean getNewCustomerFlag() {
+		return newCustomerFlag;
+	}
+
+	public void setNewCustomerFlag(Boolean newCustomerFlag) {
+		this.newCustomerFlag = newCustomerFlag;
+	}
+
+
+	public Double getMinSellPrice() {
+		return minSellPrice;
+	}
+
+
+	public void setMinSellPrice(Double normSellPrice) {
+		this.minSellPrice = normSellPrice;
+	}
+
+	public Boolean getOrderOnHandFlag() {
+		return orderOnHandFlag;
+	}
+
+	public void setOrderOnHandFlag(Boolean orderOnHandFlag) {
+		this.orderOnHandFlag = orderOnHandFlag;
+	}
+
+	public Double getOriginalAuthGp() {
+		return originalAuthGp;
+	}
+
+	public void setOriginalAuthGp(Double originalAuthGp) {
+		this.originalAuthGp = originalAuthGp;
+	}
+
+	public Boolean getPmAttachmentFlag() {
+		return pmAttachmentFlag;
+	}
+
+	public void setPmAttachmentFlag(Boolean pmAttachmentFlag) {
+		this.pmAttachmentFlag = pmAttachmentFlag;
+	}
+
+	public String getPmoq() {
+		return pmoq;
+	}
+
+	public void setPmoq(String pmoq) {
+		this.pmoq = pmoq;
+	}
+
+	public Date getPoExpiryDate() {
+		return poExpiryDate;
+	}
+
+	public void setPoExpiryDate(Date poExpiryDate) {
+		this.poExpiryDate = poExpiryDate;
+	}
+
+	public String getPpSchedule() {
+		return ppSchedule;
+	}
+
+	public void setPpSchedule(String ppSchedule) {
+		this.ppSchedule = ppSchedule;
+	}
+
+	public String getPriceListRemarks1() {
+		return priceListRemarks1;
+	}
+
+	public void setPriceListRemarks1(String priceListRemarks1) {
+		this.priceListRemarks1 = priceListRemarks1;
+	}
+
+	public String getPriceListRemarks2() {
+		return priceListRemarks2;
+	}
+
+	public void setPriceListRemarks2(String priceListRemarks2) {
+		this.priceListRemarks2 = priceListRemarks2;
+	}
+
+	public String getPriceListRemarks3() {
+		return priceListRemarks3;
+	}
+
+	public void setPriceListRemarks3(String priceListRemarks3) {
+		this.priceListRemarks3 = priceListRemarks3;
+	}
+
+	public String getPriceListRemarks4() {
+		return priceListRemarks4;
+	}
+
+	public void setPriceListRemarks4(String priceListRemarks4) {
+		this.priceListRemarks4 = priceListRemarks4;
+	}
+
+	public String getPriceValidity() {
+		return priceValidity;
+	}
+
+	public void setPriceValidity(String priceValidity) {
+		this.priceValidity = priceValidity;
+	}
+
+	public ProductGroup getProductGroup1() {
+		return productGroup1;
+	}
+
+	public void setProductGroup1(ProductGroup productGroup1) {
+		this.productGroup1 = productGroup1;
+	}
+
+	public ProductGroup getProductGroup2() {
+		return productGroup2;
+	}
+
+	public void setProductGroup2(ProductGroup productGroup2) {
+		this.productGroup2 = productGroup2;
+	}
+
+	public String getProductGroup3() {
+		return productGroup3;
+	}
+
+	public void setProductGroup3(String productGroup3) {
+		this.productGroup3 = productGroup3;
+	}
+
+	public String getProductGroup4() {
+		return productGroup4;
+	}
+
+	public void setProductGroup4(String productGroup4) {
+		this.productGroup4 = productGroup4;
+	}
+
+	public String getProgramType() {
+		return programType;
+	}
+
+	public void setProgramType(String programType) {
+		this.programType = programType;
+	}
+
+	public String getProjectName() {
+		return projectName;
+	}
+
+	public void setProjectName(String projectName) {
+		this.projectName = projectName;
+	}
+
+	public String getQcComment() {
+		return qcComment;
+	}
+
+	public void setQcComment(String qcComment) {
+		this.qcComment = qcComment;
+	}
+
+	public String getQtyIndicator() {
+		return qtyIndicator;
+	}
+
+	public void setQtyIndicator(String qtyIndicator) {
+		this.qtyIndicator = qtyIndicator;
+	}
+
+	public Date getQuotationEffectiveDate() {
+		return quotationEffectiveDate;
+	}
+
+	public void setQuotationEffectiveDate(Date quotationEffectiveDate) {
+		this.quotationEffectiveDate = quotationEffectiveDate;
+	}
+
+	public Date getQuoteExpiryDate() {
+		return quoteExpiryDate;
+	}
+
+	public void setQuoteExpiryDate(Date quoteExpiryDate) {
+		this.quoteExpiryDate = quoteExpiryDate;
+	}
+
+	public String getQuoteNumber() {
+		return quoteNumber;
+	}
+
+	public void setQuoteNumber(String quoteNumber) {
+		this.quoteNumber = quoteNumber;
+	}
+
+	public String getQuoteType() {
+		return quoteType;
+	}
+
+	public void setQuoteType(String quoteType) {
+		this.quoteType = quoteType;
+	}
+
+	public Boolean getQuotedFlag() {
+		return quotedFlag;
+	}
+
+	public void setQuotedFlag(Boolean quotedFlag) {
+		this.quotedFlag = quotedFlag;
+	}
+
+	public Material getQuotedMaterial() {
+		return quotedMaterial;
+	}
+
+	public void setQuotedMaterial(Material quotedMaterial) {
+		this.quotedMaterial = quotedMaterial;
+	}
+
+	public Manufacturer getQuotedMfr() {
+		return quotedMfr;
+	}
+
+	public void setQuotedMfr(Manufacturer quotedMfr) {
+		this.quotedMfr = quotedMfr;
+	}
+
+	public String getQuotedPartNumber() {
+		return quotedPartNumber;
+	}
+
+	public void setQuotedPartNumber(String quotedPartNumber) {
+		this.quotedPartNumber = quotedPartNumber;
+	}
+
+	public Double getQuotedPrice() {
+		return quotedPrice;
+	}
+
+	public void setQuotedPrice(Double quotedPrice) {
+		this.quotedPrice = quotedPrice;
+	}
+
+	public Integer getQuotedQty() {
+		return quotedQty;
+	}
+
+	public void setQuotedQty(Integer quotedQty) {
+		this.quotedQty = quotedQty;
+	}
+
+	public String getReasonForRefresh() {
+		return reasonForRefresh;
+	}
+
+	public void setReasonForRefresh(String reasonForRefresh) {
+		this.reasonForRefresh = reasonForRefresh;
+	}
+
+	public Double getReferenceMargin() {
+		return referenceMargin;
+	}
+
+	public void setReferenceMargin(Double referenceMargin) {
+		this.referenceMargin = referenceMargin;
+	}
+
+	public Boolean getRefreshAttachmentFlag() {
+		return refreshAttachmentFlag;
+	}
+
+	public void setRefreshAttachmentFlag(Boolean refreshAttachmentFlag) {
+		this.refreshAttachmentFlag = refreshAttachmentFlag;
+	}
+
+	public String getRemarks() {
+		return remarks;
+	}
+
+	public void setRemarks(String remarks) {
+		this.remarks = remarks;
+	}
+
+	public Integer getRequestedMaterialId() {
+		return requestedMaterialId;
+	}
+
+	public void setRequestedMaterialId(Integer requestedMaterialId) {
+		this.requestedMaterialId = requestedMaterialId;
+	}
+
+	public Manufacturer getRequestedMfr() {
+		return requestedMfr;
+	}
+
+	public void setRequestedMfr(Manufacturer requestedMfr) {
+		this.requestedMfr = requestedMfr;
+	}
+
+	public String getRequestedPartNumber() {
+		return requestedPartNumber;
+	}
+
+	public void setRequestedPartNumber(String requestedPartNumber) {
+		this.requestedPartNumber = requestedPartNumber;
+	}
+
+	public Integer getRequestedQty() {
+		return requestedQty;
+	}
+
+	public void setRequestedQty(Integer requestedQty) {
+		this.requestedQty = requestedQty;
+	}
+
+	public String getResaleIndicator() {
+		return resaleIndicator;
+	}
+
+	public void setResaleIndicator(String resaleIndicator) {
+		this.resaleIndicator = resaleIndicator;
+	}
+
+	public Double getResaleMargin() {
+		return resaleMargin;
+	}
+
+	public void setResaleMargin(Double resaleMargin) {
+		this.resaleMargin = resaleMargin;
+	}
+
+	public Double getResaleMax() {
+		return resaleMax;
+	}
+
+	public void setResaleMax(Double resaleMax) {
+		this.resaleMax = resaleMax;
+	}
+
+	public Double getResaleMin() {
+		return resaleMin;
+	}
+
+	public void setResaleMin(Double resaleMin) {
+		this.resaleMin = resaleMin;
+	}
+
+	public Integer getRescheduleWindow() {
+		return rescheduleWindow;
+	}
+
+	public void setRescheduleWindow(Integer rescheduleWindow) {
+		this.rescheduleWindow = rescheduleWindow;
+	}
+
+	public String getRevertVersion() {
+		return revertVersion;
+	}
+
+	public void setRevertVersion(String revertVersion) {
+		this.revertVersion = revertVersion;
+	}
+
+	public String getSapPartNumber() {
+		return sapPartNumber;
+	}
+
+	public void setSapPartNumber(String sapPartNumber) {
+		this.sapPartNumber = sapPartNumber;
+	}
+
+	public Date getSentOutTime() {
+		return sentOutTime;
+	}
+
+	public void setSentOutTime(Date sentOutTime) {
+		this.sentOutTime = sentOutTime;
+	}
+
+	public String getShipToCustomerName() {
+		return shipToCustomerName;
+	}
+
+	public void setShipToCustomerName(String shipToCustomerName) {
+		this.shipToCustomerName = shipToCustomerName;
+	}
+
+	
+
+	public Customer getShipToCustomer() {
+		return shipToCustomer;
+	}
+
+	public void setShipToCustomer(Customer shipToCustomer) {
+		this.shipToCustomer = shipToCustomer;
+	}
+
+	public Date getShipmentValidity() {
+		return shipmentValidity;
+	}
+
+	public void setShipmentValidity(Date shipmentValidity) {
+		this.shipmentValidity = shipmentValidity;
+	}
+
+	public String getSoldToCustomerName() {
+		return soldToCustomerName;
+	}
+
+	public void setSoldToCustomerName(String soldToCustomerName) {
+		this.soldToCustomerName = soldToCustomerName;
+	}
+	
+	
+
+	public Customer getSoldToCustomer() {
+		return soldToCustomer;
+	}
+
+	public void setSoldToCustomer(Customer soldToCustomer) {
+		this.soldToCustomer = soldToCustomer;
+	}
+
+	public Boolean getSprFlag() {
+		return sprFlag;
+	}
+
+	public void setSprFlag(Boolean sprFlag) {
+		this.sprFlag = sprFlag;
+	}
+
+	public String getStage() {
+		return stage;
+	}
+
+	public void setStage(String stage) {
+		this.stage = stage;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public Date getSubmissionDate() {
+		return submissionDate;
+	}
+
+	public void setSubmissionDate(Date submissionDate) {
+		this.submissionDate = submissionDate;
+	}
+
+	public String getSupplierDrNumber() {
+		return supplierDrNumber;
+	}
+
+	public void setSupplierDrNumber(String supplierDrNumber) {
+		this.supplierDrNumber = supplierDrNumber;
+	}
+
+	public Double getTargetMargin() {
+		return targetMargin;
+	}
+
+	public void setTargetMargin(Double targetMargin) {
+		this.targetMargin = targetMargin;
+	}
+
+	public Double getTargetResale() {
+		return targetResale;
+	}
+
+	public void setTargetResale(Double targetResale) {
+		this.targetResale = targetResale;
+	}
+
+	public String getTermsAndConditions() {
+		return termsAndConditions;
+	}
+
+	public void setTermsAndConditions(String termsAndConditions) {
+		this.termsAndConditions = termsAndConditions;
+	}
+
+	public Boolean getUsedFlag() {
+		return usedFlag;
+	}
+
+	public void setUsedFlag(Boolean usedFlag) {
+		this.usedFlag = usedFlag;
+	}
+
+	public String getValidFlag() {
+		return validFlag;
+	}
+
+	public void setValidFlag(String validFlag) {
+		this.validFlag = validFlag;
+	}
+
+	public BigDecimal getVat() {
+		return vat;
+	}
+
+	public void setVat(BigDecimal vat) {
+		this.vat = vat;
+	}
+
+	public String getVendorDebitNumber() {
+		return vendorDebitNumber;
+	}
+
+	public void setVendorDebitNumber(String vendorDebitNumber) {
+		this.vendorDebitNumber = vendorDebitNumber;
+	}
+
+	public String getVendorQuoteNumber() {
+		return vendorQuoteNumber;
+	}
+
+	public void setVendorQuoteNumber(String vendorQuoteNumber) {
+		this.vendorQuoteNumber = vendorQuoteNumber;
+	}
+
+	public Integer getVendorQuoteQty() {
+		return vendorQuoteQty;
+	}
+
+	public void setVendorQuoteQty(Integer vendorQuoteQty) {
+		this.vendorQuoteQty = vendorQuoteQty;
+	}
+
+	public Integer getVersion() {
+		return version;
+	}
+
+	public void setVersion(Integer version) {
+		this.version = version;
+	}
+
+	public String getWarning() {
+		return warning;
+	}
+
+	public void setWarning(String warning) {
+		this.warning = warning;
+	}
+
+	public Map<String, Boolean> getHighLightMap() {
+		return highLightMap;
+	}
+
+	public void setHighLightMap(Map<String, Boolean> highLightMap) {
+		this.highLightMap = highLightMap;
+	}
+	
+	public String getLastUpdatedBmt() {
+		return lastUpdatedBmt;
+	}
+
+	public void setLastUpdatedBmt(String lastUpdatedBmt) {
+		this.lastUpdatedBmt = lastUpdatedBmt;
+	}
+	
+	
+	public Date getLastBmtUpdateTime() {
+		return lastBmtUpdateTime;
+	}
+
+	public void setLastBmtUpdateTime(Date lastBmtUpdateTime) {
+		this.lastBmtUpdateTime = lastBmtUpdateTime;
+	}
+
+	public String getAttachmentFlag() {
+		return attachmentFlag;
+	}
+
+	public void setAttachmentFlag(String attachmentFlag) {
+		this.attachmentFlag = attachmentFlag;
+	}
+
+	
+	public String getAction() {
+		return action;
+	}
+	
+	public void setAction(String action) {
+		this.action = action;
+	}
+
+	public boolean isSalesCostFlag() {
+		return salesCostFlag;
+	}
+
+	public void setSalesCostFlag(boolean salesCostFlag) {
+		this.salesCostFlag = salesCostFlag;
+	}
+
+	public SalesCostType getSalesCostType() {
+		return salesCostType;
+	}
+
+	public void setSalesCostType(SalesCostType salesCostType) {
+		this.salesCostType = salesCostType;
+	}
+
+	public BigDecimal getSalesCost() {
+		return salesCost;
+	}
+
+	public void setSalesCost(BigDecimal salesCost) {
+		this.salesCost = salesCost;
+	}
+
+	public BigDecimal getSuggestedResale() {
+		return suggestedResale;
+	}
+
+	public void setSuggestedResale(BigDecimal suggestedResale) {
+		this.suggestedResale = suggestedResale;
+	}
+
+	public String getCustoemrGroupId() {
+		return custoemrGroupId;
+	}
+
+	public void setCustoemrGroupId(String custoemrGroupId) {
+		this.custoemrGroupId = custoemrGroupId;
+	}
+	
+	
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+    <f:view contentType="text/html">
+        <h:head>
+            <f:facet name="first" >
+                <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+                <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+			<meta http-equiv="Cache-Control" Content="no-cache"/>
+			<meta http-equiv="Pragma" Content="no-cache"/>
+			<meta http-equiv="Expires" Content="0"/>                   
+                </f:facet>
+
+            <h:outputStylesheet library="css" name="style-004.css" />
+            <h:outputScript library="javascript" name="common-002.js" />
+            <h:outputScript library="javascript" name="rfq-002.js" />
+             <h:outputStylesheet library="css" name="columns.css" />
+    
+        </h:head>
+        <h:body style="margin:0px 0px 0px 0px;">
+			<ui:include src="/templates/SessionTimeout.xhtml"/>   	
+			<p:dialog modal="true" widgetVar="statusDialog" header="#{dbResource['wq.label.status']}" draggable="false" closable="false" resizable="false">
+				<h:outputText value="#{dbResource['wq.message.processingWait']}" styleClass="ajaxStatus"/>
+			</p:dialog>     
+			<f:metadata>
+			    <f:viewParam name="formNumber" value="#{rfqSubmissionMB.requestFormNumber}" />
+			    <f:viewParam name="quoteId" value="#{rfqSubmissionMB.requestQuoteId}" />
+			    <f:viewParam name="quoteItemId" value="#{rfqSubmissionMB.requestQuoteItemId}" />
+			    <f:viewParam name="action" value="#{rfqSubmissionMB.requestAction}" />
+			    <f:event type="preRenderView" listener="#{rfqSubmissionMB.actionForMyQuote}" update="@form" />
+			</f:metadata>        
+        	<!-- noted by damon for not full screen,20160225  <div class="baseWidth"> -->
+        	<div>
+				<table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-bottom: 0px solid #999999;background-image: url('../resources/images/top.png');background-repeat:no-repeat;background-color:white;" 	>
+					<tr>
+						<td height="16" valign="bottom"  nowrap="nowrap" align="right" style="font-size:1.8em;font-style:italic"></td>
+					</tr>
+					<tr> 
+						<td height="35" align="right" ><b style="font-size:1.2em;font-style:italic">
+						<ui:include src="/menu/languageBar.xhtml" />&nbsp;&nbsp;
+						#{dbResource['wq.header.aventQuoteCentre']} #{userMB.user.name}</b>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+					</tr>
+				</table>       	        
+				<ui:include src="/menu/zIncMenubar.xhtml" />
+				<ui:include src="/RFQ/RFQSubmission.xhtml" />
+			</div>
+        </h:body>
+    </f:view>
+</html>
+

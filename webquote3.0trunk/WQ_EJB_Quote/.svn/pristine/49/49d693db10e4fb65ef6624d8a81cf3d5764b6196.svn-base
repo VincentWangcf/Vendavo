@@ -1,0 +1,5 @@
+package com.avnet.emasia.webquote.rowdata;
+
+public interface Computable<A, V> {
+	V compute(A arg) throws Exception;
+}

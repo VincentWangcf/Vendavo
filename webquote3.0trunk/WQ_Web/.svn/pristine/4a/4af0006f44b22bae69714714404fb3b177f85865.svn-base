@@ -1,0 +1,95 @@
+
+<ui:composition 
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<p:dialog header="#{dbResource['wq.label.exchConfirm']}" widgetVar="quotation_rate_dialog" resizable="true" width="80%">
+								
+	
+	<h:panelGrid columns="25" cellpadding="0" style="margin-top:8px; padding:4px 3px 4px 3px;">
+			<h:outputText value="#{dbResource['wq.label.QuoteRateReq']}: "  escape="false" />
+<!-- 
+			<h:outputText value="#{dbResource['wq.label.refExchCurr']}: "  escape="false" />
+			<h:selectOneMenu id="exChange_Currency" value="#{myQuoteSearchMB.exCurrency}">							
+                      <f:selectItems value="#{myQuoteSearchMB.exCurrencyList}" />
+			</h:selectOneMenu>
+ -->
+			 <p:commandButton id="Refresh_Exchange_Rate" value="#{dbResource['wq.label.refreshExchRate']}" actionListener="#{myQuoteSearchMB.refreshExchangeRate}"
+	 	oncomplete="stop(); "
+	 	update="datatable_exchangeRateLst" 
+	  style="margin:0px 0px 0px 0px"/>
+	</h:panelGrid>
+	  <p:dataTable	var="vo1"
+	    				value="#{myQuoteSearchMB.selectedQuoteItemVos}" 
+	    				rowKey="#{vo1.seq}" 
+	    				rowIndexVar="rowIndex"
+	                 	selection="#{myQuoteSearchMB.proceedQuoteItemVos}" 	
+	                 	id="datatable_exchangeRateLst"
+	                  	editable="true"
+	                 	scrollable="true"
+	                 	scrollHeight="250"
+	                 	 style="width:100%"
+	                 	rowStyleClass="#{vo1.errRow ? 'errorRow' : null}"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">	                 	              
+		           		 
+			<p:column selectionMode="multiple" styleClass="column_checkBox" exportable="false" style="width:3%" disabledSelection ="#{vo1.exChangeRate==null}"> 
+
+			</p:column> 
+					   
+			      	
+	        <p:column headerText="#{dbResource['wq.label.quoteNumber']}" sortBy="#{vo1.quoteItem.quoteNumber}" styleClass="column_icon" style="width:10%">
+				<h:outputText value="#{vo1.quoteItem.quoteNumber}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.rfqcurr']}" sortBy="#{vo1.quoteItem.rfqCurr}"   filterBy="#{vo1.quoteItem.rfqCurr}" filterMatchMode="contains" styleClass="column_salesCostType">
+			<h:outputText value="#{vo1.quoteItem.rfqCurr}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.CURExc']}" sortBy="#{vo1.quoteItem.buyCurr}/#{vo1.quoteItem.rfqCurr}"   filterBy="#{vo1.quoteItem.buyCurr}/#{vo1.quoteItem.rfqCurr}" filterMatchMode="contains" styleClass="column_salesCostType">
+			<h:outputText value="#{vo1.quoteItem.buyCurr}/#{vo1.quoteItem.rfqCurr}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quotedPrice']}&lt;br/&gt;(#{dbResource['wq.label.rfqcurr']}-#{dbResource['wq.header.new']})" sortBy="#{vo1.quoteItem.quotedPriceRFQCurNewExRate}" filterBy="#{vo1.quoteItem.quotedPriceRFQCurNewExRate}" filterMatchMode="contains" styleClass="column_quotedPrice align_right">
+			<h:outputText value="#{vo1.quoteItem.quotedPriceRFQCurNewExRate}">
+				<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5"/>
+			</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quotedPrice']}&lt;br/&gt;(#{dbResource['wq.label.rfqcurr']})" sortBy="#{vo1.quoteItem.quotedPrice}" filterBy="#{vo1.quoteItem.convertToRfqValueWithDouble(vo1.quoteItem.quotedPrice)}" filterMatchMode="contains" styleClass="column_quotedPrice align_right">
+			<h:outputText value="#{vo1.quoteItem.convertToRfqValueWithDouble(vo1.quoteItem.quotedPrice)}">
+				<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5"/>
+			</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.letestRefExchCurr']}" sortBy="#{vo1.exChangeRate.exRateTo}"  styleClass="column_icon" style="width:15%">
+				<h:outputText value="#{vo1.quoteItem.exRateNewRFQCur}">
+					<f:convertNumber  pattern="#0.00000"  />
+				</h:outputText>
+<!-- 
+				<h:outputText value="#{vo1.exChangeRate.exRateTo.multiply(vo1.exChangeRate.vat).multiply(vo1.exChangeRate.handling)}">
+					<f:convertNumber  pattern="#0.00000"  />
+				</h:outputText>
+ -->
+			</p:column>
+		
+	        <p:column headerText="#{dbResource['wq.label.orginalRefExchCurr']}" sortBy="#{vo1.quoteItem.calculatedExchRate}" styleClass="column_icon" style="width:15%">
+				<h:outputText value="#{vo1.quoteItem.exRate}">
+					<f:convertNumber  pattern="#0.00000"  />
+				</h:outputText>
+			</p:column>
+			
+			
+	 </p:dataTable> 
+	 <p:commandButton id="submit_Rate" value="#{dbResource['wq.header.confirm']}" actionListener="#{myQuoteSearchMB.confirmQuoteRate}"
+	 	oncomplete="stop(); PF('quotation_rate_dialog').hide();"
+	 	update="@form" 
+	  style="margin:0px 0px 0px 0px"/>
+	 <p:commandButton id="cancel_Rate" value="#{dbResource['wq.button.cancel']}" oncomplete="PF('quotation_rate_dialog').hide();" style="margin:0px 0px 0px 0px"/>                
+	</p:dialog>
+
+	 
+
+</ui:composition>

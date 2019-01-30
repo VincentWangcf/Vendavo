@@ -1,0 +1,1204 @@
+package com.avnet.emasia.webquote.commodity.web;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+import javax.faces.model.SelectItem;
+
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.eclipse.jetty.util.log.Log;
+import org.primefaces.component.datatable.DataTable;
+import org.primefaces.context.RequestContext;
+import org.primefaces.model.LazyDataModel;
+import org.primefaces.model.SortOrder;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.avnet.emasia.webquote.commodity.dto.CheckBoxSet;
+import com.avnet.emasia.webquote.commodity.dto.PISearchBean;
+import com.avnet.emasia.webquote.commodity.ejb.ProgramMaterialSB;
+import com.avnet.emasia.webquote.commodity.helper.SessionHelper;
+import com.avnet.emasia.webquote.commodity.util.Constants;
+import com.avnet.emasia.webquote.constants.RemoteEjbClassEnum;
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.ExcelReport;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.QtyBreakPricer;
+import com.avnet.emasia.webquote.entity.Quote;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+import com.avnet.emasia.webquote.helper.TransferHelper;
+import com.avnet.emasia.webquote.poi.CataLogPageExcelReportFormat;
+import com.avnet.emasia.webquote.quote.ejb.ManufacturerSB;
+import com.avnet.emasia.webquote.quote.ejb.QuoteSB;
+import com.avnet.emasia.webquote.reports.ejb.ExcelReportSB;
+import com.avnet.emasia.webquote.reports.ejb.OfflineReportSB;
+import com.avnet.emasia.webquote.reports.util.ReportConvertor;
+import com.avnet.emasia.webquote.user.ejb.ApplicationSB;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.user.ejb.ProductGroupSB;
+import com.avnet.emasia.webquote.user.ejb.ProgramTypeSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.DownloadUtil;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.vo.CatalogMainVO;
+import com.avnet.emasia.webquote.vo.OfflineReportParam;
+import com.avnet.emasia.webquote.web.quote.CatalogSearchMB;
+import com.avnet.emasia.webquote.web.quote.FacesUtil;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.security.WQUserDetails;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+import com.avnet.emasia.webquote.web.utility.CommonCommodity;
+/**
+ * @author Tonmy,Li(906893)
+ * @Created on 2013-02-04
+ *  Webpromo module .
+ */
+
+@ManagedBean(name = "commodityMB")
+@ViewScoped
+public class CommodityMB extends CommonCommodity implements java.io.Serializable{
+
+
+	private static final long serialVersionUID = 979611845924281312L;
+    private static final String NEXT_TAMP = "</div><div style='float:left;width:50%'>";
+    private static final String SPACE_TAMP = "</div><div style='float:right;width:50%' >";
+    private static final String REMOVE_TEMP_1 = "<div style='width:100%'><div style='float:left;width:50%'>";
+    private static final String REMOVE_TEMP_2 = "</div></div>";
+
+    private static final String REMOVE_IMAGE = "<image src";
+    private static final String BLANK_SPACE ="";
+    private static final String THREE_BLANK_SPACE = "   ";
+    private static final String NEXT_LINE = "\r\n";
+    private static final String PLUS = "+";
+    
+    private static final Logger LOGGER = Logger.getLogger(CommodityMB.class.getName());
+	
+
+
+	@EJB
+	private ProgramTypeSB programTypeSB;
+	@EJB
+	private ProductGroupSB productGroupSB;
+	@EJB
+	private ManufacturerSB manufacturerSB; 
+	@EJB
+	private ProgramMaterialSB programMaterialSB;
+	@EJB
+	private ApplicationSB applicationSB;
+	@EJB
+	private SysConfigSB sysConfigSB;
+	@EJB 
+	private BizUnitSB bizUnitSB;
+    private String mfrPart;
+    //private List<ProgramPricer> programMaterials;
+    
+    private CatalogMainVO seletedMaterial;
+    private CatalogMainVO[] selectedMaterials;
+   // private ProgramMaterialModel programMaterialModel;   
+
+    private String[] quanBreakCount = new String[10];
+    private User user;
+    
+    private String mfr;
+    private String part; 
+    
+    boolean topPanelDisplay; 
+    boolean rfqOperationPanelDisplay;
+    boolean salesDownloadButtonDisplay;
+    
+    boolean restrictCheckingForPM;
+    boolean restrictCheckingForQCPricing;
+    
+    private String systemInfo;
+    private Integer totalCount;
+    
+    private String paramMfr;
+    private String paramPart;
+    
+    private String bizUnitStr;
+    private SelectItem[] bizUnitSelectList;
+    private BizUnit bizUnit;
+    
+    private List<String> salesCostPartList;
+    
+    private String salesCostPart;
+    
+    private String productGroupStr;
+    
+    private List<CatalogMainVO> catalogMainVOs;
+    
+    public LazyDataModel<CatalogMainVO> catalogMainLazyModel;
+    private PISearchBean pisGolbal;
+    
+	
+	@EJB
+	protected EJBCommonSB ejbCommonSB;
+	
+	@EJB
+	protected ExcelReportSB excelReportSB;
+	
+	@EJB
+	private OfflineReportSB offlineReprtSB;
+	
+	@EJB
+	private QuoteSB quoteSB;
+	
+	public CommodityMB()
+	{
+			
+	}
+	
+    @PostConstruct
+    public void initialize()
+    {
+    	LOGGER.fine("call CommodityMaintainMB initialize");
+    	
+    	if(null==checkBoxSet)
+     	{
+//    		logger.info("initialize checkBoxSet is null");
+    		user =((WQUserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUser();
+    		topPanelDisplay = applicationSB.isActionAccessibleByUser(user, "CommodityMgt.AnnouncementAndPromotionItem.windows");
+    		rfqOperationPanelDisplay = applicationSB.isActionAccessibleByUser(user, "CommodityMgt.RfqOperationPanel.buttons");
+    		restrictCheckingForPM = applicationSB.isActionAccessibleByUser(user, "CommodityMgt.searchRestrictionForPM.checking");
+    		restrictCheckingForQCPricing = applicationSB.isActionAccessibleByUser(user, "CommodityMgt.searchRestrictionForQCPring.checking");
+    		salesDownloadButtonDisplay  = applicationSB.isActionAccessibleByUser(user, "CommodityMgt.downloadButtonForSales.buttons");
+     		
+    		List<String> bizUnitCodes = new ArrayList<String>();
+    		if(user.getBizUnits() != null){
+    			for(BizUnit bizUnit : user.getBizUnits())
+    				bizUnitCodes.add(bizUnit.getName());
+    		}
+    		bizUnitSelectList = QuoteUtil.createFilterOptions(bizUnitCodes.toArray(new String[bizUnitCodes.size()]), bizUnitCodes.toArray(new String[bizUnitCodes.size()]), false, false, true);					    	
+    		bizUnit = user.getDefaultBizUnit();
+    		bizUnitStr = bizUnit.getName();
+    		
+    		salesCostPartList = new ArrayList<String>();
+    		for(String saleCostPart : QuoteConstant.SALES_COST_PART) {
+    			salesCostPartList.add(saleCostPart);
+    		}
+    		
+    		defaultAction();
+    		
+     	}
+    	this.updateProgRfqSubmitMBSysInfo();
+    	
+    }
+    
+    public void redirectToCatalogSearch() {
+    	String url = "RFQ/CatalogSearch.jsf";
+    	FacesUtil.redirect(url);
+    }
+	
+    public void handleOutSideLink()
+    {
+    	LOGGER.fine("call paramPart is not null");
+		loadRestrictions();
+		PISearchBean pis = checkBoxSet.getPiSearchBean(false);
+		pis.setActive(Constants.YES);
+		pis = checkBoxSet.getPiSearchBean(false);
+		pis.setActive(Constants.YES);
+		mfrList = programMaterialSB.getMfrList(pis);
+	    productGroupList = programMaterialSB.getProductGroupList(pis);
+	    programTypeList = programMaterialSB.getProgramTypeList(pis);
+
+	    checkBoxSet.setMfr(checkBoxSet.specifiedOneMfr(mfrList,paramMfr));
+	    checkBoxSet.setProductGroup(productGroupList);
+	    checkBoxSet.setProgramType(programTypeList);
+	    checkBoxSet.setMfrPart(paramPart);
+	    checkBoxSet.setExact(Constants.YES);
+	    checkBoxSet.setSuccess(true);
+        checkBoxSet.setActive(Constants.YES);
+        
+        searchQtyBreakPricer(false);
+    }
+    
+    public void loadRestrictions() 
+    {
+    	loadRestrictions(false);
+    }
+	/*
+	 * Main search method. it will invoke different method based on user.
+	 */
+    public void loadRestrictions(boolean forReset) 
+	{
+    	LOGGER.fine("call loadRestrictions");
+
+		if(restrictCheckingForPM)
+		{
+			loadRestrictionForPM(forReset);
+		}
+		else if(restrictCheckingForQCPricing)
+		{
+			loadRestrictionForQCPricing(forReset);
+		}
+		else
+		{
+			loadRestrictionForOthers(forReset);
+		}
+	}
+    
+    
+    
+	public void loadRestrictionForPM(boolean forReset)
+	{
+		LOGGER.fine("call loadRestrictionForPM");
+		if(null==checkBoxSet || forReset)
+		{
+			checkBoxSet = new CheckBoxSet();
+			checkBoxSet.setDataAccessCheckRequired(true);
+			if(user.getDataAccesses()!=null && user.getDataAccesses().size()>0)
+			{
+	            checkBoxSet.setDataAccesses(user.getDataAccesses());
+			}
+			
+		}
+	}
+	
+	public void loadRestrictionForQCPricing(boolean forReset)
+	{
+		LOGGER.fine("call loadRestrictionForQCPricing");
+		if(null==checkBoxSet || forReset)
+		{
+			checkBoxSet = new CheckBoxSet();
+			checkBoxSet.setDataAccessCheckRequired(true);
+			if(user.getDataAccesses()!=null && user.getDataAccesses().size()>0)
+			{
+	            checkBoxSet.setDataAccesses(user.getDataAccesses());
+			}
+		}
+	}
+	
+	public void loadRestrictionForOthers(boolean forReset)
+	{
+		LOGGER.fine("call loadRestrictionForOthers");
+		if(null==checkBoxSet || forReset)
+		{
+			checkBoxSet = new CheckBoxSet();
+			checkBoxSet.setDataAccessCheckRequired(true);
+			if(user.getDataAccesses()!=null && user.getDataAccesses().size()>0)
+			{
+	            checkBoxSet.setDataAccesses(user.getDataAccesses());
+			}
+		}
+	}
+
+
+
+	
+
+
+	/*
+	 * While click on the search button , will trigger this action.
+	 */
+	public void searchAction() 
+	{
+		LOGGER.fine("call searchAction");
+		PISearchBean pis = checkBoxSet.getPiSearchBean();
+		pis.setActive(Constants.YES);		
+		pis.setMfrList(checkBoxSet.getMfrStrList(true));
+		pis.setProductGroupList(checkBoxSet.getProductGroupStrList(true));
+		pis.setProgramTypeList(checkBoxSet.getProgramTypeStrList(true));
+		pis.setBizUnit(bizUnitStr);
+		pis.setSalesCostPart(salesCostPart);
+		pis.setProductGroupStr(productGroupStr);
+		checkBoxSet.setMfrPart(mfrPart);
+		checkBoxSet.setActive(Constants.YES);
+		updateFilterPanel();
+		searchQtyBreakPricer(false);
+		
+	}
+
+	/*
+	 * program type change action.
+	 */
+	public void programTypeCBChange()
+	{
+		LOGGER.fine("call |  programTypeCBChange");
+		LOGGER.fine("call |  programTypeCBChange selectedProgramTypeListTemp.size()="+ selectedProgramTypeListTemp.size()+ "  selectedProgramTypeList.size()="+selectedProgramTypeList.size());
+        if(selectedProgramTypeListTemp.size()==selectedProgramTypeList.size())
+        	return;
+        else
+		{
+        	selectedProgramTypeListTemp.clear();
+        	selectedProgramTypeListTemp.addAll(selectedProgramTypeList);
+		}
+        changeAction(Constants.PARA_PROGRAM_CG, getSelectedProgramTypeList());
+        // all unselected state.
+       /* if(selectedProgramTypeList.size()==0)
+        {
+    	    selectedMfrListTemp = new ArrayList<String>(); 
+    	    selectedProductGroupListTemp = new ArrayList<String>(); 
+    	    selectedProgramTypeListTemp = new ArrayList<String>(); 
+        	defaultAction();
+        }
+        else
+        {
+        	changeAction(Constants.PARA_PROGRAM_CG, getSelectedProgramTypeList()); 
+        }*/
+		
+	}
+	/*
+	 * product group change action.
+	 */
+	public void productGroupCBChange()
+	{
+		LOGGER.fine("call |  productGroupCBChange");
+		LOGGER.fine("call |  productGroupCBChange selectedProductGroupListTemp.size()="+ selectedProductGroupListTemp.size()+ "  selectedProductGroupList.size()="+selectedProductGroupList.size());
+		if(selectedProductGroupListTemp.size()==selectedProductGroupList.size())
+        	return;
+		else
+		{
+			selectedProductGroupListTemp.clear();
+			selectedProductGroupListTemp.addAll(selectedProductGroupList);
+		}
+		changeAction(Constants.PARA_PRODUCT_GROUP_CG, getSelectedProductGroupList());
+	}
+	
+	/*
+	 * mfr change action.
+	 */
+	public void mfrCBChange()
+	{
+		LOGGER.fine("call |  mfrCBChange");
+		LOGGER.fine("call |  mfrCBChange selectedMfrListTemp.size()="+ selectedMfrListTemp.size()+ "  selectedMfrList.size()="+selectedMfrList.size());
+		
+		if(selectedMfrListTemp.size()==selectedMfrList.size())
+        	return;
+		else
+		{
+			selectedMfrListTemp.clear();
+			selectedMfrListTemp.addAll(selectedMfrList);
+		}
+		changeAction(Constants.PARA_MFR_CG, getSelectedMfrList()); 
+	}
+	
+	
+	
+	
+	/*
+	 * While change the status of the check box , will trigger this action.
+	 */
+	public void changeAction(String type, List<String> selectedlist) 
+	{
+		LOGGER.fine("call changeAction");
+		PISearchBean pis = checkBoxSet.getPiSearchBean();
+		pis.setBizUnit(bizUnitStr);
+		pis.setSalesCostPart(salesCostPart);
+		pis.setProductGroupStr(productGroupStr);
+		ejbCommonSB.changeAction(type, selectedlist, pis, checkBoxSet, programMaterialSB, programTypeList,
+				productGroupList, mfrList);
+		//SearchProgramMaterial(false);
+		updateFilterPanel();
+		//SearchProgramMaterial(false);
+	}	
+	/* 
+	 * view promotion item action.
+	 */
+	public void viewPromotionItemAction(ActionEvent event)
+	{
+		LOGGER.fine("call viewPromotionItemAction");
+		loadRestrictions();
+		PISearchBean pis = checkBoxSet.getPiSearchBean(false);
+		pis.setActive(Constants.YES);
+		pis = checkBoxSet.getPiSearchBean(false);
+		pis.setActive(Constants.YES);
+		mfrList = programMaterialSB.getMfrList(pis);
+	    productGroupList = programMaterialSB.getProductGroupList(pis);
+	    programTypeList = programMaterialSB.getProgramTypeList(pis);
+
+	    
+	    Material selectedMaterial = (Material)event.getComponent().getAttributes().get("selectedMaterial");
+	    checkBoxSet.setMfr(checkBoxSet.specifiedOneMfr(mfrList,selectedMaterial.getManufacturer().getName()));
+	    checkBoxSet.setProductGroup(productGroupList);
+	    checkBoxSet.setProgramType(programTypeList);
+	    checkBoxSet.setMfrPart(selectedMaterial.getFullMfrPartNumber());
+	    checkBoxSet.setExact(Constants.YES);
+	    checkBoxSet.setSuccess(true);
+        checkBoxSet.setActive(Constants.YES);
+        
+        searchQtyBreakPricer(false);
+	}
+	
+	public void defaultAction()
+	{
+		defaultAction(false);
+	}
+	public void defaultAction(boolean forReset)
+	{
+		LOGGER.fine("call |  defaultAction");
+		mfrPart = null;
+	    resetCheckBox();
+	    checkBoxSet = new CheckBoxSet();
+		loadRestrictions(forReset);
+		PISearchBean pis = checkBoxSet.getPiSearchBean(false);
+		pis.setActive(Constants.YES);
+		pis.setBizUnit(bizUnitStr);
+		pis.setSalesCostPart(salesCostPart);
+		pis.setProductGroupStr(productGroupStr);
+		mfrList = programMaterialSB.getMfrList(pis);
+	   // productGroupList = programMaterialSB.getProductGroupList(pis);
+	    programTypeList = programMaterialSB.getProgramTypeList(pis);
+	    checkBoxSet.setMfr(mfrList);
+	   //checkBoxSet.setProductGroup(productGroupList);
+	    checkBoxSet.setProgramType(programTypeList);
+	    checkBoxSet.setSuccess(true);
+	    checkBoxSet.setActive(Constants.YES);
+	    searchQtyBreakPricer(true);
+	    
+	}
+
+
+	
+
+	/*
+	 * search program material.
+	 */
+	
+	public void searchQtyBreakPricer(boolean isDefaultSearch) {
+		LOGGER.fine("call |  SearchProgramMaterial");
+		PISearchBean pis = new PISearchBean();
+		pis.setActive(Constants.YES);
+		// com.avnet.emasia.wequote.commodity.util.StringUtils.printList("getMfrStrList
+		// 22", checkBoxSet.getMfrStrList(false));
+		pis.setMfrList(checkBoxSet.getMfrStrList(false));
+		// com.avnet.emasia.wequote.commodity.util.StringUtils.printList("getProductGroupStrList
+		// 22", checkBoxSet.getProductGroupStrList(false));
+		//pis.setProductGroupList(checkBoxSet.getProductGroupStrList(false));
+		// com.avnet.emasia.wequote.commodity.util.StringUtils.printList("getProgramTypeStrList
+		// 22", checkBoxSet.getProgramTypeStrList(false));
+		pis.setProgramTypeList(checkBoxSet.getProgramTypeStrList(false));
+		pis.setMfrPart(checkBoxSet.getMfrPart());
+		pis.setExact(checkBoxSet.getExact());
+		pis.setDataAccessCheckRequired(checkBoxSet.isDataAccessCheckRequired());
+		pis.setDataAccesses(checkBoxSet.getDataAccesses());
+		pis.setBizUnit(bizUnitStr);
+		pis.setSalesCostPart(salesCostPart);
+		pis.setProductGroupStr(productGroupStr);
+
+		// List<ProgramMaterial> results =
+		// programMaterialSB.searchProgramMaterial(pis);
+		LOGGER.fine("call |  SearchProgramMaterial searchProgramMaterial end");
+		// for(int i =0; i <results.size();i ++)
+		// {
+		// ProgramMaterial pi = (ProgramMaterial)results.get(i);
+		// pi.setPriceValidity(DateUtils.addDay(pi.getPriceValidity(), -1));
+		// }
+
+		// programMaterials = results;
+		// programMaterialModel = new ProgramMaterialModel(programMaterials);
+		// if(isDefaultSearch)
+		// {
+		// totalCount = programMaterials.size();
+		// }
+		// isDefaultSearchGolbal = isDefaultSearch;
+		pisGolbal = pis;
+
+		final DataTable d = (DataTable) FacesContext.getCurrentInstance().getViewRoot()
+				.findComponent(":form:programMaterialTable");
+		if (d != null) {
+			int first = 0;
+			d.setFirst(first);
+		}
+		this.catalogMainLazyModel = new LazyDataModel<CatalogMainVO>() {
+			private static final long serialVersionUID = 1L;
+			private List<CatalogMainVO> data;
+
+			@Override
+			public List<CatalogMainVO> load(int first, int pageSize, String sortField, SortOrder sortOrder,
+					Map<String, Object> filters) {
+				pisGolbal.setFirstPage(first);
+				pisGolbal.setPageSize(pageSize);
+				pisGolbal.setSortField(sortField);
+				if (sortOrder != null) {
+					pisGolbal.setSortOrder(sortOrder.toString());
+				}
+
+				List<QtyBreakPricer> result = programMaterialSB.searchQtyBreakPricerByPage(pisGolbal);
+				catalogMainVOs = TransferHelper.transferToCataLogMainVOList(result,bizUnitStr);
+				this.data = catalogMainVOs;
+				int rowCount = programMaterialSB.searchQtyBreakPricerCount(pisGolbal);
+				catalogMainLazyModel.setRowCount(rowCount);
+				return catalogMainVOs;
+			}
+
+			@Override
+			public CatalogMainVO getRowData(String rowKey) {
+				if (this.data != null && this.data.size() > 0)
+					for (CatalogMainVO cm : data)
+
+					{
+						if (String.valueOf(cm.getId()).equals(rowKey))
+							return cm;
+					}
+
+				return null;
+			}
+
+			@Override
+			public Object getRowKey(CatalogMainVO cm) {
+				return cm.getId();
+			}
+		};
+
+		if (isDefaultSearch) {
+			totalCount = programMaterialSB.searchQtyBreakPricerCount(pis);
+		}
+		// updateSystemInfo();
+	}
+	
+	
+	
+	public void exportSelected() {
+		try {
+			if (selectedMaterials == null || selectedMaterials.length == 0) {
+				FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_WARN,
+						ResourceMB.getText("wq.message.noRecordSelected") + " !", ""));
+				return;
+			}
+			List<CatalogMainVO> vos = Arrays.asList(selectedMaterials);
+			ExcelReport excelReport = excelReportSB.getExcelReportByReportName(QuoteConstant.CATALOG_MAIN_REPORT);
+			List resultList = ReportConvertor.removeHtmlText(vos);
+			DownloadUtil.outputExcelFile(excelReport, "", resultList, new CataLogPageExcelReportFormat(),FacesContext.getCurrentInstance());
+		} catch (WebQuoteException e) {
+
+			LOGGER.log(Level.SEVERE, "Download Selected Quote Error,Report Name: " + QuoteConstant.CATALOG_MAIN_REPORT + ", "
+					+ "Reason for failure: " + MessageFormatorUtil.getParameterizedStringFromException(e), e);
+			Log.info("Download Selected Quote Error,Report Name:" + QuoteConstant.CATALOG_MAIN_REPORT);
+		}
+
+	}
+	
+	public void sendOffLineReport() {
+		PISearchBean pis = new PISearchBean();
+		pis.setActive(Constants.YES);
+		pis.setMfrList(checkBoxSet.getMfrStrList(false));
+		pis.setProgramTypeList(checkBoxSet.getProgramTypeStrList(false));
+		pis.setMfrPart(checkBoxSet.getMfrPart());
+		pis.setExact(checkBoxSet.getExact());
+		pis.setDataAccessCheckRequired(checkBoxSet.isDataAccessCheckRequired());
+		pis.setDataAccesses(checkBoxSet.getDataAccesses());
+		pis.setBizUnit(bizUnitStr);
+		pis.setSalesCostPart(salesCostPart);
+		pis.setProductGroupStr(productGroupStr);
+		User tempUser = UserInfo.getUser();
+		OfflineReportParam param = new OfflineReportParam();
+		param.setCriteriaBeanValue(pis);
+		param.setReportName(QuoteConstant.CATALOG_MAIN_REPORT);
+		param.setEmployeeId(String.valueOf(tempUser.getEmployeeId()));
+		param.setRemoteEjbClass(RemoteEjbClassEnum.CATALOGMAIN_REMOTE_EJB.classSimpleName());
+		offlineReprtSB.sendOffLineReportRemote(param);
+		FacesContext.getCurrentInstance().addMessage("growl",
+				new FacesMessage(FacesMessage.SEVERITY_INFO, "",
+						ResourceMB.getText("wq.message.requestSubmitted") + ". <br />"
+								+ ResourceMB.getText("wq.message.reportSentYourEmail") + ". <br />"
+								+ ResourceMB.getText("wq.message.withInOneH") + "."));
+		return;
+	}
+	
+	//TODO
+	/****add object to DB QUOTE AND QUOTEITEMS*****/
+	public void addToCart() {
+		LOGGER.info("call |addToCart  ");
+		String message=null;
+		if(selectedMaterials.length==0)
+		{
+			FacesContext context = FacesContext.getCurrentInstance();   
+			message =ResourceMB.getText("wq.message.noItemSelected");
+			context.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "", message));   
+		}
+		else
+		{
+			Integer[] tempInt = checkingExceedCount(QuoteConstant.SHOPPING_CART_MAX_ITEMS);
+			if(tempInt!=null)
+			{
+				FacesContext context = FacesContext.getCurrentInstance();  
+				Object[] objArr = {String.valueOf(QuoteConstant.SHOPPING_CART_MAX_ITEMS),String.valueOf(tempInt[0]+tempInt[1]),String.valueOf(tempInt[0]),String.valueOf(tempInt[1])};
+	        	String failedMsg = ResourceMB.getParameterizedString("wq.message.exceedMaxShoppingItems",objArr);
+				context.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR,"", failedMsg));  
+			}
+			else
+			{
+				LOGGER.info("begin addToCart  ,  CatalogMainVO size:: " + this.getSelectedMaterials().length);
+				FacesContext ctx = FacesContext.getCurrentInstance();
+				ProgRfqSubmitMB progRfqSubmitMB = (ProgRfqSubmitMB)ctx.getApplication().getELResolver().getValue(ctx.getELContext(), null, "progRfqSubmitMB");
+				progRfqSubmitMB.setBizUnit(bizUnit);
+				progRfqSubmitMB.addCatalogMainVOToDB(this.getSelectedMaterials());
+				//progRfqSubmitMB.updateSystemInfo();
+				
+			    FacesContext context = FacesContext.getCurrentInstance();
+			    message=ResourceMB.getText("wq.message.savedSuccess");
+				context.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,"", message));  
+			}
+		}
+	}
+
+/*	//TODO
+	private void addCatalogMainVOToDB(){
+		LOGGER.fine("call |  addCatalogMainVOToDB");
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		Object value = ctx.getApplication().getELResolver().getValue(ctx.getELContext(), null, "progRfqSubmitMB");
+		((ProgRfqSubmitMB)value).addCatalogMainVOToDB(this.getSelectedMaterials());
+	}*/
+    
+    public String getMethodName()
+    {
+    	return "loadRestrictionForOthers";
+    }
+	
+    
+    
+	public boolean isSalesDownloadButtonDisplay() {
+		return salesDownloadButtonDisplay;
+	}
+
+	public void setSalesDownloadButtonDisplay(boolean salesDownloadButtonDisplay) {
+		this.salesDownloadButtonDisplay = salesDownloadButtonDisplay;
+	}
+
+	public String getMfrPart() {
+		return mfrPart;
+	}
+
+	public void setMfrPart(String mfrPart) {
+		this.mfrPart = mfrPart;
+	}
+
+	/*public List<ProgramPricer> getProgramMaterials() {
+		return programMaterials;
+	}
+
+	public void setProgramMaterials(List<ProgramPricer> programMaterials) {
+		this.programMaterials = programMaterials;
+	}*/
+	
+	public CheckBoxSet getCheckBoxSet() {
+		return checkBoxSet;
+	}
+
+	public void setCheckBoxSet(CheckBoxSet checkBoxSet) {
+		this.checkBoxSet = checkBoxSet;
+	}
+
+	
+	public String getMfr() {
+		return mfr;
+	}
+
+	public void setMfr(String mfr) {
+		this.mfr = mfr;
+	}
+
+	public String getPart() {
+		return part;
+	}
+
+	public void setPart(String part) {
+		this.part = part;
+	}
+
+	public String[] getQuanBreakCount() {
+		return quanBreakCount;
+	}
+
+	public void setQuanBreakCount(String[] quanBreakCount) {
+		this.quanBreakCount = quanBreakCount;
+	}
+
+
+	public CatalogMainVO[] getSelectedMaterials() {
+		return selectedMaterials;
+	}
+
+	public void setSelectedMaterials(
+			CatalogMainVO[] selectedProgramMaterials) {
+		this.selectedMaterials = selectedProgramMaterials;
+	}
+
+	public CatalogMainVO getSeletedMaterial() {
+		return seletedMaterial;
+	}
+
+	public void setSeletedMaterial(CatalogMainVO seletedProgramMaterial) {
+		this.seletedMaterial = seletedProgramMaterial;
+	}
+
+	/*public ProgramMaterialModel getProgramMaterialModel() {
+		return programMaterialModel;
+	}
+
+	public void setProgramMaterialModel(ProgramMaterialModel programMaterialModel) {
+		this.programMaterialModel = programMaterialModel;
+	}*/
+	
+	
+	public boolean isTopPanelDisplay() {
+		return topPanelDisplay;
+	}
+
+	public void setTopPanelDisplay(boolean topPanelDisplay) {
+		this.topPanelDisplay = topPanelDisplay;
+	}
+
+	
+	public boolean isRfqOperationPanelDisplay() {
+		return rfqOperationPanelDisplay;
+	}
+
+	public void setRfqOperationPanelDisplay(boolean rfqOperationPanelDisplay) {
+		this.rfqOperationPanelDisplay = rfqOperationPanelDisplay;
+	}
+	
+	public String getSystemInfo() {
+		return systemInfo;
+	}
+
+	public void setSystemInfo(String systemInfo) {
+		this.systemInfo = systemInfo;
+	}
+
+	public void resetCheckBox()
+	{
+	    selectedMfrList = new ArrayList<String>(); 
+	    selectedProductGroupList = new ArrayList<String>(); 
+	    selectedProgramTypeList = new ArrayList<String>(); 
+	    selectedMfrListTemp = new ArrayList<String>(); 
+	    selectedProductGroupListTemp = new ArrayList<String>(); 
+	    selectedProgramTypeListTemp = new ArrayList<String>(); 
+	}
+
+	
+	
+	//To-Do
+	public Integer getSelectedRfqDraftCount()
+	{
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		Object value = ctx.getApplication().getELResolver().getValue(ctx.getELContext(), null, "progRfqSubmitMB");
+		List<Material> progDraftM = ((ProgRfqSubmitMB)value).getSelectedRfqDraft();
+		return new Integer(progDraftM.size());
+	}
+	
+	public boolean checkingNoItemSelected()
+	{
+		//Checking two
+        Integer selectedRfqCount = SessionHelper.getSelectedRfqCount();
+        Integer selectedProgramMCount = new Integer(selectedMaterials.length);
+        Integer selectedRfqDraftCount = getSelectedRfqDraftCount();
+        if(selectedRfqCount+selectedProgramMCount+selectedRfqDraftCount ==0)
+        {
+			return true;
+        }
+        return false;
+	}
+	
+	//TODO
+	public Integer[] checkingExceedCount(int maxCount)
+	{
+		//Checking two
+		LOGGER.fine("call |  checkingExceedCount(int maxCount)");
+        Integer selectedProgramMCount = new Integer(selectedMaterials.length);
+        Integer rfqDraftCount = quoteSB.getRfqDraftCount(user, bizUnit);
+        if(selectedProgramMCount+rfqDraftCount >maxCount)
+        { 
+        	Integer[] returnS = new Integer[]{selectedProgramMCount,rfqDraftCount};
+        	return returnS;
+        }
+        return null;
+	}
+	
+	public Integer[] checkingExceed300()
+	{
+		//Checking two
+		LOGGER.fine("call |  checkingExceed300");
+		RequestContext requestContext = RequestContext.getCurrentInstance();
+        Integer selectedRfqCount = SessionHelper.getSelectedRfqCount();
+        Integer selectedProgramMCount = new Integer(selectedMaterials.length);
+        Integer selectedRfqDraftCount = getSelectedRfqDraftCount();
+        if(selectedRfqCount+selectedProgramMCount+selectedRfqDraftCount >300)
+        { 
+        	Integer[] returnS = new Integer[]{selectedProgramMCount,selectedRfqCount,selectedRfqDraftCount};
+        	return returnS;
+        }
+        return null;
+	}
+	
+	
+	/*
+	 * *******************************************
+	 * Below are the actions , which called by UI.
+	 */
+	
+	
+	
+	/*
+	 * go to commodity submission page.
+	 */
+	public void submitRfqAction()
+	{
+		LOGGER.fine("call |  submitRfqAction");
+		String message=null;
+		
+		//Checking: NoItemSelected
+		if(checkingNoItemSelected())
+		{
+			FacesContext context = FacesContext.getCurrentInstance();  
+			message =ResourceMB.getText("wq.message.noItemSelected");
+			context.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR,"", message));   
+		}
+		else
+		{
+			//Checking: exceed300
+			Integer[] tempInt = checkingExceed300();
+			if(tempInt!=null)
+			{
+				
+				FacesContext context = FacesContext.getCurrentInstance(); 
+				Object[] objArr = {String.valueOf(tempInt[0]+tempInt[1]+tempInt[2]),String.valueOf(tempInt[0]),String.valueOf(tempInt[1]),String.valueOf(tempInt[2])};
+	        	String failedMsg = ResourceMB.getParameterizedString("wq.message.exceed300",objArr);
+				context.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR,"", failedMsg));  
+				
+			}
+			else 
+			{
+				FacesContext ctx = FacesContext.getCurrentInstance();
+				Object value = ctx.getApplication().getELResolver().getValue(ctx.getELContext(), null, "progRfqSubmitMB");
+				//((ProgRfqSubmitMB)value).submitAllRfqAction(selectedProgramMaterials);
+			}
+		}
+	
+
+	}
+	
+	
+	
+	/*
+	 * Reload the initial page.
+	 */
+	public void resetAction()
+	{
+		LOGGER.fine("call |  resetAction");
+		defaultAction(true);
+		selectedMaterials = null;
+		FacesContext context = FacesContext.getCurrentInstance();   
+		final String message =ResourceMB.getText("wq.message.reset");
+		context.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO, "", message));   
+	}
+	
+	/*
+	 * Saved the selected RFQ to session
+	 */
+	public void saveSelectedRfqAction()
+	{
+		LOGGER.fine("call |  saveSelectedRfqAction");
+		String message=null;
+		//Checking one
+		if(selectedMaterials.length==0)
+		{
+			FacesContext context = FacesContext.getCurrentInstance();   
+			message =ResourceMB.getText("wq.message.noItemSelected");
+			context.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR, "", message));   
+		}
+		else
+		{
+			//Checking: exceed300
+			Integer[] tempInt = checkingExceed300();
+			if(tempInt!=null)
+			{
+				FacesContext context = FacesContext.getCurrentInstance();  
+				Object[] objArr = {String.valueOf(tempInt[0]+tempInt[1]+tempInt[2]),String.valueOf(tempInt[0]),String.valueOf(tempInt[1]),String.valueOf(tempInt[2])};
+	        	String failedMsg = ResourceMB.getParameterizedString("wq.message.exceed300",objArr);
+				context.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR,"", failedMsg));  
+			}
+			else
+			{
+				//SessionHelper.addSelectedRfqToSession(selectedProgramMaterials);
+				
+				//updateSystemInfo();
+				
+			    FacesContext context = FacesContext.getCurrentInstance();
+			    message=ResourceMB.getText("wq.message.savedSuccess");
+				context.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,"", message));  
+			}
+	        
+
+			 
+		}
+		
+
+
+	}
+	
+	/*
+	 * send the current page date by excel format
+	 */
+	public void curPageExpAction(Object document)
+	{
+		LOGGER.fine("call |  curPageExpAction");
+		String[] headerColumn = {"No.",
+				"MFR",
+				"MFR P/N",
+				"Product Group 2",
+				"Program",
+				"Order Qty Min Sell Price",
+				"Available to sell Qty"
+}; 
+		HSSFWorkbook wb = (HSSFWorkbook) document;   
+	    HSSFSheet sheet = wb.getSheetAt(0);
+	    
+	    sheet.setColumnWidth(0, 2000);
+	    sheet.setColumnWidth(1, 2500);
+	    sheet.setColumnWidth(2, 8000);
+	    sheet.setColumnWidth(3, 6000);
+	    sheet.setColumnWidth(4, 4000);
+	    sheet.setColumnWidth(5, 13000);
+	    sheet.setColumnWidth(6, 7000);
+	    HSSFRow row = sheet.createRow(0);
+	    for (int i = 0; i < headerColumn.length; i++) {
+	    	row.createCell(i).setCellValue(headerColumn[i]);
+	    }
+
+//	    HSSFCellStyle cellStyle = wb.createCellStyle();     
+//	    cellStyle.setFillForegroundColor(HSSFColor.LIGHT_BLUE.index);   
+//	    cellStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);     
+	    
+	    HSSFCellStyle style1 = wb.createCellStyle();
+	    style1.setWrapText(true);
+ 
+	    filterOutHtmlTemp( sheet, style1);
+	    
+	}
+	
+	public void updateSystemInfo()
+	{
+		/*LOGGER.fine("call |  updateSystemInfo");
+		StringBuffer systemInfoSb = new StringBuffer();
+		Integer selectedRfqCount = SessionHelper.getSelectedRfqCount();
+        Integer selectedRfqDraftCount = getSelectedRfqDraftCount();
+        final String  message =ResourceMB.getText("wq.message.systemInfo")+".";
+        systemInfoSb.append(selectedRfqCount+selectedRfqDraftCount).append("/").append(totalCount)
+        .append(" "+ message);
+        systemInfo = systemInfoSb.toString();
+        RequestContext requestContext = RequestContext.getCurrentInstance();
+    	requestContext.update("form:systemInfo");*/
+	}
+	
+	//TODO
+	//public void updateShoppingCount() {
+		 
+	//}
+	/*
+	 * send the current page date by excel format
+	 */
+	
+	public void fullExpAction(Object document)
+	{
+		LOGGER.fine("call |  fullExpAction");
+		HSSFWorkbook wb = (HSSFWorkbook) document;   
+	    HSSFSheet sheet = wb.getSheetAt(0);   
+	    sheet.setColumnWidth(0, 2000);
+	    sheet.setColumnWidth(1, 2500);
+	    sheet.setColumnWidth(2, 8000);
+	    sheet.setColumnWidth(3, 6000);
+	    sheet.setColumnWidth(4, 4000);
+	    sheet.setColumnWidth(5, 13000);
+	    sheet.setColumnWidth(6, 7000);
+
+
+	    HSSFCellStyle cellStyle = wb.createCellStyle();     
+	    cellStyle.setFillForegroundColor(HSSFColor.LIGHT_BLUE.index);   
+	    cellStyle.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);     
+	    
+	    HSSFCellStyle style1 = wb.createCellStyle();
+	    style1.setWrapText(true);
+
+	    filterOutHtmlTemp( sheet, style1);
+	    
+	}
+	
+	public void filterOutHtmlTemp(HSSFSheet sheet,HSSFCellStyle style1)
+	{
+		 for (Row row : sheet) 
+		    { 
+		    	for (Cell cell : row) 
+		    	{ 
+		    		String tempValue = cell.getStringCellValue();
+	    			if(tempValue!=null)
+	    			{
+	    				
+	    				if(tempValue.contains(REMOVE_IMAGE))
+	    				{
+	    					tempValue = tempValue.substring(0, tempValue.indexOf(REMOVE_IMAGE));
+	    				}
+	    				else
+	    				{
+	    					if(tempValue.contains(NEXT_TAMP))
+		    					tempValue=tempValue.replaceAll(NEXT_TAMP, NEXT_LINE);	
+	    					if(tempValue.contains(SPACE_TAMP))
+		    					tempValue=tempValue.replaceAll(SPACE_TAMP, THREE_BLANK_SPACE);
+		    				if(tempValue.contains(REMOVE_TEMP_1))
+		    					tempValue=tempValue.replaceAll(REMOVE_TEMP_1, BLANK_SPACE);
+		    				if(tempValue.contains(REMOVE_TEMP_2))
+		    					tempValue=tempValue.replaceAll(REMOVE_TEMP_2, BLANK_SPACE);
+		    				
+	    				}
+	    			}
+	    			cell.setCellStyle(style1);
+	    			cell.setCellValue(tempValue);
+
+		    	}
+	    	} 
+	}
+
+	public String getParamMfr() {
+		return paramMfr;
+	}
+
+	public void setParamMfr(String paramMfr) {
+		this.paramMfr = paramMfr;
+	}
+
+	public String getParamPart() {
+		return paramPart;
+	}
+
+	public void setParamPart(String paramPart) {
+		LOGGER.info("Set param part");
+		this.paramPart = paramPart;
+		if(paramPart!=null && paramPart.length()>0)
+    	{
+    		handleOutSideLink();
+    	}
+		RequestContext requestContext = RequestContext.getCurrentInstance();
+    	requestContext.update("form");
+		
+	}
+
+
+
+	public String getBizUnitStr() {
+		return bizUnitStr;
+	}
+
+	public void setBizUnitStr(String bizUnitStr) {
+		this.bizUnitStr = bizUnitStr;
+	}
+
+	public BizUnit getBizUnit() {
+		return bizUnit;
+	}
+
+	public void setBizUnit(BizUnit bizUnit) {
+		this.bizUnit = bizUnit;
+	}
+
+	public SelectItem[] getBizUnitSelectList() {
+		return bizUnitSelectList;
+	}
+
+	public void setBizUnitSelectList(SelectItem[] bizUnitSelectList) {
+		this.bizUnitSelectList = bizUnitSelectList;
+	}
+	
+
+    public List<String> getSalesCostPartList() {
+		return salesCostPartList;
+	}
+
+	public void setSalesCostPartList(List<String> salesCostPartList) {
+		this.salesCostPartList = salesCostPartList;
+	}
+
+	public String getSalesCostPart() {
+		return salesCostPart;
+	}
+
+	public void setSalesCostPart(String salesCostPart) {
+		this.salesCostPart = salesCostPart;
+	}
+
+	public String getProductGroupStr() {
+		return productGroupStr;
+	}
+
+	public void setProductGroupStr(String productGroupStr) {
+		this.productGroupStr = productGroupStr;
+	}
+	
+	
+
+	public List<CatalogMainVO> getCatalogMainVOs() {
+		return catalogMainVOs;
+	}
+
+	public void setCatalogMainVOs(List<CatalogMainVO> catalogMainVOs) {
+		this.catalogMainVOs = catalogMainVOs;
+	}
+
+	public void switchBizUnit(){
+    	
+    	LOGGER.info("call |  switchBizUnit");
+		bizUnit = bizUnitSB.findByPk(bizUnitStr);
+		
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		Object value = ctx.getApplication().getELResolver().getValue(ctx.getELContext(), null, "announcementMB");
+		AnnouncementMB tempObj = ((AnnouncementMB)value);
+		tempObj.switchBizUnit(bizUnit);
+		
+		Object value2 = ctx.getApplication().getELResolver().getValue(ctx.getELContext(), null, "promotionItemMB");
+		PromotionItemMB tempObj2 = ((PromotionItemMB)value2);
+		tempObj2.switchBizUnit(bizUnit);
+		
+		this.updateProgRfqSubmitMBSysInfo();
+		SessionHelper.removeSelectedRfqMap();
+		
+		checkBoxSet = null;
+		defaultAction();
+		
+		FacesContext context = FacesContext.getCurrentInstance(); 
+		final String message =ResourceMB.getText("wq.message.regionChange");
+		context.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,"", message));  		
+		LOGGER.info("call end |  switchBizUnit");
+	}
+	
+	private void updateProgRfqSubmitMBSysInfo() {
+		FacesContext ctx = FacesContext.getCurrentInstance();
+		Object value3 = ctx.getApplication().getELResolver().getValue(ctx.getELContext(), null, "progRfqSubmitMB");
+		ProgRfqSubmitMB tempObj3 = ((ProgRfqSubmitMB)value3);
+		tempObj3.updateSystemInfoForBizUnitChange(user, bizUnit);
+		//FacesContext ctx = FacesContext.getCurrentInstance();
+		Object value4 = ctx.getApplication().getELResolver().getValue(ctx.getELContext(), null, "catalogSearchMB");
+		CatalogSearchMB tempObj4 = ((CatalogSearchMB)value4);
+		tempObj4.setRegion(bizUnit.getName());
+		
+		//tempObj3.switchBizUnit(bizUnit);
+		
+	}
+	public LazyDataModel<CatalogMainVO> getCatalogMainLazyModel() {
+		return catalogMainLazyModel;
+	}
+
+	public void setCatalogMainLazyModel(LazyDataModel<CatalogMainVO> catalogMainLazyModel) {
+		this.catalogMainLazyModel = catalogMainLazyModel;
+	}
+
+
+}

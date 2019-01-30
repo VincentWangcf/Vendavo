@@ -1,0 +1,6 @@
+package com.avnet.emasia.webquote.columndata;
+
+public enum FileType {
+	EXCEL,
+	TEXT
+}

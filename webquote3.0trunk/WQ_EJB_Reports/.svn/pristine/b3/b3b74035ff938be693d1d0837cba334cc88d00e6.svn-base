@@ -1,0 +1,248 @@
+package com.avnet.emasia.webquote.reports.ejb.remote.impl;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.Resource;
+import javax.ejb.EJB;
+import javax.ejb.Remote;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
+import javax.transaction.UserTransaction;
+
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.ExcelReport;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.ProgramPricer;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.exception.AppException;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+import com.avnet.emasia.webquote.poi.ExcelGenerator;
+import com.avnet.emasia.webquote.quote.ejb.MaterialSB;
+import com.avnet.emasia.webquote.quote.ejb.PricerTypeMappingSB;
+import com.avnet.emasia.webquote.quote.ejb.QuoteSB;
+import com.avnet.emasia.webquote.quote.ejb.SAPWebServiceSB;
+import com.avnet.emasia.webquote.quote.vo.FuturePriceCriteria;
+import com.avnet.emasia.webquote.quote.vo.MyQuoteSearchCriteria;
+import com.avnet.emasia.webquote.quote.vo.WorkingPlatformItemVO;
+import com.avnet.emasia.webquote.reports.constant.ReportConstant;
+import com.avnet.emasia.webquote.reports.ejb.ExcelReportSB;
+import com.avnet.emasia.webquote.reports.ejb.remote.OffLineRemote;
+import com.avnet.emasia.webquote.reports.util.ProgOqmspUtil;
+import com.avnet.emasia.webquote.reports.util.ReportConvertor;
+import com.avnet.emasia.webquote.reports.util.ReportsUtil;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.vo.OfflineReportParam;
+import com.avnet.emasia.webquote.vo.Oqmsp;
+
+@Stateless
+@Remote(OffLineRemote.class)
+@TransactionManagement(TransactionManagementType.BEAN)
+public class WorkingPlatFormOffLineReport extends OffLineReport  implements OffLineRemote {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private static final Logger LOG = Logger.getLogger(WorkingPlatFormOffLineReport.class.getName());
+	
+	@Resource
+	UserTransaction ut;
+	
+	@EJB
+	QuoteSB quoteSB;
+	
+	@EJB
+	ExcelReportSB excelReportSB;
+	
+	@EJB
+	private transient UserSB userSb;
+	
+	@EJB
+	private transient MailUtilsSB mailUtilsSB;
+	
+	@EJB
+	private SysConfigSB sysConfigSB;
+	
+	@EJB
+	SAPWebServiceSB sapWebServiceSB;
+	
+	@EJB
+	PricerTypeMappingSB pricerTypeMappingSB;
+	
+	@EJB
+	MaterialSB materialSB;
+
+	@Override
+	public void sendOffLineReport(OfflineReportParam param) throws Exception {
+		List<WorkingPlatformItemVO> resultList = null;
+		try {
+			ut.setTransactionTimeout(2000000);
+			ut.begin();
+			int first = 0;
+			int end = 0;
+			int pageSize = 1000;
+			User user = userSb.findByEmployeeIdLazily(param.getEmployeeId());
+			ExcelReport excelReport = excelReportSB.getExcelReportByReportName(param.getReportName());
+			MyQuoteSearchCriteria criteria = (MyQuoteSearchCriteria) param.getCriteriaBean();
+			int totalRecords = quoteSB.findLazyDataCount(criteria, null, null, null, null);
+			
+			LOG.info("search result count:" + totalRecords);
+			int count = totalRecords / pageSize;
+			LOG.info("count:" + count);
+			String templatePath = sysConfigSB.getProperyValue(ReportConstant.TEMPLATE_PATH);
+			String reportFilePath = sysConfigSB.getProperyValue(ReportConstant.OFFLINE_REPORT_PATH);
+			String newfileName = ReportsUtil.generateOfflineReportFileName(user.getEmployeeId(), "xlsx");
+			//reportFilePath = "C:/temp";
+			//templatePath = "C:/temp";
+			SXSSFWorkbook workbook = ExcelGenerator.generateExcelTemplate(excelReport, param.getReportName(), templatePath);
+			for (int i = 0; i <= count; i++) {
+				first = i * pageSize;
+				if (pageSize > (totalRecords - (i * pageSize))) {
+					end = totalRecords - (i * pageSize);
+				} else {
+					end = pageSize;
+				}
+
+				resultList = new ArrayList<WorkingPlatformItemVO>();
+				List<QuoteItem> quoteItems = quoteSB.findLazyData(criteria, first, end, null, "ASC", null);
+				resultList = populateData(quoteItems, user.getDefaultBizUnit());
+				if(resultList.size() > 0) {
+					for(WorkingPlatformItemVO vo : resultList) {
+						String quantityBreak = getQuantityBreakExcelCellText(vo.getQuoteItem());
+						vo.setQuantityBreakStr(quantityBreak);
+					}
+				}
+				List newList = ReportConvertor.convertToWorkingPlatFormBean(resultList);
+				workbook = ExcelGenerator.generateExcelFile(workbook, newList, excelReport);
+				resultList.clear();
+				resultList = null;
+			}
+			ExcelGenerator.outputExcelFile(workbook, reportFilePath + File.separator + newfileName);
+			sendOfflineEmail(user,newfileName);
+		} catch (Exception e) {
+			LOG.log(Level.WARNING, "Exception PartMaster sendOffLineReport : "+e.getMessage(), e);
+			throw e;
+		}finally {
+			if(resultList != null) {
+				resultList.clear();
+				resultList = null;
+			}
+		}
+	}
+
+	private List<WorkingPlatformItemVO> populateData(List<QuoteItem> searchResult, BizUnit bizUnit) {
+		List<QuoteItem> quoteSearchResult = (List<QuoteItem>) searchResult;
+		List<WorkingPlatformItemVO> searchedWorkingPlatformItems = new ArrayList<WorkingPlatformItemVO>();
+		try {
+			sapWebServiceSB.enquirySAPAGP(quoteSearchResult);
+			for (QuoteItem item : quoteSearchResult) {
+				if (item.getAuthGp() != null && item.getOrginalAuthGp() == null) {
+					item.setOrginalAuthGp(item.getAuthGp());
+				}
+			}
+
+		} catch (AppException e) {
+			LOG.log(Level.SEVERE, "Failed to enquiry SAP to get DRMS info"
+					+ MessageFormatorUtil.getParameterizedStringFromException(e), e);
+		}
+
+		Set<String> futureSet = getFuturePricerMap(quoteSearchResult, bizUnit);
+		for (QuoteItem quoteItem : quoteSearchResult) {
+			WorkingPlatformItemVO item = new WorkingPlatformItemVO();
+			item.setQuoteItem(quoteItem, bizUnit);
+			boolean hasFP = false;
+			if (futureSet != null) {
+				String key = quoteItem.getRequestedMfr().getName() + "|" + quoteItem.getRequestedPartNumber();
+				if (futureSet.contains(key)) {
+					hasFP = true;
+				}
+			}
+			item.setHasFuturePricer(hasFP);
+			item.setChanged(false);
+			item.setInitialized(true);
+			searchedWorkingPlatformItems.add(item);
+
+		}
+
+		if (searchedWorkingPlatformItems != null && searchedWorkingPlatformItems.size() > 0) {
+			for (Iterator<WorkingPlatformItemVO> itr = searchedWorkingPlatformItems.iterator(); itr.hasNext();) {
+				WorkingPlatformItemVO filteredItem = itr.next();
+				boolean found = false;
+				for (QuoteItem quoteItem : quoteSearchResult) {
+					if (filteredItem.getQuoteItem().getId() == quoteItem.getId()) {
+						found = true;
+						// PROGRM PRICER ENHANCEMENT
+						filteredItem.setQuoteItem(quoteItem, bizUnit);
+						filteredItem.setChanged(false);
+						filteredItem.setInitialized(true);
+					}
+				}
+				if (found == false) {
+					itr.remove();
+				}
+			}
+		}
+
+		return searchedWorkingPlatformItems;
+	}
+
+	private Set<String> getFuturePricerMap(List<QuoteItem> quoteItems, BizUnit bizUnit) {
+		Set<String> returnSet = new HashSet<String>();
+		List<FuturePriceCriteria> futurePriceCriterias = new ArrayList<FuturePriceCriteria>();
+		if (quoteItems != null && quoteItems.size() > 0) {
+			for (QuoteItem qi : quoteItems) {
+				if (qi.getRequestedMfr() != null && qi.getQuotedPartNumber() != null) {
+					FuturePriceCriteria fpc = new FuturePriceCriteria();
+					fpc.setBizUnit(bizUnit.getName());
+					fpc.setMfr(qi.getRequestedMfr().getName());
+					fpc.setPartNumber(qi.getQuotedPartNumber());
+					futurePriceCriterias.add(fpc);
+				}
+			}
+		}
+
+		if (futurePriceCriterias != null && futurePriceCriterias.size() > 0) {
+			returnSet = pricerTypeMappingSB.getFuturePriceMap(futurePriceCriterias);
+		}
+		return returnSet;
+	}
+	
+	private String getQuantityBreakExcelCellText(QuoteItem item) {
+		StringBuffer sb = new StringBuffer();
+		if(item != null) {
+			Material material = item.getQuotedMaterial();
+			if (material != null) {
+				material = materialSB.findMaterialByPK(material.getId());
+				String costIndicator = item.getCostIndicator();
+				ProgramPricer pm = (ProgramPricer)material.getValidProgPricerByBizUintAndCostIndicator(item.getQuote().getBizUnit().getName(), costIndicator);
+				if (pm != null) {
+					List<Oqmsp> opmspList = ProgOqmspUtil.getOpmspList(pm);
+					if (opmspList != null && opmspList.size() > 0) {
+						for (Oqmsp o : opmspList) {
+							sb.append(o.getOq()).append("   ").append(o.getMsp()).append("\r\n");
+						}
+					}
+				}
+			}
+		}
+		return sb.toString();
+	}
+
+	
+
+}

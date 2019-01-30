@@ -1,0 +1,114 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:l="http://java.sun.com/jsf/composite/l"
+                xmlns:f="http://java.sun.com/jsf/core">
+    <h:head>
+        <style>
+            * {
+                font: 12px calibri;
+                word-wrap: break-word !important;
+            }
+
+            .ui-datatable thead th,.ui-datatable tbody td,.ui-datatable tfoot td {
+                padding: 2px 2px;
+                overflow: hidden;
+                white-space: nowrap;
+                border-width: 1px;
+                border-style: solid;
+            }
+
+            .field_option {
+                background-color: pink;
+            }
+
+            .field_mandatory {
+                background-color: yellow;
+            }
+        </style>
+    </h:head>
+    <h:form>
+        <p:panel id="history">
+            <f:facet name="header">
+                Quotation History
+            </f:facet>
+            <p:panelGrid>
+                <p:row>
+                    <p:column colspan="6">
+                        <p:outputLabel for="sMFR" value="MFR:" />
+                        <p:inputText id="sMFR" value="#{bmtQuotationHistoryMB.mfr}" />
+
+                        <p:outputLabel for="sPN" value="P/N:" />
+                        <p:inputText id="sPN" value="#{bmtQuotationHistoryMB.pn}" />
+                        <p:outputLabel for="sSoldToName" value="Sold To Name:" />
+                        <p:inputText id="sSoldToName"
+                                     value="#{bmtQuotationHistoryMB.soldToName}" />
+                        <p:outputLabel for="sECName" value="EC Name:" />
+                        <p:inputText id="sECName" value="#{bmtQuotationHistoryMB.eCName}" />
+                    </p:column>
+                </p:row>
+                <p:row>
+                    <p:column>
+                        <p:outputLabel for="sQuoteReleaseDateFrom"
+                                       value="Quote Release Date From:" />
+                        <p:calendar id="sQuoteReleaseDateFrom"
+                                    value="#{bmtQuotationHistoryMB.quoteReleaseDateFrom}"
+                                    showOn="button" />
+
+                        <p:outputLabel for="sQuoteReleaseDateTo" value="To:" />
+                        <p:calendar id="sQuoteReleaseDateTo"
+                                    value="#{bmtQuotationHistoryMB.quoteReleaseDateTo}"
+                                    showOn="button" />
+                    </p:column>
+                    <p:column>
+
+                        <p:outputLabel for="sStage" value="Stage" />
+                    </p:column>
+                    <p:column>
+                        <p:selectManyCheckbox id="sStage"
+                                              value="#{bmtQuotationHistoryMB.stage}">
+                            <f:selectItem itemLabel="Finish" itemValue="FINISH" />
+                            <f:selectItem itemLabel="Pending" itemValue="PENDING" />
+                            <f:selectItem itemLabel="Invalid" itemValue="INVALID" />
+                        </p:selectManyCheckbox>
+                    </p:column>
+
+                    <p:column>
+                        <p:outputLabel for="sStatus" value="Status" />
+                    </p:column>
+                    <p:column>
+                        <p:selectManyCheckbox id="sStatus"
+                                              value="#{bmtQuotationHistoryMB.status}">
+                            <f:selectItem itemLabel="IT" itemValue="IT" />
+                            <f:selectItem itemLabel="QC" itemValue="QC" />
+                            <f:selectItem itemLabel="RIT" itemValue="RIT" />
+                            <f:selectItem itemLabel="SQ" itemValue="SQ" />
+                            <f:selectItem itemLabel="BQ" itemValue="BQ" />
+                            <f:selectItem itemLabel="RBQ" itemValue="RBQ" />
+                            <f:selectItem itemLabel="BIT" itemValue="BIT" />
+                            <f:selectItem itemLabel="RBIT" itemValue="RBIT" />
+
+                        </p:selectManyCheckbox>
+                    </p:column>
+                    <p:column>
+                        <p:commandButton value="Search" process="history"
+                                         update="history_datatable"
+                                         actionListener="#{bmtQuotationHistoryMB.searchHistory}" />
+                        <p:commandButton value="Clear Filter" process="@this"
+                                         update="history"
+                                         actionListener="#{bmtQuotationHistoryMB.searchHistoryClear}" />
+                    </p:column>
+                </p:row>
+                <p:dataTable id="history_datatable"
+                             value="#{bmtQuotationHistoryMB.quotationHistorys}" var="vo"
+                             rows="2" rowKey="#{vo.id}" paginator="true"
+                             rowsPerPageTemplate="2,4,6" sortBy="#{vo.o.id}"
+                             paginatorPosition="top" rowIndexVar="rowIndex"
+                             emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+                </p:dataTable>
+            </p:panelGrid>
+        </p:panel>
+    </h:form>
+</ui:composition>

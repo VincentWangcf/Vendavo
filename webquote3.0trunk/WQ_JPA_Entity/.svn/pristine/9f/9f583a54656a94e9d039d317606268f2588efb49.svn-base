@@ -1,0 +1,479 @@
+package com.avnet.emasia.webquote.vo;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.NormalPricer;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+
+public class PricerInfo extends PricerCostIndicatorSearchItems implements Serializable {
+
+	private static final long serialVersionUID = 7697011599760935818L;
+	// Out parameters
+	
+	private long pricerId;
+
+	private Double cost;
+	private Integer moq;
+	private Integer mov;
+	private Integer mpq;
+	private String leadTime;
+	
+	private String priceValidity;
+	private Date shipmentValidity;
+	
+	private Double minSell;
+	private Double normalSell;
+	
+	private String termsAndConditions;
+	private String priceListRemarks1;
+	private String priceListRemarks2;
+	private String priceListRemarks3;
+	private String priceListRemarks4;
+	private String description;
+	private Date quotationEffectiveDate;
+	
+	private String materialTypeId;
+	private String programType;
+	private String costIndicator;
+	private NormalPricer materialDetail;
+	
+	private boolean isContractPricer;
+	private String contractSoldToCustomerNumber;
+	private String contractSoldToCustomerName;
+    private Date displayQuoteEffDate;
+	
+	// In parameters
+	private BizUnit bizUnit;
+	private String mfr;
+	private String fullMfrPartNumber;
+	private String soldToCustomerNumber;
+	private String soldToCustomerName;
+	private String endToCustomerNumber;
+	private String endToCustomerName;
+	private String salesEmployeeId;
+	
+
+	private String qcComment;
+	
+
+
+	private List<Customer> allowedCustomers;
+	private Customer soldToCustomer;
+
+
+	private Customer endCustomer;
+	
+
+	private String sapPartNumber;
+	
+	private int itemNumber;
+	
+	private Integer requestedQty;
+	
+	public PricerInfo(){
+	}
+	
+	public PricerInfo(QuoteItem quoteItem){
+    	setBizUnit(quoteItem.getQuote().getBizUnit());
+    	setMfr(quoteItem.getQuotedMaterial().getManufacturer().getName());
+    	setFullMfrPartNumber(quoteItem.getQuotedPartNumber());
+    	setSoldToCustomerName(quoteItem.getQuote().getSoldToCustomerName());
+    	setSoldToCustomerNumber(quoteItem.getQuote().getSoldToCustomer().getCustomerNumber());
+    	setEndToCustomerName(quoteItem.getEndCustomerName());
+    	setEndToCustomerNumber(quoteItem.getEndCustomer()!=null ? quoteItem.getEndCustomer().getCustomerNumber() : null);
+    	setSalesEmployeeId(quoteItem.getQuote().getSales().getEmployeeId());
+    	setProgramType(quoteItem.getProgramType());
+    	
+    	if(quoteItem.getQuotedMaterial().getProductGroup1()!=null)
+    		setProductGroup1(quoteItem.getQuotedMaterial().getProductGroup1().getName());
+    	if(quoteItem.getQuotedMaterial().getProductGroup2()!=null)
+    		setProductGroup2(quoteItem.getQuotedMaterial().getProductGroup2().getName());
+    	setProductGroup3(quoteItem.getQuotedMaterial().getProductGroup3());
+    	setProductGroup4(quoteItem.getQuotedMaterial().getProductGroup4());
+    	
+    	setAllowedCustomers(quoteItem.getQuote().getSales().getCustomers());
+    	setSoldToCustomer(quoteItem.getQuote().getSoldToCustomer());
+    	setEndCustomer(quoteItem.getEndCustomer());
+	}
+	
+
+	
+	public long getPricerId() {
+		return pricerId;
+	}
+	public void setPricerId(long pricerId) {
+		this.pricerId = pricerId;
+	}
+	public Double getCost() {
+		return cost;
+	}
+	public void setCost(Double cost) {
+		this.cost = cost;
+	}
+	public Integer getMoq() {
+		return moq;
+	}
+	public void setMoq(Integer moq) {
+		this.moq = moq;
+	}
+	public Integer getMov() {
+		return mov;
+	}
+	public void setMov(Integer mov) {
+		this.mov = mov;
+	}
+	public Integer getMpq() {
+		return mpq;
+	}
+	public void setMpq(Integer mpq) {
+		this.mpq = mpq;
+	}
+	public String getLeadTime() {
+		return leadTime;
+	}
+	public void setLeadTime(String leadTime) {
+		this.leadTime = leadTime;
+	}
+	public String getPriceValidity() {
+		return priceValidity;
+	}
+	public void setPriceValidity(String priceValidity) {
+		this.priceValidity = priceValidity;
+	}
+	public Date getShipmentValidity() {
+		return shipmentValidity;
+	}
+	public void setShipmentValidity(Date shipmentValidity) {
+		this.shipmentValidity = shipmentValidity;
+	}
+	public Double getMinSell() {
+		return minSell;
+	}
+	public void setMinSell(Double minSell) {
+		this.minSell = minSell;
+	}
+	public Double getNormalSell() {
+		return normalSell;
+	}
+	public void setNormalSell(Double normalSell) {
+		this.normalSell = normalSell;
+	}
+	public String getTermsAndConditions() {
+		return termsAndConditions;
+	}
+	public void setTermsAndConditions(String termsAndConditions) {
+		this.termsAndConditions = termsAndConditions;
+	}
+	public String getPriceListRemarks1() {
+		return priceListRemarks1;
+	}
+	public void setPriceListRemarks1(String priceListRemarks1) {
+		this.priceListRemarks1 = priceListRemarks1;
+	}
+	public String getPriceListRemarks2() {
+		return priceListRemarks2;
+	}
+	public void setPriceListRemarks2(String priceListRemarks2) {
+		this.priceListRemarks2 = priceListRemarks2;
+	}
+	public String getPriceListRemarks3() {
+		return priceListRemarks3;
+	}
+	public void setPriceListRemarks3(String priceListRemarks3) {
+		this.priceListRemarks3 = priceListRemarks3;
+	}
+	public String getPriceListRemarks4() {
+		return priceListRemarks4;
+	}
+	public void setPriceListRemarks4(String priceListRemarks4) {
+		this.priceListRemarks4 = priceListRemarks4;
+	}
+	public String getDescription() {
+		return description;
+	}
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	public Date getQuotationEffectiveDate() {
+		return quotationEffectiveDate;
+	}
+	public void setQuotationEffectiveDate(Date quotationEffectiveDate) {
+		this.quotationEffectiveDate = quotationEffectiveDate;
+	}
+	public BizUnit getBizUnit() {
+		return bizUnit;
+	}
+	public void setBizUnit(BizUnit bizUnit) {
+		this.bizUnit = bizUnit;
+	}
+	public String getFullMfrPartNumber() {
+		return fullMfrPartNumber;
+	}
+	public void setFullMfrPartNumber(String fullMfrPartNumber) {
+		this.fullMfrPartNumber = fullMfrPartNumber;
+	}
+	public String getMfr() {
+		return mfr;
+	}
+	public void setMfr(String mfr) {
+		this.mfr = mfr;
+	}
+	public String getSoldToCustomerNumber() {
+		return soldToCustomerNumber;
+	}
+	public void setSoldToCustomerNumber(String soldToCustomerNumber) {
+		this.soldToCustomerNumber = soldToCustomerNumber;
+	}
+	public String getSoldToCustomerName() {
+		return soldToCustomerName;
+	}
+	public void setSoldToCustomerName(String soldToCustomerName) {
+		this.soldToCustomerName = soldToCustomerName;
+	}
+	public String getEndToCustomerNumber() {
+		return endToCustomerNumber;
+	}
+	public void setEndToCustomerNumber(String endToCustomerNumber) {
+		this.endToCustomerNumber = endToCustomerNumber;
+	}
+	public String getEndToCustomerName() {
+		return endToCustomerName;
+	}
+	public void setEndToCustomerName(String endToCustomerName) {
+		this.endToCustomerName = endToCustomerName;
+	}
+	public String getSalesEmployeeId() {
+		return salesEmployeeId;
+	}
+	public void setSalesEmployeeId(String salesEmployeeId) {
+		this.salesEmployeeId = salesEmployeeId;
+	}
+	public String getMaterialTypeId() {
+		return materialTypeId;
+	}
+	public void setMaterialTypeId(String materialTypeId) {
+		this.materialTypeId = materialTypeId;
+	}
+	public String getProgramType() {
+		return programType;
+	}
+	public void setProgramType(String programType) {
+		this.programType = programType;
+	}
+	public String getCostIndicator() {
+		return costIndicator;
+	}
+	public void setCostIndicator(String costIndicator) {
+		this.costIndicator = costIndicator;
+	}
+	public NormalPricer getMaterialDetail() {
+		return materialDetail;
+	}
+	public void setMaterialDetail(NormalPricer materialDetail) {
+		this.materialDetail = materialDetail;
+	}
+	public boolean isContractPricer() {
+		return isContractPricer;
+	}
+	public void setContractPricer(boolean isContractPricer) {
+		this.isContractPricer = isContractPricer;
+	}
+	public String getContractSoldToCustomerNumber() {
+		return contractSoldToCustomerNumber;
+	}
+	public void setContractSoldToCustomerNumber(String contractSoldToCustomerNumber) {
+		this.contractSoldToCustomerNumber = contractSoldToCustomerNumber;
+	}
+	public String getContractSoldToCustomerName() {
+		return contractSoldToCustomerName;
+	}
+	public void setContractSoldToCustomerName(String contractSoldToCustomerName) {
+		this.contractSoldToCustomerName = contractSoldToCustomerName;
+	}
+	public Date getDisplayQuoteEffDate() {
+		return displayQuoteEffDate;
+	}
+	public void setDisplayQuoteEffDate(Date displayQuoteEffDate) {
+		this.displayQuoteEffDate = displayQuoteEffDate;
+	}
+	
+	public String getSapPartNumber() {
+		return sapPartNumber;
+	}
+	public void setSapPartNumber(String sapPartNumber) {
+		this.sapPartNumber = sapPartNumber;
+	}
+	@Override
+	public String toString() {
+		return "PricerInfo [cost=" + cost + ", moq=" + moq + ", mov=" + mov
+				+ ", mpq=" + mpq + ", leadTime=" + leadTime
+				+ ", priceValidity=" + priceValidity + ", shipmentValidity="
+				+ shipmentValidity + ", minSell=" + minSell + ", normalSell="
+				+ normalSell + ", termsAndConditions=" + termsAndConditions
+				+ ", priceListRemarks1=" + priceListRemarks1
+				+ ", priceListRemarks2=" + priceListRemarks2
+				+ ", priceListRemarks3=" + priceListRemarks3
+				+ ", priceListRemarks4=" + priceListRemarks4 + ", description="
+				+ description + ", quotationEffectiveDate="
+				+ quotationEffectiveDate + ", materialTypeId=" + materialTypeId
+				+ ", programType=" + programType + ", costIndicator="
+				+ costIndicator + ", materialDetail=" + materialDetail
+				+ ", isContractPricer=" + isContractPricer
+				+ ", contractSoldToCustomerNumber="
+				+ contractSoldToCustomerNumber
+				+ ", contractSoldToCustomerName=" + contractSoldToCustomerName
+				+ ", displayQuoteEffDate=" + displayQuoteEffDate + ", bizUnit="
+				+ bizUnit + ", mfr=" + mfr + ", fullMfrPartNumber="
+				+ fullMfrPartNumber + ", soldToCustomerNumber="
+				+ soldToCustomerNumber + ", soldToCustomerName="
+				+ soldToCustomerName + ", endToCustomerNumber="
+				+ endToCustomerNumber + ", endToCustomerName="
+				+ endToCustomerName + ", salesEmployeeId=" + salesEmployeeId
+				+ "]";
+	}
+
+	
+	public String getQcComment() {
+		return qcComment;
+	}
+	public void setQcComment(String qcComment) {
+		this.qcComment = qcComment;
+	}
+	
+	public List<Customer> getAllowedCustomers() {
+		return allowedCustomers;
+	}
+	public void setAllowedCustomers(List<Customer> allowedCustomers) {
+		this.allowedCustomers = allowedCustomers;
+	}
+	
+	public Customer getSoldToCustomer() {
+		return soldToCustomer;
+	}
+	public void setSoldToCustomer(Customer soldToCustomer) {
+		this.soldToCustomer = soldToCustomer;
+	}
+	public Customer getEndCustomer() {
+		return endCustomer;
+	}
+	public void setEndCustomer(Customer endCustomer) {
+		this.endCustomer = endCustomer;
+	}
+	
+	public int getItemNumber() {
+		return itemNumber;
+	}
+	public void setItemNumber(int itemNumber) {
+		this.itemNumber = itemNumber;
+	}
+
+	
+	
+//	private Boolean allocationFlag;
+//	private String avnetQcComments;
+//	private Integer cancellationWindow;
+//	private String commodityCode;
+//	private CostIndicator costIndicator;
+//	private Date createdOn;
+//	private String fullMfrPartNumber;
+//	private String greenProductIndicator;
+//	private Boolean ncnrFlag;
+//	private Date ncnrValidFrom;
+//	private String qtyIndicator;
+//	private Integer rescheduledWindow;
+//	private String supplierNumber;
+//	private String shipDebit;
+//	private Date allocationValidFrom;
+//	private String eccn;
+//	private String lastUpdatedBy;
+//	private BizUnit bizUnitBean;
+//	private Material material;
+//	private SalesOrg salesOrgBean;
+//	private Plant plant;
+//	private Boolean availableToSellMoreFlag;
+//	private String materialCategory;
+
+	public void fillPriceInfoToQuoteItem(QuoteItem quoteItem, boolean isNeedMaterialType)
+	{
+		/*
+    	 *  1.	Cost
+			2.	MPQ
+			3.	MOQ
+			4.	MOV
+			5.	Lead Time
+			6.	Pricer Validity
+			7.	Shipment Validity
+			8.	Min Sell
+			9.	Bottom Sell
+			10.	Terms and Conditions
+			11.	Pricer List Remarks 1- 4
+			12.	Part Description
+			13.	Quotation Effective Date
+    	 */
+		/*
+		 * part one
+		 */
+		quoteItem.setCost(cost);
+		quoteItem.setMoq(moq);
+		quoteItem.setMov(mov);
+		quoteItem.setMpq(mpq);
+		quoteItem.setLeadTime(leadTime);
+    	/*
+    	 * part two
+    	 */
+		quoteItem.setPriceValidity(priceValidity);
+		quoteItem.setShipmentValidity(shipmentValidity);
+		quoteItem.setBottomPrice(minSell);
+		quoteItem.setMinSellPrice(normalSell);
+		quoteItem.setTermsAndConditions(termsAndConditions);
+
+		/*
+		 * part three
+		 */
+		quoteItem.setPriceListRemarks1(priceListRemarks1);
+		quoteItem.setPriceListRemarks2(priceListRemarks2);
+		quoteItem.setPriceListRemarks3(priceListRemarks3);
+		quoteItem.setPriceListRemarks4(priceListRemarks4);
+		quoteItem.setDescription(description);
+		quoteItem.setQuotationEffectiveDate(displayQuoteEffDate); 
+		/*
+		 * additional
+		 */
+		if(isNeedMaterialType)
+		{
+			
+    	    quoteItem.setMaterialTypeId(materialTypeId);
+		}
+    	quoteItem.setProgramType(programType);
+    	quoteItem.setCostIndicator(costIndicator);
+    	
+    	// for defect 384
+    	//quoteItem.setAqcc(pricingInfo.getQcComment());
+    	
+    	if(quoteItem.getAqcc() != null){
+    		if(qcComment != null){
+    			if(! quoteItem.getAqcc().toUpperCase().contains(qcComment.toUpperCase())){
+    				quoteItem.setAqcc(quoteItem.getAqcc() + ";" + qcComment);
+    			}
+    		}
+    	}else{
+    		quoteItem.setAqcc(qcComment);
+    	}
+
+	}
+
+	public Integer getRequestedQty() {
+		return requestedQty;
+	}
+
+	public void setRequestedQty(Integer requestedQty) {
+		this.requestedQty = requestedQty;
+	}
+	
+}
+
+

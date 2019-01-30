@@ -1,0 +1,288 @@
+package com.avnet.emasia.webquote.masterData.dao.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Remote;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
+
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
+import com.avnet.emasia.webquote.entity.DataSyncError;
+import com.avnet.emasia.webquote.entity.SalesCostPricer;
+import com.avnet.emasia.webquote.entity.SalesCostType;
+
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.masterData.util.StringUtils;
+
+import com.avnet.emasia.webquote.masterData.dao.SalesCostPricerDAO;
+import com.avnet.emasia.webquote.masterData.dto.Config;
+import com.avnet.emasia.webquote.masterData.dto.FileContext;
+//import com.avnet.emasia.webquote.masterData.dto.SapInterfacePricer;
+
+import com.avnet.emasia.webquote.masterData.ejb.DataSyncErrorSB;
+import com.avnet.emasia.webquote.masterData.ejb.MasterDataSB;
+
+import com.avnet.emasia.webquote.masterData.ejb.ScheduleConfigSB;
+import com.avnet.emasia.webquote.masterData.ejb.StandardJob;
+import com.avnet.emasia.webquote.masterData.ejb.remote.PosRemote;
+import com.avnet.emasia.webquote.masterData.exception.CheckedException;
+import com.avnet.emasia.webquote.masterData.util.Constants;
+import com.avnet.emasia.webquote.masterData.util.FunctionUtils;
+import com.avnet.emasia.webquote.masterData.util.ResourceLoader;
+import com.avnet.emasia.webquote.quote.ejb.PosSB;
+import com.avnet.emasia.webquote.utilities.DateUtils;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+
+
+@Stateless
+@TransactionManagement(TransactionManagementType.BEAN)
+public class SalesCostPricerDAOImpl implements SalesCostPricerDAO {
+	@Resource
+	UserTransaction ut;
+
+	@PersistenceContext(unitName = "Server_Source")
+	private EntityManager em;
+
+	@EJB
+	private DataSyncErrorSB errorSB;
+
+	
+	private static Logger logger = Logger.getLogger(MasterDataSB.class.getName());
+
+	private final static int SESSION_TIME_OUT = 36000;
+	private final static String MATERIAL_TYPE_NORMAL = "NORMAL";
+	
+	private long rowLimit = 100000;
+
+	public long getRowLimit() {
+		return rowLimit;
+	}
+
+	public void setRowLimit(long rowLimit) {
+		this.rowLimit = rowLimit;
+	}
+
+	@Override
+	public void batchStartUpdate() throws IllegalStateException, SecurityException, SystemException {
+		// TODO Auto-generated method stub
+		logger.info("SalesCostPricerDAOImpl.batchStartUpdate: Begin");
+		try {
+			long prcID = this.getMaxIDByRowLimit();
+			String sJPQL = "";
+			
+			if (prcID>0) sJPQL = "UPDATE SalesCostPricer v set v.batchStatus = v.batchStatus + 10 where v.batchStatus >= 0 AND v.batchStatus < 10 AND v.material.sapPartNumber != null AND v.id<" + prcID;
+			else sJPQL = "UPDATE SalesCostPricer v set v.batchStatus = v.batchStatus + 10 where v.batchStatus >= 0 AND v.batchStatus < 10 AND v.material.sapPartNumber != null";
+			
+			ut.setTransactionTimeout(SESSION_TIME_OUT);
+			ut.begin();
+			
+	    	Query q1 = em.createQuery(sJPQL);
+	    	//Query q1 = em.createQuery("UPDATE SalesCostPricer v set v.batchStatus = v.batchStatus + 10 where v.batchStatus >= 0 AND v.batchStatus < 10 AND v.material.sapPartNumber != null");
+	    	//Query q1 = em.createQuery("UPDATE SalesCostPricer v set v.batchStatus = v.batchStatus + 10 where v.batchStatus >= 0 AND v.batchStatus < 10");
+
+			q1.executeUpdate();
+	    	em.flush();
+        	em.clear();
+			ut.commit();				
+		} catch (Exception ex){
+			ex.printStackTrace();
+			//logger.log(Level.SEVERE, "batchStartUpdate", ex);
+			
+	    	//em.flush();
+        	//em.clear();
+        	ut.rollback();
+        	/*try {
+        		ut.commit();
+        	} catch (Exception e){
+        		LOG.log(Level.SEVERE, "update ActiveSession logout time failed!");
+        	}			*/
+		}
+
+		logger.info("SalesCostPricerDAOImpl.batchStartUpdate: End");
+	}
+
+	@Override
+	public void batchEndUpdate() throws IllegalStateException, SecurityException, SystemException {
+		// TODO Auto-generated method stub
+		logger.info("SalesCostPricerDAOImpl.batchEndUpdate: Begin");
+
+		try {
+			ut.setTransactionTimeout(SESSION_TIME_OUT);
+			ut.begin();
+	    	Query q1 = em.createQuery("UPDATE SalesCostPricer v set v.batchStatus = v.batchStatus + 10 where v.batchStatus >= 10 AND v.batchStatus < 20");
+			q1.executeUpdate();
+	    	em.flush();
+        	em.clear();
+			ut.commit();				
+		} catch (Exception ex){
+			ex.printStackTrace();
+			//logger.log(Level.SEVERE, "batchStartUpdate", ex);
+			
+	    	//em.flush();
+        	//em.clear();
+			ut.rollback();
+			
+        	/*try {
+        		ut.commit();
+        	} catch (Exception e){
+        		LOG.log(Level.SEVERE, "update ActiveSession logout time failed!");
+        	}			*/
+		}
+
+		logger.info("SalesCostPricerDAOImpl.batchEndUpdate: End");
+		
+	}
+
+	public List<SalesCostPricer> getProcessingData() {
+		logger.info("SalesCostPricerDAOImpl.getProcessingData: Begin");
+		List<SalesCostPricer> mrLst = null;
+		
+		//ut.setTransactionTimeout(SESSION_TIME_OUT);
+		//ut.begin();
+		TypedQuery<SalesCostPricer> queryMr = em
+				.createQuery("SELECT a FROM SalesCostPricer a where a.batchStatus >= 10 AND a.batchStatus < 20", SalesCostPricer.class);
+		//.createQuery("SELECT a FROM Pricer a where a.batchStatus >= 10 AND a.batchStatus < 20", Pricer.class);
+		mrLst = queryMr.getResultList();
+
+		logger.info("SalesCostPricerDAOImpl.getProcessingData: End");
+		return mrLst;			
+	}
+	
+	public void updateQtyControl(String salesCostType, String bizUnit, String manufacturerName, String fullMfrPartNumber, long qtyControl ) throws IllegalStateException, SecurityException, SystemException {
+		logger.info("SalesCostPricerDAOImpl.updateQtyControl: Begin");
+		
+//		SalesCostPricer scp = new SalesCostPricer();
+//		
+//		//scp.getSalesCostType().name();
+//		scp.getBizUnitBean().getName();
+//		scp.getMaterial().getManufacturer().getName();
+//		scp.getMaterial().getFullMfrPartNumber();
+		
+		try {
+			ut.setTransactionTimeout(SESSION_TIME_OUT);
+			ut.begin();
+	    	Query q1 = em.createQuery("UPDATE SalesCostPricer v set v.qtyControl = :qtyCtrl, v.lastUpdatedOn=:lUpOn where v.salesCostType = :scType AND v.bizUnitBean.name = :bUnit AND v.material.manufacturer.name = :mfr AND v.material.fullMfrPartNumber = :mpn");
+
+	    	q1.setParameter("qtyCtrl", qtyControl);
+	    	q1.setParameter("lUpOn", DateUtils.getCurrentAsiaDateObj());
+	    	q1.setParameter("scType", SalesCostType.GetSCTypeByStr(salesCostType));
+	    	q1.setParameter("bUnit", bizUnit);
+	    	q1.setParameter("mfr", manufacturerName);
+	    	q1.setParameter("mpn", fullMfrPartNumber);
+
+	    	q1.executeUpdate();
+	    	em.flush();
+        	em.clear();
+			ut.commit();				
+		} catch (Exception ex){
+			ex.printStackTrace();
+			//logger.log(Level.SEVERE, "batchStartUpdate", ex);
+			
+	    	//em.flush();
+        	//em.clear();
+			ut.rollback();
+			
+        	/*try {
+        		ut.commit();
+        	} catch (Exception e){
+        		LOG.log(Level.SEVERE, "update ActiveSession logout time failed!");
+        	}			*/
+		}
+
+		logger.info("SalesCostPricerDAOImpl.updateQtyControl: End");
+	}
+	
+	public long getMaxIDByRowLimit(){
+		logger.info("SalesCostPricerDAOImpl.getMaxIDByRowLimit: Begin");
+		long prcID=0;
+		
+		if (getRowLimit()>0) {
+		    List l = em.createNativeQuery(
+		            "SELECT CAST(MAX(prc.ID) as VARCHAR2(38)) FROM ( "
+		            + "SELECT prc.ID FROM PRICER prc "
+		            + "INNER JOIN MATERIAL mat ON mat.ID = prc.MATERIAL_ID "
+		            + "INNER JOIN MANUFACTURER man ON man.ID = mat.MANUFACTURER_ID "
+		            + "INNER JOIN QUANTITY_BREAK_PRICE qbp ON qbp.MATERIAL_DETAIL_ID = prc.ID "
+		            + "WHERE prc.PRICER_TYPE='SalesCostPricer' AND mat.SAP_PART_NUMBER IS NOT null "
+		            + "AND prc.BATCH_STATUS>=0 AND prc.BATCH_STATUS<10 "
+		            + "ORDER BY prc.ID ASC) prc "
+		            + "WHERE ROWNUM<='" + Long.toString(getRowLimit() + 1) + "' "
+		            )
+		            .getResultList();
+		    
+		    prcID = Long.parseLong((String)l.get(0));
+		}
+
+		logger.info("SalesCostPricerDAOImpl.getMaxIDByRowLimit: End > " + prcID);
+	    
+/*	    SELECT MAX(prc.ID)
+	    FROM (
+	        SELECT prc.ID, prc.PRICER_TYPE, mat.SAP_PART_NUMBER, prc.BATCH_STATUS --count(*)
+	        FROM PRICER prc
+	        INNER JOIN MATERIAL mat
+	        ON mat.ID = prc.MATERIAL_ID
+	        INNER JOIN MANUFACTURER man
+	        ON man.ID = mat.MANUFACTURER_ID
+	        INNER JOIN QUANTITY_BREAK_PRICE qbp
+	        ON qbp.MATERIAL_DETAIL_ID = prc.ID
+	        WHERE prc.PRICER_TYPE='SalesCostPricer' AND mat.SAP_PART_NUMBER IS NOT null
+	        AND prc.BATCH_STATUS=10 
+	        --AND prc.ID<=10288064736 --10288064754 --10288140788
+	        ORDER BY prc.ID ASC
+	    ) prc
+	    WHERE ROWNUM<=50001	 */   
+		return prcID;
+	}
+	
+
+
+/*
+	public List<SapInterfacePricer> getProcessingData() {
+		logger.info("SalesCostPricerDAOImpl.getProcessingData: Begin");
+		List<SapInterfacePricer> mrLst = null;
+		
+		//ut.setTransactionTimeout(SESSION_TIME_OUT);
+		//ut.begin();
+		TypedQuery<SapInterfacePricer> queryMr = em
+				.createQuery("SELECT prc.salesCostType, prc.bizUnit, mnf.name manufacturerName, " +
+				    "mat.fullMFRPartNumber, prc.programAvailableToSellQty, " +
+				    "prc.quotationEffectiveDate, prc.preValidToDate, " +
+				    "prc.quotationEffectiveTo, prc.batchStatus, " +
+				    "(SELECT count(*) FROM QuantityBreakPrice WHERE materialDetail.id=prc.id) qtyScaleCnt, " +
+				    "qbp.quantityBreak, qbp.salesCost " +
+				"FROM Pricer prc " +
+				"LEFT JOIN Material mat " +
+				"ON mat.id = prc.material.id " +
+				"LEFT JOIN Manufacturer mnf " +
+				"ON mnf.id = mat.manufacturer.id " +
+				"LEFT JOIN quantityBreakPrice qbp " +
+				"ON qbp.materialDetail.id = prc.id where prc.batchStatus >= 10 AND prc.batchStatus < 20", SapInterfacePricer.class);
+		//.createQuery("SELECT a FROM Pricer a where a.batchStatus >= 10 AND a.batchStatus < 20", Pricer.class);
+		mrLst = queryMr.getResultList();
+
+		logger.info("SalesCostPricerDAOImpl.getProcessingData: End");
+		return mrLst;			
+	}
+*/
+}

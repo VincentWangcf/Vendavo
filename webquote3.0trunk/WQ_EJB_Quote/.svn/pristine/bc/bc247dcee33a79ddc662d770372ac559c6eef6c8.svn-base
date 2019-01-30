@@ -1,0 +1,228 @@
+package com.avnet.emasia.webquote.stm.ejb;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.TreeSet;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+
+import org.apache.commons.lang.time.DateUtils;
+
+import com.avnet.emasia.webquote.constants.ActionEnum;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.MfrRequestInfo;
+import com.avnet.emasia.webquote.entity.Quote;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.Team;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.QuoteSB;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.stm.constant.B2bStatusEnum;
+import com.avnet.emasia.webquote.stm.dto.OutBoundVo;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.common.Constants;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+
+@Stateless
+@LocalBean
+public class MfrRequestInfoSB {
+	@PersistenceContext(unitName = "Server_Source")
+	EntityManager em;
+	
+	@EJB
+	private QuoteSB quoteSB;
+	
+	private static Logger logger = Logger.getLogger(MfrRequestInfoSB.class.getName());
+	
+	public 	List<MfrRequestInfo> findMfrRequestInfosbyQuoteItems(List<QuoteItem> quoteItems){
+		if(quoteItems == null || quoteItems.size() ==0){
+			return new ArrayList<MfrRequestInfo>();
+		}
+		String sql = "select m from MfrRequestInfo m where m.quoteItem.id in :quoteItems ";
+		TypedQuery<MfrRequestInfo>  query = em.createQuery(sql, MfrRequestInfo.class);
+		TreeSet<Long> ids = new TreeSet<Long>();
+		for(QuoteItem quoteItem:quoteItems){
+			ids.add(quoteItem.getId());
+		}
+    	if(quoteItems != null ){
+    		query.setParameter("quoteItems", ids); 
+    	}
+ 
+    	List<MfrRequestInfo> list = query.getResultList();
+    	return list;
+	}
+	
+	public 	MfrRequestInfo findMfrRequestInfobyQuoteItem(QuoteItem quoteItem){
+		String sql = "select m from MfrRequestInfo m where m.quoteItem.id = :id ";
+		TypedQuery<MfrRequestInfo>  query = em.createQuery(sql, MfrRequestInfo.class);
+    	if(quoteItem != null ){
+    		query.setParameter("id", quoteItem.getId()); 
+    	}
+    	List<MfrRequestInfo> list = query.getResultList();
+    	if(list.size()>0){
+    		return list.get(0);
+    	}else{
+    		return null;
+    	}
+	}
+	public List<MfrRequestInfo> findPendingItem(List<String> teams,BizUnit bu) {
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<MfrRequestInfo> c = cb.createQuery(MfrRequestInfo.class);
+		
+		Root<MfrRequestInfo> mfrRequestInfo = c.from(MfrRequestInfo.class);
+		Join<MfrRequestInfo,QuoteItem> quoteItem = mfrRequestInfo.join("quoteItem", JoinType.LEFT);
+		Join<QuoteItem, Quote> quote = quoteItem.join("quote");
+		Join<Quote, Team> team = quote.join("team", JoinType.LEFT);
+		Join<Quote,BizUnit> bizUnit = quote.join("bizUnit", JoinType.LEFT);
+		
+		List<Predicate> predicates = new ArrayList<Predicate>();
+		
+		//only get the pending item
+		predicates.add(cb.equal(quoteItem.get("stage"), Constants.QUOTE_STAGE_PENDING));
+		predicates.add(cb.equal(mfrRequestInfo.get("status"), "Bidding")); 
+		
+		//get the pending for more than 48 hours
+		Date now = new Date();
+		Date beforeYes = DateUtils.addDays(now, -2);
+		predicates.add(cb.lessThan(mfrRequestInfo.<Date>get("sentOutTime"), beforeYes));
+		
+		Predicate predicateTeam = team.get("name").in(teams);
+		predicates.add(predicateTeam);
+		
+		Predicate predicateBizUnit = cb.equal(bizUnit.get("name"), bu.getName());
+		predicates.add(predicateBizUnit);
+		
+		c.distinct(true);
+		c.orderBy(cb.desc(mfrRequestInfo.get("bpmName")));
+		c.where(predicates.toArray(new Predicate[]{}));
+		TypedQuery<MfrRequestInfo> q = em.createQuery(c);
+		
+		List<MfrRequestInfo> items = q.getResultList();
+		
+		
+		return items;
+
+	}
+
+	public void updateMfrRequestInfo(List<OutBoundVo> selectedVos, User user) {
+		
+		for (OutBoundVo vo : selectedVos) {
+			MfrRequestInfo entity = vo.getMfrRequestInfo();
+			if (entity != null) {
+				this.fillEntityByVo(entity,vo,B2bStatusEnum.Bidding.name());
+				entity.setSentOutTime(new Date());
+				entity.setQuoteItem(vo.getQuoteItem());
+				em.merge(entity);
+			} else {
+				entity = new MfrRequestInfo();
+				this.fillEntityByVo(entity,vo,B2bStatusEnum.Bidding.name());
+				entity.setCreateTime(new Date());
+				entity.setSentOutTime(new Date());
+				entity.setQuoteItem(vo.getQuoteItem());
+				em.persist(entity);
+			}
+			vo.setMfrRequestInfo(entity);
+			QuoteItem quoteItem = vo.getQuoteItem();
+			if(quoteItem!=null){
+				//get quoteItem in db, in order to avoid the optimistic locking problem
+				//quoteItem = quoteSB.findByPK(quoteItem.getId());
+				//quoteItem.setMfrRequestInfo(entity);
+				if(quoteItem.getStatus() == null || ! quoteItem.getStatus().equalsIgnoreCase(QuoteSBConstant.RFQ_STATUS_IT)){
+					quoteItem.setStatus(QuoteSBConstant.RFQ_STATUS_SQ);
+				}
+				quoteItem.setAction(ActionEnum.VENDOR_QUOTE_SEND.name());
+				quoteItem.setLastUpdatedBy(user.getEmployeeId());
+				quoteItem.setLastUpdatedName(user.getName());
+				quoteItem = quoteSB.updateQuoteItem(quoteItem);
+				vo.setQuoteItem(quoteItem);
+			}
+			vo.setB2bStatus(B2bStatusEnum.Bidding.name());
+		}
+	}
+	
+	public StringBuffer verifyQuoteItem(List<OutBoundVo> selectedVos, String language){
+		StringBuffer sb = new StringBuffer ();
+		for (OutBoundVo vo : selectedVos) {
+			QuoteItem quoteItemVo = vo.getQuoteItem();
+			QuoteItem quoteItemDb = quoteSB.findByPK(quoteItemVo.getId());
+			//System.out.println("quoteItemVo:" +quoteItemVo.getVersion());
+			//System.out.println("quoteItemDb:" +quoteItemDb.getVersion());
+			if(quoteItemVo.getVersion()<quoteItemDb.getVersion()){
+				Object arr[] = {vo.getSeq(),quoteItemVo.getQuoteNumber()};
+				sb.append(MessageFormatorUtil.getParameterizedString(new Locale(language),"wq.message.backToSendVendorQuotation", arr)+". <br/>");
+				break;
+			}
+			if(!quoteItemDb.getStage().equalsIgnoreCase(QuoteSBConstant.QUOTE_STAGE_PENDING)){
+				Object arr[] = {vo.getSeq(),quoteItemVo.getQuoteNumber()};
+				sb.append(MessageFormatorUtil.getParameterizedString(new Locale(language),"wq.message.onlyPendingQuoteSend", arr)+", <br/>");
+				break;
+			}
+		}
+		return sb;
+	}
+	
+	private void fillEntityByVo(MfrRequestInfo entity,OutBoundVo vo,String status){
+		entity.setStatus(status);
+		entity.setBpmCode(vo.getBpmCode());
+		entity.setBpmName(vo.getBpmName());
+		entity.setBpmCntCode(vo.getBpmCntCode());
+		entity.setBqNumber(vo.getBqNumber());
+		entity.setEcBpmCode(vo.getEcBpmCode());
+		entity.setEcBPMName(vo.getEcBPMName());
+		entity.setEcBPMCntCode(vo.getEcBPMCntCode());
+		entity.setProjectRegistrationNumber(vo.getProjectRegistrationNumber());
+		entity.setVendorShipTo(vo.getShipToCode());
+		entity.setReqQty(QuoteUtil.strToInt(vo.getReqQty()));
+		entity.setContactName(vo.getContactName());
+		entity.setContactChannel(vo.getContactChannel());
+		entity.setHeadRemark(vo.getHeadRemark());
+		if(!QuoteUtil.isEmpty(vo.getTgtCost())){
+			if(!vo.getTgtCost().equalsIgnoreCase("NA")){
+				entity.setTgtCost(Double.valueOf(vo.getTgtCost()));
+			}
+		}
+		if(!QuoteUtil.isEmpty(vo.getTgtResale())){
+			entity.setTgtResale(Double.valueOf(vo.getTgtResale()));
+		}
+	}
+	
+/*	public List<QuoteItem>  autoCreateMfrRequestInfo(List<QuoteItem> searchResult,User user) {
+		List<QuoteItem> returnResult = new ArrayList<QuoteItem>();
+		for(QuoteItem quoteItem:searchResult){
+			MfrRequestInfo mfrRequestInfo = quoteItem.getMfrRequestInfo();
+			if(mfrRequestInfo==null){
+				mfrRequestInfo = new MfrRequestInfo(); 
+				String revertVersion = quoteItem.getRevertVersion();
+				if(revertVersion!=null&&revertVersion.equalsIgnoreCase("0A")){
+					mfrRequestInfo.setStatus(B2bStatusEnum.New.name());
+				}else {
+					mfrRequestInfo.setStatus(B2bStatusEnum.Refreshed.name());
+				}
+				mfrRequestInfo.setReqQty(quoteItem.getRequestedQty());
+				mfrRequestInfo.setTgtResale(quoteItem.getTargetResale());
+				mfrRequestInfo.setCreateTime(new Date());
+				mfrRequestInfo.setBizUnit(user.getDefaultBizUnit());
+				em.persist(mfrRequestInfo);
+				quoteItem.setMfrRequestInfo(mfrRequestInfo);
+				quoteItem = quoteSB.updateQuoteItem(quoteItem);				
+			}
+			returnResult.add(quoteItem);
+		}
+		return returnResult;
+	}*/
+
+}

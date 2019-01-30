@@ -1,0 +1,368 @@
+<ui:composition template="/templates/MasterLayoutAutoFit.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	
+	<ui:define name="windowTitle">
+		#{dbResource['wq.title.webQuoteVersion']}
+	</ui:define>
+	<f:metadata>         
+	    <f:viewParam name="mfr" value="#{commodityMB.paramMfr}" />
+	    <f:viewParam name="part" value="#{commodityMB.paramPart}" />
+	</f:metadata>
+	<ui:define name="content">  
+		<p:growl id="growl" showDetail="true" sticky="#{growlPropertyMB.sticky}" autoUpdate="true" showSummary="#{growlPropertyMB.showSummary}" escape="#{growlPropertyMB.escape}"/>
+		<h:form id="form">
+		        <p:growl id="growl" for="growl" showDetail="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" /> 
+		        <c:if test="#{commodityMB.topPanelDisplay}">
+				<h:panelGrid columns="2" id="topPanel" columnClasses="webpromo_announcmentPanel,webpromo_promotionItemPanel">
+					    <p:column>
+							<p:panel header="#{dbResource['wq.label.announcement']}" styleClass="announceTable" >
+									<p:dataTable id="announTable" var="announcement" value="#{announcementMB.announcements}" scrollable="true" scrollHeight="140" 
+									emptyMessage="#{dbResource['wq.message.noRecordFound']}." >
+								        <p:column style="text-align:left;" >  
+								             <h:outputText id="announDes"   value="#{announcement}" converter="webquote.commodity.Announcement" escape="false" style="align:left"/>
+								              <p:overlayPanel id="imgPanel" for="announDes" showEffect="fade" hideEffect="fade" showEvent="mouseover" hideEvent="mouseout"  
+									                 dismissable="false" showCloseIcon="false">  
+									                 <h:outputText value="#{announcement.description}" />
+									          </p:overlayPanel> 
+								            
+								        </p:column> 
+									</p:dataTable> 
+							</p:panel>
+						</p:column>
+						<p:column>
+							<p:panel header="#{dbResource['wq.label.promotionalItems']}" styleClass="promotionItemTable" >
+				                <p:dataTable id="proItemTable" var="promotionItem" value="#{promotionItemMB.promotionItems}" scrollable="true" scrollHeight="140"
+				                emptyMessage="#{dbResource['wq.message.noRecordFound']}.">  
+					                <p:column style="text-align:left;" >  
+								            <p:commandLink id="viewPromItem" update=":form:programMaterialTable" actionListener="#{commodityMB.viewPromotionItemAction}" style="margin-right:20px;" global="false" onstart="start2();" oncomplete="stop2();" onerror="stopWithError2();">  
+								                  <f:attribute name="selectedMaterial" value="#{promotionItem.material}" />
+								                  <h:outputText id="promoDes" value="#{promotionItem}" converter="webquote.commodity.PromotionItem" escape="false"/>
+								                   <p:overlayPanel id="imgPanel2" for="promoDes" showEffect="fade" hideEffect="fade" showEvent="mouseover" hideEvent="mouseout"  
+									                 dismissable="false" showCloseIcon="false">  
+									                 <h:outputText value="#{promotionItem.material.manufacturer.name}, #{promotionItem.material.fullMfrPartNumber}, #{promotionItem.description}"  />
+									               </p:overlayPanel>
+								            </p:commandLink> 
+								    </p:column> 
+							    </p:dataTable>
+						    </p:panel>
+		                </p:column>
+			    </h:panelGrid>
+			    </c:if>
+				<p:panelGrid id="southPanel" columns="2" columnClasses="southPanel_column_filterPanel,southPanel_column_programPanel" styleClass="southPanel">
+				     <p:column>
+					 <p:scrollPanel id="filterPanel" styleClass="southPanel_filterPanel">
+
+						<p:fieldset legend="#{dbResource['wq.label.region']}:"
+							toggleable="true" toggleSpeed="500">
+							<h:selectOneMenu id="bizUnit" value="#{commodityMB.bizUnitStr}"
+								style="padding:2px 2px 2px 3px;margin: 4px 1px 1px 1px;">
+								<f:selectItems value="#{commodityMB.bizUnitSelectList}" />
+								<p:ajax event="change" update="@form"
+									listener="#{commodityMB.switchBizUnit}" oncomplete="stop();"
+									global="false" onstart="start();" onerror="stopWithError();" />
+							</h:selectOneMenu>
+						</p:fieldset>
+
+						<p:fieldset id="salesCostPart"
+							legend="#{dbResource['wq.label.saleCostPart']}: "
+							toggleable="true" toggleSpeed="500">
+							<h:selectOneMenu id="salesCostPartMenu"
+								value="#{commodityMB.salesCostPart}"
+								style="padding:2px 2px 2px 3px;margin: 4px 1px 1px 1px;">
+								<f:selectItems value="#{commodityMB.salesCostPartList}" />
+							</h:selectOneMenu>
+						</p:fieldset>
+
+						<p:fieldset legend="#{dbResource['wq.label.mfrPart']}: "
+							toggleable="true" toggleSpeed="500">
+							<p:inputText id="mfrPart" value="#{commodityMB.mfrPart}"
+								style="width:100px" />
+							
+							<ui:remove>
+							<p:commandButton icon="ui-icon-search" id="searchBtn"
+								update=":form:growl,:form:ptcb,:form:pgcb,:form:mfcb,:form:programMaterialPanel"
+								action="#{commodityMB.searchAction}" ajax="true"
+								onstart="start2();" oncomplete="stop2();"
+								onerror="stopWithError2();" />
+							<p:defaultCommand target="searchBtn" />
+							</ui:remove>
+						</p:fieldset>
+						<p:fieldset id="ptcb"
+							legend="#{dbResource['wq.label.programs']}: " toggleable="true"
+							toggleSpeed="500">
+							<p:selectManyCheckbox styleClass="noBorder"
+								value="#{commodityMB.selectedProgramTypeList}"
+								layout="pageDirection">
+								<f:selectItems value="#{commodityMB.checkBoxSet.programType}"
+									var="programType" itemValue="#{programType.name}"
+									itemLabel="#{programType.name}"
+									itemDisabled="#{!programType.enable}">
+								</f:selectItems>
+								<p:ajax listener="#{commodityMB.programTypeCBChange}"
+									update=":form:ptcb,:form:pgcb,:form:mfcb"
+									global="false" onstart="start2();" oncomplete="stop2();"
+									onerror="stopWithError2();"></p:ajax>
+							</p:selectManyCheckbox>
+						</p:fieldset>
+						<p:fieldset id="pgcb"
+							legend="#{dbResource['wq.label.productGroups']}: "
+							toggleable="true" toggleSpeed="500">
+							<p:inputText id="productGroup" value="#{commodityMB.productGroupStr}" style="width:100px" />
+							
+						</p:fieldset>
+						<p:fieldset id="mfcb" legend="#{dbResource['wq.label.mfr']}: "
+							toggleable="true" toggleSpeed="500">
+							<p:selectManyCheckbox styleClass="noBorder"
+								value="#{commodityMB.selectedMfrList}" layout="pageDirection">
+								<f:selectItems value="#{commodityMB.checkBoxSet.mfr}" var="mfr"
+									itemValue="#{mfr.name}" itemLabel="#{mfr.name}"
+									itemDisabled="#{!mfr.enable}" />
+								<p:ajax listener="#{commodityMB.mfrCBChange}"
+									update=":form:mfcb,:form:ptcb,:form:pgcb"
+									global="false" onstart="start2();" oncomplete="stop2();"
+									onerror="stopWithError2();"></p:ajax>
+							</p:selectManyCheckbox>
+						</p:fieldset>
+						<p:spacer height="50"></p:spacer>
+					</p:scrollPanel>
+					<h:panelGrid columns="1" styleClass="bottom_noBorder"
+						style="height:20px;">
+						<p:column style="align:left;">
+							<p:spacer width="20" height="25" />
+							<p:commandButton value="#{dbResource['wq.button.refreshTable']}"
+								icon="ui-icon-search" style="margin-left:30px;"
+								update=":form:growl,:form:ptcb,:form:pgcb,:form:mfcb,:form:programMaterialPanel"
+								actionListener="#{commodityMB.searchAction}" global="false"
+								onstart="start();" oncomplete="stop();"
+								onerror="stopWithError();"  />
+						</p:column>
+						<p:column style="align:left;">
+							<p:spacer width="20" height="25" />
+							<p:commandLink   style="margin-left:30px;color:blue;font: bold;font-size: 12px;">
+								<h:outputText value="#{dbResource['wq.link.catalogSearch']}>>" />
+							</p:commandLink>
+						</p:column>
+					</h:panelGrid>
+					<p:dialog id="bizUnitSwitchConfirmId"  widgetVar="bizUnitSwitchConfirmDialog">
+						<br/> 
+				        <h:outputText value="#{dbResource['wq.message.regionChange']}" /> 
+				        <br/><br/> 
+						<p:commandButton id="pyes" value="#{dbResource['wq.button.yes']}"  oncomplete="PF('bizUnitSwitchConfirmDialog').hide()"  >
+						</p:commandButton>
+						<p:spacer width="10" height="10" /> 
+						<p:commandButton id="pno" value="#{dbResource['wq.button.no']}"  oncomplete="PF('bizUnitSwitchConfirmDialog').hide()" />		
+					</p:dialog>
+					
+					</p:column>
+					<p:column>
+					<p:panel id="programMaterialPanel" style="padding: 0px 0px 0px 0px;margin: 0px 0px 0px 0px;">
+						<p:dataTable id="programMaterialTable" 
+							         var="item"	
+							 	     value="#{commodityMB.catalogMainLazyModel}"
+							 	     lazy="true"
+					                 paginator="true" rows="25"
+					                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+					                 rowsPerPageTemplate="25,50,100"
+					                 paginatorPosition="bottom"
+					                 rowIndexVar="rowIndex"                 	
+					                 style="width:100%"
+					                 emptyMessage="#{dbResource['wq.message.noRecordWidCriteria']}" 
+					                 scrollable="true"
+			                 	     scrollHeight="220"
+			                 	     selection="#{commodityMB.selectedMaterials}">
+							         
+									<p:column headerText="#{dbResource['wq.label.no']}" id="sequenceNumber"  width="40">
+									     <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.no']}"/>  
+										</f:facet>
+										<h:outputText value="#{rowIndex+1}" /> 
+									</p:column>
+									<p:column headerText="#{dbResource['wq.label.mfr']}" id="mfr"  sortBy="#{item.mfr}"  width="50">
+									     <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.mfr']}"/>
+										</f:facet>
+								        <h:outputText value="#{item.mfr}" /> 
+							        </p:column>
+									<p:column id="fullPart" sortBy="#{item.fullPartNumber}" width="170" >
+								        <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.mfrPN']}"/> 
+										</f:facet>
+								        <h:outputText id="fullPartText" value="#{item.fullPartNumber}" /> 
+								        <p:tooltip id="fullPartTip" for="fullPartText"  >  
+                                             <h:outputLabel for="mpq2" value="#{dbResource['wq.label.MPQ']} : " /><h:outputText id="mpq2" value="#{item.mpq}" /><br/>
+                                             <h:outputLabel for="moq2" value="#{dbResource['wq.label.moq']} : " /><h:outputText id="moq2" value="#{item.moq}" /> <br/>
+                                             <h:outputLabel for="quoteExpiryDate" value="#{dbResource['wq.label.quoteExpiryDate']} :" /><h:outputText id="quoteExpiryDate" value="#{item.priceValidity}" converter="webquote.commodity.ExpiredDateConverter" escape="false" /> <br/>
+                                             <h:outputLabel for="leadTime" value="#{dbResource['wq.label.lblleadTime']} :" /><h:outputText id="leadTime" value="#{item.leadTime}" /> <br/>
+                                             <h:outputLabel for="allocation" value="#{dbResource['wq.label.allocations']} :" /><h:outputText id="allocation" value="#{item.allocation}" /> <br/>
+                                             <h:outputLabel for="tac" value="#{dbResource['wq.label.TermsAndConditions']} :" /><h:outputText id="tac" value="#{item.termsAndConditions}" /> 
+										</p:tooltip>
+							        </p:column>
+							        <p:column id="salesCostFlag" sortBy="#{item.salesCostPart}"  width="50">
+						            <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.saleCostPart']}"/>		
+									</f:facet>
+							        <h:outputText value="#{item.salesCostPart}" /> 
+						        </p:column>
+							        <p:column  id="productGroup" sortBy="#{item.productGroup}"  width="190">
+								         <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.proGroup']}"/>
+										 </f:facet>
+								         <h:outputText value="#{item.productGroup}" /> 
+							        </p:column>
+									<p:column headerText="#{dbResource['wq.label.prog']}" id="program" sortBy="#{item.program}"  width="90">
+									     <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.prog']}"/>
+										 </f:facet>
+								         <h:outputText value="#{item.program}" /> 
+							        </p:column>
+									<p:column id="orderQty"  width="190">
+										 <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.orderQty']}"/>
+										 </f:facet>
+										 <h:outputText id="orderQtyText" value="#{item.orderQty}"  escape="false" /> 
+							        </p:column>
+							        <p:column id="normalSellPrice"  width="110">
+										 <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.normalSellPrice']}"/>
+										 </f:facet>
+										 <h:outputText id="normalSellPriceText" value="#{item.normalSellPrice}"  escape="false" /> 
+							        </p:column>
+
+									<p:column id="SalesCost" width="110">
+										<f:facet name="header">
+											<h:outputLabel value="#{dbResource['wq.label.salesCost']}" />
+										</f:facet>
+										<h:outputText value="#{item.salesCost}" escape="false"/>
+									</p:column>
+		
+									<p:column id="suggestedResale" width="110">
+										<f:facet name="header">
+											<h:outputLabel
+												value="#{dbResource['wq.label.suggestedResale']}" />
+										</f:facet>
+										<h:outputText value="#{item.suggestedResale}" escape="false"/>
+									</p:column>
+
+								<p:column id="availableToSellQty"  sortBy="#{item.availableSellQty}"  width="70" >
+								        <f:facet name="header">
+										    <h:outputLabel value="#{dbResource['wq.label.AvailableToSellQuantity']}"/>
+										</f:facet>
+								        <h:outputText value="#{item.availableSellQty}" escape="false" /> 
+							        </p:column>
+							        
+							        <ui:remove>
+							        <c:if test="#{commodityMB.rfqOperationPanelDisplay}">
+							        <p:column headerText="#{dbResource['wq.label.actn']}" id="action"  width="85" exportable="false">
+											<p:commandLink 
+                                                update=":form_submit:submissionTable,:form_submit:submissionHeaderPanel" 
+				                                actionListener="#{progRfqSubmitMB.quoteNowAction}" >  
+											     <f:attribute name="selectedProgramMaterial" value="#{item}" />
+								                 <h:graphicImage url="./../resources/images/getQuote.png" styleClass="iconLink"/>	
+								            </p:commandLink>
+							        </p:column>
+			                        </c:if>
+			                          </ui:remove>
+			                          
+			                        <p:column selectionMode="multiple" width="40" exportable="false"/>  
+						   </p:dataTable>
+						   
+						   <f:facet name="footer">  
+					         <h:panelGrid columns="1" styleClass="bottom_noBorder"  style="height:20px;" >
+								<p:column style="align:left;">
+									<p:spacer width="20" height="10" />
+									<p:commandButton  ajax="false"
+										value="#{dbResource['wq.header.exportSelected']}"
+										actionListener="#{commodityMB.exportSelected}"
+										id="exportSelectedBnt" >
+									</p:commandButton>
+									<p:spacer width="20" height="10" />
+									<p:commandButton
+										value="#{dbResource['wq.button.sendOfflineReport']}"
+										actionListener="#{commodityMB.sendOffLineReport}"
+										id="sendOffLineReportBtn" update=":growl">
+									</p:commandButton>
+
+								<p:spacer width="20" height="10" />
+									<p:commandButton
+										value="#{dbResource['wq.button.addSelectionToCart']}"
+										actionListener="#{commodityMB.addToCart}"
+										id="addToShoppingCart" >
+									</p:commandButton>
+								</p:column>
+
+									
+							</h:panelGrid>
+                  		 </f:facet> 
+                  		 
+						   <ui:remove>
+						   <c:if test="#{commodityMB.rfqOperationPanelDisplay}">
+						   <f:facet name="footer">  
+						         <h:panelGrid columns="2" styleClass="bottom_noBorder" columnClasses="bottom_noBorder_leftColumn,bottom_noBorder_rightColumn" >
+							             <p:column>
+							                    <h:outputText id="systemInfo" value="#{commodityMB.systemInfo}" /> 
+							             </p:column>
+							             <p:column>
+							                   <c:if test="#{commodityMB.topPanelDisplay}">
+												       <p:commandButton value="#{dbResource['wq.label.pgeExport']}" id="curPageExp" ajax="false" >
+														    <p:dataExporter type="xls" target="programMaterialTable" fileName="ProgramItems" postProcessor="#{commodityMB.curPageExpAction}" pageOnly="true"/>
+													   </p:commandButton>
+				                                       <p:spacer width="20" height="10" /> 
+				                                       <p:commandButton value="#{dbResource['wq.label.fulExport']}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">
+												        	<p:fileDownload value="#{commodityMB.webPromoTable}" />  	        
+												        </p:commandButton>
+													   <p:spacer width="20" height="10" /> 
+								                </c:if>
+							                    <p:commandButton value="#{dbResource['wq.label.reset']}" id="cancelPromo" 
+											           update=":form:growl,:form:mfrPart,:form:ptcb,:form:pgcb,:form:mfcb,:form:programMaterialPanel"
+											           action="#{commodityMB.resetAction}"  
+											           global="false" onstart="start2();" oncomplete="stop2();"/>
+											    <p:spacer width="20" height="10" /> 
+												<p:commandButton value="#{dbResource['wq.label.addRFQ']}" id="addPromoToRfq"
+												       update=":form:growl,:form:systemInfo"
+												       action="#{commodityMB.saveSelectedRfqAction}"    onstart="start2();" oncomplete="stop2();" onerror="stopWithError2();"/>
+												<p:spacer width="20" height="10" /> 
+												<p:commandButton value="#{dbResource['wq.label.sbmRFQ']}" id="submitPromoRfq" 
+												        update=":form:growl,:form_submit:submissionTable,:form_submit:submissionHeaderPanel" 
+														action="#{commodityMB.submitRfqAction}"  onstart="start2();" oncomplete="stop2();" onerror="stopWithError2();"/>										
+							             </p:column>
+					             </h:panelGrid>
+		                   </f:facet>  
+		                   </c:if>
+						   </ui:remove>
+					   </p:panel>  
+					   </p:column>   
+				</p:panelGrid>
+		</h:form>
+		
+		
+		<ui:remove>
+		<c:if test="#{commodityMB.rfqOperationPanelDisplay}">
+			<ui:include src="/WebPromo/ProgRfqSubmit.xhtml" />
+			<ui:include src="/WebPromo/ProgRfqResult.xhtml" />
+		</c:if> 
+		</ui:remove>	
+		   
+	    <c:if test="#{commodityMB.rfqOperationPanelDisplay}">	
+			<script type="text/javascript"> 	
+			    window.onresize = adjustForOnReside();
+				function adjustForOnReside() {
+					var proTable = document.getElementById("form:topPanel");
+					proTable.style.width = document.body.clientWidth + 'px';
+				}
+			</script> 
+	   </c:if>
+		
+	</ui:define>
+</ui:composition>
+
+		
+		
+		
+
+
+	

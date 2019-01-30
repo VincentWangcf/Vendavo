@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+        <h:head>
+            <f:facet name="first">
+                <meta http-equiv="X-UA-Compatible"  content="IE=edge"/>
+                <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+                <title>#{dbResource['wq.title.webQuoteVersion']}</title>
+            </f:facet>                          
+            <f:view locale="#{userMB.user.userLocale}"></f:view>
+        </h:head>
+<h:body>
+
+
+	<div id="center" class="center">
+			<table width="400" border="0" cellspacing="2" cellpadding="0" align="center">
+			<tr>
+			    <td colspan="4"><h:outputText value=" " /></td>
+			</tr>
+			<tr>
+			    <td colspan="4" align="center"><b>#{dbResource['wq.message.accessDenied']}.</b></td>
+			</tr>
+			<tr>
+			    <td colspan="4"></td>
+			</tr>
+			<tr>
+			    <td colspan="4"></td>
+			</tr>
+			<tr>
+				<td width="15"></td>
+			    <td  colspan="1" align="center"><input type="button" name="Close" value="#{dbResource['wq.button.close']}" onclick="window.opener=null;window.close();" />
+				</td>
+				<td  colspan="1" align="left"><input type="button" name="Back" value="#{dbResource['wq.button.back']}" onclick="history.go(-1)" />
+				</td>
+			</tr>
+			</table>
+	</div>
+
+                    
+</h:body>
+</html>

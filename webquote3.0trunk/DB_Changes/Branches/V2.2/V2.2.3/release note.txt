@@ -1,0 +1,26 @@
+Tonmy Li 2015-04-20
+Fixed the defect 407.
+
+
+Tonmy Li 2015-04-20 
+Fixed the defect 410.
+
+Tonmy Li 2015-04-22 
+Fixed the defect 406.
+
+
+Tonmy Li 2015-04-23 
+Fixed the defect 428.
+
+Jason Chen 2015-04-23 
+Fixed the defect 431.
+
+Tonmy Li 2015-04-24 
+Fixed the defect 420.
+
+
+Jason Chen 2015-04-24 
+Fixed the defect 433.
+
+Tonmy Li 2015-04-24 
+Make system to support ANZ and Korea

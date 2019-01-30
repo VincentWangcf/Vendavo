@@ -1,0 +1,16 @@
+:normalEnd:
+file: \WQ_EJB_Quote\ejbModule\com\avnet\emasia\webquote\quote\vo\QuoteBuilderBean.java
+fromUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/branches/funtional_branch/use_jms_to_create_sap_quote/WQ_EJB_Quote/ejbModule/com/avnet/emasia/webquote/quote/vo/QuoteBuilderBean.java
+fromRevision: HEAD
+toUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/branches/funtional_branch/use_jms_to_create_sap_quote/WQ_EJB_Quote/ejbModule/com/avnet/emasia/webquote/quote/vo/QuoteBuilderBean.java
+toRevision: HEAD
+force: false
+recurse: false
+ignore: false
+depth: 0
+
+workspaceUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/trunk/WQ_EJB_Quote/ejbModule/com/avnet/emasia/webquote/quote/vo/QuoteBuilderBean.java
+workspaceRevision: 24083
+lowerRevision: 0
+upperRevision: 0
+merge -rHEAD:HEAD http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/branches/funtional_branch/use_jms_to_create_sap_quote/WQ_EJB_Quote/ejbModule/com/avnet/emasia/webquote/quote/vo/QuoteBuilderBean.java C:/Damon/webquote3.0trunk/WQ_EJB_Quote/ejbModule/com/avnet/emasia/webquote/quote/vo/QuoteBuilderBean.java

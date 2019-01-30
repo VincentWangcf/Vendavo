@@ -1,0 +1,6 @@
+package com.avnet.emasia.webquote.columndata;
+
+public interface Bean {
+	int getSeq();
+	void setSeq(int seq);
+}

@@ -1,0 +1,120 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="myquote-004.css" />
+	</ui:define>
+
+	<ui:define name="content">
+<style>
+.ui-widget-content {
+	background-color: rgb(255, 255, 255) !important;
+}
+</style>	
+
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+
+	<h:form id="form" onkeypress="if(window.event.keyCode==13) return false;">
+
+	<p:panel header="#{dbResource['wq.header.dLinkCreation']}" style="font-size:12pt">
+		<p:messages id="messages" showDetail="true" autoUpdate="true" escape="false"/>
+			<h:outputText value="#{dbResource['wq.label.final']} #{dbResource['wq.label.curr']}: " />
+			<h:selectOneMenu id="finalCurrSelectedDownList" value="#{dLinkMB.selectedCurrency}"> 
+                     <f:selectItem itemLabel="JPY" itemValue="JPY" />  
+<!-- 
+                    <f:selectItems  value="#{dLinkMB.quoteItemVos.get(firstRow).quoteItem.quote.bizUnit.getAllowCurrencies()}" />
+ -->
+			</h:selectOneMenu>
+
+		    <p:dataTable	var="vo"
+		    				value="#{dLinkMB.quoteItemVos}" 
+		    				rowKey="#{vo.quoteItem.id}" 
+		    				rowIndexVar="rowIndex"
+		                 	selection="#{dLinkMB.selectedQuoteItemVos}"
+		                 	disabledSelection="#{vo.errRow}"
+		                 	filteredValue="#{dLinkMB.filteredQuoteItemVos}" 
+		                 	id="datatable_dLinkQuote"                 
+		                 	editable="true"
+		                 	editMode="cell"
+		                 	cellEditEvent="click"     
+		                 	scrollable="true"
+		                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">	                   	              
+	
+					<p:column selectionMode="multiple" styleClass="column_icon"/> 
+ 
+<!--
+ 			        <p:column headerText="" styleClass="column_icon">
+						<p:selectBooleanCheckbox value="#{vo.errRow}" rendered="#{! vo.errRow}" />
+
+						<p:selectBooleanCheckbox value="false" rendered="#{vo.errRow}" disabled="true"/>
+
+					</p:column>				        
+ -->							
+			        <p:column headerText="#{dbResource['wq.label.status']}" styleClass="column_icon">
+						<h:graphicImage url="./../resources/images/icon_tick.png" styleClass="iconLink" rendered="#{! vo.errRow}" />  
+						<h:graphicImage url="./../resources/images/icon_cross.png" styleClass="iconLink" rendered="#{vo.errRow}" />  
+					</p:column>				        
+								
+
+ 					<p:column headerText="#{dbResource['wq.button.dLink']}" sortBy="#{vo.quoteItem.quote.dLinkFlag}" filterBy="#{vo.quoteItem.quote.dLinkFlag}" filterMatchMode="contains" styleClass="myquote_column_status">
+					<h:outputText value="#{vo.quoteItem.quote.dLinkFlag? 'Yes':'No'}" />
+					</p:column>
+		
+ 					<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quote']}#" sortBy="#{vo.quoteItem.quoteNumber}" filterBy="#{vo.quoteItem.quoteNumber}" styleClass="myquote_column_quoteNumber">
+					<h:outputText value="#{vo.quoteItem.quoteNumber}"/>
+					</p:column>
+		
+			<p:column headerText="#{dbResource['wq.label.SoldToCode']}" sortBy="#{vo.quoteItem.soldToCustomer.customerNumber}" filterBy="#{vo.quoteItem.soldToCustomer.customerNumber}" styleClass="myquote_column_soldToCustomerNumber">
+			<h:outputText value="#{vo.quoteItem.soldToCustomer.customerNumber}"/>
+			</p:column>
+			
+					<p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{vo.quoteItem.quotedMaterial.manufacturer.name}" filterBy="#{vo.quoteItem.quotedMaterial.manufacturer.name}" styleClass="myquote_column_mfr">
+					<h:outputText value="#{vo.quoteItem.quotedMaterial.manufacturer.name}"/>
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.avnetQPN']}" sortBy="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}" filterBy="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}" styleClass="myquote_column_quotedPartNumber">
+					<h:outputText value="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}"/>
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.FNLCUR']}" sortBy="#{vo.quoteItem.finalCurr}" filterBy="#{vo.quoteItem.finalCurr}" styleClass="myquote_column_mfr">
+					<h:outputText value="#{vo.quoteItem.finalCurr}"/>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.final']}&lt;br/&gt;#{dbResource['wq.label.quotation']}&lt;br/&gt;#{dbResource['wq.label.price']}" sortBy="#{vo.quoteItem.finalQuotationPrice}" filterBy="#{vo.quoteItem.finalQuotationPrice}" filterMatchMode="contains" styleClass="column_quotedPrice align_right">
+					<h:outputText value="#{vo.quoteItem.finalQuotationPrice}">
+						<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5"/>
+					</h:outputText>
+					</p:column>			
+
+			        <p:column headerText="#{dbResource['wq.label.rateRemark']}" styleClass="myquote_column_rateRemarks">
+						<h:outputText value="#{vo.quoteItem.rateRemarks}" escape="false" />
+					</p:column>	
+
+			        <p:column headerText="#{dbResource['wq.label.message']}" styleClass="column_messageBox">
+						<h:outputText style="font-size:12px !important;" value="#{vo.message}" escape="false" />
+					</p:column>	
+
+					<f:facet name="footer">     
+			        	<p:commandButton value="#{dbResource['wq.button.submit']}" update="@form" actionListener="#{dLinkMB.copyQuote}" rendered="#{! dLinkMB.finished}" icon="ui-icon ui-icon-circle-arrow-n"/>  
+			        	<p:commandButton value="#{dbResource['wq.button.BackMyQuoteSearch']}" icon="ui-icon ui-icon-circle-arrow-w" action="#{myQuoteSearchMB.getMyQuotePage}" ajax="false"/>
+<!-- 
+			        	<p:button value="#{dbResource['wq.button.BackMyQuoteSearch']}" icon="ui-icon ui-icon-circle-arrow-w" onclick="window.history.back(); return true;" ajax="false"/>
+ -->
+			        </f:facet>  			 	                                
+	    	</p:dataTable>
+	    	
+
+		</p:panel>
+			
+	<h:outputScript library="javascript" name="disableRowSelection.js" />	    
+	         	
+	</h:form>
+		
+	</ui:define>
+</ui:composition>

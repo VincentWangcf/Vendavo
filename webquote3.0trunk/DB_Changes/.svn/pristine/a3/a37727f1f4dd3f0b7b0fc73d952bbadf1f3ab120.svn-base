@@ -1,0 +1,1 @@
+insert into APP_PROPERTY (PROP_KEY, PROP_DESC, PROP_VALUE, PROP_RESERVED) values ('CACHE_EXPIRY_POLICY_MINUTE', 'cache expiry policy in minutes', '120', '1');

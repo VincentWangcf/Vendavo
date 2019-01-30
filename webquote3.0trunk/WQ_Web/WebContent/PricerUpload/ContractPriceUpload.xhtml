@@ -1,0 +1,146 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+
+
+	<ui:define name="content">
+		<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+		
+		<h:form id="form"  enctype="multipart/form-data">
+			
+			<p:messages id="messages" escape="false" closable="true" autoUpdate="true"/>
+			
+			<p:wizard widgetVar="wiz" flowListener="#{contractPriceUploadMB.onFlowProcess}" style="width:100%" nextLabel="#{dbResource['wq.button.next']}" backLabel="#{dbResource['wq.button.back']}">
+				
+				<p:tab id="upload" title="1. #{dbResource['wq.label.contractPriceUpload']}">
+					<p:panel header="#{dbResource['wq.button.upload']}" style="font-size:12pt">
+						<h:panelGrid columns="2" cellpadding="0">					
+							<p:fileUpload value="#{contractPriceUploadMB.file}" allowTypes="/(\.|\/)(xls|xlsx|XLS|XLSX)$/" mode="simple" />
+							<p:commandButton value="#{dbResource['wq.button.upload']}" icon="ui-icon-circle-check"
+								update=":form:uploadFileName" actionListener="#{contractPriceUploadMB.handleFileUpload}" ajax="false"/>							
+						</h:panelGrid>
+						<h:outputText id="uploadFileName" value="#{contractPriceUploadMB.uploadFileName}"/>
+					</p:panel>
+					<p:commandLink value="#{dbResource['wq.label.downloadContractTemplate']}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">
+						<p:fileDownload value="#{contractPriceUploadMB.contractPriceTemplate}" />
+				    </p:commandLink>
+				</p:tab>
+				
+				<p:tab id="check" title="2. #{dbResource['wq.label.checkUpload']}">
+						<p:dataTable var="item"
+							value="#{contractPriceUploadMB.beans}"
+							rowKey="#{item.fullMfrPart}" 
+							rowIndexVar="rowIndex"
+							id="datatable_promoItems" 
+							resizableColumns="true" 
+							scrollable="true"  
+							paginator="true" 
+							rows="10"
+							rowsPerPageTemplate="10,20,50"
+							rowStyleClass="#{item.errorRow ? 'errorRow' : null}">
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+							
+							<p:column headerText="#{dbResource['wq.label.no']}" id="rowNumber" width="45">
+			        			#{item.seq}
+		        			</p:column>
+		        			
+							<p:column headerText="#{dbResource['wq.label.mfr']}*" id="mfr" width="60">
+			        			#{item.mfr}
+		        			</p:column>
+		        			
+							<p:column headerText="#{dbResource['wq.label.mfrP']}*" id="fullPart" width="180">
+								#{item.fullMfrPart}
+		        			</p:column>
+		        			
+							<p:column headerText="#{dbResource['wq.label.custNameSP']}*" width="300">
+			        			#{item.customerName}
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.SoldToCode']}" width="80">
+			        			#{item.soldToCode}
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.endCust']}" width="300">
+			        			#{item.endCustomerName}
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.EndCustomerCode']}" width="80">
+			        			#{item.endCustomerCode}
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.normSell']}*" width="80">
+			        			#{item.normSell}
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.cost']}*" width="80">
+			        			#{item.cost}
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.curr']}" width="50">
+			        			#{item.currency}
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.lstartDate']}*" width="80">
+			        			#{item.startDate}
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.validity']}*" width="80">
+			        			#{item.validity}
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.shipmentVal']}" width="80">
+			        			#{item.shipmentValidity}
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.costIndicator']}*" width="150">
+			        			#{item.costIndicator}
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.vendorQuote']}#" width="120">
+			        			#{item.vendorQuoteNo}
+		        			</p:column>
+		        			
+							<p:column headerText="#{dbResource['wq.label.vendorQuoteQty']}" width="100">
+			        			#{item.vendorQuoteQty}
+		        			</p:column>
+		        			
+		        			<p:column headerText="#{dbResource['wq.label.avnetQC']}" width="200">
+			        			#{item.avnetQCComment}
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.overRidden']}*" width="200">
+			        			#{item.overriddenStr}
+		        			</p:column>
+						</p:dataTable>
+				</p:tab>
+				
+				<p:tab id="confirm" title="3. #{dbResource['wq.label.confirmUpload']}">
+					<p:panel header="#{dbResource['wq.header.confirm']}">
+						 <p:panelGrid  columns="3" style="margin:0px 500px">
+							<h:outputText value="#{dbResource['wq.label.NoCaps']}" />
+							<h:outputText value="#{dbResource['wq.label.action']}" />
+				            <h:outputText value="#{dbResource['wq.header.records']}"/>
+				            
+				            <h:outputText value="1" />
+				            <h:outputText value="#{dbResource['wq.label.contractPriceAdded']}:"/>
+				            <h:outputText value="#{contractPriceUploadMB.counts[0]}"/>
+				            
+				            <h:outputText value="2" />
+				            <h:outputText value="#{dbResource['wq.label.contractPriceUpdated']}:"/>
+				            <h:outputText value="#{contractPriceUploadMB.counts[1]}"/>
+						</p:panelGrid>
+						<p:spacer width="500" height="30"/>
+						<p:commandButton id="back" value="#{dbResource['wq.label.backHome']}" action="#{contractPriceUploadMB.backToHome}" />
+					</p:panel>
+				</p:tab>
+			</p:wizard>
+		</h:form>
+	</ui:define>
+</ui:composition>

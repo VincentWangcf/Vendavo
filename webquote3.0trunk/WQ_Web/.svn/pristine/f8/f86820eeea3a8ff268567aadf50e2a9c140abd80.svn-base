@@ -1,0 +1,1941 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:l="http://java.sun.com/jsf/composite/l"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+
+	<f:metadata>
+		<f:viewParam name="quoteNumber"
+			value="#{responseInternalTransferMB.quoteNumber}" />
+	</f:metadata>
+
+	<ui:define name="content">
+
+		<h:form id="form" enctype="multipart/form-data">
+
+			<p:messages id="growl" escape="false" closable="true"
+				autoUpdate="true" />
+			<p:remoteCommand name="lazyload"
+				update=":form:datatable_response_internal_transfer" autoRun="true"
+				actionListener="#{responseInternalTransferMB.pmSearch}"
+				rendered="#{responseInternalTransferMB.allowAutoSearch}"
+				onstart="start();" onsuccess="stop();" onerror="stopWithError();" />
+
+			<p:accordionPanel id="searchCriteria">
+
+				<p:tab
+					title="#{dbResource['wq.label.responseITSearchCriteria']}">
+
+					<h:panelGrid cellpadding="0"
+						style="padding:0px 3px 0px 3px; width:100%;" columns="8">
+
+
+						<h:outputText
+							value="#{dbResource['wq.label.avnet']} &lt;br/&gt;#{dbResource['wq.label.quote']}#:"
+							escape="false" />
+						<p:inputTextarea size="8"
+							value="#{responseInternalTransferMB.criteria.sQuoteNumber}"
+							autoResize="false" />
+
+						<h:outputText value="#{dbResource['wq.label.avnetQPN']}:" />
+						<p:autoComplete
+							value="#{responseInternalTransferMB.criteria.sQuotedPartNumber}"
+							completeMethod="#{myQuoteSearchMB.autoCompleteForPartNumber}"
+							minQueryLength="5" global="fasle" />
+
+						<h:outputText value="#{dbResource['wq.label.mfr']}:" />
+						<p:autoComplete
+							value="#{responseInternalTransferMB.criteria.sMfr}"
+							completeMethod="#{myQuoteSearchMB.autoCompleteForManufacturer}"
+							minQueryLength="1" style="width:80%;" global="fasle" />
+
+						<h:outputText value="#{dbResource['wq.label.reqRef']}:" />
+						<p:inputTextarea size="8"
+							value="#{responseInternalTransferMB.criteria.sYourReference}"
+							autoResize="false" />
+
+						<h:outputText
+							value="#{dbResource['wq.label.custmrName']}:" />
+						<p:autoComplete
+							value="#{responseInternalTransferMB.criteria.sCustomerName}"
+							completeMethod="#{myQuoteSearchMB.autoCompleteForCustomerName}"
+							minQueryLength="3" global="fasle" />
+
+
+						<h:outputText value="#{dbResource['wq.label.empName']}:" />
+						<p:autoComplete
+							value="#{responseInternalTransferMB.criteria.sSalesName}"
+							completeMethod="#{myQuoteSearchMB.autoCompleteForEmployeeName}"
+							minQueryLength="4" global="fasle" />
+
+						<h:outputText value="#{dbResource['wq.label.team']}:" />
+						<p:autoComplete
+							value="#{responseInternalTransferMB.criteria.sTeam}"
+							completeMethod="#{myQuoteSearchMB.autoCompleteForTeam}"
+							minQueryLength="4" global="fasle" />
+
+					</h:panelGrid>
+
+					<h:panelGrid columns="7" cellpadding="0" style="width:50%">
+
+						<h:outputText
+							value="#{dbResource['wq.label.quoteRelDate']}"
+							style="padding:0px 3px 0px 3px" />
+
+						<h:outputText value="#{dbResource['wq.header.from']}"
+							style="padding:0px 3px 0px 3px" />
+						<p:calendar
+							value="#{responseInternalTransferMB.criteria.pageSentOutDateFrom}"
+							showOn="button" effect="size"
+							pattern="dd/MM/yyyy" />
+
+						<h:outputText value="#{dbResource['wq.header.To']}"
+							style="padding:0px 3px 0px 3px" />
+						<p:calendar
+							value="#{responseInternalTransferMB.criteria.pageSentOutDateTo}"
+							showOn="button" effect="size"
+							pattern="dd/MM/yyyy"  />
+							
+			<h:outputText value="#{dbResource['wq.label.salesCostPart']}:" />
+				<h:selectOneMenu id="salesCostPartSelectedDownList" value="#{responseInternalTransferMB.criteria.selectedSalesCostPart}">	
+					 <f:selectItem itemLabel="*ALL"  />						
+                     <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			         <f:selectItem itemLabel="No" itemValue="No" />  
+				</h:selectOneMenu>
+
+					</h:panelGrid>
+
+					<h:panelGrid columns="2" cellpadding="0"
+						style="padding:0px 3px 0px 3px;">
+						<p:commandButton value="#{dbResource['wq.button.search']}"
+							icon="ui-icon-search" 
+							actionListener="#{responseInternalTransferMB.pmSearch}"
+							update=":form:datatable_response_internal_transfer, :form:panelGrid_responseITDetails"
+							onstart="start();" onsuccess="stop();" onerror="stopWithError();" />
+
+						<p:commandButton value="#{dbResource['wq.label.reset']}"
+							icon="ui-icon-triangle-1-w"
+							actionListener="#{responseInternalTransferMB.postContruct}"
+							update="@form" onstart="start();"
+							onsuccess="stop();" onerror="stopWithError();" />
+					</h:panelGrid>
+
+				</p:tab>
+			</p:accordionPanel>
+			<p:panel
+				header="#{dbResource['wq.label.responseITTransfer']}"
+				style="font-size:12pt">
+				<h:panelGrid columns="12" cellpadding="0"
+					style="padding:0px 3px 0px 3px;">
+
+					<p:commandButton value="#{dbResource['wq.header.save']}"
+						update=":form:datatable_response_internal_transfer, :form:growl"
+						actionListener="#{responseInternalTransferMB.save}"
+						onstart="start();" onsuccess="stop();" onerror="stopWithError();" />
+					<h:outputText value="|" />
+					<p:commandButton value="#{dbResource['wq.button.sendQC']}"
+						actionListener="#{responseInternalTransferMB.sendToQC}"
+						update=":form:datatable_response_internal_transfer, :form:growl, :form:sendToQCCheckingMsg"
+						oncomplete="sendToQCChecking(xhr, status, args)"
+						onstart="start();" onsuccess="stop();" onerror="stopWithError();" />
+					<h:outputText value="|" />
+					<p:commandButton
+						value="#{dbResource['wq.button.invalidIT']}"
+						actionListener="#{responseInternalTransferMB.invalidInternalTransfer}"
+						update=":form:datatable_response_internal_transfer, :form:growl"
+						onstart="start();" onsuccess="stop();" onerror="stopWithError();" />
+					<h:outputText value="|" />
+					<p:commandButton id="downloadLink"
+						value="#{dbResource['wq.button.downloadXLS']}"
+						ajax="false"
+						actionListener="#{responseInternalTransferMB.downloadXLS}">
+						<p:fileDownload
+							value="#{responseInternalTransferMB.downloadRitDataExcel}" />
+					</p:commandButton>
+					<h:outputText value="|" />
+					<p:fileUpload  label="#{dbResource['wq.button.chooseFile']}"
+						value="#{responseInternalTransferMB.ritDataExcel}" mode="simple"  skinSimple="true"/>
+					<p:commandButton value="#{dbResource['wq.button.upload']}"
+						icon="ui-icon-circle-check" update="@form"
+						actionListener="#{responseInternalTransferMB.handleFileUpload}"
+						ajax="false">
+						<f:view afterPhase="#{responseInternalTransferMB.afterPhase}"/>
+					</p:commandButton>
+
+					<p:defaultCommand target=":form:dummy"
+						style="width:0px;display:none;" />
+
+					<p:commandButton id="dummy" value=""
+						style="width:0px;display:none;" />
+
+
+				</h:panelGrid>
+				<l:attachmentsDialog id="attathmentsPanel" canDownload="true"
+					attachments="#{viewScope.attachments}" />
+				<p:dataTable var="vo"
+					value="#{responseInternalTransferMB.quoteItemVo}"
+					rowKey="#{vo.quoteItem.id}" paginator="true" rows="5"
+					lazy="true" rowsPerPageTemplate="5,10,20,30,40,50"
+					selection="#{responseInternalTransferMB.quoteItemVo.selectionItems}"
+					id="datatable_response_internal_transfer" editable="true"
+					editMode="cell" paginatorPosition="top" scrollable="true"
+					paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+					scrollHeight="230" widgetVar="datatable_rit" rowIndexVar="rowIndex" emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+					<p:ajax event="rowSelect"
+						listener="#{responseInternalTransferMB.quoteItemVo.rowSelect}"
+						update=":form:panelGrid_responseITDetails" />
+					<p:ajax event="rowSelectCheckbox"
+						listener="#{responseInternalTransferMB.quoteItemVo.onRowSelectCheckbox}"
+						update=":form:panelGrid_responseITDetails" />
+                           
+                <p:ajax event="rowUnselect" listener="#{responseInternalTransferMB.quoteItemVo.onRowUnselect}" />
+                <p:ajax event="rowUnselectCheckbox" listener="#{responseInternalTransferMB.quoteItemVo.onRowUnselectCheckbox}"/>
+                <p:ajax event="toggleSelect" listener="#{responseInternalTransferMB.quoteItemVo.onToggleSelect}" />
+					<p:column selectionMode="multiple" styleClass="column_icon" />
+
+					<p:column headerText="#{dbResource['wq.label.no']}"
+						styleClass="column_icon readOnlyCell">
+						<h:outputText value="#{rowIndex+1}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.form']}"
+						sortBy="#{vo.quoteItem.quote.formNumber}"
+						filterBy="#{vo.quoteItem.quote.formNumber}"
+						filterMatchMode="contains"
+						styleClass="column_formNumber readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.quote.formNumber}" />
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quote']}#"
+						sortBy="#{vo.quoteItem.quoteNumber}"
+						filterBy="#{vo.quoteItem.quoteNumber}" filterMatchMode="contains"
+						styleClass="column_quoteNumber readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.quoteNumber}" />
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.message.pending']} #{dbResource['wq.label.day']}"
+						sortBy="#{vo.quoteItem.submissionDate}"
+						filterBy="#{vo.quoteItem.pendingDay}" filterMatchMode="contains"
+						styleClass="column_pendingDay readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.pendingDay}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.mfr']}"
+						sortBy="#{vo.quoteItem.manufacturer.name}"
+						filterBy="#{vo.quoteItem.manufacturer.name}"
+						filterMatchMode="contains" styleClass="column_mfr readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.requestedMfr.name}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.QuoteType']}"
+						sortBy="#{vo.quoteItem.quoteType}"
+						filterBy="#{vo.quoteItem.quoteType}" filterMatchMode="contains"
+						styleClass="column_quoteType readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.quoteType}" />
+					</p:column>
+
+
+		        		        
+		       <p:column id="p_salesCostPart" headerText="#{dbResource['wq.label.salesCostPart']}" sortBy="#{vo.quoteItem.salesCostFlag}"  filterBy="#{vo.quoteItem.salesCostFlag}" styleClass="column_mfr readOnlyCell">
+					<h:outputText value="#{vo.quoteItem.salesCostFlag == true ?'Yes':'No'}"/>      
+		        </p:column>
+		
+		        <p:column id="salesCostType_select" headerText="#{dbResource['wq.label.salesCostType']}" sortBy="#{vo.quoteItem.salesCostType}" filterMatchMode="contains" filterBy="#{vo.quoteItem.salesCostType}" styleClass="column_qtyIndicator">
+ 	    			<h:selectOneMenu value="#{vo.quoteItem.salesCostType}"  effect="size" disabled="#{vo.quoteItem.salesCostFlag != true}" >											
+			          	<f:selectItem itemLabel="NonSC"  itemValue="NonSC"/> 
+			            <f:selectItem itemLabel="ZINC" itemValue="ZINC" />                                            
+			            <f:selectItem itemLabel="ZIND" itemValue="ZIND" /> 
+			            <f:attribute name="targetQuoteItem" value="#{vo}" />
+			        	<p:ajax event="change" listener="#{responseInternalTransferMB.updateSalesCosteType}" update="@this,:form:growl" />
+					</h:selectOneMenu>	 		
+				<!-- 	<h:outputText
+								value="#{vo.quoteItem.salesCostType == null?'NonSC':vo.quoteItem.salesCostType}" />	 -->	 
+		        </p:column>  
+					<p:column
+						headerText="#{dbResource['wq.label.salesman']}&lt;br/&gt;-#{dbResource['wq.label.name']}"
+						sortBy="#{vo.quoteItem.quote.user.name}"
+						filterBy="#{vo.quoteItem.quote.user.name}"
+						filterMatchMode="contains"
+						styleClass="column_employeeName readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.quote.sales.name}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.team']}"
+						sortBy="#{vo.quoteItem.quote.team.name}"
+						filterBy="#{vo.quoteItem.quote.team.name}"
+						filterMatchMode="contains" styleClass="column_team readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.quote.team.name}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.custNameSP']}"
+						sortBy="#{vo.quoteItem.quote.soldToCustomerName}"
+						filterBy="#{vo.quoteItem.quote.soldToCustomerName}"
+						filterMatchMode="contains"
+						styleClass="column_soldToCustomerName readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.quote.soldToCustomerName}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.endCust']}"
+						sortBy="#{empty(vo.quoteItem.endCustomer) ? vo.quoteItem.endCustomerName : vo.quoteItem.endCustomer.name }"
+						filterBy="#{empty(vo.quoteItem.endCustomer) ? vo.quoteItem.endCustomerName : vo.quoteItem.endCustomer.name }"
+						filterMatchMode="contains"
+						styleClass="column_endCustomerName readOnlyCell">
+						<h:outputText
+							value="#{empty(vo.quoteItem.endCustomer) ? vo.quoteItem.endCustomerName : vo.quoteItem.endCustomer.name }" />
+					</p:column>
+
+		      <p:column headerText="#{dbResource['wq.label.customerGroupID']}" sortBy="#{vo.quoteItem.customerGroupId}" filterMatchMode="contains" filterBy="#{vo.quoteItem.customerGroupId}" styleClass="column_vendorQuoteQty editCell">
+					<!-- <h:outputText value="#{rfq.customerGroupId}" rendered="#{rfq.disableEditable}" styleClass="input_text"/> -->
+					<p:inputText id="p_custoemrGroupId" value="#{vo.quoteItem.customerGroupId}" styleClass="optional_input_text input_text" >
+					<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+					</p:inputText>
+		        </p:column>
+					<p:column
+						headerText="#{dbResource['wq.label.requested']}&lt;br/&gt;#{dbResource['wq.label.pn']}"
+						sortBy="#{vo.quoteItem.requestedPartNumber}"
+						filterBy="#{vo.quoteItem.requestedPartNumber}"
+						filterMatchMode="contains"
+						styleClass="column_fullMfrPart readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.requestedPartNumber}" />
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}"
+						sortBy="#{vo.quoteItem.requestedQty}"
+						filterBy="#{vo.quoteItem.requestedQty}" filterMatchMode="contains"
+						styleClass="column_requiredQty align_right readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.requestedQty}">
+							<f:convertNumber
+								 pattern="#,###"  />
+						</h:outputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.EAU']}"
+						sortBy="#{vo.quoteItem.eau}" filterBy="#{vo.quoteItem.eau}"
+						filterMatchMode="contains"
+						styleClass="column_eau align_right readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.eau}">
+							<f:convertNumber
+								pattern="#,###"  />
+						</h:outputText>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.target']}&lt;br/&gt;#{dbResource['wq.label.resale']}"
+						sortBy="#{vo.quoteItem.targetResale}"
+						filterBy="#{vo.quoteItem.targetResale}" filterMatchMode="contains"
+						styleClass="column_targetResale align_right readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.targetResale}">
+							<f:convertNumber
+								 pattern="#,##0.00000"
+								minFractionDigits="5" />
+						</h:outputText>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.target']}&lt;br/&gt;#{dbResource['wq.label.margin']}%"
+						sortBy="#{vo.quoteItem.targetMargin}"
+						filterBy="#{vo.quoteItem.targetMargin}" filterMatchMode="contains"
+						styleClass="column_targetPriceMargin align_right readOnlyCell">
+						<h:panelGroup id="targetMarginPercentage" layout="block">
+							<h:outputText value="#{vo.quoteItem.targetMargin}"
+								id="targetMargin">
+								<f:convertNumber
+									pattern="#,##0.00"
+									minFractionDigits="2" />
+							</h:outputText>
+							<h:outputText value="%"
+								rendered="#{vo.quoteItem.targetMargin != null}" />
+						</h:panelGroup>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quotedPN']}*"
+						sortBy="#{vo.quoteItem.quotedPartNumber}" filterBy="#{vo.quoteItem.quotedPartNumber}"
+						filterMatchMode="contains"
+						styleClass="column_fullMfrPart tdmandatoryvalue">
+
+						<p:inputText id="quotedPartNumber_in"
+							value="#{vo.quotedPartNumber}"
+							onkeyup="checkEnterKey(event, this);"
+							onchange="convertToSupper(this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="mandatory_input_text">
+							<f:attribute name="targetQuoteItemVo" value="#{vo}" />
+							<p:ajax event="change"
+								listener="#{responseInternalTransferMB.changeQuotedPartNumber}"
+								update="#{responseInternalTransferMB.updateIds}"
+								onstart="start();" onsuccess="stop();"
+								onerror="stopWithError();" />
+						</p:inputText>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.pn']}&lt;br/&gt;#{dbResource['wq.button.search']}"
+						styleClass="column_icon readOnlyCell">
+						<p:commandLink global="false"
+							oncomplete="PF('search_Parts_dialog').show()"
+							actionListener="#{responseInternalTransferMB.searchForMaterialPopup}"
+							update=":form:search_Parts_dialog"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});">
+							<f:attribute name="targetQuoteItemVo" value="#{vo}" />
+							<h:graphicImage url="./../resources/images/icon_magnifier.png"
+								styleClass="iconLink" />
+						</p:commandLink>
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.SapPN']}"
+						sortBy="#{vo.quoteItem.sapPartNumber}" filterMatchMode="contains"
+						filterBy="#{vo.quoteItem.sapPartNumber}"
+						styleClass="column_costIndicator editCell">
+						<h:selectOneMenu id="sapPartNumber_in"
+							value="#{vo.quoteItem.sapPartNumber}" style="width:90%"
+							effect="size"
+							onselect="checkUpdateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});">
+							<f:selectItems
+								value="#{responseInternalTransferMB.convertSapPartNumberToSelectItem(vo.quoteItem.requestedMfr.name,vo.quotedPartNumber)}" />
+							<f:attribute name="targetQuoteItemVo" value="#{vo}" />
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</h:selectOneMenu>
+					</p:column>
+					<p:column
+						headerText="#{dbResource['wq.label.quoted']}&lt;br/&gt;#{dbResource['wq.label.margin']}%"
+						sortBy="#{vo.quoteItem.resaleMargin}" filterMatchMode="contains"
+						filterBy="#{vo.quoteItem.resaleMargin}"
+						styleClass="column_quotedMargin editCell">
+						<h:panelGroup id="quoteMarginPercentage" layout="block">
+							<p:inputText id="quotedMargin_in"
+								value="#{vo.quoteItem.resaleMargin}"
+								onkeypress="return isDouble(event, true)"
+								onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+								onkeyup="checkEnterKey(event, this)"
+									disabled="#{(vo.quoteItem.salesCostType =='ZINC' or vo.quoteItem.salesCostType =='ZIND')}"
+								styleClass="input_text_quoted_margin">
+								<f:convertNumber  minFractionDigits="2" maxFractionDigits="2" />
+								<f:attribute name="targetQuoteItem" value="#{vo.quoteItem}" />
+								<p:ajax event="change"
+									listener="#{responseInternalTransferMB.updateQuotedMargin}"
+									update="#{responseInternalTransferMB.updateIds}" />
+							</p:inputText>
+							<h:outputText value="%"
+								rendered="#{vo.quoteItem.resaleMargin != null}" />
+						</h:panelGroup>
+					</p:column>
+		        <p:column headerText="#{dbResource['wq.label.salesCost']}" sortBy="#{vo.quoteItem.salesCost}" filterMatchMode="contains" filterBy="#{vo.quoteItem.salesCost}" styleClass="column_quotedPrice align_right tdmandatoryvalue">
+					<h:outputText value="#{vo.quoteItem.salesCost}" rendered="#{!(vo.quoteItem.salesCostType =='ZINC' or vo.quoteItem.salesCostType =='ZIND')}" styleClass="mandatory_input_text"/>
+					<p:inputText id="p_salesCost" disabled="#{!(vo.quoteItem.salesCostType =='ZINC' or vo.quoteItem.salesCostType =='ZIND')}" value="#{vo.quoteItem.salesCost}" styleClass="mandatory_input_text" >							
+						<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+					</p:inputText>
+		        </p:column>
+		        
+		        
+		        <p:column headerText="#{dbResource['wq.label.suggested']}&lt;br/&gt;#{dbResource['wq.label.resale']}" sortBy="#{vo.quoteItem.suggestedResale}" filterMatchMode="contains" filterBy="#{vo.quoteItem.suggestedResale}" styleClass="column_cost editCell">
+					<h:outputText value="#{vo.quoteItem.suggestedResale}" rendered="#{!(vo.quoteItem.salesCostType =='ZINC' or vo.quoteItem.salesCostType =='ZIND')}" styleClass="input_text"/>
+					<p:inputText id="p_suggestedResale" disabled="#{!(vo.quoteItem.salesCostType =='ZINC' or vo.quoteItem.salesCostType =='ZIND')}" value="#{vo.quoteItem.suggestedResale}"  styleClass="optional_input_text">							
+						<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+					</p:inputText>
+		        </p:column> 
+		        
+					<p:column
+						headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quotedPrice']}*"
+						sortBy="#{vo.quoteItem.quotedPrice}"
+						filterBy="#{vo.quoteItem.quotedPrice}" filterMatchMode="contains"
+						styleClass="column_quotedPrice align_right tdmandatoryvalue">
+						<p:inputText value="#{vo.quoteItem.quotedPrice}"
+							id="quotedPrice_in"
+							onkeyup="updateDecimal(#{rowIndex}, 'form', 'quotedPrice', 'datatable_response_internal_transfer'); checkEnterKey(event, this);"
+							onkeypress="return isDouble(event, true)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							disabled="#{(vo.quoteItem.salesCostType =='ZINC' or vo.quoteItem.salesCostType =='ZIND')}"
+							styleClass="mandatory_input_text">
+							<f:convertNumber  minFractionDigits="2" maxFractionDigits="5" />
+							<f:attribute name="targetQuoteItem" value="#{vo.quoteItem}" />
+							<p:ajax event="change"
+								listener="#{responseInternalTransferMB.updateQuotedPrice}"
+								update="#{responseInternalTransferMB.updateIds}" />
+						</p:inputText>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.costIndicator']}*"
+						sortBy="#{vo.quoteItem.costIndicator}"
+						filterBy="#{vo.quoteItem.costIndicator}"
+						filterMatchMode="contains"
+						styleClass="column_costIndicator tdmandatoryvalue">
+						<h:selectOneMenu value="#{vo.quoteItem.costIndicator}"
+							style="width:100%" id="costIndicator_in">
+							<f:selectItems
+								value="#{responseInternalTransferMB.costIndicators}" />
+							<f:attribute name="targetQuoteItemVo" value="#{vo}" />
+							<p:ajax event="change"
+								listener="#{responseInternalTransferMB.switchCostIndicator}"
+								update="#{responseInternalTransferMB.updateIds}"
+								onstart="start();" onsuccess="stop();"
+								onerror="stopWithError();" />
+						</h:selectOneMenu>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.cost']}&lt;br/&gt;#{dbResource['wq.label.indicator']}&lt;br/&gt;#{dbResource['wq.button.search']}"
+						style="width:120px !important;" styleClass="column_icon readOnlyCell">
+						<p:commandLink global="false"
+							oncomplete="PF('cost_indicator_dialog').show();"
+							actionListener="#{responseInternalTransferMB.searchForPricerPopup}"
+							update=":form:cost_indicator_dialog"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});">
+							<f:attribute name="targetQuoteItemVo" value="#{vo}" />
+							<h:graphicImage url="./../resources/images/icon_magnifier.png"
+								styleClass="iconLink" />
+						</p:commandLink>
+						<h:graphicImage url="./../resources/images/ic_future_price.png"
+							styleClass="iconLink" rendered="#{vo.hasFuturePricer}" />
+		            <h:graphicImage id="s_pricer_icon" url="./../resources/images/ic_s_price.png" styleClass="iconLink" rendered="#{vo.iconsArray[0]==1}"/>
+		        	<h:graphicImage id="ms_pricer_icon" url="./../resources/images/ic_ms_price.png" styleClass="iconLink" rendered="#{vo.iconsArray[0]>1}"/>
+		        	<h:graphicImage id="p_pricer_icon" url="./../resources/images/ic_p_price.png" styleClass="iconLink" rendered="#{vo.iconsArray[1]>0}"/>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.cost']}*"
+						sortBy="#{vo.quoteItem.cost}" filterBy="#{vo.quoteItem.cost}"
+						filterMatchMode="contains"
+						styleClass="column_cost align_right tdmandatoryvalue">
+						<p:inputText value="#{vo.quoteItem.cost}" id="cost_in"
+							onkeyup="updateDecimal(#{rowIndex}, 'form', 'cost', 'datatable_response_internal_transfer'); checkEnterKey(event, this);"
+							onkeypress="return isDouble(event, true)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="mandatory_input_text">
+							<f:attribute name="targetQuoteItem" value="#{vo.quoteItem}" />
+							<p:ajax event="change"
+								listener="#{responseInternalTransferMB.updateCost}"
+								update="#{responseInternalTransferMB.updateIds}" />
+						</p:inputText>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.Qty']}&lt;br/&gt;#{dbResource['wq.label.indicator']}*"
+						sortBy="#{vo.quoteItem.qtyIndicator}"
+						filterBy="#{vo.quoteItem.qtyIndicator}" filterMatchMode="contains"
+						styleClass="column_qtyIndicator tdmandatoryvalue">
+						<h:selectOneMenu value="#{vo.quoteItem.qtyIndicator}"
+							style="width:100%" id="qtyIndicator_in">
+							<f:selectItems
+								value="#{responseInternalTransferMB.qtyIndicators}"
+								var="qtyIndicator" itemLabel="#{qtyIndicator}"
+								itemValue="#{qtyIndicator}" />
+								<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</h:selectOneMenu>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quotedQty']}"
+						sortBy="#{vo.quoteItem.quotedQty}"
+						filterBy="#{vo.quoteItem.quotedQty}" filterMatchMode="contains"
+						styleClass="column_quotedQty align_right editCell">
+						<p:inputText value="#{vo.quoteItem.quotedQty}" id="quotedQty_in"
+							onkeypress="return isInteger(event)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							onkeyup="checkEnterKey(event, this)" styleClass="input_text" >
+								<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+					<!-- bmt fields start -->
+					<p:column headerText="#{dbResource['wq.label.designLoc']}"
+						sortBy="#{vo.quoteItem.designLocation}"
+						filterBy="#{vo.quoteItem.designLocation}"
+						filterMatchMode="contains" styleClass="column_designLocation">
+						 #{vo.quoteItem.designLocation}
+					</p:column>
+					<p:column
+						headerText="#{dbResource['wq.label.designRegion']}"
+						sortBy="#{vo.quoteItem.designRegion}"
+						filterOptions="#{selectItemMB.designRegionItem(true)}"
+						filterBy="#{vo.quoteItem.designRegion}" filterMatchMode="exact"
+						styleClass="column_region">
+						 #{vo.quoteItem.designRegion}
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.BmtFlag']}"
+						sortBy="#{vo.quoteItem.itemDesign.bmtFlag}"
+						filterOptions="#{selectItemMB.bmtFlagItemForFilter()}"
+						filterBy="#{vo.quoteItem.itemDesign.bmtFlag}"
+						filterMatchMode="exact" styleClass="column_bmtFlag">
+						 #{vo.quoteItem.quoteItemDesign.bmtFlag.description}
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtMFRDR']}#"
+						sortBy="#{vo.quoteItem.itemDesign.drMfrNo}"
+						filterBy="#{vo.quoteItem.itemDesign.drMfrNo}"
+						filterMatchMode="contains" styleClass="column_mfr_dr">
+						 #{vo.quoteItem.quoteItemDesign.drMfrNo}
+					</p:column>
+					<p:column
+						headerText="#{dbResource['wq.label.bmtSuggCost']}"
+						sortBy="#{vo.quoteItem.itemDesign.drCost}"
+						filterBy="#{vo.quoteItem.itemDesign.drCost}"
+						filterMatchMode="contains" styleClass="column_drCost">
+						 #{vo.quoteItem.quoteItemDesign.drCost}
+					</p:column>
+					<p:column
+						headerText="#{dbResource['wq.label.bmtSuggResale']}"
+						sortBy="#{vo.quoteItem.itemDesign.drResale}"
+						filterBy="#{vo.quoteItem.itemDesign.drResale}"
+						filterMatchMode="contains" styleClass="column_drCost">
+						 #{vo.quoteItem.quoteItemDesign.drResale}
+					</p:column>
+					<p:column
+						headerText="#{dbResource['wq.label.bmtSuggMargin']}"
+						styleClass="column_drCost">
+						#{vo.quoteItem.quoteItemDesign.drMargin}
+					</p:column>
+					<p:column
+						headerText="#{dbResource['wq.label.bmtMFRQuote']}#"
+						sortBy="#{vo.quoteItem.itemDesign.drMfrQuoteNo}"
+						filterBy="#{vo.quoteItem.itemDesign.drMfrQuoteNo}"
+						filterMatchMode="contains" styleClass="column_drMfrQuoteNo">
+						 #{vo.quoteItem.quoteItemDesign.drMfrQuoteNo}
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtEffDate']}"
+						sortBy="#{vo.quoteItem.itemDesign.drEffectiveDate}"
+						filterBy="#{vo.quoteItem.itemDesign.drEffectiveDate}"
+						filterMatchMode="contains" styleClass="column_drEffectiveDate">
+						<l:date value="#{vo.quoteItem.quoteItemDesign.drEffectiveDate}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtExpDate']}"
+						sortBy="#{vo.quoteItem.itemDesign.drExpiryDate}"
+						filterBy="#{vo.quoteItem.itemDesign.drExpiryDate}"
+						filterMatchMode="contains" styleClass="column_drExpiryDate">
+						<l:date value="#{vo.quoteItem.quoteItemDesign.drExpiryDate}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtComm']}"
+						sortBy="#{vo.quoteItem.itemDesign.drComments}"
+						filterBy="#{vo.quoteItem.itemDesign.drComments}"
+						filterMatchMode="contains" styleClass="column_drComments">
+						#{vo.quoteItem.quoteItemDesign.drComments}
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtAtt']}"
+						styleClass="column_bmtAttachment">
+						<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}"
+							styleClass="query_view"
+							rendered="#{vo.quoteItem.bmtAttachmentFlag}"
+							update=":form:attathmentsPanel:componentAttData"
+							oncomplete="PF('attachmentDialog').show();">
+							<h:graphicImage url="./../resources/images/icon_magnifier.png"
+								styleClass="iconLink" />
+							<f:setPropertyActionListener target="#{viewScope.attachments}"
+								value="#{vo.quoteItem.getAttachments('BMT Attachment')}" />
+						</p:commandLink>
+					</p:column>
+					<p:column
+						headerText="#{dbResource['wq.label.bmtQuotedQty']}"
+						sortBy="#{vo.quoteItem.itemDesign.drQuoteQty}"
+						filterBy="#{vo.quoteItem.itemDesign.drQuoteQty}"
+						filterMatchMode="contains" styleClass="column_drQuoteQty">
+						#{vo.quoteItem.quoteItemDesign.drQuoteQty}
+					</p:column>
+					<p:column
+						headerText="#{dbResource['wq.label.bmtSuggCost']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})"
+						sortBy="#{vo.quoteItem.itemDesign.drCostAltCurrency}"
+						filterBy="#{vo.quoteItem.itemDesign.drCostAltCurrency}"
+						filterMatchMode="contains" styleClass="column_drCostAltCurrency">
+						#{vo.quoteItem.quoteItemDesign.drCostAltCurrency}
+					</p:column>
+					<p:column
+						headerText="#{dbResource['wq.label.bmtSuggResale']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})"
+						sortBy="#{vo.quoteItem.itemDesign.drResaleAltCurrency}"
+						filterBy="#{vo.quoteItem.itemDesign.drResaleAltCurrency}"
+						filterMatchMode="contains" styleClass="column_drResaleAltCurrency">
+						#{vo.quoteItem.quoteItemDesign.drResaleAltCurrency}
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bmtCurr']}"
+						sortBy="#{vo.quoteItem.itemDesign.drAltCurrency}"
+						filterBy="#{vo.quoteItem.itemDesign.drAltCurrency}"
+						filterMatchMode="contains" styleClass="column_drAltCurrency">
+						#{vo.quoteItem.quoteItemDesign.drAltCurrency}
+					</p:column>
+					<p:column
+						headerText="#{dbResource['wq.label.bmtExchRate']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})"
+						sortBy="#{vo.quoteItem.itemDesign.drExchangeRate}"
+						filterBy="#{vo.quoteItem.itemDesign.drExchangeRate}"
+						filterMatchMode="contains" styleClass="column_drExchangeRate">
+						#{vo.quoteItem.quoteItemDesign.drExchangeRate}
+					</p:column>
+					<!-- bmt fields end -->
+
+					<p:column
+						headerText="#{dbResource['wq.message.multiUsage']}*"
+						sortBy="#{vo.quoteItem.multiUsageFlag}"
+						filterBy="#{vo.quoteItem.multiUsageFlag}"
+						styleClass="column_multiUsage tdmandatoryvalue">
+						<h:selectOneMenu value="#{vo.quoteItem.multiUsageFlag}"
+							effect="size" id="multiUsageFlag_in">
+							<f:selectItem itemLabel="Yes" itemValue="true" />
+							<f:selectItem itemLabel="No" itemValue="false" />
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</h:selectOneMenu>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.QCCommentsAvnetInternal']}"
+						sortBy="#{vo.quoteItem.internalComment}"
+						filterBy="#{vo.quoteItem.internalComment}"
+						filterMatchMode="contains"
+						styleClass="column_qcInternalComment readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.internalComment}" />
+					</p:column>
+					<!-- bmt fields start -->
+					<p:column headerText="#{dbResource['wq.label.qcAtt']}"
+						styleClass="column_qcAttachments">
+						<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}"
+							styleClass="query_view"
+							rendered="#{vo.quoteItem.qcAttachmentFlag}"
+							update=":form:attathmentsPanel:componentAttData"
+							oncomplete="PF('attachmentDialog').show();">
+							<h:graphicImage url="./../resources/images/icon_magnifier.png"
+								styleClass="iconLink" />
+							<f:setPropertyActionListener target="#{viewScope.attachments}"
+								value="#{vo.quoteItem.getAttachments('QC Attachment')}" />
+						</p:commandLink>
+					</p:column>
+
+					<!-- bmt fields end -->
+
+					<p:column
+						headerText="#{dbResource['wq.label.lead']}&lt;br/&gt;#{dbResource['wq.label.timeWks']}*"
+						sortBy="#{vo.quoteItem.leadTime}"
+						filterBy="#{vo.quoteItem.leadTime}" filterMatchMode="contains"
+						styleClass="column_leadTime tdmandatoryvalue">
+						<p:inputText value="#{vo.quoteItem.leadTime}" id="leadTime_in"
+							onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="mandatory_input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.MPQ']}*"
+						sortBy="#{vo.quoteItem.mpq}" filterBy="#{vo.quoteItem.mpq}"
+						filterMatchMode="contains"
+						styleClass="column_mpq align_right tdmandatoryvalue">
+						<p:inputText value="#{vo.quoteItem.smpq}" id="mpq_in"
+							onkeypress="return isInteger(event)"
+							onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="mandatory_input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.moq']}*"
+						sortBy="#{vo.quoteItem.moq}" filterBy="#{vo.quoteItem.moq}"
+						filterMatchMode="contains"
+						styleClass="column_moq align_right tdmandatoryvalue">
+						<p:inputText value="#{vo.quoteItem.smoq}" id="moq_in"
+							onkeypress="return isInteger(event)"
+							onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="mandatory_input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.mov']}*"
+						sortBy="#{vo.quoteItem.mov}" filterBy="#{vo.quoteItem.mov}"
+						filterMatchMode="contains"
+						styleClass="column_mov align_right tdmandatoryvalue">
+						<p:inputText value="#{vo.quoteItem.smov}" id="mov_in"
+							onkeypress="return isInteger(event)"
+							onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="mandatory_input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.QuotationEffectiveDate']}"
+						sortBy="#{vo.quoteItem.quotationEffectiveDate}"
+						filterBy="#{vo.quoteItem.quotationEffectiveDate}"
+						filterMatchMode="contains"
+						styleClass="column_shipmentValidity editCell">
+						<p:inputText value="#{vo.quoteItem.quotationEffectiveDate}"
+							id="quotationEffectiveDate_in"
+							onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="input_text" 
+							label="Quotation Effective Date">
+							<f:convertDateTime pattern="dd/MM/yyyy"/>
+							<p:ajax update=":form:growl"/>
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.price']}&lt;br/&gt;#{dbResource['wq.label.validity']}*"
+						sortBy="#{vo.quoteItem.priceValidity}"
+						filterBy="#{vo.quoteItem.priceValidity}"
+						filterMatchMode="contains"
+						styleClass="column_validity tdmandatoryvalue">
+						<p:inputText value="#{vo.quoteItem.priceValidity}"
+							id="validity_in" onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="mandatory_input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.shipment']}&lt;br/&gt;#{dbResource['wq.label.validity']}"
+						sortBy="#{vo.quoteItem.shipmentValidity}"
+						filterBy="#{vo.quoteItem.shipmentValidity}"
+						filterMatchMode="contains"
+						styleClass="column_shipmentValidity editCell">
+						<p:inputText value="#{vo.quoteItem.shipmentValidity}"
+							id="shipmentValidity_in" onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="input_text" 
+							label="Shipment Validity">
+							<f:convertDateTime pattern="dd/MM/yyyy"/>
+							<p:ajax update=":form:growl"/>
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.mfrDebit']} #"
+						sortBy="#{vo.quoteItem.vendorDebitNumber}"
+						filterBy="#{vo.quoteItem.vendorDebitNumber}"
+						filterMatchMode="contains"
+						styleClass="column_vendorDebitNumber editCell">
+						<p:inputText value="#{vo.quoteItem.vendorDebitNumber}"
+							onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.mfrQoute']} #"
+						sortBy="#{vo.quoteItem.vendorQuoteNumber}"
+						filterBy="#{vo.quoteItem.vendorQuoteNumber}"
+						filterMatchMode="contains"
+						styleClass="column_vendorQuoteNumber editCell">
+						<p:inputText value="#{vo.quoteItem.vendorQuoteNumber}"
+							onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.mfrQuoteQty']}"
+						sortBy="#{vo.quoteItem.vendorQuoteQty}"
+						filterBy="#{vo.quoteItem.vendorQuoteQty}"
+						filterMatchMode="contains"
+						styleClass="column_vendorQuoteQty align_right editCell">
+						<p:inputText value="#{vo.quoteItem.svendorQuoteQty}"
+							onkeypress="return isInteger(event)"
+							onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.reschedulingWindow']}"
+						sortBy="#{vo.quoteItem.rescheduleWindow}"
+						filterBy="#{vo.quoteItem.rescheduleWindow}"
+						filterMatchMode="contains"
+						styleClass="column_reschedulingWindow align_right editCell">
+						<p:inputText value="#{vo.quoteItem.srescheduleWindow}"
+							id="rescheduleWindow_in" onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.cancellationWindow']}"
+						sortBy="#{vo.quoteItem.cancellationWindow}"
+						filterBy="#{vo.quoteItem.cancellationWindow}"
+						filterMatchMode="contains"
+						styleClass="column_cancellationWindow align_right editCell">
+						<p:inputText value="#{vo.quoteItem.scancellationWindow}"
+							id="cancellationWindow_in" onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+
+					<p:column
+						headerText="#{dbResource['wq.label.quotation']} #{dbResource['wq.label.tc']}"
+						sortBy="#{vo.quoteItem.termsAndConditions}"
+						filterBy="#{vo.quoteItem.termsAndConditions}"
+						filterMatchMode="contains"
+						styleClass="column_termsAndConditions editCell">
+						<p:inputText value="#{vo.quoteItem.termsAndConditions}"
+							style="width:100%" id="termsAndConditions_in"
+							onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column headerText="" styleClass="column_icon readOnlyCell">
+						<p:selectCheckboxMenu label=""
+							value="#{vo.termsAndConditionsStrs}" filter="true"
+							filterText="Filter" filterMatchMode="contain"
+							panelStyle="width:350px" styleClass="input_text">
+							<f:selectItems
+								value="#{responseInternalTransferMB.termsAndConditions}"
+								var="termAndCondition" itemLabel="#{termAndCondition}"
+								itemValue="#{termAndCondition}" />
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl,termsAndConditions_in" />
+						</p:selectCheckboxMenu>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.resale']}&lt;br/&gt;#{dbResource['wq.label.indicator']}"
+						sortBy="#{vo.quoteItem.resaleIndicator}"
+						filterBy="#{vo.quoteItem.resaleIndicator}"
+						filterMatchMode="contains"
+						styleClass="column_resalesIndicator editCell">
+						<p:inputText value="#{vo.quoteItem.resaleIndicator}"
+							id="resaleIndicator_in" onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							styleClass="input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.header.rfqForm']}&lt;br/&gt;-#{dbResource['wq.label.attach']}."
+						exportable="false" styleClass="column_icon align_center">
+						<p:commandLink update=":form:attachment_list_panel"
+							actionListener="#{attachmentDownloadMB.listAttachment('RFQ Form Attachment')}"
+							rendered="#{vo.quoteItem.quote.formAttachmentFlag}"
+							oncomplete="PF('attachment_list_dialog').show()">
+							<h:graphicImage library="images" name="icon_magnifier.png"
+								styleClass="iconLink" />
+							<f:param name="quoteItem_id" value="#{vo.quoteItem.id}" />
+							<f:param name="quote_id" value="#{vo.quoteItem.quote.id}" />
+						</p:commandLink>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.header.rfqItem']}&lt;br/&gt;-#{dbResource['wq.label.attach']}."
+						styleClass="column_icon align_center">
+						<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}"
+							styleClass="query_view"
+							rendered="#{vo.quoteItem.itemAttachmentFlag}"
+							update=":form:attathmentsPanel:componentAttData"
+							oncomplete="PF('attachmentDialog').show();">
+							<h:graphicImage url="./../resources/images/icon_magnifier.png"
+								styleClass="iconLink" />
+							<f:setPropertyActionListener target="#{viewScope.attachments}"
+								value="#{vo.quoteItem.getAttachments('RFQ Item Attachment')}" />
+						</p:commandLink>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.refresh']}&lt;br/&gt;-#{dbResource['wq.label.attach']}."
+						exportable="false" styleClass="column_icon align_center">
+						<p:commandLink update=":form:attachment_list_panel"
+							actionListener="#{attachmentDownloadMB.listAttachment('Refresh Attachment')}"
+							rendered="#{vo.quoteItem.refreshAttachmentFlag}"
+							oncomplete="PF('attachment_list_dialog').show()">
+							<h:graphicImage library="images" name="icon_magnifier.png"
+								styleClass="iconLink" />
+							<f:param name="quoteItem_id" value="#{vo.quoteItem.id}" />
+							<f:param name="quote_id" value="#{vo.quoteItem.quote.id}" />
+						</p:commandLink>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.pm']}&lt;br/&gt;-#{dbResource['wq.label.attach']}."
+						styleClass="column_icon editCell align_center">
+						<p:commandLink update=":form:attachment_edit_panel"
+								
+							actionListener="#{responseInternalTransferMB.listAttachments}"
+							oncomplete="PF('attachment_edit_dialog').show()">
+							<h:graphicImage library="images" name="icon_magnifier.png"
+								styleClass="iconLink" />
+							<f:param name="id" value="#{vo.quoteItem.id}" />
+							<f:param name="attachmentType" value="PM Attachment" />
+						</p:commandLink>
+					</p:column>
+
+
+					<p:column headerText="#{dbResource['wq.label.pmComment']}"
+						sortBy="#{vo.quoteItem.internalTransferComment}"
+						filterBy="#{vo.quoteItem.internalTransferComment}"
+						filterMatchMode="contains" styleClass="column_pmComment editCell">
+						<p:inputText value="#{vo.quoteItem.internalTransferComment}" id="pmComment_in"
+							onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							style="width:100%" styleClass="input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+					</p:column>
+
+					<p:column headerText="" styleClass="column_icon readOnlyCell">
+						<p:selectCheckboxMenu label="" value="#{vo.aqccStrs}"
+							filter="true" filterText="Filter" filterMatchMode="contain"
+							panelStyle="width:350px" styleClass="input_text">
+							<f:selectItems
+								value="#{responseInternalTransferMB.avnetQuoteCentreComments}"
+								var="avnetQuoteCentreComment"
+								itemLabel="#{avnetQuoteCentreComment}"
+								itemValue="#{avnetQuoteCentreComment}" />
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl,pmComment_in" />
+						</p:selectCheckboxMenu>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.allocations']}&lt;br/&gt;#{dbResource['wq.label.part']}*"
+						sortBy="#{vo.quoteItem.allocationFlag}"
+						filterBy="#{vo.quoteItem.allocationFlag}"
+						filterMatchMode="contains"
+						styleClass="column_allocationFlag editCell">
+						<h:selectOneMenu value="#{vo.quoteItem.allocationFlag}" id="allocationFlag_in"
+							effect="size">
+							<f:selectItem itemLabel="Yes" itemValue="true" />
+							<f:selectItem itemLabel="No" itemValue="false" />
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</h:selectOneMenu>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.soldTo']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+						sortBy="#{vo.quoteItem.soldToCustomer.customerNumber}"
+						filterBy="#{vo.quoteItem.soldToCustomer.customerNumber}"
+						filterMatchMode="contains"
+						styleClass="column_soldToCustomerNumber readOnlyCell">
+						<h:outputText
+							value="#{vo.quoteItem.soldToCustomer.customerNumber}" />
+					</p:column>
+
+
+					<p:column headerText="#{dbResource['wq.label.authGP']}"
+						sortBy="#{vo.quoteItem.authGp}" filterBy="#{vo.quoteItem.authGp}"
+						filterMatchMode="contains" styleClass="column_authGp readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.authGp}" />
+					</p:column>
+
+
+					<p:column
+						headerText="#{dbResource['wq.label.reasonsFor']}&lt;br/&gt;#{dbResource['wq.label.authGPChange']}"
+						sortBy="#{vo.authGpReasonDesc}" filterBy="#{vo.authGpReasonDesc}"
+						filterMatchMode="contains"
+						styleClass="column_authGpReasonDesc editCell">
+						<h:selectOneMenu id="authGpReasonDesc"
+							value="#{vo.authGpReasonDesc}" effect="size">
+							<f:selectItem itemLabel="" itemValue="" />
+							<f:selectItems
+								value="#{responseInternalTransferMB.drmsAgpReasons}"
+								var="reason" itemValue="#{reason.authGpChgDesc}"
+								itemLabel="#{reason.authGpChgDesc}" />
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</h:selectOneMenu>
+					</p:column>
+
+
+					<p:column
+						headerText="#{dbResource['wq.label.remarksReason']}"
+						sortBy="#{vo.quoteItem.authGpRemark}"
+						filterBy="#{vo.quoteItem.authGpRemark}" filterMatchMode="contains"
+						styleClass="column_authGpRemark editCell">
+						<p:inputText value="#{vo.quoteItem.authGpRemark}"
+							onkeyup="checkEnterKey(event, this)"
+							onclick="updateDetailPanel(#{vo.quoteItem.id}, #{rowIndex});"
+							style="width:100%" styleClass="input_text" >
+							<p:ajax event="change" listener="#{responseInternalTransferMB.quoteItemVo.cellChangeListener(vo.quoteItem.id)}" update="@this,:form:growl" />
+						</p:inputText>
+
+					</p:column>
+
+
+					<p:column headerText="#{dbResource['wq.label.DRExpiryDate']}"
+						sortBy="#{vo.quoteItem.drExpiryDate}"
+						filterBy="#{vo.quoteItem.drExpiryDate}" filterMatchMode="contains"
+						styleClass="column_drExpiryDate readOnlyCell">
+						<h:outputText value="#{vo.quoteItem.drExpiryDate}">
+							<f:convertDateTime
+								pattern="dd/MM/yyyy" />
+						</h:outputText>
+					</p:column>
+
+				</p:dataTable>
+
+
+				<p:panelGrid styleClass="panelGrid" id="panelGrid_responseITDetails">
+					<ui:remove>
+						<f:facet name="header">
+						#{dbResource['wq.label.responseITDetailsData']}
+					</f:facet>
+					</ui:remove>
+					<p:row>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.form']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quote.formNumber}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.avnetQuote']}#</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteNumber}" />
+						</p:column>
+
+						<p:column styleClass="tdtag"></p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.QuoteType']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteType}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.salesCostPart']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.salesCostFlag =='true'?'Yes':'No'}" />
+						</p:column>
+					  <p:column styleClass="tdtag">#{dbResource['wq.label.salesCostType']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.salesCostType == null?'NonSC':responseInternalTransferMB.selectedQuoteItemVo.quoteItem.salesCostType}" />
+						</p:column>
+
+					</p:row>
+
+					<p:row>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.spr']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.sprFlag? resourceMB.getText('wq.button.yes'):resourceMB.getText('wq.button.no')}" />
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.SapPN']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.sapPartNumber}" />
+						</p:column>
+
+						<p:column styleClass="tdtag"></p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.mfr']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.requestedMfr.name}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.trgResale']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell align_right">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.targetResale}">
+								<f:convertNumber
+									pattern="#,##0.00000" 
+									minFractionDigits="5" />
+							</h:outputText>
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.targetMargin']}%</p:column>
+						<p:column styleClass="tdvalue readOnlyCell align_right">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.targetMargin}">
+								<f:convertNumber
+									 pattern="#,##0.00"
+									minFractionDigits="2" />
+							</h:outputText>
+							<h:outputText value="%"
+								rendered="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.targetMargin != null}" />
+						</p:column>
+
+
+					</p:row>
+
+					<p:row>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.custNameSP']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quote.soldToCustomerName}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.custmrType']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quote.customerType}" />
+						</p:column>
+
+						<p:column styleClass="tdtag"></p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.reqPN']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.requestedPartNumber}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.reqQty']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell align_right">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.requestedQty}">
+								<f:convertNumber
+									 pattern="#,###" />
+							</h:outputText>
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.EAU']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell align_right">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.eau}">
+								<f:convertNumber
+									pattern="#,###" />
+							</h:outputText>
+						</p:column>
+
+					</p:row>
+
+					<p:row>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.endCust']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{empty(responseInternalTransferMB.selectedQuoteItemVo.quoteItem.endCustomer) ? responseInternalTransferMB.selectedQuoteItemVo.quoteItem.endCustomerName : responseInternalTransferMB.selectedQuoteItemVo.quoteItem.endCustomer.name}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.segment']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.enquirySegment}" />
+						</p:column>
+
+						<p:column styleClass="tdtag"></p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.projectName']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.projectName}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.MpSchedule']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.mpSchedule}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.loa']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.loaFlag ? resourceMB.getText('wq.button.yes'):resourceMB.getText('wq.button.no')}" />
+						</p:column>
+
+					</p:row>
+					<p:row>
+
+						<p:column styleClass="tdtag"></p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.customerGroupID']}</p:column>
+						<p:column styleClass="tdvalue  readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.customerGroupId}" />
+						</p:column>
+						<p:column styleClass="tdtag"></p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.salesCost']}</p:column>
+
+						<p:column styleClass="tdvalue align_right readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.salesCost}">
+								<f:convertNumber pattern="#,##0.00000" minFractionDigits="5" />
+							</h:outputText>
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.suggested']} #{dbResource['wq.label.resale']}</p:column>
+
+						<p:column styleClass="tdvalue align_right readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.suggestedResale}">
+								<f:convertNumber pattern="#,##0.00000" minFractionDigits="5" />
+							</h:outputText>
+						</p:column>
+
+					</p:row>
+
+					<p:row>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.ShipToParty']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{empty(responseInternalTransferMB.selectedQuoteItemVo.quoteItem.shipToCustomer) ? responseInternalTransferMB.selectedQuoteItemVo.quoteItem.shipToCustomerName : responseInternalTransferMB.selectedQuoteItemVo.quoteItem.shipToCustomer.name}" />
+						</p:column>
+
+						<p:column styleClass="tdtag"></p:column>
+						<p:column styleClass="tdvalue readOnlyCell"></p:column>
+						<p:column styleClass="tdtag"></p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.app']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.application}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.ppSchedule']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.ppSchedule}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.proGroup']}2</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.productGroup2.name}" />
+						</p:column>
+
+					</p:row>
+
+					<p:row>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.salesmanName']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quote.sales.name}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.team']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quote.team.name}" />
+						</p:column>
+
+						<p:column styleClass="tdtag"></p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.drmsID']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.drmsNumber}" />
+						</p:column>
+
+						<p:column styleClass="tdtag" escape="false">#{dbResource['wq.label.DesignInCat']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.designInCat}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.prog']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.programType}" />
+						</p:column>
+
+
+					</p:row>
+
+					<p:row>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.reqRef']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quote.yourReference}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.rfqSubmissionDate']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.submissionDate}">
+								<f:convertDateTime
+									pattern="dd/MM/yyyy hh:mm:ss" />
+							</h:outputText>
+						</p:column>
+
+						<p:column styleClass="tdtag"></p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.mfrDR']}#</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.supplierDrNumber}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.message.comptInfo']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.competitorInformation}" />
+						</p:column>
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.rfqAtt']}</p:column>
+						<p:column styleClass="tdvalue">
+							<p:commandLink update=":form:attachment_list_panel"
+								actionListener="#{attachmentDownloadMB.listAttachment('RFQ Form Attachment')}"
+								rendered="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quote.formAttachmentFlag}"
+								oncomplete="PF('attachment_list_dialog').show()">
+								<h:graphicImage library="images" name="icon_magnifier.png"
+									styleClass="iconLink" />
+								<f:param name="quoteItem_id"
+									value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.id}" />
+								<f:param name="quote_id"
+									value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quote.id}" />
+							</p:commandLink>
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.rfqItem']}</p:column>
+						<p:column styleClass="tdvalue">
+							<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}"
+								styleClass="query_view"
+								rendered="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.itemAttachmentFlag}"
+								update=":form:attathmentsPanel:componentAttData"
+								oncomplete="PF('attachmentDialog').show();">
+								<h:graphicImage url="./../resources/images/icon_magnifier.png"
+									styleClass="iconLink" />
+								<f:setPropertyActionListener target="#{viewScope.attachments}"
+									value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.getAttachments('RFQ Item Attachment')}" />
+							</p:commandLink>
+						</p:column>
+
+						<p:column styleClass="tdtag"></p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.refreshAttachment']}</p:column>
+						<p:column styleClass="tdvalue">
+							<p:commandLink update=":form:attachment_list_panel"
+								actionListener="#{attachmentDownloadMB.listAttachment('Refresh Attachment')}"
+								rendered="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.refreshAttachmentFlag}"
+								oncomplete="PF('attachment_list_dialog').show()">
+								<h:graphicImage library="images" name="icon_magnifier.png"
+									styleClass="iconLink" />
+								<f:param name="quoteItem_id"
+									value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.id}" />
+								<f:param name="quote_id"
+									value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quote.id}" />
+							</p:commandLink>
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.PMAtt']}</p:column>
+						<p:column styleClass="tdvalue" colspan="3">
+							<p:commandLink update=":form:attachment_list_panel"
+								actionListener="#{attachmentDownloadMB.listAttachment('PM Attachment')}"
+								rendered="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.pmAttachmentFlag}"
+								oncomplete="PF('attachment_list_dialog').show()">
+								<h:graphicImage library="images" name="icon_magnifier.png"
+									styleClass="iconLink" />
+								<f:param name="quoteItem_id"
+									value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.id}" />
+								<f:param name="quote_id"
+									value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quote.id}" />
+							</p:commandLink>
+						</p:column>
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.SoldToCode']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quote.soldToCustomer.customerNumber}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.ShipToCode']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.shipToCustomer.customerNumber}" />
+						</p:column>
+
+						<p:column styleClass="tdtag"></p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.designLoc']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.designLocation}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.designRegion']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.designRegion}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">
+							<h:outputText
+								value="#{dbResource['wq.label.QCComment']}&lt;br&gt;(#{dbResource['wq.label.avnetInternalOnly']})"
+								escape="false" />
+						</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.internalComment}" />
+						</p:column>
+					</p:row>
+
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.EndCustomerCode']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.endCustomer.customerNumber}" />
+						</p:column>
+
+						<p:column styleClass="tdtag"></p:column>
+						<p:column styleClass="tdvalue readOnlyCell"></p:column>
+						<p:column styleClass="tdtag"></p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.itmRemark']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.remarks}" />
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.qcAtt']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}"
+								styleClass="query_view"
+								rendered="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.qcAttachmentFlag}"
+								update=":form:attathmentsPanel:componentAttData"
+								oncomplete="PF('attachmentDialog').show();">
+								<h:graphicImage url="./../resources/images/icon_magnifier.png"
+									styleClass="iconLink" />
+								<f:setPropertyActionListener target="#{viewScope.attachments}"
+									value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.getAttachments('QC Attachment')}" />
+							</p:commandLink>
+						</p:column>
+					</p:row>
+
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.remarks']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quote.remarks}" />
+						</p:column>
+
+						<p:column styleClass="tdtag"></p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.reasonRefresh']}</p:column>
+						<p:column colspan="3" styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.reasonForRefresh}" />
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtComm']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.drComments}" />
+						</p:column>
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.BmtFlag']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.bmtFlag.description}" />
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtSuggCost']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.drCost}" />
+						</p:column>
+						<p:column styleClass="tdtag"></p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtSuggResale']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.drResale}" />
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtSuggMargin']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.drMargin}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtAtts']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}"
+								styleClass="query_view"
+								rendered="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.bmtAttachmentFlag}"
+								update=":form:attathmentsPanel:componentAttData"
+								oncomplete="PF('attachmentDialog').show();">
+								<h:graphicImage url="./../resources/images/icon_magnifier.png"
+									styleClass="iconLink" />
+								<f:setPropertyActionListener target="#{viewScope.attachments}"
+									value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.getAttachments('BMT Attachment')}" />
+							</p:commandLink>
+						</p:column>
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtCurr']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.drAltCurrency}" />
+						</p:column>
+						<p:column styleClass="tdtag">
+							<h:outputText
+								value="#{dbResource['wq.label.bmtSuggCost']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})"
+								escape="false" />
+						</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.drCostAltCurrency}" />
+						</p:column>
+						<p:column styleClass="tdtag"></p:column>
+						<p:column styleClass="tdtag">
+							<h:outputText
+								value="#{dbResource['wq.label.bmtSuggResale']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})"
+								escape="false" />
+						</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.drResaleAltCurrency}" />
+						</p:column>
+						<p:column styleClass="tdtag">
+							<h:outputText
+								value="#{dbResource['wq.label.bmtExchRate']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})"
+								escape="false" />
+						</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.drExchangeRate}" />
+						</p:column>
+
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtQuotedQty']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.drQuoteQty}
+						</p:column>
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtEffDate']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<l:date
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.drEffectiveDate}" />
+						</p:column>
+						<p:column styleClass="tdtag">
+							<h:outputText
+								value="#{dbResource['wq.label.bmtExpDate']}"
+								escape="false" />
+						</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<l:date
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.drExpiryDate}" />
+						</p:column>
+						<p:column styleClass="tdtag"></p:column>
+						<p:column styleClass="tdtag">
+							<h:outputText value="#{dbResource['wq.label.bmtMFRDR']}#"
+								escape="false" />
+						</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.drMfrNo}" />
+						</p:column>
+						<p:column styleClass="tdtag">
+							<h:outputText
+								value="#{dbResource['wq.label.bmtMFRQuote']}#"
+								escape="false" />
+						</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText
+								value="#{responseInternalTransferMB.selectedQuoteItemVo.quoteItem.quoteItemDesign.drMfrQuoteNo}" />
+						</p:column>
+
+						<p:column styleClass="tdtag"></p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+						</p:column>
+					</p:row>
+
+				</p:panelGrid>
+
+
+			</p:panel>
+			<ui:include src="AttachmentListDialog.xhtml" />
+
+			<p:dialog header="#{dbResource['wq.header.attchmntList']}"
+				widgetVar="attachment_edit_dialog" resizable="true">
+				<p:panel header="" id="attachment_edit_panel" style="font-size:12pt">
+
+					<p:fileUpload
+						fileUploadListener="#{responseInternalTransferMB.addAttachment}"
+						update=":form:datatable_attachment_edit"
+						allowTypes="/(\.|\/)(xls|xlsx|zip|doc|docx|msg|pdf|txt|jpg|png|ppt|pptx|7z|XLS|XLSX|ZIP|DOC|DOCX|MSG|PDF|TXT|JPG|PNG|PPT|PPTX|7Z)$/" 
+						cancelLabel="#{dbResource['wq.button.cancel']}" label="#{dbResource['wq.button.choose']}" uploadLabel="#{dbResource['wq.button.upload']}" 
+						/>
+
+					<p:dataTable var="attachment"
+						value="#{responseInternalTransferMB.attachments}"
+						rowKey="#{attachment.id}" rowIndexVar="attachment_rowIndex"
+						id="datatable_attachment_edit" style="margin:5px 0px 0px 0px;"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+						<p:column headerText="#{dbResource['wq.button.no']}.">
+			        #{attachment_rowIndex + 1}
+		        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.fileName']}">
+							<p:commandLink>
+								<h:outputLabel value="#{attachment.fileName}" />
+							</p:commandLink>
+						</p:column>
+
+						<p:column headerText="">
+							<p:commandButton
+								value="#{dbResource['wq.button.download']}" ajax="false">
+								<p:fileDownload
+									value="#{responseInternalTransferMB.getFile(attachment.fileName)}" />
+							</p:commandButton>
+						</p:column>
+
+						<p:column headerText="">
+							<ui:remove>
+								<p:commandButton
+									value="#{dbResource['wq.label.delete']}"
+									actionListener="#{responseInternalTransferMB.deleteAttachment(attachment.fileName)}"
+									update=":form:datatable_attachment_edit" />
+							</ui:remove>
+							<p:commandButton value="#{dbResource['wq.label.delete']}"
+								onclick="PF('confirmation').show(); var a = document.getElementById('form:confirmDialog_modal'); a.style.width=0"
+								actionListener="#{responseInternalTransferMB.setDeleteFileName(attachment.fileName)}" />
+						</p:column>
+
+					</p:dataTable>
+
+				</p:panel>
+			</p:dialog>
+
+			<p:confirmDialog id="confirmDialog"
+				message="#{dbResource['wq.dialog.confirmDelAttchmnt']}"
+				header="#{dbResource['wq.diglog.header.confirm']}"
+				severity="alert" widgetVar="confirmation">
+				<p:commandButton value="#{dbResource['wq.button.yes']}"
+					actionListener="#{responseInternalTransferMB.deleteAttachment}"
+					update=":form:datatable_attachment_edit"
+					oncomplete="PF('confirmation').hide()" />
+				<p:commandButton value="#{dbResource['wq.button.no']}"
+					onclick="PF('confirmation').hide()" type="button" />
+			</p:confirmDialog>
+
+
+			<p:dialog id="sendToQCDialog"
+				header="#{dbResource['wq.diglog.header.confirm']}"
+				widgetVar="sendToQCDialog" resizable="false">
+
+				<p:panelGrid>
+					<p:row>
+						<p:column colspan="2">
+							<p:messages id="sendToQCCheckingMsg" for="sendToQCCheckingMsg"
+								escape="false" />
+						</p:column>
+					</p:row>
+					<f:facet name="footer">
+						<p:row>
+							<p:column style="text-align: center">
+								<p:commandButton value="#{dbResource['wq.button.yes']}"
+									actionListener="#{responseInternalTransferMB.sendToQC}"
+									update=":form:datatable_response_internal_transfer"
+									onclick="PF('sendToQCDialog').hide()">
+									<f:attribute name="sendToQCConfirmed" value="true" />
+								</p:commandButton>
+							</p:column>
+							<p:column style="text-align: center">
+								<p:commandButton value="#{dbResource['wq.button.no']}"
+									type="button" onclick="PF('sendToQCDialog').hide()" />
+							</p:column>
+						</p:row>
+					</f:facet>
+				</p:panelGrid>
+
+			</p:dialog>
+
+			<p:remoteCommand name="sendToQC"
+				actionListener="#{responseInternalTransferMB.sendToQC}"
+				update=":form:datatable_response_internal_transfer">
+				<f:attribute name="sendToQCConfirmed" value="true" />
+			</p:remoteCommand>
+
+			<p:dialog header="#{dbResource['wq.header.searchParts']}"
+				widgetVar="search_Parts_dialog" id="search_Parts_dialog">
+				<p:panel
+					header="#{dbResource['wq.header.searchParts']} (#{responseInternalTransferM.searchPartsCount} #{dbResource['wq.label.recordFound']})"
+					id="alternatePartSearch_panel" style="font-size:12pt">
+					<h:panelGrid columns="5">
+						<h:outputText value="#{dbResource['wq.label.mfr']}"
+							style="padding:0px 3px 0px 3px" />
+						<h:selectOneMenu value="#{responseInternalTransferMB.mfr}">
+							<f:selectItems value="#{responseInternalTransferMB.mfrSelectList}" />
+						</h:selectOneMenu>
+
+						<h:outputText value="#{dbResource['wq.label.mfrP']}:" />
+						<p:inputText value="#{responseInternalTransferMB.requestedPartNumber}" />
+						<p:commandButton value="#{dbResource['wq.button.search']}"
+							update=":form:alternatePartSearch_panel, :form:growl"
+							actionListener="#{responseInternalTransferMB.searchInMaterialPopup}" />
+					</h:panelGrid>
+
+					<p:dataTable var="pricerInfo"
+						value="#{responseInternalTransferMB.pricerInfosInMaterialPopup}"
+						selection="#{responseInternalTransferMB.selectedPricerInfoInMaterialPopup}"
+						rowKey="#{pricerInfo.pricerId}"
+						rowIndexVar="pricer_rowIndex" 
+						paginator="true" 
+						rows="10"
+						
+						rowsPerPageTemplate="10,20,50" id="datatable_searchPart"
+						paginatorPosition="top" editable="true"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+		
+
+						<p:column selectionMode="single" styleClass="column_icon" />
+
+						<p:column headerText="#{dbResource['wq.label.mfr']}">
+			        #{pricerInfo.mfr}
+		        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.mfrP']}">
+			        #{pricerInfo.fullMfrPartNumber}
+		        </p:column>
+		        
+		        
+         <p:column headerText="#{dbResource['wq.label.salesCostPart']}">
+				        #{pricerInfo.salesCostFlag == 'true'?'Yes':'No'}
+			        </p:column>	
+
+						<p:column headerText="#{dbResource['wq.label.cost']}">
+							<h:outputText value="#{pricerInfo.cost}">
+								<f:convertNumber  minFractionDigits="2" maxFractionDigits="5" />
+							</h:outputText>
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.MPQ']}">
+					#{pricerInfo.mpq}
+		        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.moq']}">
+					#{pricerInfo.moq}
+		        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.leadTime']}">
+					#{pricerInfo.leadTime}
+		        </p:column>
+
+						<p:column
+							headerText="#{dbResource['wq.label.description']}">
+					#{pricerInfo.description}
+		        </p:column>
+					</p:dataTable>
+					<p:commandButton global="false"
+						oncomplete="PF('search_Parts_dialog').hide();"
+						value="#{dbResource['wq.button.select']}"
+						actionListener="#{responseInternalTransferMB.replacePart()}"
+						update=":form:datatable_response_internal_transfer,
+		      						    :form:panelGrid_responseITDetails"
+						onstart="start();" onsuccess="stop();" onerror="stopWithError();"
+						style="margin:0px 0px 10px 0px">
+					</p:commandButton>
+				</p:panel>
+			</p:dialog>
+
+
+			<p:dialog header="#{dbResource['wq.label.costIndicators']}"
+				widgetVar="cost_indicator_dialog" id="cost_indicator_dialog">
+				<p:panel
+					header="#{dbResource['wq.label.costIndicators']} (#{responseInternalTransferMB.pricerInfosInMaterialPopup.size()} #{dbResource['wq.label.recordFound']})"
+					id="costIndicator_panel" style="font-size:12pt">
+					<p:dataTable var="pricerInfo"
+						value="#{responseInternalTransferMB.pricerInfosInPricerPopup}"
+						selection="#{responseInternalTransferMB.selectedPricerInfoInPricerPopup}"
+						rowIndexVar="rowIndex"
+						rowKey="#{pricerInfo.pricerId}"
+						id="datatable_costIndicator" paginator="true" rows="10"
+						rowsPerPageTemplate="5,10,20" paginatorPosition="top"
+						style="margin:5px 0px 0px 0px;"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+						<p:column headerText="#{dbResource['wq.button.no']}.">
+				        #{rowIndex + 1}
+			        </p:column>
+
+						<p:column selectionMode="single" styleClass="column_icon" />
+
+						<p:column headerText="#{dbResource['wq.label.pricerType']}">
+						#{pricerInfo.pricerType}
+			        </p:column>
+			        
+			           <p:column headerText="#{dbResource['wq.label.salesCostPart']}">
+				        #{pricerInfo.salesCostFlag == 'true'?'Yes':'No'}
+			        </p:column>	
+						<p:column
+							headerText="#{dbResource['wq.label.costIndicator']}">
+						#{pricerInfo.costIndicator}
+			        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.cost']}">
+							<h:outputText value="#{pricerInfo.cost}">
+								<f:convertNumber  minFractionDigits="5" maxFractionDigits="5" />
+							</h:outputText>
+						</p:column>
+
+						<p:column
+							headerText="#{dbResource['wq.label.QuotationEffectiveDate']}">
+							<h:outputText
+								value="#{pricerInfo.quotationEffectiveDate}">
+								<f:convertDateTime pattern="dd/MM/yyyy" />
+							</h:outputText>
+						</p:column>
+
+						<p:column
+							headerText="#{dbResource['wq.label.priceValidity']}">
+						#{pricerInfo.priceValidity}
+			        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.MPQ']}">
+						#{pricerInfo.mpq}
+			        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.moq']}">
+						#{pricerInfo.moq}
+			        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.mov']}">
+						#{pricerInfo.mov}
+			        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.leadTime']}">
+						#{pricerInfo.leadTime}
+			        </p:column>
+
+					</p:dataTable>
+					<p:commandButton id="costIndicator_selectButton"
+						value="#{dbResource['wq.button.select']}"
+						action="#{responseInternalTransferMB.selectPricer}"
+						update=":form:datatable_response_internal_transfer"
+						style="margin:0px 0px 10px 0px"
+						oncomplete="PF('cost_indicator_dialog').hide();">
+					</p:commandButton>
+
+				</p:panel>
+			</p:dialog>
+		</h:form>
+
+		<script type="text/javascript">
+
+	function sendToQCChecking(xhr, status, args) {
+        if(args.sendToQCCheckingPassed == '1'){
+        	//do nothing, all error shows in the 'growl'
+        }else if(args.sendToQCCheckingPassed == '2'){
+        	PF('sendToQCDialog').show(); 
+        }else if(args.sendToQCCheckingPassed == '3'){
+        	sendToQC();
+        }
+    }
+
+
+	var previousQuoteItemId = 0;
+
+	function updateDetailPanel(currentNumber, rowInd){
+		if(currentNumber != previousQuoteItemId){
+			PF('datatable_rit').unselectAllRows();
+			PF('datatable_rit').selectRow(rowInd);
+			previousQuoteItemId = currentNumber;
+		}	
+	}
+	
+</script>
+
+	</ui:define>
+</ui:composition>

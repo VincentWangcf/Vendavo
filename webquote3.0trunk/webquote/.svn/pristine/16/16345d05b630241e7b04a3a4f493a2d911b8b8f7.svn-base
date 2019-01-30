@@ -1,0 +1,324 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.avnet.emasia</groupId>
+	<artifactId>webquote</artifactId>
+	<version>2.6</version>
+	<packaging>pom</packaging>
+
+	<name>webquote</name>
+
+	<properties>
+
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+		<version.jboss.maven.plugin>7.4.Final</version.jboss.maven.plugin>
+
+		<version.jboss.bom.eap>6.2.0.GA</version.jboss.bom.eap>
+
+		<version.jboss.as>7.5.0.Final-redhat-21</version.jboss.as>
+
+		<version.ear.plugin>2.8</version.ear.plugin>
+		<version.ejb.plugin>2.3</version.ejb.plugin>
+		<version.surefire.plugin>2.10</version.surefire.plugin>
+		<version.war.plugin>2.1.1</version.war.plugin>
+
+		<!-- maven-compiler-plugin -->
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<maven.compiler.source>1.8</maven.compiler.source>
+
+		<cxf.version>2.4.9</cxf.version>
+
+	</properties>
+
+	<modules>
+		<module>../WebQuoteEar</module>
+		<module>../WQ_JPA_Entity</module>
+		<module>../WQ_EJB_Utility</module>
+		<module>../WQ_EJB_Quote</module>
+		<module>../WQ_EJB_AuditTrail</module>
+		<module>../WQ_EJB_Commodity</module>
+		<module>../WQ_EJB_MasterData</module>
+		<module>../WQ_EJB_Reports</module>
+		<module>../WQ_EJB_UserAndAuthor</module>
+		<module>../WQ_Web</module>
+		<module>../WebQuoteRptEar</module>
+
+	</modules>
+
+	<dependencyManagement>
+		
+		<dependencies>
+
+			<dependency>
+				<groupId>com.avnet.emasia</groupId>
+				<artifactId>WQ_EJB_AuditTrail</artifactId>
+				<version>2.6</version>
+				<type>ejb</type>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>com.avnet.emasia</groupId>
+				<artifactId>WQ_EJB_Commodity</artifactId>
+				<version>2.6</version>
+				<type>ejb</type>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>com.avnet.emasia</groupId>
+				<artifactId>WQ_EJB_MasterData</artifactId>
+				<version>2.6</version>
+				<type>ejb</type>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>com.avnet.emasia</groupId>
+				<artifactId>WQ_EJB_Quote</artifactId>
+				<version>2.6</version>
+				<type>ejb</type>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>com.avnet.emasia</groupId>
+				<artifactId>WQ_EJB_Reports</artifactId>
+				<version>2.6</version>
+				<type>ejb</type>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>com.avnet.emasia</groupId>
+				<artifactId>WQ_EJB_UserAndAuthor</artifactId>
+				<version>2.6</version>
+				<type>ejb</type>
+				<scope>provided</scope>
+			</dependency>
+
+
+			<dependency>
+				<groupId>com.avnet.emasia</groupId>
+				<artifactId>WQ_EJB_Utility</artifactId>
+				<version>2.6</version>
+				<type>ejb</type>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>com.avnet.emasia</groupId>
+				<artifactId>WQ_JPA_Entity</artifactId>
+				<version>2.6</version>
+				<type>ejb</type>
+				<scope>provided</scope>
+			</dependency>
+
+
+
+			<dependency>
+				<groupId>com.avnet.emasia</groupId>
+				<artifactId>WQ_Web</artifactId>
+				<version>2.6</version>
+				<type>war</type>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>commons-beanutils</groupId>
+				<artifactId>commons-beanutils</artifactId>
+				<version>1.9.2</version>
+				<scope>compile</scope>
+			</dependency>
+
+
+		    <dependency>
+		      <groupId>org.apache.poi</groupId>
+		      <artifactId>poi</artifactId>
+		      <version>3.10-FINAL</version>
+		    </dependency>
+		  
+		    <dependency>
+		      <groupId>org.apache.poi</groupId>
+		      <artifactId>poi-ooxml</artifactId>
+		      <version>3.10-FINAL</version>
+		    </dependency>
+		  
+		    <dependency>
+		      <groupId>org.apache.poi</groupId>
+		      <artifactId>poi-ooxml-schemas</artifactId>
+		      <version>3.10-FINAL</version>
+		    </dependency>
+		  
+		    <dependency>
+		      <groupId>org.apache.poi</groupId>
+		      <artifactId>poi-scratchpad</artifactId>
+		      <version>3.10-FINAL</version>
+		    </dependency>
+
+
+			<!-- javax spec  -->
+		
+			<dependency>
+  				<groupId>javax.inject</groupId>
+  				<artifactId>javax.inject</artifactId>
+  				<version>1.0.0.redhat-6</version>
+  				<scope>provided</scope>			
+			</dependency>
+					
+			<dependency>
+				<groupId>com.sun.mail</groupId>
+				<artifactId>javax.mail</artifactId>
+				<version>1.5.5.redhat-1</version>
+				<scope>provided</scope>
+			</dependency>
+		
+			<dependency>
+  				<groupId>org.jboss.spec.javax.annotation</groupId>
+  				<artifactId>jboss-annotations-api_1.2_spec</artifactId>
+  				<version>1.0.0.Final-redhat-1</version>
+  				<scope>provided</scope>
+			</dependency>
+		 
+			<dependency>
+				<groupId>org.jboss.spec.javax.ejb</groupId>
+				<artifactId>jboss-ejb-api_3.2_spec</artifactId>
+				<version>1.0.0.Final-redhat-1</version>
+				<scope>provided</scope>
+			</dependency>
+	 
+			<dependency>
+				<groupId>org.jboss.spec.javax.transaction</groupId>
+				<artifactId>jboss-transaction-api_1.2_spec</artifactId>
+				<version>1.0.0.Final-redhat-1</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.jboss.spec.javax.interceptor</groupId>
+				<artifactId>jboss-interceptors-api_1.2_spec</artifactId>
+				<version>1.0.0.Final-redhat-1</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.jboss.spec.javax.jms</groupId>
+				<artifactId>jboss-jms-api_2.0_spec</artifactId>
+				<version>1.0.0.Final-redhat-1</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.jboss.spec.javax.faces</groupId>
+				<artifactId>jboss-jsf-api_2.2_spec</artifactId>
+				<version>2.2.12.redhat-1</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.jboss.spec.javax.servlet</groupId>
+				<artifactId>jboss-servlet-api_3.1_spec</artifactId>
+				<version>1.0.0.Final-redhat-1</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.jboss.spec.javax.el</groupId>
+				<artifactId>jboss-el-api_3.0_spec</artifactId>
+				<version>1.0.6.Final-redhat-1</version>
+				<scope>provided</scope>
+			</dependency>
+
+
+			<!-- javax.persistence and eclipselink -->
+			<dependency>
+				<groupId>org.eclipse.persistence</groupId>
+				<artifactId>eclipselink</artifactId>
+				<version>2.6.4</version>
+				<scope>provided</scope>
+			</dependency>
+
+
+			<!-- jboss ejb -->
+ 
+			<dependency>
+				<groupId>org.jboss.ejb3</groupId>
+				<artifactId>jboss-ejb3-ext-api</artifactId>
+				<version>2.2.0.Final-redhat-1</version>
+				<scope>provided</scope>
+			</dependency>
+ 
+
+			<!-- jboss job -->
+			<dependency>
+				<groupId>org.jboss.eap</groupId>
+				<artifactId>wildfly-clustering-server</artifactId>
+				<version>7.0.0.GA-redhat-2</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.jboss.eap</groupId>
+				<artifactId>wildfly-clustering-service</artifactId>
+				<version>7.0.0.GA-redhat-2</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.jboss.eap</groupId>
+				<artifactId>wildfly-clustering-singleton-api</artifactId>
+				<version>7.0.0.GA-redhat-2</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.wildfly.core</groupId>
+				<artifactId>wildfly-server</artifactId>
+				<version>2.1.2.Final-redhat-1</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>jboss</groupId>
+				<artifactId>jboss-annotations-ejb3</artifactId>
+				<version>4.2.2.GA</version>
+				<scope>provided</scope>
+			</dependency>
+			 
+
+			<!-- apache cxf -->
+		
+			<dependency>
+				<groupId>org.apache.cxf</groupId>
+				<artifactId>cxf-rt-frontend-jaxws</artifactId>
+				<version>${cxf.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.apache.cxf</groupId>
+				<artifactId>cxf-rt-transports-http</artifactId>
+				<version>${cxf.version}</version>
+			</dependency>
+
+			<!-- Jetty is needed if you're are not using the CXFServlet -->
+			<dependency>
+				<groupId>org.apache.cxf</groupId>
+				<artifactId>cxf-rt-transports-http-jetty</artifactId>
+				<version>${cxf.version}</version>
+			</dependency>
+			
+		</dependencies>
+		
+		
+	</dependencyManagement>
+	
+	<build>
+	    <sourceDirectory>ejbModule</sourceDirectory>
+	    <resources>
+	      <resource>
+	        <directory>ejbModule</directory>
+	        <excludes>
+	          <exclude>**/*.java</exclude>
+	        </excludes>
+	      </resource>
+	    </resources>	
+	</build>
+</project>

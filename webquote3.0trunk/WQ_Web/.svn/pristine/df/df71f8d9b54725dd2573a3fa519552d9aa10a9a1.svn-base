@@ -1,0 +1,222 @@
+package com.avnet.emasia.webquote.commodity.converter;
+
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.faces.component.UIComponent;
+import javax.faces.component.UIOutput;
+import javax.faces.context.FacesContext;
+import javax.faces.convert.Converter;
+import javax.faces.convert.FacesConverter;
+
+import org.apache.commons.lang.StringUtils;
+import org.eclipse.jetty.util.log.Log;
+import com.avnet.emasia.webquote.commodity.helper.ProgRfqSubmitHelper;
+import com.avnet.emasia.webquote.entity.ProgramPricer;
+import com.avnet.emasia.webquote.entity.QtyBreakPricer;
+import com.avnet.emasia.webquote.entity.QuantityBreakPrice;
+import com.avnet.emasia.webquote.helper.TransferHelper;
+import com.avnet.emasia.webquote.utilities.DateUtils;
+import com.avnet.emasia.webquote.vo.Oqmsp;
+
+/**
+ * @author Tonmy Li Created on 2013-4-10
+ */
+
+@FacesConverter("webquote.commodity.Oqmsp")
+public class OqmspConverter implements Converter {
+
+	private static Logger logger = Logger.getLogger(OqmspConverter.class.getName());
+	public static final DecimalFormat THOUSAND_FORMAT = new DecimalFormat("###,###");
+	private final static String PLUS = "+";
+	private final static String INDICATOR_SUBSTR = "-";
+
+	private final String BLANK = "";
+
+	private PartternEnum parttern;
+
+	public OqmspConverter() {
+	}
+
+	public OqmspConverter(PartternEnum parttern) {
+		// Log.info(parttern.toString());
+		this.parttern = parttern;
+	}
+
+	public enum PartternEnum {
+
+		CVT_BREAKINT, // order qty rows in single colum
+		CVT_NORMSELL, // normal sell rows in single colum
+		CVT_SALESCOST, // Sales cost rows in single colum
+		CVT_SUGGESTSALE // Suggests Sale rows in single colum
+	}
+
+	@Override
+	public Object getAsObject(FacesContext arg0, UIComponent arg1, String arg2) {
+
+		return null;
+
+	}
+
+	// &lt;br /&gt;
+	@Override
+	public String getAsString(FacesContext arg0, UIComponent arg1, Object arg2) {
+
+		StringBuffer sb = new StringBuffer();
+		// String pm = (String)arg2;
+		Log.info(this.hashCode() + parttern.toString());
+		List<QuantityBreakPrice> qList = (List<QuantityBreakPrice>) arg2;
+		if (qList == null || qList.isEmpty()) {
+			return BLANK;
+		}
+		if (parttern == null) {
+			Log.info("parttern should not be blank");
+			return BLANK;
+		}
+		switch (parttern) {
+		case CVT_BREAKINT:
+			return convertQrderQty(qList);
+		case CVT_NORMSELL:
+			return convertNormalSellPrice(qList);
+		case CVT_SALESCOST:
+			return convertSalesCost(qList);
+		case CVT_SUGGESTSALE:	
+			return convertSuggestedResale(qList);
+
+		}
+		// Log.info(arg1.getcon());
+		// List<Oqmsp> opmspList = ProgRfqSubmitHelper.getOpmspList(pm);
+		/*
+		 * if(opmspList!=null && opmspList.size()>0) {
+		 * sb.append("<div style='width:100%'>"); for(Oqmsp o : opmspList) {
+		 * sb.append("<div style='float:left;width:50%'>").append(o.getOq()).
+		 * append("</div><div style='float:right;width:50%' >").append(o.getMsp(
+		 * )).append("</div>"); } sb.append("</div>"); }
+		 */
+
+		return sb.toString();
+	}
+
+	private static String convertQrderQty(List<QuantityBreakPrice> pricesList) {
+		int qbPSize = pricesList.size();
+		StringBuffer sb = new StringBuffer("");
+		sb.append("<div style='width:100%'>");
+		int size = (qbPSize >= 5) ? 5 : qbPSize;
+		for (int i = 0; i < size; i++) {
+			if (pricesList.get(i).getRoundedQuantityBreakTo() != null) {
+				if (Integer.MAX_VALUE > pricesList.get(i).getRoundedQuantityBreakTo()) {
+					sb.append("<div style='text-align:center'>")
+							.append(thousandFormat(pricesList.get(i).getRoundedQuantityBreak()))
+							.append(INDICATOR_SUBSTR)
+							.append(thousandFormat(pricesList.get(i).getRoundedQuantityBreakTo()));
+					sb.append("</div>");
+				} else {
+					sb.append("<div style='text-align:center'>")
+							.append(thousandFormat(pricesList.get(i).getRoundedQuantityBreak())).append(PLUS);
+					sb.append("</div>");
+				}
+			} else {
+				Log.info(pricesList.get(i).getId() + " RoundedQuantityBreakTo should not be blank");
+			}
+		}
+		sb.append("</div>");
+		return sb.toString();
+
+	}
+
+	private static String convertNormalSellPrice(List<QuantityBreakPrice> pricesList) {
+		int qbPSize = pricesList.size();
+		StringBuffer sb = new StringBuffer("");
+		sb.append("<div style='width:100%'>");
+		int size = (qbPSize >= 5) ? 5 : qbPSize;
+		for (int i = 0; i < size; i++) {
+			if (pricesList.get(i).getQuantityBreakPrice() != null) {
+				sb.append("<div>").append(pricesList.get(i).getQuantityBreakPrice()).append("</div>");
+			}else {
+				break;
+			}
+		}
+		sb.append("</div>");
+		return sb.toString();
+	}
+
+	private static String convertSalesCost(List<QuantityBreakPrice> pricesList) {
+		int qbPSize = pricesList.size();
+		StringBuffer sb = new StringBuffer("");
+		sb.append("<div style='width:100%'>");
+		int size = (qbPSize >= 5) ? 5 : qbPSize;
+		for (int i = 0; i < size; i++) {
+			if (pricesList.get(i).getSalesCost() != null) {
+				sb.append("<div>").append(pricesList.get(i).getSalesCost()).append("</div>");
+			}else {
+				break;
+			}
+		}
+		sb.append("</div>");
+		return sb.toString();
+	}
+
+	private static String convertSuggestedResale(List<QuantityBreakPrice> pricesList) {
+		int qbPSize = pricesList.size();
+		StringBuffer sb = new StringBuffer("");
+		sb.append("<div style='width:100%'>");
+		int size = (qbPSize >= 5) ? 5 : qbPSize;
+		for (int i = 0; i < size; i++) {
+			if (pricesList.get(i).getSuggestedResale() != null) {
+				sb.append("<div>").append(pricesList.get(i).getSuggestedResale()).append("</div>");
+			}else {
+				break;
+			}
+		}
+		sb.append("</div>");
+		return sb.toString();
+	}
+
+	private static String convertValidityDate(String validity) {
+		String qed = "";
+		if (StringUtils.isNotBlank(validity)) {
+			if (DateUtils.isDate(validity)) {
+				qed = DateUtils.addDay(validity, -1);
+			} else {
+				if (StringUtils.isNumeric(validity)) {
+					qed = DateUtils.addDay(DateUtils.getCurrentDateStrForValidity(),
+							(Integer.valueOf(validity).intValue() - 1));
+				}
+			}
+		}
+		return qed;
+	}
+
+	private static String thousandFormat(int mpq) {
+		String returnStr = "";
+		try {
+			returnStr = THOUSAND_FORMAT.format(mpq);
+		} catch (Exception e) {
+			logger.log(Level.WARNING, "Exception occuring in method thousandFormat " + e.getMessage(), e);
+		}
+		return returnStr;
+	}
+
+	private static String convertAvailableToSellQty(QtyBreakPricer qbp) {
+		StringBuffer sb = new StringBuffer();
+		Integer availableSellToQty = qbp.getAvailableToSellQty();
+		if (availableSellToQty != null) {
+			if (qbp instanceof ProgramPricer) {
+				ProgramPricer pm = (ProgramPricer) qbp;
+				if (pm.getAvailableToSellMoreFlag()) {
+					sb.append(thousandFormat(availableSellToQty)).append(PLUS);
+				} else {
+					sb.append(thousandFormat(availableSellToQty));
+				}
+			} else {
+				sb.append(thousandFormat(availableSellToQty));
+			}
+
+		} else {
+			return "";
+		}
+		return sb.toString();
+	}
+}

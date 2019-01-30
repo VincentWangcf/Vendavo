@@ -1,0 +1,4 @@
+001.sql - Create new table COST_COMPARISON_TEMP.
+		- Insert new record to APP_MESSAGES, APP_LABEL, and EXCEL_REPORT, APP_FUNCTION, APP_ROLE_FUNCTION table.
+002.sql add or update currency		
+		

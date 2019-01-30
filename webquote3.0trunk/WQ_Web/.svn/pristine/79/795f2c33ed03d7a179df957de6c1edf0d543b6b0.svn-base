@@ -1,0 +1,147 @@
+package com.avnet.emasia.webquote.web.pricerupload;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Logger;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.mail.MessagingException;
+import javax.naming.NamingException;
+
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jboss.logmanager.Level;
+
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadTemplateBean;
+import com.avnet.emasia.webquote.commodity.constant.PricerConstant;
+import com.avnet.emasia.webquote.commodity.ejb.PricerEnquirySB;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+
+
+@Stateless
+@Asynchronous
+@LocalBean
+public class PricerEnquiryOffline {
+
+	private static final Logger LOG = Logger.getLogger(PricerEnquiryOffline.class.getName());
+
+	@EJB
+	PricerEnquirySB pricerEnquirySB;
+	@EJB
+	SysConfigSB sysConfigSB;
+	@EJB
+	protected MailUtilsSB mailUtilsSB;
+	
+	@EJB
+	private SystemCodeMaintenanceSB sysCodeMaintSB;
+	
+
+	public void downLoadOffline(PricerUploadTemplateBean criteria,User user,PricerDownLoadStrategy downloadSrategy ){
+		try {
+			try {
+
+				Thread.sleep(5000);
+				LOG.info("trying to make this thread asleep.");
+				} catch (InterruptedException e) {
+					LOG.info("Error occured while trying to make this thread asleep.");
+				LOG.log(Level.SEVERE, "Exception in downloading file offline for user : "+user.getEmployeeId()+" , Exception message : "+e.getMessage(), e);
+				}
+			long start = System.currentTimeMillis();
+			List<PricerUploadTemplateBean> downLoadList = pricerEnquirySB.pricerEnquiry(criteria,false);
+	
+			SXSSFWorkbook wb = downloadSrategy.getDownloadFileOffline(user.getDefaultBizUnit().getName(), downLoadList, PricerConstant.PRICER_TEMPLATE_NAME);
+			String fileName = "downloadoffline";
+			String reportTitle ="price inquiry download offline";
+			sendEmail(wb, fileName,user,reportTitle);
+			LOG.info("downLoadList.size():"+downLoadList.size());
+			long end = System.currentTimeMillis();
+			LOG.info("downLoadOffline end,takes " + (end - start) + " ms");	
+		} catch (Exception e) {
+		
+			LOG.log(Level.SEVERE, "failed to download file : downloadoffline, Message : "+e.getMessage(), e);
+		}
+	}
+	
+	private void sendEmail(SXSSFWorkbook workbook, String fileName,User user,String reportTitle)
+			throws IOException {
+
+		LOG.info("call e Report sendEmail process");
+		File xlsFile = null;
+		File zipFile = null;
+		FileOutputStream fileOut = null;
+		String tempPath = sysConfigSB.getProperyValue(QuoteConstant.TEMP_DIR);
+		try {
+			MailInfoBean mib = new MailInfoBean();
+			List<String> toList = new ArrayList<String>();
+			
+			//toList.add("Andy.Hu@AVNET.COM"); // ;user.getEmailAddress()
+			toList.add(user.getEmailAddress());
+			String fromEmailAddr = sysCodeMaintSB.getBuzinessProperty("OFFLINE_REPORT_FROM", user.getDefaultBizUnit().getName());
+
+			if (toList.size() > 0) {
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+				String subject = reportTitle;
+				mib.setMailSubject(subject);
+				mib.setMailTo(toList);
+				String content = "";
+				content += "";
+				content += "Best Regards," + "<br/>";
+				content += fromEmailAddr + "<br/>";
+				mib.setMailContent(content);
+				mib.setMailFrom(fromEmailAddr);
+				fileName = fileName+"_"+sdf.format(new Date());
+				String zipFileName = tempPath+fileName + ".zip";
+				String xlsFileName = tempPath+fileName + ".xlsx";
+				xlsFile = new File(xlsFileName);
+				fileOut = new FileOutputStream(xlsFile);
+				workbook.write(fileOut);
+				fileOut.close();
+				zipFile = (File) QuoteUtil.doZipFile(zipFileName, xlsFileName);
+				mib.setZipFile(zipFile);
+
+				try {
+					mailUtilsSB.sendAttachedMail(mib);
+				} catch (Exception e) {
+					LOG.log(Level.SEVERE, "Send email failed! for file: "+fileName+", Report title: "+reportTitle+", Exception message: " +e.getMessage(), e);
+				}
+
+				LOG.info("call sendEmail end");
+			} else {
+				LOG.info("call sendEmail end, because receiptor is empty!");
+			}
+		} catch (FileNotFoundException e) {
+			throw e;
+		} catch (IOException e1) {
+			throw e1;
+		} finally {
+
+			if (fileOut != null)
+				fileOut = null;
+			if (xlsFile != null) {
+				if (xlsFile.exists())
+					xlsFile.delete();
+			}
+			if (zipFile != null) {
+				if (zipFile.exists())
+					zipFile.delete();
+			}
+		}
+	}
+
+	
+}

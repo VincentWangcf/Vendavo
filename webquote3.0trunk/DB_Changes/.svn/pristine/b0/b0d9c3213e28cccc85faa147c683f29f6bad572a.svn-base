@@ -1,0 +1,20 @@
+/**andy hu 2014-10-10 11:23 comment ********************************************************************************************/
+1: 001 add SAP_PART_NUMBER in quote_item.sql
+the change reason:
+	1.	Provide the pull down menu for SAP Part Number in the following areas
+		a.	RFQ Submission Page (RFQ Item Table). Sales/CS can select the SAP Part Number if he/she need.
+		b.	Working Platform Page (Pending List and RFQ Detail). QC can select the SAP Part Number if he/she need.
+		c.	Response Internal Transfer Page. PM can select the SAP Part Number if he/she need.
+	2.	Send the SAP Quote with selected SAP Part Number.
+/*****************************************************************************************************************/
+/**andy hu 2014-12-4 11:23 comment ********************************************************************************************/
+2: 002 REFERENCE_MARGIN RESALE_MARGIN data patch.sql
+the change reason:
+	1.	fix INC0043919 if the quote which cannot find the reference margin setting, assign reference quote margin as quoted margin. 
+/*****************************************************************************************************************/
+/*****************************************************************************************************************/
+/**andy hu 2014-12-10 11:23 comment ********************************************************************************************/
+3: 003addQUOTED_PART_NUMBER_INDEX.sql
+the change reason:
+	1.	fix INC0026978 improve search quotation history  performance 
+/**

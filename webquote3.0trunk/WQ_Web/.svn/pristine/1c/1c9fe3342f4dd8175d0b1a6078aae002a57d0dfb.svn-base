@@ -1,0 +1,280 @@
+package com.avnet.emasia.webquote.ejb;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
+
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.URL;
+
+import javax.annotation.Resource;
+import javax.ejb.ActivationConfigProperty;
+import javax.ejb.EJB;
+import javax.ejb.MessageDriven;
+import javax.ejb.MessageDrivenContext;
+import javax.jms.Message;
+import javax.jms.MessageListener;
+import javax.xml.ws.WebServiceException;
+
+import org.apache.cxf.transport.http.HTTPException;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.QuoteToSoPending;
+import com.avnet.emasia.webquote.exception.AppException;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.sap.document.sap.soap.functions.mc_style.TableOfZquoteMsg;
+import com.sap.document.sap.soap.functions.mc_style.ZquoteMsg;
+import com.avnet.emasia.webquote.quote.ejb.QuoteSB;
+import com.avnet.emasia.webquote.quote.ejb.QuoteToSoPendingSB;
+import com.avnet.emasia.webquote.quote.ejb.QuoteToSoSB;
+import com.avnet.emasia.webquote.quote.ejb.SAPWebServiceSB;
+
+@MessageDriven(activationConfig = {
+		@ActivationConfigProperty(propertyName = "destinationLookup", propertyValue = "queue/CreateSapQuoteQueue"),
+		@ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
+		@ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
+		@ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1") })
+// DUPS_OK_ACKNOWLEDGE Auto-acknowledge
+public class CreateSAPQuoteMDB implements MessageListener  {
+
+	private static final Logger LOG = Logger.getLogger(CreateSAPQuoteMDB.class.getName());
+	private static final int MAX_DELIVERY_COUNT = 2;
+	private static final Class<?>[] SURPORT_HANDLE_EXPS = {HTTPException.class, SocketTimeoutException.class, ConnectException.class};
+	@EJB
+	SAPWebServiceSB sapWebServiceSB;
+
+	@EJB
+	QuoteSB quoteSB;
+
+	@EJB
+	QuoteToSoPendingSB quoteToSoPendingSB;
+
+	@EJB
+	QuoteToSoSB quoteToSoSB;
+
+	@Resource
+	MessageDrivenContext context;
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void onMessage(Message message) {
+
+		List<QuoteItem> qList = null;
+		List<Long> idList = null;
+		String mesgId = null;
+		Exception exception = null;
+		try {
+			mesgId = "[" + message.getJMSMessageID() + "]";
+			LOG.info(mesgId + " consumer access mesg begin.");
+			idList = message.getBody(List.class);
+			if (idList == null || idList.isEmpty()) {
+				LOG.severe(" JMSMessageID::" + mesgId + " failed by empty idList.");
+				return;
+			}
+			qList = getQItemByQNumbers(idList);
+			if (qList == null || qList.isEmpty()) {
+				LOG.severe(" JMSMessageID::" + mesgId + " failed by empty qList." + " idList::" + collectIds(idList));
+				return;
+			}
+			List<QuoteItem> qList2 = qList;
+			List<Long> idList2 = idList;
+
+			LOG.config(() -> "idList2:::::" + idList2.toString() + ", qList2:::::" + qList2.toString() + ", this:::::"
+					+ System.identityHashCode(this) + ", thread:::::" + Thread.currentThread().getId());
+
+			TableOfZquoteMsg msg = this.sapWebServiceSB.createSAPQuoteNotSendEmail(qList);
+			this.handleMesgBackFromSap(msg, qList);
+			LOG.info(mesgId + " consumer access mesg successfully.");
+
+		    //invokeThrowException();
+
+		} catch (Exception e) {
+			try {
+				Throwable nextThrow = null;
+				boolean isWebServiceExp = e instanceof AppException && 
+						(nextThrow = ((AppException)e).getCausedBy()) instanceof WebServiceException;
+				boolean needRetry = false;
+				if (isWebServiceExp && (nextThrow = nextThrow.getCause()) != null) {
+					Class currThrowClass = nextThrow.getClass();
+					needRetry = Arrays.stream(SURPORT_HANDLE_EXPS).anyMatch(p -> p.equals(currThrowClass));
+				}
+				//java.net.SocketTimeoutException
+				//java.net.ConnectException
+				if (needRetry) {
+					context.setRollbackOnly();
+					if (message.getJMSRedelivered()) {
+						int deliveryCount = message.getIntProperty("JMSXDeliveryCount");
+						LOG.info(mesgId + " deliveryCount::" + deliveryCount);
+						if (MAX_DELIVERY_COUNT == deliveryCount) {
+							exception = e;
+							LOG.log(Level.SEVERE,
+									mesgId + " consumer access mesg failed!!!! after re try to delivery. ", e);
+						}
+					}
+				} else {
+					exception = e;
+					
+					LOG.log(Level.SEVERE, " onMessage failed. JMSMessageID::" + mesgId, e);
+					LOG.severe(" JMSMessageID::" + mesgId + " failed ids ::" + collectIds(idList) + " failed qnums ::"
+							+ collectQuoteNums(qList));
+				}
+			} catch (Exception ex) {
+				exception = ex;
+				LOG.log(Level.SEVERE, "consumer access mesg failed!!!!", ex);
+				LOG.log(Level.SEVERE, "Found Exception when handle onMessage failed Exception. ", e);
+			}
+		}
+		if (exception != null) {
+			handleAfterRetryFailedOrOtherException(qList, exception, mesgId);
+		}
+		LOG.info(mesgId + " consumer access mesg end.");
+	}
+
+	//  need to think about how to handle it.
+	private void handleMesgBackFromSap(TableOfZquoteMsg tableMsg, List<QuoteItem> quoteItems) {
+		if (tableMsg == null || quoteItems == null)
+			return;
+		Date createDay = new Date();
+		try {
+			List<ZquoteMsg> msgs = tableMsg.getItem();
+			List<String> errorMsgs = new ArrayList<String>();
+
+			for (ZquoteMsg msg : msgs) {
+				if (!msg.getType().equalsIgnoreCase("S")) {
+					LOG.log(Level.WARNING,
+							msg.getId() + "/" + msg.getMessage() + "/" + msg.getNumber() + "/" + msg.getType());
+					for (QuoteItem item : quoteItems) {
+						if (item.getQuoteNumber() != null && msg.getMessage() != null
+								&& msg.getMessage().indexOf(item.getQuoteNumber()) > -1) {
+							QuoteToSoPending quoteToSoPending = new QuoteToSoPending();
+							quoteToSoPending.setBizUnit(item.getQuote().getBizUnit());
+							quoteToSoPending.setCreateDate(createDay);
+							quoteToSoPending.setCustomerNumber(item.getSoldToCustomer().getCustomerNumber());
+							quoteToSoPending.setStatus(true);
+
+							quoteToSoPending.setMfr(item.getRequestedMfr().getName());
+							quoteToSoPending.setFullMfrPartNumber(item.getRequestedPartNumber());
+
+							quoteToSoPending.setQuoteNumber(item.getQuoteNumber());
+							quoteToSoPending.setMessage(msg.getMessage());
+							quoteToSoPending.setType(msg.getType());
+							try {
+								QuoteToSoPending detach = quoteToSoPendingSB.updateQuoteToSoPending(quoteToSoPending);
+							} catch (Exception ex) {
+								LOG.log(Level.SEVERE,
+										"Cannot create Quote To So Pending for Quote item biz unit: "
+												+ item.getQuote().getBizUnit().getName() + ", " + "Reason for failure: "
+												+ MessageFormatorUtil.getParameterizedStringFromException(ex),
+										ex);
+							}
+							break;
+						}
+					}
+
+					errorMsgs.add(msg.getMessage());
+				}
+			}
+		} catch (Exception e) {
+
+			LOG.log(Level.SEVERE, "exception message: " + MessageFormatorUtil.getParameterizedStringFromException(e));
+
+			for (QuoteItem item : quoteItems) {
+				QuoteToSoPending quoteToSoPending = new QuoteToSoPending();
+				quoteToSoPending.setBizUnit(item.getQuote().getBizUnit());
+				quoteToSoPending.setCreateDate(createDay);
+				quoteToSoPending.setCustomerNumber(item.getSoldToCustomer().getCustomerNumber());
+				quoteToSoPending.setStatus(true);
+
+				quoteToSoPending.setMfr(item.getRequestedMfr().getName());
+				quoteToSoPending.setFullMfrPartNumber(item.getRequestedPartNumber());
+
+				quoteToSoPending.setQuoteNumber(item.getQuoteNumber());
+				try {
+					QuoteToSoPending detach = quoteToSoPendingSB.updateQuoteToSoPending(quoteToSoPending);
+				} catch (Exception ex) {
+					LOG.log(Level.SEVERE,
+							"Cannot create Quote To So Pending for MFR: " + item.getRequestedMfr().getName()
+									+ ", Exception message: "
+									+ MessageFormatorUtil.getParameterizedStringFromException(e));
+				}
+			}
+		}
+	}
+
+	//  send email
+	private void handleAfterRetryFailedOrOtherException(List<QuoteItem> quoteItems, Exception exception,
+			String mesgId) {
+		String formatMesg = "JMSMessageID:[" + mesgId + "]";
+		LOG.info(" handleAfterRetryFailedOrOtherException begin," + formatMesg);
+		if (quoteItems == null || quoteItems.isEmpty()) {
+			LOG.info(formatMesg + " handleAfterRetryFailedOrOtherException meet quoteItems null or empty ,"
+					+ quoteItems);
+			return;
+		}
+		
+		try {
+			List<Long> ids = quoteItems.stream().map(item -> item.getId()).collect(Collectors.toList());
+			quoteToSoSB.persistQuoteToSosFromItemIdList(ids);
+		} catch (Exception e) {
+			LOG.log(Level.SEVERE, e.getMessage(), e);
+		}
+
+		sapWebServiceSB.sendEmailWhenCreateQuoteFailed(quoteItems, exception, formatMesg);
+		LOG.info(" handleAfterRetryFailedOrOtherException end," + formatMesg);
+	}
+
+	private void invokeThrowException() throws Exception {
+		WebServiceException exception = new WebServiceException("asiiiiii");
+		exception.initCause(new HTTPException(0, "hhhhhhh", new URL("https://emasiaweb-test.avnet.com/webquote")));
+		throw new AppException("try invoke exception.", exception);
+	}
+
+	private String collectQuoteNums(List<QuoteItem> qList) {
+		String qNums = null;
+		if (qList == null) {
+			qNums = "null";
+		} else if (qList.isEmpty()) {
+			qNums = "empty";
+		} else {
+			qNums = qList.stream().filter(p -> p != null && p.getQuoteNumber() != null).map(p -> p.getQuoteNumber())
+					.collect(joining(","));
+		}
+		return "[" + qNums + "]";
+	}
+
+	private String collectIds(List<Long> qList) {
+		String qIds = null;
+		if (qList == null) {
+			qIds = "null";
+		} else if (qList.isEmpty()) {
+			qIds = "empty";
+		} else {
+			qIds = qList.stream().filter(p -> p != null).map(id -> String.valueOf(id)).collect(joining(","));
+		}
+		return "[" + qIds + "]";
+	}
+
+	private List<QuoteItem> getQItemByQNumbers(List<Long> idList) {
+		if (idList == null || idList.isEmpty()) {
+			LOG.warning(" idList should not be null or empty.");
+			return Collections.emptyList();
+		}
+		List<QuoteItem> qList = quoteSB.findQuoteItemsByPKs(idList);
+		if (qList.size() != idList.size()) {
+			List<Long> idsNoFoundInDB = idList.stream().filter(id -> {
+				return id == null || qList.stream().noneMatch(q -> q.getId() == id);
+			}).collect(toList());
+			LOG.warning(" qList.size() not equals idList.size(). This should not be normal."
+					+ " Not found this ids in DB::" + collectIds(idsNoFoundInDB));
+		}
+		return qList;
+	}
+
+}

@@ -1,0 +1,524 @@
+package com.avnet.emasia.webquote.web.pricerupload;
+
+import static java.util.stream.Collectors.toList;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.logging.Logger;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadTemplateBean;
+import com.avnet.emasia.webquote.commodity.bean.ProgramItemUploadCounterBean;
+import com.avnet.emasia.webquote.commodity.constant.PRICER_TYPE;
+import com.avnet.emasia.webquote.commodity.constant.PricerConstant;
+import com.avnet.emasia.webquote.commodity.constant.UPLOAD_ACTION;
+import com.avnet.emasia.webquote.commodity.util.PricerUploadTemplateBeanComparator;
+import com.avnet.emasia.webquote.commodity.util.PricerUtils;
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.entity.SalesCostType;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.POIUtils;
+import com.avnet.emasia.webquote.utilites.web.util.PricerUploadHelper;
+import com.avnet.emasia.webquote.utilities.StringBuilderDecorate;
+import com.avnet.emasia.webquote.utilities.StringBuilderDecorate.OverLimitException;
+import com.avnet.emasia.webquote.utilities.bean.ExcelAliasBean;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+import com.avnet.emasia.webquote.web.maintenance.UploadStrategy;
+
+public class PriceUploadStrategy extends UploadStrategy {
+
+	private static final long serialVersionUID = -43475458881197935L;
+	private static final Logger LOG = Logger.getLogger(PriceUploadStrategy.class.getName());
+	public static final SalesCostType[] ScTypeValues = { SalesCostType.ZBMP, SalesCostType.ZBMD, SalesCostType.ZINM };
+	@Override
+	public List excel2Beans(Sheet sheet) {
+		List<PricerUploadTemplateBean> beans = new LinkedList<PricerUploadTemplateBean>();
+		FormulaEvaluator evaluator = sheet.getWorkbook().getCreationHelper().createFormulaEvaluator();
+		User user = getUser();
+
+		Cell cell;
+		int lineSeq = 0;
+		List<ExcelAliasBean> excelAliasTreeSet = PricerUploadHelper.getPricerExcelAliasAnnotation();
+
+		Row row = null;
+		int lastRownum = sheet.getLastRowNum();
+
+		for (int i = 0; i <= lastRownum; i++) {
+			// skip 5 row
+			if (lineSeq < PricerConstant.PRICER_TEMPLATE_HEADER_ROW_NUMBER) {
+				lineSeq++;
+				continue;
+			}
+			row = sheet.getRow(i);
+			if (row == null) {
+				continue;
+			}
+			PricerUploadTemplateBean bean = new PricerUploadTemplateBean();
+			bean.setLineSeq(++lineSeq);
+			for (ExcelAliasBean excelAliasBean : excelAliasTreeSet) {
+				cell = row.getCell(excelAliasBean.getCellNum() - 1);
+				if (cell != null) {
+					POIUtils.setter(bean, excelAliasBean.getFieldName(),
+							POIUtils.getCellValueWithFormatter(cell, evaluator), String.class);
+				}
+			}
+
+			bean.setBizUnit(user.getDefaultBizUnit());
+			beans.add(bean);
+		}
+		sheet = null;
+		return beans;
+	}
+
+	/**
+	 * add/update verify
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public String verifyFields(List<?> beans) {
+		Collections.sort((List<PricerUploadTemplateBean>) beans, new PricerUploadTemplateBeanComparator());
+		
+		List<Function<PricerUploadTemplateBean, String>> functions = new LinkedList<>();
+		
+		/** validate action and pricerType for all rows */
+		functions.add((PricerUploadTemplateBean bean) -> PricerUploadHelper.validateActionAndPricerType(bean));
+		/** validate mandatory for all fields */
+		functions.add((PricerUploadTemplateBean bean) -> PricerUploadHelper.validateMandatoryFields(bean));
+		/** for fix defect 377 to MOQ or MOV are empty, error message shall be shown*/
+		functions.add((PricerUploadTemplateBean bean) -> PricerUploadHelper.validateMOQAndMOV(bean));
+		functions.add((PricerUploadTemplateBean bean) -> PricerUploadHelper.validateFieldType(bean));
+		functions.add((PricerUploadTemplateBean bean) -> PricerUploadHelper.validateLengthOfFields(bean));
+		/** validate EffectiveDate for all rows */
+		functions.add((PricerUploadTemplateBean bean) -> PricerUploadHelper.validateValidity(bean));
+		functions.add((PricerUploadTemplateBean bean) -> PricerUploadHelper.validateBoolean(bean));
+		functions.add((PricerUploadTemplateBean bean) -> PricerUploadHelper.validateValue(bean));
+		// check for program type, the maximum length is 20 by
+		// damon@20170113
+		/** validate A-Book Cost */
+		functions.add((PricerUploadTemplateBean bean) -> PricerUploadHelper.validateProgramType(bean));
+		return collectForeachVerify((List<PricerUploadTemplateBean>) beans, functions);
+	}
+	
+	/***
+	 * 
+	 * @param beans
+	 * @param function
+	 * @return
+	 */
+	private String collectForeachVerify(List<PricerUploadTemplateBean> beans, List<Function<PricerUploadTemplateBean, String>> functions) {
+		StringBuilderDecorate validateMsg = new StringBuilderDecorate(PricerConstant.STRING_MAX_LENGTH);
+		try {
+			beans.forEach(bean -> functions.forEach(function -> validateMsg.append(function.apply(bean))));
+		} catch(OverLimitException e) {
+			//return validateMsg.toString();
+		}
+		return validateMsg.toString();
+	}
+	
+	private String collectForeachVerify(List<PricerUploadTemplateBean> beans, Function<PricerUploadTemplateBean, String> function) {
+		return collectForeachVerify(beans, Arrays.asList(function));
+	}
+	
+	private String collectBatchVerify(List<Supplier<String>> suppliers) {
+		StringBuilderDecorate validateMsg = new StringBuilderDecorate(PricerConstant.STRING_MAX_LENGTH);
+		try {
+			suppliers.forEach(supplier->validateMsg.append(supplier));
+		} catch(OverLimitException e) {
+			//return validateMsg.toString();
+		}
+		return validateMsg.toString();
+	}
+	
+	private String collectBatchVerify(Supplier<String> supplier) {
+		return collectBatchVerify(Arrays.asList(supplier));
+	}
+	
+	//TODO test
+	public String verifyFieldsForRemove(List<?> beans) {
+		List<Function<PricerUploadTemplateBean, String>> functions = new LinkedList<>();
+		functions.add((PricerUploadTemplateBean bean) -> PricerUploadHelper.validateMandatoryFieldsForRemove(bean));
+		//LOG.info("begin v ::" + index);
+		List<PricerUploadTemplateBean> orderedList = ((List<PricerUploadTemplateBean>)beans).stream()
+				.sorted(Comparator.comparing(b->b.getKeyNoQed())).collect(toList());
+		
+		functions.add((PricerUploadTemplateBean bean) -> validateDuplicateByOrderedList(bean, orderedList));
+		return collectForeachVerify((List<PricerUploadTemplateBean>) orderedList, functions);
+	}
+
+	public String verifyFieldsForRemoveAllPricer(List<?> beans) {
+		List<Function<PricerUploadTemplateBean, String>> functions = new LinkedList<>();
+		functions.add((PricerUploadTemplateBean bean) -> PricerUploadHelper.validateMandatoryFieldsForRemoveAllPricer(bean));
+		
+		List<PricerUploadTemplateBean> orderedList = ((List<PricerUploadTemplateBean>)beans).stream()
+				.sorted(Comparator.comparing(b->b.getKeyNoQed())).collect(toList());
+		
+		functions.add((PricerUploadTemplateBean bean) -> validateDuplicateByOrderedList(bean, orderedList));
+		return collectForeachVerify((List<PricerUploadTemplateBean>) orderedList, functions);
+	}
+	//private static int index = 0;
+	private static String validateDuplicateByOrderedList(PricerUploadTemplateBean bean, List<?> beans) {
+		//LOG.info("begin v ::" + ++index);
+		String pricerType = bean.getPricerType();
+		if(PRICER_TYPE.ALLPRICER.getName().equalsIgnoreCase(pricerType)){
+			//NO SUPPORT GETKEYbYnoQED
+			StringBuffer currentBf = new StringBuffer();
+		
+			currentBf.append(bean.getMfr()).append(bean.getFullMfrPart());
+		
+			StringBuffer validateMsg = new StringBuffer();
+			PricerUploadTemplateBean nextBean = null;
+			StringBuffer nextBf = new StringBuffer(); 
+			Boolean isDuplicate = false;
+			
+			for (int j = 0; j < beans.size(); j++) {
+				nextBean = (PricerUploadTemplateBean) beans.get(j);
+			
+				nextBf.append(nextBean.getMfr()).append(nextBean.getFullMfrPart());
+			
+				if (bean.getLineSeq()!=nextBean.getLineSeq()&&!nextBean.isDuplicate()&&currentBf.toString().equals(nextBf.toString())) {
+					bean.setErr(true);	
+					bean.setDuplicate(true);		
+					validateMsg.append( "(["+bean.getLineSeq()+"],["+nextBean.getLineSeq()+"]) ");
+					nextBean.setErr(true);	
+					nextBean.setDuplicate(true);
+					isDuplicate = true;
+				}	
+			nextBf.delete(0, nextBf.length());
+			}
+			if(isDuplicate){  
+				validateMsg.insert(0, ResourceMB.getText("wq.error.removeDuplicatePricerMFR")+":");
+			}
+			if(validateMsg.length()>0){
+				validateMsg.append(",<br/>");
+			}
+			return validateMsg.toString();
+		} else {
+			StringBuffer currentBf = new StringBuffer();
+			
+			currentBf.append(bean.getKeyNoQed()).append(bean.getQuotationEffectiveDate());
+		
+			StringBuffer validateMsg = new StringBuffer();
+			PricerUploadTemplateBean nextBean = null;
+			StringBuffer nextBf = new StringBuffer(); 
+			Boolean isDuplicate = false;
+			int nextBeanIndex = beans.indexOf(bean) + 1;
+			for (int j = nextBeanIndex; j < beans.size(); j++) {
+				nextBean = (PricerUploadTemplateBean) beans.get(j);
+				if (!bean.getKeyNoQed().equals(nextBean.getKeyNoQed())) {
+					break;
+				}
+				nextBf.append(nextBean.getKeyNoQed()).append(nextBean.getQuotationEffectiveDate());
+			
+				if (bean.getLineSeq()!=nextBean.getLineSeq()&&!nextBean.isDuplicate()&&currentBf.toString().equals(nextBf.toString())) {
+					bean.setErr(true);	
+					bean.setDuplicate(true);		
+					validateMsg.append( "(["+bean.getLineSeq()+"],["+nextBean.getLineSeq()+"]) ");
+					nextBean.setErr(true);	
+					nextBean.setDuplicate(true);
+					isDuplicate = true;
+				}	
+				nextBf.delete(0, nextBf.length());
+			}
+			if(isDuplicate){  
+				String mesgKey = "wq.error.removeDuplicatePricer";
+				if (PRICER_TYPE.CONTRACT.getName().equalsIgnoreCase(pricerType)) {
+					mesgKey = "wq.error.removeDuplicatePricer";
+				} else if (PRICER_TYPE.PROGRAM.getName().equalsIgnoreCase(pricerType)) {
+					mesgKey = "wq.error.removeDuplicatePricerProg";
+				}else if (PRICER_TYPE.NORMAL.getName().equalsIgnoreCase(pricerType)) {
+					mesgKey = "wq.error.removeDuplicatePricerQED";
+				}else if (PRICER_TYPE.SALESCOST.getName().equalsIgnoreCase(pricerType)) {
+					mesgKey = "wq.error.removeDuplicatePricerSalesCost";
+				}else if (PRICER_TYPE.SIMPLE.getName().equalsIgnoreCase(pricerType)) {
+					mesgKey = "wq.error.removeDuplicatePricerSimple";
+				}
+				validateMsg.insert(0, ResourceMB.getText(mesgKey)+":");
+			}
+			if(validateMsg.length()>0){
+				validateMsg.append(",<br/>");
+			}
+			return validateMsg.toString();
+		}
+	}
+	
+	public static MailInfoBean generateUploadPricerEmailContent(Date createOn,String fileName, User user,String errMsg,ProgramItemUploadCounterBean countBean,String fromEmailAddr) {
+		MailInfoBean mib = new MailInfoBean();
+		List<String> toList = new ArrayList<String>();
+		//toList.add("Andy.Hu@AVNET.COM"); // ;user.getEmailAddress()
+		toList.add(user.getEmailAddress());
+		if (toList.size() > 0) {
+			String subject  = "price upload offline";;
+			mib.setMailSubject(subject);
+			mib.setMailTo(toList);
+			String content = "";
+			if(!errMsg.equals("")){
+				content = "File Name: "+fileName+" Uploaded By: "+user.getName()+"  Uploaded by user at: "+PricerUtils.convertFormat2Time(createOn)+" Proceeded by system at: "+PricerUtils.convertFormat2Time(new Date())+" <br/>";
+				content = content + "Upload file didn't pass the verification, please modify the upload files according to follow information,"
+						+ " authentication information is as follows:<br/>";
+				content = content + errMsg +"<br/>";
+				content += "Best Regards," + "<br/>";
+				content += fromEmailAddr + "<br/>";
+			}
+			mib = EJBCommonSB.sendUploadPricerEmail(createOn, fileName, user, countBean, fromEmailAddr, mib, content, "pricerUploadHelper");
+		}
+		return mib;
+	}
+	
+	public String verifyPricerType(List<PricerUploadTemplateBean> beans) {
+		return collectForeachVerify(beans, (PricerUploadTemplateBean bean)->{
+			if (QuoteUtil.isEmpty(bean.getPricerType())) {
+				return ResourceMB.getText("wq.message.row") + " [" + bean.getLineSeq() + "] :"
+						+ ResourceMB.getText("wq.error.mandatoryPricerField") + ", <br/>";
+			} else if (null == PRICER_TYPE.getPricerTypeByName(bean.getPricerType())) {
+				return ResourceMB.getText("wq.message.row") + " [" + bean.getLineSeq() + "] :"
+						+ ResourceMB.getText("wq.error.invalidPricerType") + ", <br/>";
+			}
+			return "";
+		});
+	}
+
+	public boolean validateUiqueActionOrPricerType(String currentAction, String currentPricerType, List<?> beans) {
+		PricerUploadTemplateBean bean = null;
+
+		for (int i = 1; i < beans.size(); i++) {// Starting from the second
+												// row,currentAction and
+												// currentPricerType From the
+												// first row of data
+			bean = (PricerUploadTemplateBean) beans.get(i);
+
+			if (bean.getAction() != null && !bean.getAction().equals(currentAction)) {
+				return false;
+			}
+
+			if (bean.getPricerType() != null && !bean.getPricerType().equalsIgnoreCase(currentPricerType)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Display error message: Remove (Pricer Only) cannot be applied to Part
+	 * Master type file.
+	 * 
+	 * @param action
+	 * @param pricerType
+	 * @return
+	 */
+	public boolean verifyRemoveForPartMaster(String action, String pricerType) {
+		if (PRICER_TYPE.PARTMASTER.getName().equalsIgnoreCase(pricerType)
+				&& UPLOAD_ACTION.REMOVE_PRICER_ONLY.getName().equalsIgnoreCase(action)) {
+			return false;
+		}
+		return true;
+	}
+
+	public boolean verifyRemoveAllPricer(String action, String pricerType) {
+
+		if (action.equalsIgnoreCase(UPLOAD_ACTION.REMOVE_ALL_PRICER.getName())
+				&& !pricerType.equalsIgnoreCase(PRICER_TYPE.ALLPRICER.getName())) {
+			return false;
+		}
+
+		if (!action.equalsIgnoreCase(UPLOAD_ACTION.REMOVE_ALL_PRICER.getName())
+				&& pricerType.equalsIgnoreCase(PRICER_TYPE.ALLPRICER.getName())) {
+			return false;
+		}
+
+		return true;
+
+	}
+
+	public boolean verifyAction(String action) {
+		if (QuoteUtil.isEmpty(action)) {
+			return false;
+		}
+		return true;
+	}
+
+	// verify for DataAccess
+	public String verifyDataAccess(String pricerType, User user, List<PricerUploadTemplateBean> beans, UPLOAD_ACTION action, Map<String, Set<String>> currencyMapRegion) {
+		String sb = "";
+		if (UPLOAD_ACTION.ADD_UPDATE.equals(action)
+				|| UPLOAD_ACTION.REMOVE_PRICER_ONLY.equals(action)) {
+			
+			List<Supplier<String>> suppliers = new LinkedList<>();
+			suppliers.add(() -> verifyAccessPMSalesCostFlag(pricerType, user, beans));
+			suppliers.add(() -> verifyAccessRegionalData(pricerType, user, beans));
+			suppliers.add(() -> verifyAccessSCFlagInMRegional(pricerType, user, beans, action));
+			if(UPLOAD_ACTION.ADD_UPDATE.equals(action)) {
+				suppliers.add(() -> verifyAccessCurrencyInDefaultRegion(pricerType, user, beans, currencyMapRegion));
+			}
+				
+			sb = collectBatchVerify(suppliers);
+			
+		} else if (UPLOAD_ACTION.REMOVE_ALL_PRICER.equals(action)) {
+			//sb.append(verifyAccessForUserSCFlag(user));
+		}
+		return sb;
+
+	}
+	
+	private String verifyAccessCurrencyInDefaultRegion(String pricerType, User user, List<PricerUploadTemplateBean> beans, Map<String, Set<String>> currencyMapRegion) {
+		if (PRICER_TYPE.PARTMASTER.getName().equals(pricerType)) return "";
+		LOG.info(pricerType + " call verifyAccessCurrencyInDefaultRegion begin.");
+		boolean isScPricer = PRICER_TYPE.SALESCOST.getName().equals(pricerType);
+		final Set<String> currencys = currencyMapRegion.get(user.getDefaultBizUnit().getName());
+		Function<PricerUploadTemplateBean, String> verifyItemFunction = null;
+		Function<PricerUploadTemplateBean, String> mesg = (PricerUploadTemplateBean bean)->
+				ResourceMB.getText("wq.message.row") + " [" + bean.getLineSeq() + "] :" + 
+				ResourceMB.getText("wq.error.noaccesscurrency") + ", <br/>" ;
+		
+		if(currencys!=null) { 
+			verifyItemFunction = (PricerUploadTemplateBean bean)-> {
+				boolean noRightToAccesscurrency = !(isScPricer ? currencyMapRegion.get(bean.getRegion()) : currencys).contains(bean.getCurrency());
+				if(noRightToAccesscurrency) return mesg.apply(bean);
+				return null;
+			};
+		} else {
+			verifyItemFunction = (PricerUploadTemplateBean bean) -> mesg.apply(bean);
+		}
+		return collectForeachVerify(beans, verifyItemFunction);
+	}
+ 
+
+	// verify for user is or not have access to decPartMaster's sales cost flag
+	public String verifyAccessPMSalesCostFlag(String pricerType, User user, List<PricerUploadTemplateBean> beans) {
+		LOG.info(pricerType + " call verifyAccessPMSalesCostFlag begin.");
+		if (QuoteUtil.isEqual(false, user.isSalsCostAccessFlag())&& PRICER_TYPE.PARTMASTER.getName().equals(pricerType)) {
+			return collectForeachVerify(beans, (PricerUploadTemplateBean bean)-> {
+				if ("YES".equalsIgnoreCase(bean.getSalesCostFlag())) {
+					return ResourceMB.getText("wq.message.row") + " [" + bean.getLineSeq() + "] :"
+							+ ResourceMB.getText("wq.error.accessforsalescost") + ", <br/>";
+				}
+				return null;
+			});
+		}
+		return "";
+	}
+
+	// remove all -> need user's profile sales_cost_flar =null.
+	/*private String verifyAccessForUserSCFlag(User user) {
+		if (null != user.isSalsCostAccessFlag()) {
+			StringBuffer sb = new StringBuffer();
+			sb.append(ResourceMB.getText("wq.error.accessforremoveallpricerbyscflag") + ", <br/>");
+			return sb.toString();
+		}
+		return "";
+	}*/
+
+	// VERIFY USER HAS OR NOT RIGHT TO MANAGE THE DATA
+	private String verifyAccessRegionalData(String pricerType, User user, List<PricerUploadTemplateBean> beans) {
+		if (PRICER_TYPE.PARTMASTER.getName().equals(pricerType) || PRICER_TYPE.SIMPLE.getName().equals(pricerType)
+				|| PRICER_TYPE.SALESCOST.getName().equals(pricerType)) {
+			return collectForeachVerify(beans, (PricerUploadTemplateBean bean)-> {
+				if (!user.isAccessRegion(bean.getRegion())) {
+					return ResourceMB.getText("wq.message.row") + " [" + bean.getLineSeq() + "] :"
+							+ ResourceMB.getText("wq.error.accessregionaldata") + ", <br/>";
+				}
+				return null;
+			});
+		}
+		return "";
+	}
+
+	// VERIFY
+	public String verifyAccessSCFlagInMRegional(String pricerType, User user, List<PricerUploadTemplateBean> beans,
+			 UPLOAD_ACTION action) {
+
+		if (PRICER_TYPE.PARTMASTER.getName().equals(pricerType) || null == user.isSalsCostAccessFlag()) {
+			return "";
+		}
+		return collectForeachVerify(beans, (PricerUploadTemplateBean bean)-> {
+			if (null != bean.getMaterialRegional()) {
+				String mesg = "";
+				// You do not have access to remove for non Sales Cost Part.
+				// You do not have access to remove for Sales Cost Part.
+				// You do not have access to [{0}] for [{1}].
+				//PRICER_TYPE.SALESCOST.getName().equals(pricerType)
+				//if (QuoteUtil.isEqual(true, user.isSalsCostAccessFlag()) && !bean.getMaterialRegional().isSalesCostFlag()) {
+				if (QuoteUtil.isEqual(true, user.isSalsCostAccessFlag()) && !PRICER_TYPE.SALESCOST.getName().equals(pricerType)) {
+					mesg += ResourceMB.getText("wq.error.accessbysalescostflagfornonsc");
+				}else if (QuoteUtil.isEqual(false, user.isSalsCostAccessFlag()) && PRICER_TYPE.SALESCOST.getName().equals(pricerType)) {
+					mesg += ResourceMB.getText("wq.error.accessbysalescostflagforsc");
+				}
+				if(mesg.length()>0) {
+					return
+						ResourceMB.getText("wq.message.row") + " [" + bean.getLineSeq() + "] :" + mesg + ", <br/>";
+				}
+			}
+			return null;
+		});
+	}
+
+	public String verifyDataValue(String pricerType, User user, List<PricerUploadTemplateBean> beans, String action) {
+		List<Supplier<String>> suppliers = new LinkedList<>();
+		suppliers.add(() -> verifyScTypeValue(pricerType, user, beans, action));
+		suppliers.add(() -> verifyScAsiaNoZinmData(pricerType, user, beans, action));
+		return collectBatchVerify(suppliers);
+	}
+
+	private String verifyScTypeValue(String pricerType, User user, List<PricerUploadTemplateBean> beans,
+			String action) {
+		if (PRICER_TYPE.SALESCOST.getName().equals(pricerType)) {
+			return collectForeachVerify(beans, (PricerUploadTemplateBean bean)-> {
+				if (!QuoteUtil.isEmpty(bean.getSalesCostType())) {
+					if (null == GetSCTypeByStrForUpload(bean.getSalesCostType())) {
+						return ResourceMB.getText("wq.message.row") + " [" + bean.getLineSeq() + "] :"
+								+ ResourceMB.getText("wq.error.sctyperestrict") + ", <br/>";
+					}
+				}
+				return null;
+			});
+		}
+		return "";
+	}
+
+	private String verifyScAsiaNoZinmData(String pricerType, User user, List<PricerUploadTemplateBean> beans,
+			String action) {
+		if (PRICER_TYPE.SALESCOST.getName().equals(pricerType)) {
+			return collectForeachVerify(beans, (PricerUploadTemplateBean bean)-> {
+				if (QuoteSBConstant.REGION_ASIA.equalsIgnoreCase(bean.getRegion())
+						&& SalesCostType.ZINM.toString().equalsIgnoreCase(bean.getSalesCostType())) {
+					return ResourceMB.getText("wq.message.row") + " [" + bean.getLineSeq() + "] :"
+							+ ResourceMB.getText("wq.error.asianosczinm") + ", <br/>";
+				}
+				return null;
+			});
+		}
+		return "";
+	}
+
+	/****
+	 * only for upload because upload only have ZBMP, ZBMD or ZINM three type
+	 **/
+	
+	public static SalesCostType GetSCTypeByStrForUpload(String enumStr) {
+		if (enumStr == null || enumStr.length() == 0) {
+			return null;
+		}
+		
+		for (SalesCostType value : ScTypeValues) {
+			if (value.toString().equals(enumStr)) {
+				return value;
+			}
+		}
+		return null;
+	}
+}

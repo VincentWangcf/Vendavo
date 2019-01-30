@@ -1,0 +1,78 @@
+package com.avnet.emasia.webquote.quote.vo;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * <P>Working Plat From Search Criteria</p>
+ * @author Lenon.Yang 
+ * @date 2016-11-07
+ * @version 1.0
+ *
+ */
+public class WorkingPlatFormSearchCriteria implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	private List<String> pageStatus = new ArrayList<String>();
+	
+	private List<String> status = new ArrayList<String>();
+	
+	private String selectedMfr;
+	
+	private String recordNumber;
+	
+	private List<String> recordNumberList = new ArrayList<String>();
+	
+	public List<String> getPageStatus() {
+		return pageStatus;
+	}
+
+	public void setPageStatus(List<String> pageStatus) {
+		this.pageStatus = pageStatus;
+	}
+
+	public List<String> getStatus() {
+		return status;
+	}
+
+	public void setStatus(List<String> status) {
+		this.status = status;
+	}
+
+	public String getSelectedMfr() {
+		return selectedMfr;
+	}
+
+	public void setSelectedMfr(String selectedMfr) {
+		this.selectedMfr = selectedMfr;
+	}
+
+	public String getRecordNumber() {
+		return recordNumber;
+	}
+
+	public void setRecordNumber(String recordNumber) {
+		this.recordNumber = recordNumber;
+	}
+
+	public List<String> getRecordNumberList() {
+		recordNumberList.clear();
+		recordNumberList.add("100");
+		recordNumberList.add("300");
+		recordNumberList.add("500");
+		recordNumberList.add("1000");
+		recordNumberList.add("2000");
+		recordNumberList.add("ALL");
+		return recordNumberList;
+	}
+
+	public void setRecordNumberList(List<String> recordNumberList) {
+		this.recordNumberList = recordNumberList;
+	}
+
+}

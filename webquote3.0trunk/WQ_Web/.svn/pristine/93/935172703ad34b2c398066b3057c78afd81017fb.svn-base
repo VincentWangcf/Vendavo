@@ -1,0 +1,959 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:func="http://emasia.avnet.com/functions"
+	>
+
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+
+	<f:metadata>
+		<f:viewParam name="quoteId" value="#{myQuoteSearchMB.quoteId}" />
+	</f:metadata>
+
+	
+	<ui:define name="content">
+
+		<p:ajaxStatus onstart="start();" onsuccess="stop();"
+			onerror="stopWithError();" />
+<p:growl id="growl" showDetail="true" sticky="#{growlPropertyMB.sticky}" autoUpdate="true" showSummary="#{growlPropertyMB.showSummary}" escape="#{growlPropertyMB.escape}"/>
+
+		<h:form id="form">
+
+			<p:accordionPanel>
+				<p:tab title="#{dbResource['wq.header.myQuoteSearchCritria']}">
+
+					<h:panelGrid cellpadding="0" style="width:100%;" columns="10">
+
+						<h:outputText value="#{dbResource['wq.label.avnetQuote']} #:" escape="false" />
+						<p:inputTextarea id="criteriaQuoteNumber" size="8"
+							value="#{myQuoteSearchMB.criteria.sQuoteNumber}"
+							autoResize="false" />
+
+						<h:outputText value="#{dbResource['wq.header.form']} #:" />
+						<p:inputTextarea size="8"
+							value="#{myQuoteSearchMB.criteria.sFormNumber}"
+							autoResize="false" />
+
+								<h:outputText value="#{dbResource['wq.label.mfr']}:" />
+						<p:autoComplete value="#{myQuoteSearchMB.criteria.sMfr}"
+							completeMethod="#{myQuoteSearchMB.autoCompleteForManufacturer}"
+							minQueryLength="1" style="width:80%;" >
+								<p:ajax event="query" global="false"/>
+				     </p:autoComplete>
+
+						<h:outputText value="#{dbResource['wq.label.avnetQPN']}:" />
+						<p:autoComplete
+							value="#{myQuoteSearchMB.criteria.sQuotedPartNumber}"
+							completeMethod="#{myQuoteSearchMB.autoCompleteForPartNumber}"
+							minQueryLength="5">
+								<p:ajax event="query" global="false"/>
+				     </p:autoComplete>
+
+						<h:outputText value="#{dbResource['wq.label.reqRef']}:" />
+						<p:inputTextarea size="8"
+							value="#{myQuoteSearchMB.criteria.sYourReference}"
+							autoResize="false" />
+
+						<h:outputText value="#{dbResource['wq.label.custmrName']}:" />
+						<p:autoComplete value="#{myQuoteSearchMB.criteria.sCustomerName}"
+							completeMethod="#{myQuoteSearchMB.autoCompleteForCustomerName}"
+							minQueryLength="3" >
+										<p:ajax event="query" global="false"/>
+				     </p:autoComplete>
+
+						<h:outputText value="#{dbResource['wq.label.SoldToCode']}:" />
+						<p:inputText value="#{myQuoteSearchMB.criteria.sSoldToCode}" />
+
+						<h:outputText value="#{dbResource['wq.label.empName']}:" />
+						<p:autoComplete value="#{myQuoteSearchMB.criteria.sSalesName}"
+							completeMethod="#{myQuoteSearchMB.autoCompleteForEmployeeNameForCS}"
+							minQueryLength="4" >
+									<p:ajax event="query" global="false"/>
+				     </p:autoComplete>
+
+						<h:outputText value="#{dbResource['wq.label.reqPN']}:" />
+						<p:autoComplete
+							value="#{myQuoteSearchMB.criteria.sRequestedPartNumber}"
+							completeMethod="#{myQuoteSearchMB.autoCompleteForPartNumber}"
+							minQueryLength="5" >
+									<p:ajax event="query" global="false"/>
+				     </p:autoComplete>
+					<h:outputText value="#{dbResource['wq.label.mfrQoute']}#:" />
+					<p:inputText value="#{myQuoteSearchMB.criteria.supplierQuote}"  />
+				
+				
+					</h:panelGrid>
+
+					<h:panelGrid cellpadding="0" columns="12" style="width:100%">
+					
+					<h:outputText value="#{dbResource['wq.label.mfrDebit']}#:" />
+					<p:inputText value="#{myQuoteSearchMB.criteria.supplierDebit}"  />
+				 <p:spacer width="152" height="10" />
+						<h:outputText value="#{dbResource['wq.label.status']}:" />
+						<p:selectManyCheckbox value="#{myQuoteSearchMB.criteria.status}"
+							label="status">
+							<f:selectItems itemValue="#{status}" itemLabel="#{status}"
+								value="#{myQuoteSearchMB.criteria.pageStatus}" var="status" />
+						</p:selectManyCheckbox>
+
+						 <p:spacer width="160" height="10" />
+
+						<h:outputText value="#{dbResource['wq.label.quoteStage']}:" />
+						<p:selectManyCheckbox value="#{myQuoteSearchMB.criteria.stage}"
+							label="stage">
+							<f:selectItems itemValue="#{stage}" itemLabel="#{stage}"
+								value="#{myQuoteSearchMB.criteria.pageSalesCSStage}" var="stage" />
+						</p:selectManyCheckbox>
+
+					</h:panelGrid>
+
+					<h:panelGrid cellpadding="0" columns="12" style="width:100%">
+
+						<h:outputText value="#{dbResource['wq.label.quoteRelDate']}" />
+						<h:outputText value="#{dbResource['wq.header.from']}" />
+						<p:calendar
+							value="#{myQuoteSearchMB.criteria.pageSentOutDateFrom}"
+							showOn="button" pattern="dd/MM/yyyy" />
+						<h:outputText value="#{dbResource['wq.header.To']}" />
+						<p:calendar value="#{myQuoteSearchMB.criteria.pageSentOutDateTo}"
+							showOn="button" pattern="dd/MM/yyyy" />
+
+						<h:outputText value="" style="width:20px;" />
+
+						<h:outputText value="#{dbResource['wq.label.rfqSubmissionDate']}" />
+						<h:outputText value="#{dbResource['wq.header.from']}" />
+						<p:calendar value="#{myQuoteSearchMB.criteria.pageUploadDateFrom}"
+							showOn="button"  pattern="dd/MM/yyyy" />
+						<h:outputText value="#{dbResource['wq.header.To']}" />
+						<p:calendar value="#{myQuoteSearchMB.criteria.pageUploadDateTo}"
+							showOn="button" pattern="dd/MM/yyyy" />
+
+						<h:outputText value="" style="width:20px;" />
+
+
+						<h:outputText value="#{dbResource['wq.label.quoteExpiryDate']} :" />
+						<h:outputText value="#{dbResource['wq.header.from']}" />
+						<p:calendar
+							value="#{myQuoteSearchMB.criteria.pageQuoteExpiryDateFrom}"
+							showOn="button" pattern="dd/MM/yyyy" />
+						<h:outputText value="#{dbResource['wq.header.To']}" />
+						<p:calendar
+							value="#{myQuoteSearchMB.criteria.pageQuoteExpiryDateTo}"
+							showOn="button" pattern="dd/MM/yyyy" />
+						<h:outputText value="" style="width:20px;" />
+						
+				<h:outputText value="#{dbResource['wq.label.salesCostPart']}:" />
+				<h:selectOneMenu id="salesCostPartSelectedDownList" value="#{myQuoteSearchMB.criteria.selectedSalesCostPart}">	
+					 <f:selectItem itemLabel="*ALL" itemValue="*ALL" />						
+                     <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			         <f:selectItem itemLabel="No" itemValue="No" />  
+				</h:selectOneMenu>
+								
+				<h:outputText value="#{dbResource['wq.label.customerGroupID']}:"/>
+				<p:inputTextarea id="criteriaCustomerGroup" size="8" value="#{myQuoteSearchMB.criteria.sCustomerGroupId}" autoResize="false" />
+
+				<h:outputText value="$Link" />
+				<h:selectOneMenu id="dLinkSelectedDownList" value="#{myQuoteSearchMB.criteria.SDLinkFlag}" style="margin-left: -120px;">	
+					 <f:selectItem itemLabel="*ALL" itemValue="*ALL" />						
+                     <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			         <f:selectItem itemLabel="No" itemValue="No" />  
+				</h:selectOneMenu>
+
+				<h:outputText value="" style="width:80px;"/>
+
+					</h:panelGrid>
+
+					<h:panelGrid columns="3" cellpadding="0">
+
+						<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search"
+							actionListener="#{myQuoteSearchMB.csSearch}" update="@form" />
+						<p:commandButton value="#{dbResource['wq.button.sendOfflineReport']}" icon="ui-icon-search"
+							actionListener="#{myQuoteSearchMB.csSearchOffline}"
+							update=":growl" />
+						<p:commandButton value="#{dbResource['wq.label.reset']}" icon="ui-icon-triangle-1-w"
+							actionListener="#{myQuoteSearchMB.postContruct}" update="@form" />
+
+					</h:panelGrid>
+
+					<p:watermark for="criteriaQuoteNumber"
+						value="Example:          WR0123456       WR0123457" escape="false" />
+				</p:tab>
+			</p:accordionPanel>
+			<p:panel header="#{dbResource['wq.message.myQuoteList']}" style="font-size:12pt">
+
+				
+				<h:outputText
+					value="#{dbResource['wq.message.SearchCriteriaPrecisely']}."
+					rendered="#{myQuoteSearchMB.recordsExceedMaxAllowed}"
+					style="color:red;font-weight:bold;" />
+
+				<h:panelGrid columns="10" cellpadding="0">
+					<p:commandButton value="#{dbResource['wq.header.copyQuote']}" update="@form"
+						action="#{myQuoteSearchMB.copyHeader}" />
+	        |<p:commandButton value="#{dbResource['wq.button.refreshQuote']}" update="@form"
+						action="#{myQuoteSearchMB.refreshQuote}">
+						<f:setPropertyActionListener
+							target="#{myQuoteSearchMB.myQuotePage}"
+							value="/RFQ/MyQuoteListForCS.jsf" />
+					</p:commandButton>  
+	        |<p:commandButton value="#{dbResource['wq.header.continueSubmission']}" update="@form"
+						action="#{myQuoteSearchMB.continueSubmission}" />
+			|<p:commandButton value="#{dbResource['wq.header.exportSelected']}" ajax="false" actionListener="#{myQuoteSearchMB.exportSelected('MYQUOTE_CS')}">
+			</p:commandButton>
+				</h:panelGrid>
+
+				<p:dataTable var="vo" value="#{myQuoteSearchMB.quoteItemVos}"
+					rowKey="#{vo.quoteItem.id}" paginator="true" rowIndexVar="rowIndex"
+					rows="10" rowsPerPageTemplate="10,20,50"
+					lazy="true"
+					selection="#{myQuoteSearchMB.quoteItemVos.selectionItems}"
+					id="datatable_myquotelist" editable="true" paginatorPosition="top"
+					scrollable="true" scrollHeight="300"
+					rowStyleClass="#{vo.errRow ? 'errorRow' : null}"
+					emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+					
+					
+					<p:ajax event="rowSelect"
+                           listener="#{myQuoteSearchMB.quoteItemVos.onRowSelect}">
+                           
+                </p:ajax>
+                <p:ajax event="rowUnselect" listener="#{myQuoteSearchMB.quoteItemVos.onRowUnselect}" />
+				<p:ajax event="rowSelectCheckbox"
+                           listener="#{myQuoteSearchMB.quoteItemVos.onRowSelectCheckbox}">
+                </p:ajax>
+                <p:ajax event="rowUnselectCheckbox"
+                           listener="#{myQuoteSearchMB.quoteItemVos.onRowUnselectCheckbox}">
+                </p:ajax>
+                <p:ajax event="toggleSelect" listener="#{myQuoteSearchMB.quoteItemVos.onToggleSelect}" />
+
+					<p:column selectionMode="multiple" styleClass="column_icon"
+						exportable="false" />
+
+					<p:column headerText="#{dbResource['wq.label.no']}"  styleClass="column_seq"
+						exportable="false">
+						<h:outputText value="#{vo.seq}" />
+						<!-- <h:outputText value="#{rowIndex+1}" /> -->
+					</p:column>
+		 <p:column headerText="#{dbResource['wq.label.salesCostPart']}" sortBy="#{vo.quoteItem.salesCostFlag}" filterBy="#{vo.quoteItem.salesCostFlag}" filterMatchMode="contains" styleClass="column_salesCostPart" >
+			<h:outputText value="#{vo.quoteItem.salesCostFlag? 'Yes':'No'}" />
+			</p:column>
+					<p:column headerText="#{dbResource['wq.label.used']}" sortBy="#{vo.quoteItem.usedFlag}" filterBy="#{vo.quoteItem.usedFlag}" filterMatchMode="contains" styleClass="column_seq" >
+						<h:outputText value="#{vo.quoteItem.usedFlag? 'Yes':'No'}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quote']}#"
+						sortBy="#{vo.quoteItem.quoteNumber}"
+						filterBy="#{vo.quoteItem.quoteNumber}" filterMatchMode="contains"
+						styleClass="column_quoteNumber">
+						<h:outputText value="#{vo.quoteItem.quoteNumber}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.form']}"
+						sortBy="#{vo.quoteItem.quote.formNumber}"
+						filterBy="#{vo.quoteItem.quote.formNumber}"
+						filterMatchMode="contains" styleClass="column_formNumber">
+						<h:outputText value="#{vo.quoteItem.quote}"
+							converter="webquote.rfq.FormNumber" escape="false" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.quote']}&lt;br/&gt;#{dbResource['wq.label.stage']}"
+						sortBy="#{vo.quoteItem.stage}" filterBy="#{vo.quoteItem.stage}"
+						filterMatchMode="contains" styleClass="column_stage">
+						<h:outputText value="#{vo.quoteItem.stage}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.rfq']}&lt;br/&gt;#{dbResource['wq.label.status']}"
+						sortBy="#{vo.quoteItem.status}" filterBy="#{vo.quoteItem.status}"
+						filterMatchMode="contains" styleClass="column_rfqStatus">
+						<h:outputText
+							value="#{vo.quoteItem.status == 'DQ' ? '': vo.quoteItem.status}" />
+					</p:column>
+					
+					<ui:include src="MyQuoteCommonColumns.xhtml" />
+<!-- 
+					<p:column headerText="#{dbResource['wq.label.quote']}&lt;br/&gt;#{dbResource['wq.label.stage']}" sortBy="#{vo.quoteItem.stage}" filterBy="#{vo.quoteItem.stage}" filterMatchMode="contains" styleClass="column_stage">
+					<h:outputText value="#{vo.quoteItem.stage}"/>
+					</p:column>
+		
+					<p:column headerText="#{dbResource['wq.label.rfq']}&lt;br/&gt;#{dbResource['wq.label.status']}" sortBy="#{vo.quoteItem.status}" filterBy="#{vo.quoteItem.status}" filterMatchMode="contains" styleClass="column_rfqStatus">
+					<h:outputText value="#{vo.quoteItem.status == 'DQ' ? '': vo.quoteItem.status}"/>
+					</p:column>
+ -->
+					<p:column headerText="#{dbResource['wq.label.valid']}&lt;br/&gt;#{dbResource['wq.label.for']}&lt;br/&gt;#{dbResource['wq.label.ordering']}"
+						sortBy="#{vo.readyForOrder}" filterBy="#{vo.readyForOrder}"
+						filterMatchMode="contains" styleClass="column_readyForOrder">
+						<h:outputText value="#{vo.readyForOrder? 'Yes':'No'}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.message.invalidOrd']}"
+						sortBy="#{vo.reasonForNotReadyForOrder}"
+						filterBy="#{vo.reasonForNotReadyForOrder}"
+						filterMatchMode="contains"
+						styleClass="column_reasonForNotReadyForOrder">
+						<h:outputText value="#{vo.reasonForNotReadyForOrder}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.mfr']}"
+						sortBy="#{vo.quoteItem.requestedMfr.name}"
+						filterBy="#{vo.quoteItem.requestedMfr.name}"
+						filterMatchMode="contains" styleClass="column_mfr">
+						<h:outputText value="#{vo.quoteItem.requestedMfr.name}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quotedPN']}"
+						sortBy="#{vo.quoteItem.quotedPartNumber}"
+						filterBy="#{vo.quoteItem.quotedPartNumber}"
+						filterMatchMode="contains" styleClass="column_quotedPartNumber">
+						<h:outputText
+							value="#{vo.quoteItem.quotedPartNumber}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.requested']}&lt;br/&gt;#{dbResource['wq.label.pn']}"
+						sortBy="#{vo.quoteItem.requestedPartNumber}"
+						filterBy="#{vo.quoteItem.requestedPartNumber}"
+						filterMatchMode="contains" styleClass="column_fullMfrPart">
+						<h:outputText value="#{vo.quoteItem.requestedPartNumber}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.sapMN']}"
+						sortBy="#{vo.quoteItem.sapPartNumber}"
+						filterBy="#{vo.quoteItem.sapPartNumber}"
+						filterMatchMode="contains" styleClass="column_fullMfrPart">
+						<h:outputText value="#{vo.quoteItem.sapPartNumber}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.sap']}&lt;br/&gt;#{dbResource['wq.label.pn']}&lt;br/&gt;#{dbResource['wq.button.search']}"
+						styleClass="column_icon" exportable="false">
+						<p:commandLink global="false"
+							actionListener="#{myQuoteSearchMB.updatePartNumberSearchDialogBox}"
+							update=":form:search_Parts_dialog">
+							<f:attribute name="targetQuoteItemVo" value="#{vo}" />
+							<h:graphicImage url="./../resources/images/icon_magnifier.png"
+								styleClass="iconLink" />
+						</p:commandLink>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.custNameSP']}"
+						sortBy="#{vo.quoteItem.quote.soldToCustomerName}"
+						filterBy="#{vo.quoteItem.quote.soldToCustomerName}"
+						filterMatchMode="contains" styleClass="column_soldToCustomerName">
+						<h:outputText value="#{vo.quoteItem.quote.soldToCustomerName}" />
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.chineseCustName']}"
+						sortBy="#{vo.quoteItem.quote.soldToCustomerNameChinese}"
+						filterBy="#{vo.quoteItem.quote.soldToCustomerNameChinese}" filterMatchMode="contains"
+						styleClass="column_soldToCustomerName">
+						<h:outputText value="#{vo.quoteItem.quote.soldToCustomerNameChinese}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.soldTo']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+						sortBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}"
+						filterBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}"
+						filterMatchMode="contains"
+						styleClass="column_soldToCustomerNumber">
+						<h:outputText
+							value="#{vo.quoteItem.quote.soldToCustomer.customerNumber}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.sap']}&lt;br/&gt;#{dbResource['wq.label.soldToType']}"
+						sortBy="#{vo.quoteItem.quote.soldToCustomer.accountGroupDesc}"
+						filterBy="#{vo.quoteItem.quote.soldToCustomer.accountGroupDesc}"
+						filterMatchMode="contains" styleClass="column_customerType">
+						<h:outputText
+							value="#{vo.quoteItem.quote.soldToCustomer.accountGroupDesc}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.endCust']}"
+						sortBy="#{vo.endCustomerName}"
+						filterBy="#{vo.quoteItem.endCustomer.CustomerFullName}"
+						filterMatchMode="contains" styleClass="column_endCustomerName">
+						<h:outputText
+							value="#{vo.endCustomerName}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.end']}&lt;br/&gt;#{dbResource['wq.label.cust']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+						sortBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.endCustomer.customerNumber : vo.quoteItem.endCustomer.customerNumber}"
+						filterBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.endCustomer.customerNumber : vo.quoteItem.endCustomer.customerNumber}"
+						filterMatchMode="contains" styleClass="column_endCustomerNumber">
+						<h:outputText
+							value="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.endCustomer.customerNumber : vo.quoteItem.endCustomer.customerNumber}" />
+					</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.customerGroupID']}" sortBy="#{vo.quoteItem.customerGroupId}" filterBy="#{vo.quoteItem.customerGroupId}" filterMatchMode="contains" styleClass="column_custoemrGroupId">
+			<h:outputText value="#{vo.quoteItem.customerGroupId}"/>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.rfqcurr']}" sortBy="#{vo.quoteItem.rfqCurr}"   filterBy="#{vo.quoteItem.rfqCurr}" filterMatchMode="contains" styleClass="column_salesCostType">
+			<h:outputText value="#{vo.quoteItem.rfqCurr}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.salesCostType']}" sortBy="#{vo.quoteItem.salesCostType}"  filterBy="#{vo.quoteItem.salesCostType}" filterMatchMode="contains" styleClass="column_salesCostType">
+			<h:outputText value="#{vo.quoteItem.salesCostType}"/>
+			</p:column>
+		  <p:column headerText="#{dbResource['wq.label.salesCost']}" sortBy="#{vo.quoteItem.salesCostRFQCur}" filterBy="#{vo.quoteItem.salesCostRFQCur}" filterMatchMode="contains" styleClass="column_salesCost align_right">
+			<h:outputText value="#{vo.quoteItem.salesCostRFQCur}">
+				<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5"/>
+			</h:outputText>
+			</p:column>
+			
+		  <p:column headerText="#{dbResource['wq.label.suggested']}&lt;br/&gt;#{dbResource['wq.label.resale']}" sortBy="#{vo.quoteItem.suggestedResaleRFQCur}" filterBy="#{vo.quoteItem.suggestedResaleRFQCur}" filterMatchMode="contains" styleClass="column_suggestedResale align_right">
+			<h:outputText value="#{vo.quoteItem.suggestedResaleRFQCur}">
+				<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5"/>
+			</h:outputText>
+			</p:column>
+<!-- 201810 (wwh): update -->
+					<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quotedPrice']}&lt;br/&gt;(#{dbResource['wq.label.rfqcurr']})"
+						sortBy="#{vo.quoteItem.quotedPriceRFQCur}"
+						filterBy="#{vo.quoteItem.quotedPriceRFQCur}" filterMatchMode="contains"
+						styleClass="column_quotedPrice align_right">
+						<h:outputText value="#{vo.quoteItem.quotedPriceRFQCur}">
+							<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5" />
+						</h:outputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.target']}&lt;br/&gt;#{dbResource['wq.label.resale']}&lt;br/&gt;(#{dbResource['wq.label.rfqcurr']})"
+						sortBy="#{vo.quoteItem.targetResale}"
+						filterBy="#{vo.quoteItem.targetResale}" filterMatchMode="contains"
+						styleClass="column_targetResale align_right">
+						<h:outputText value="#{vo.quoteItem.targetResale}">
+							<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5" />
+						</h:outputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.CURExc']}" sortBy="#{vo.quoteItem.buyCurr}/#{vo.quoteItem.rfqCurr}"   filterBy="#{vo.quoteItem.buyCurr}/#{vo.quoteItem.rfqCurr}" filterMatchMode="contains" styleClass="column_salesCostType">
+					<h:outputText value="#{vo.quoteItem.buyCurr}/#{vo.quoteItem.rfqCurr}"/>
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.ExcRate']}" sortBy="#{vo.quoteItem.exRateRfq}" filterBy="#{vo.quoteItem.exRateRfq}" filterMatchMode="contains" styleClass="column_quotedPrice align_right">
+					<h:outputText value="#{vo.quoteItem.exRate}">
+						<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5"/>
+					</h:outputText>
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.FNLCUR']}" sortBy="#{vo.quoteItem.finalCurr}"   filterBy="#{vo.quoteItem.finalCurr}" filterMatchMode="contains" styleClass="column_salesCostType">
+					<h:outputText value="#{vo.quoteItem.finalCurr}"/>
+					</p:column>
+			
+					<p:column headerText="#{dbResource['wq.label.final']}&lt;br/&gt;#{dbResource['wq.label.quotation']}&lt;br/&gt;#{dbResource['wq.label.price']}"
+						sortBy="#{vo.quoteItem.finalQuotationPrice}"
+						filterBy="#{vo.quoteItem.finalQuotationPrice}"
+						filterMatchMode="contains"
+						styleClass="column_quotedPrice align_right">
+						<h:outputText value="#{vo.quoteItem.finalQuotationPrice}">
+							<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5" />
+						</h:outputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.FNLExcRate']}" sortBy="#{vo.quoteItem.exRateFnlCalc}" filterBy="#{vo.quoteItem.exRateFnlCalc}" filterMatchMode="contains" styleClass="column_quotedPrice align_right">
+					<h:outputText value="#{vo.quoteItem.exRateFnlCalc}">
+						<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5"/>
+					</h:outputText>
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.ResaleRange']}" sortBy="#{vo.quoteItem.resaleRange}"   filterBy="#{vo.quoteItem.resaleRange}" filterMatchMode="contains" styleClass="column_salesCostType">
+					<h:outputText value="#{vo.quoteItem.resaleRange}"/>
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.resale']}&lt;br/&gt;#{dbResource['wq.label.indicator']}"
+						sortBy="#{vo.quoteItem.resaleIndicator}"
+						filterBy="#{vo.quoteItem.resaleIndicator}"
+						filterMatchMode="contains" styleClass="column_resalesIndicator">
+						<h:outputText value="#{vo.quoteItem.resaleIndicator}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.quote']}&lt;br/&gt;#{dbResource['wq.label.reference']}&lt;br/&gt;#{dbResource['wq.label.margin']}"
+						sortBy="#{vo.quoteItem.referenceMargin}"
+						filterBy="#{vo.quoteItem.referenceMargin}"
+						filterMatchMode="contains"
+						styleClass="column_targetResale align_right">
+						<h:outputText value="#{vo.quoteItem.referenceMargin}">
+							<f:convertNumber pattern="#0.00" minFractionDigits="2" />
+						</h:outputText>
+						<h:outputText value="%"
+							rendered="#{! empty(vo.quoteItem.referenceMargin)}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.PMOQ']}" sortBy="#{vo.quoteItem.pmoq}"
+						filterBy="#{vo.quoteItem.pmoq}" id="pmoq"
+						filterMatchMode="contains" styleClass="column_pmoq ">
+						<h:outputText value="#{vo.quoteItem.pmoq}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.cost']}&lt;br/&gt;#{dbResource['wq.label.indicator']}"
+						sortBy="#{vo.quoteItem.costIndicator}"
+						filterBy="#{vo.quoteItem.costIndicator}"
+						filterMatchMode="contains"
+						styleClass="column_costIndicator align_right">
+						<h:outputText value="#{vo.quoteItem.costIndicator}" />
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.QuotationEffectiveDate']} " sortBy="#{vo.quoteItem.quotationEffectiveDate}" 
+					filterBy="#{vo.quoteItem.quotationEffectiveDate}" filterMatchMode="contains" styleClass="column_quoteExpiryDate" >
+						<h:outputText value="#{vo.quoteItem.quotationEffectiveDate}">
+						     <f:convertDateTime pattern="dd/MM/yyyy" />
+					    </h:outputText>
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.QuoteExpiry']}&lt;br/&gt;#{dbResource['wq.label.date']}"
+						sortBy="#{vo.quoteItem.quoteExpiryDate}"
+						filterBy="#{vo.quoteItem.quoteExpiryDate}"
+						filterMatchMode="contains" styleClass="column_quoteExpiryDate">
+						<h:outputText value="#{vo.quoteItem.quoteExpiryDate}">
+							<f:convertDateTime pattern="dd/MM/yyyy" />
+						</h:outputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.shipment']}&lt;br/&gt;#{dbResource['wq.label.validity']}"
+						sortBy="#{vo.quoteItem.shipmentValidity}"
+						filterBy="#{vo.quoteItem.shipmentValidity}"
+						filterMatchMode="contains" styleClass="column_shipmentValidity">
+						<h:outputText value="#{vo.quoteItem.shipmentValidity}">
+							<f:convertDateTime pattern="dd/MM/yyyy" />
+						</h:outputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.MPQ']}" sortBy="#{vo.quoteItem.mpq}"
+						filterBy="#{vo.quoteItem.mpq}" filterMatchMode="contains"
+						styleClass="column_mpq align_right">
+						<h:outputText value="#{vo.quoteItem.mpq}">
+							<f:convertNumber   pattern="#,###"  />
+						</h:outputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.moq']}" sortBy="#{vo.quoteItem.moq}"
+						filterBy="#{vo.quoteItem.moq}" filterMatchMode="contains"
+						styleClass="column_moq align_right">
+						<h:outputText value="#{vo.quoteItem.moq}">
+							<f:convertNumber   pattern="#,###"  />
+						</h:outputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.lead']}&lt;br/&gt;#{dbResource['wq.label.timeWks']}"
+						sortBy="#{vo.quoteItem.leadTime}"
+						filterBy="#{vo.quoteItem.leadTime}" filterMatchMode="contains"
+						styleClass="column_leadTime">
+						<h:outputText value="#{vo.quoteItem.leadTime}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.message.multiUsage']}"
+						sortBy="#{vo.quoteItem.multiUsageFlag}"
+						filterBy="#{vo.quoteItem.multiUsageFlag}"
+						filterMatchMode="contains" styleClass="column_multiUsage">
+						<h:outputText value="#{vo.quoteItem.multiUsageFlag? 'Yes':'No'}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.mfrDebit']} #"
+						sortBy="#{vo.quoteItem.vendorDebitNumber}"
+						filterBy="#{vo.quoteItem.vendorDebitNumber}"
+						filterMatchMode="contains" styleClass="column_vendorDebitNumber">
+						<h:outputText value="#{vo.quoteItem.vendorDebitNumber}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.mfrQoute']}#"
+						sortBy="#{vo.quoteItem.vendorQuoteNumber}"
+						filterBy="#{vo.quoteItem.vendorQuoteNumber}"
+						filterMatchMode="contains" styleClass="column_vendorQuoteNumber">
+						<h:outputText value="#{vo.quoteItem.vendorQuoteNumber}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.mfrQuoteQty']}"
+						sortBy="#{vo.quoteItem.vendorQuoteQty}"
+						filterBy="#{vo.quoteItem.vendorQuoteQty}"
+						filterMatchMode="contains"
+						styleClass="column_vendorQuoteQty align_right">
+						<h:outputText value="#{vo.quoteItem.vendorQuoteQty}">
+							<f:convertNumber   pattern="#,###"  />
+						</h:outputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.cancellation']}&lt;br/&gt;#{dbResource['wq.button.window']}"
+						sortBy="#{vo.quoteItem.cancellationWindow}"
+						filterBy="#{vo.quoteItem.cancellationWindow}"
+						filterMatchMode="contains"
+						styleClass="column_cancellationWindow align_right">
+						<h:outputText value="#{vo.quoteItem.cancellationWindow}" rendered="#{vo.quoteItem.cancellationWindow != 0}"/>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.rescheduling']}&lt;br/&gt;#{dbResource['wq.button.window']}"
+						sortBy="#{vo.quoteItem.rescheduleWindow}"
+						filterBy="#{vo.quoteItem.rescheduleWindow}"
+						filterMatchMode="contains"
+						styleClass="column_reschedulingWindow align_right">
+						<h:outputText value="#{vo.quoteItem.rescheduleWindow}" rendered="#{vo.quoteItem.rescheduleWindow != 0}"/>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.quotation']} #{dbResource['wq.label.tc']}"
+						sortBy="#{vo.quoteItem.termsAndConditions}"
+						filterBy="#{vo.quoteItem.termsAndConditions}"
+						filterMatchMode="contains" styleClass="column_termsAndConditions">
+						<h:outputText value="#{vo.quoteItem.termsAndConditions}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.allocatnPart']}"
+						sortBy="#{vo.quoteItem.allocationFlag}"
+						filterBy="#{vo.quoteItem.allocationFlag}"
+						filterMatchMode="contains" styleClass="column_allocationFlag">
+						<h:outputText value="#{vo.quoteItem.allocationFlag? 'Yes':'No'}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.avnetQuoteCenterComment']}"
+						sortBy="#{vo.quoteItem.aqcc}" filterBy="#{vo.quoteItem.aqcc}"
+						filterMatchMode="contains" styleClass="column_qcExternalComment">
+						<h:outputText value="#{vo.quoteItem.aqcc}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.qc']} #{dbResource['wq.label.comment']}&lt;br/&gt;(#{dbResource['wq.label.avnetInternalOnly']})"
+						sortBy="#{vo.quoteItem.internalComment}"
+						filterBy="#{vo.quoteItem.internalComment}"
+						filterMatchMode="contains" styleClass="column_qcInternalComment">
+						<h:outputText value="#{vo.quoteItem.internalComment}" />
+					</p:column>
+<!-- 
+					<p:column headerText="#{dbResource['wq.label.quote']}&lt;br/&gt;#{dbResource['wq.label.stage']}"
+						sortBy="#{vo.quoteItem.stage}" filterBy="#{vo.quoteItem.stage}"
+						filterMatchMode="contains" styleClass="column_stage">
+						<h:outputText value="#{vo.quoteItem.stage}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.rfq']}&lt;br/&gt;#{dbResource['wq.label.status']}"
+						sortBy="#{vo.quoteItem.status}" filterBy="#{vo.quoteItem.status}"
+						filterMatchMode="contains" styleClass="column_rfqStatus">
+						<h:outputText
+							value="#{vo.quoteItem.status == 'DQ' ? '': vo.quoteItem.status}" />
+					</p:column>
+					
+					<ui:include src="MyQuoteCommonColumns.xhtml" />
+ -->
+					<p:column headerText="#{dbResource['wq.label.salesman']}&lt;br/&gt;#{dbResource['wq.label.name']}"
+						sortBy="#{vo.quoteItem.quote.sales.name}"
+						filterBy="#{vo.quoteItem.quote.sales.name}"
+						filterMatchMode="contains" styleClass="column_salesEmployeeName">
+						<h:outputText value="#{vo.quoteItem.quote.sales.name}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.sales']}&lt;br/&gt;#{dbResource['wq.label.employee']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+						sortBy="#{vo.quoteItem.quote.sales.employeeId}"
+						filterBy="#{vo.quoteItem.quote.sales.employeeId}"
+						filterMatchMode="contains" styleClass="column_salesEmployeeNumber">
+						<h:outputText value="#{vo.quoteItem.quote.sales.employeeId}" />
+					</p:column>
+
+
+					<p:column headerText="#{dbResource['wq.label.team']}"
+						sortBy="#{vo.quoteItem.quote.team.name}"
+						filterBy="#{vo.quoteItem.quote.team.name}"
+						filterMatchMode="contains" styleClass="column_team">
+						<h:outputText value="#{vo.quoteItem.quote.team.name}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.ShipToParty']}"
+						sortBy="#{vo.quoteItem.id ==0 ? (empty(vo.quoteItem.quote.shipToCustomer) ? vo.quoteItem.quote.shipToCustomerName : vo.quoteItem.quote.shipToCustomer.name ) : (empty(vo.quoteItem.shipToCustomer) ? vo.quoteItem.shipToCustomerName : vo.quoteItem.shipToCustomer.name ) }"
+						filterBy="#{vo.quoteItem.id ==0 ? (empty(vo.quoteItem.quote.shipToCustomer) ? vo.quoteItem.quote.shipToCustomerName : vo.quoteItem.quote.shipToCustomer.name ) : (empty(vo.quoteItem.shipToCustomer) ? vo.quoteItem.shipToCustomerName : vo.quoteItem.shipToCustomer.name ) }"
+						filterMatchMode="contains" styleClass="column_shipToCustomerName">
+						<h:outputText
+							value="#{vo.quoteItem.id ==0 ? (empty(vo.quoteItem.quote.shipToCustomer) ? vo.quoteItem.quote.shipToCustomerName : vo.quoteItem.quote.shipToCustomer.name ) : (empty(vo.quoteItem.shipToCustomer) ? vo.quoteItem.shipToCustomerName : vo.quoteItem.shipToCustomer.name ) }" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.shipTo']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+						sortBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.shipToCustomer.customerNumber : vo.quoteItem.shipToCustomer.customerNumber}"
+						filterBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.shipToCustomer.customerNumber : vo.quoteItem.shipToCustomer.customerNumber}"
+						filterMatchMode="contains"
+						styleClass="column_shipToCustomerNumber">
+						<h:outputText
+							value="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.shipToCustomer.customerNumber : vo.quoteItem.shipToCustomer.customerNumber}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.cust']}&lt;br/&gt;#{dbResource['wq.label.type']}"
+						sortBy="#{vo.quoteItem.quote.customerType}"
+						filterBy="#{vo.quoteItem.quote.customerType}"
+						filterMatchMode="contains" styleClass="column_customerType">
+						<h:outputText value="#{vo.quoteItem.quote.customerType}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.materialType']}"
+						sortBy="#{vo.quoteItem.materialTypeId}"
+						filterBy="#{vo.quoteItem.materialTypeId}"
+						filterMatchMode="contains" styleClass="column_materialType">
+						<h:outputText value="#{vo.quoteItem.materialTypeId}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.businessProgram']}&lt;br/&gt;#{dbResource['wq.label.type']}"
+						sortBy="#{vo.quoteItem.programType}"
+						filterBy="#{vo.quoteItem.programType}"
+						filterMatchMode="contains" styleClass="column_programType">
+						<h:outputText value="#{vo.quoteItem.programType}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.segment']}"
+						sortBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.enquirySegment : vo.quoteItem.enquirySegment}"
+						filterBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.enquirySegment : vo.quoteItem.enquirySegment}"
+						filterMatchMode="contains" styleClass="column_enquirySegment">
+						<h:outputText
+							value="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.enquirySegment : vo.quoteItem.enquirySegment}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.project']}&lt;br/&gt;#{dbResource['wq.label.name']}"
+						sortBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.projectName : vo.quoteItem.projectName}"
+						filterBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.projectName : vo.quoteItem.projectName}"
+						filterMatchMode="contains" styleClass="column_projectName">
+						<h:outputText
+							value="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.projectName : vo.quoteItem.projectName}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.app']}"
+						sortBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.application : vo.quoteItem.application}"
+						filterBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.application : vo.quoteItem.application}"
+						filterMatchMode="contains" styleClass="column_application">
+						<h:outputText
+							value="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.application : vo.quoteItem.application}" />
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.designRegion']}" sortBy="#{vo.quoteItem.designRegion}" filterBy="#{vo.quoteItem.designRegion}" filterMatchMode="contains" styleClass="column_rfqStatus">
+						<h:outputText value="#{vo.quoteItem.designRegion}"/>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.design']}&lt;br/&gt;#{dbResource['wq.label.location']}"
+						sortBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.designLocation : vo.quoteItem.designLocation}"
+						filterBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.designLocation : vo.quoteItem.designLocation}"
+						filterMatchMode="contains" styleClass="column_designLocation">
+						<h:outputText
+							value="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.designLocation : vo.quoteItem.designLocation}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.DesignInCat']}" sortBy="#{vo.quoteItem.designInCat}" filterBy="#{vo.quoteItem.designInCat}" filterMatchMode="contains" styleClass="column_designInCat">
+						<h:outputText value="#{vo.quoteItem.designInCat}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.drmsID']}"
+						sortBy="#{vo.quoteItem.drmsNumber}"
+						filterBy="#{vo.quoteItem.drmsNumber}" filterMatchMode="contains"
+						styleClass="column_drmsNumber">
+						<h:outputText value="#{vo.quoteItem.drmsNumber}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.mp']}&lt;br/&gt;#{dbResource['wq.label.schedule']}"
+						sortBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.mpSchedule : vo.quoteItem.mpSchedule}"
+						filterBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.mpSchedule : vo.quoteItem.mpSchedule}"
+						filterMatchMode="contains" styleClass="column_mpSchedule">
+						<h:outputText
+							value="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.mpSchedule : vo.quoteItem.mpSchedule}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.pp']}&lt;br/&gt;#{dbResource['wq.label.schedule']}"
+						sortBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.ppSchedule : vo.quoteItem.ppSchedule}"
+						filterBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.ppSchedule : vo.quoteItem.ppSchedule}"
+						filterMatchMode="contains" styleClass="column_ppSchedule">
+						<h:outputText
+							value="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.ppSchedule : vo.quoteItem.ppSchedule}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.loa']}"
+						sortBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.loaFlag : vo.quoteItem.loaFlag}"
+						filterBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.loaFlag : vo.quoteItem.loaFlag}"
+						filterMatchMode="contains" styleClass="column_loa">
+						<h:outputText
+							value="#{(vo.quoteItem.id ==0 ? vo.quoteItem.quote.loaFlag : vo.quoteItem.loaFlag) ? 'Yes':'No'}" />
+					</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.QuoteType']}" sortBy="#{vo.quoteItem.quoteType}" filterBy="#{vo.quoteItem.quoteType}" filterMatchMode="contains" styleClass="column_quoteType">
+				<h:outputText value="#{vo.quoteItem.quoteType}"/>
+			</p:column>
+<!-- 			
+			<p:column headerText="#{dbResource['wq.label.refExchRate']}" sortBy="#{vo.quoteItem.exRateRfq}" filterBy="#{vo.quoteItem.exRateRfq}" filterMatchMode="contains" styleClass="column_mfr">
+				<h:outputText rendered="#{vo.quoteItem.exRateRfq !=null and vo.quoteItem.vat !=null and vo.quoteItem.handling !=null }" 
+				 value="#{vo.quoteItem.exRateRfq.multiply(vo.quoteItem.vat).multiply(vo.quoteItem.handling)}">
+					<f:convertNumber pattern="#0.00000" />
+				</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.refExchCurr']}" sortBy="#{vo.quoteItem.rfqCurr}" filterBy="#{vo.quoteItem.rfqCurr}" filterMatchMode="contains" styleClass="column_mfr">
+			<h:outputText value="#{vo.quoteItem.rfqCurr}"/>
+			</p:column>
+ -->
+					<p:column headerText="#{dbResource['wq.label.remarks']}"
+						sortBy="#{vo.quoteItem.quote.remarks}"
+						filterBy="#{vo.quoteItem.quote.remarks}"
+						filterMatchMode="contains" styleClass="column_remarks">
+						<h:outputText value="#{vo.quoteItem.quote.remarks}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.reqRef']}"
+						sortBy="#{vo.quoteItem.quote.yourReference}"
+						filterBy="#{vo.quoteItem.quote.yourReference}"
+						filterMatchMode="contains" styleClass="column_yourReference">
+						<h:outputText value="#{vo.quoteItem.quote.yourReference}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.CopyToCS']}"
+						sortBy="#{vo.copyToCSName}" filterBy="#{vo.copyToCSName}"
+						filterMatchMode="contains" styleClass="column_copyToCs">
+						<h:outputText value="#{vo.copyToCSName}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.spr']}" sortBy="#{vo.quoteItem.sprFlag}"
+						filterBy="#{vo.quoteItem.sprFlag}" filterMatchMode="contains"
+						styleClass="column_sprFlag">
+						<h:outputText value="#{vo.quoteItem.sprFlag? 'Yes':'No'}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.proGroup']}2"
+						sortBy="#{vo.quoteItem.productGroup2.name}"
+						filterBy="#{vo.quoteItem.productGroup2.name}"
+						filterMatchMode="contains" styleClass="column_productGroup">
+						<h:outputText value="#{vo.quoteItem.productGroup2.name}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}"
+						sortBy="#{vo.quoteItem.requestedQty}"
+						filterBy="#{vo.quoteItem.requestedQty}" filterMatchMode="contains"
+						styleClass="column_requestedQty align_right">
+						<h:outputText value="#{vo.quoteItem.requestedQty}">
+							<f:convertNumber   pattern="#,###"  />
+						</h:outputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.EAU']}" sortBy="#{vo.quoteItem.eau}"
+						filterBy="#{vo.quoteItem.eau}" filterMatchMode="contains"
+						styleClass="column_eau align_right">
+						<h:outputText value="#{vo.quoteItem.eau}">
+							<f:convertNumber   pattern="#,###"  />
+						</h:outputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.mfrDR']}#"
+						sortBy="#{vo.quoteItem.supplierDrNumber}"
+						filterBy="#{vo.quoteItem.supplierDrNumber}"
+						filterMatchMode="contains" styleClass="column_supplierDrNumber">
+						<h:outputText value="#{vo.quoteItem.supplierDrNumber}" />
+					</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.att']}" exportable="false" styleClass="column_icon align_center">
+	        	<p:commandLink update=":form:attachment_list_panel" actionListener="#{attachmentDownloadMB.listAttachmentsByType()}" oncomplete="PF('attachment_list_dialog').show()">
+	        		<h:graphicImage library="images" name="icon_magnifier.png" styleClass="iconLink" 
+	        		     rendered="#{vo.quoteItem.itemAttachmentFlag
+										 or vo.quoteItem.quote.formAttachmentFlag 
+										 or vo.quoteItem.refreshAttachmentFlag }" />
+	        		<f:param name="quoteItem_id" value="#{vo.quoteItem.id}"/>
+	        		<f:param name="quote_id" value="#{vo.quoteItem.quote.id}"/>		
+	        		<f:param name="att_type" value="RFQ Item Attachment,RFQ Form Attachment,Refresh Attachment"/>		        	
+	        	</p:commandLink> 						        				        						        
+			</p:column> 
+
+
+					<p:column headerText="#{dbResource['wq.label.competitor']}&lt;br/&gt;#{dbResource['wq.label.information']}"
+						sortBy="#{vo.quoteItem.competitorInformation}"
+						filterBy="#{vo.quoteItem.competitorInformation}"
+						filterMatchMode="contains"
+						styleClass="column_competitorInformation">
+						<h:outputText value="#{vo.quoteItem.competitorInformation}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.itmRemark']}"
+						sortBy="#{vo.quoteItem.remarks}"
+						filterBy="#{vo.quoteItem.remarks}" filterMatchMode="contains"
+						styleClass="column_itemRemarks">
+						<h:outputText value="#{vo.quoteItem.remarks}" />
+					</p:column>
+
+					<ui:remove>
+						<p:column headerText="#{dbResource['wq.label.refresh']}&lt;br/&gt;#{dbResource['wq.label.attachment']}"
+							exportable="false" styleClass="column_icon">
+							<p:commandLink update=":form:attachment_list_panel"
+								actionListener="#{attachmentDownloadMB.listAttachments}"
+								oncomplete="PF('attachment_list_dialog').show()">
+								<h:graphicImage library="images" name="icon_magnifier.png"
+									styleClass="iconLink" />
+								<f:param name="id" value="#{vo.quoteItem.id}" />
+								<f:param name="type" value="REFRESH" />
+							</p:commandLink>
+						</p:column>
+					</ui:remove>
+
+					<p:column headerText="#{dbResource['wq.label.first']}&lt;br/&gt;#{dbResource['wq.label.rfqCode']}"
+						sortBy="#{vo.quoteItem.firstRfqCode}"
+						filterBy="#{vo.quoteItem.firstRfqCode}" filterMatchMode="contains"
+						styleClass="column_firstRfqCode">
+						<h:outputText value="#{vo.quoteItem.firstRfqCode}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.revert']}&lt;br/&gt;#{dbResource['wq.label.version']}"
+						sortBy="#{vo.quoteItem.revertVersion}"
+						filterBy="#{vo.quoteItem.revertVersion}"
+						filterMatchMode="contains" styleClass="column_revertVersion">
+						<h:outputText value="#{vo.quoteItem.revertVersion}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.rfqSubmissionDate']}" 
+					sortBy="#{vo.quoteItem.submissionDate}" 
+					filterBy="#{vo.quoteItem.submissionDate}" 
+					filterMatchMode="contains" styleClass="column_uploadTime">
+					<h:outputText value="#{vo.quoteItem.submissionDate}">
+						<f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" />
+					</h:outputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.quoteRelease']}&lt;br/&gt;#{dbResource['wq.label.date']}"
+						sortBy="#{vo.quoteItem.sentOutTime}"
+						filterBy="#{vo.quoteItem.sentOutTime}" filterMatchMode="contains"
+						styleClass="column_sentOutTime">
+						<h:outputText value="#{vo.quoteItem.sentOutTime}">
+							<f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" />
+						</h:outputText>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.quotedBy']}"
+						sortBy="#{vo.quoteItem.lastUpdatedQcName}"
+						filterBy="#{vo.quoteItem.lastUpdatedQcName}"
+						filterMatchMode="contains" styleClass="column_employeeName">
+						<h:outputText value="#{vo.quoteItem.lastUpdatedQcName}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.rfqCreatedBy']}"
+						sortBy="#{vo.quoteItem.quote.createdName}"
+						filterBy="#{vo.quoteItem.quote.createdName}"
+						filterMatchMode="contains" styleClass="column_employeeName">
+						<h:outputText value="#{vo.quoteItem.quote.createdName}" />
+					</p:column>
+					
+					
+					<p:column headerText="#{dbResource['wq.label.dpRef']}" sortBy="#{vo.quoteItem.quote.dpReferenceId}" filterBy="#{vo.quoteItem.quote.dpReferenceId}" filterMatchMode="contains" style="width:80px;">
+						<h:outputText value="#{vo.quoteItem.quote.dpReferenceId}"/>
+					</p:column>	
+			
+					<p:column headerText="#{dbResource['wq.label.dpRefLine']}" sortBy="#{vo.quoteItem.dpReferenceLineId}" filterBy="#{vo.quoteItem.dpReferenceLineId}" filterMatchMode="contains" style="width:80px;">
+						<h:outputText value="#{vo.quoteItem.dpReferenceLineId}"/>
+					</p:column>	
+			
+					<p:column headerText="#{dbResource['wq.button.dLink']}" sortBy="#{vo.quoteItem.quote.dLinkFlag}" filterBy="#{vo.quoteItem.quote.dLinkFlag}" filterMatchMode="contains" style="width:80px;">
+					<h:outputText value="#{vo.quoteItem.quote.dLinkFlag? 'Yes':'No'}" />
+					</p:column>
+		
+					<p:column headerText="#{dbResource['wq.label.rateRemark']}" sortBy="#{vo.quoteItem.rateRemarks}" filterBy="#{vo.quoteItem.rateRemarks}" filterMatchMode="contains" style="width:80px;">
+					<h:outputText value="#{vo.quoteItem.rateRemarks}"/>
+					</p:column>	
+					
+				</p:dataTable>
+			</p:panel>
+
+			<ui:include src="AttachmentListDialog.xhtml" />
+			<ui:include src="SAPMaterialListDialog.xhtml" />
+
+			<p:remoteCommand name="restoreFirstRowCommnad"
+				update=":form:datatable_myquotelist"
+				actionListener="#{myQuoteSearchMB.restoreFirstRow()}"
+				rendered="#{myQuoteSearchMB.keepFirstRow}" autoRun="true" />
+
+		<h:outputScript library="javascript" name="disableRowSelection.js" />
+		</h:form>
+
+
+	</ui:define>
+</ui:composition>

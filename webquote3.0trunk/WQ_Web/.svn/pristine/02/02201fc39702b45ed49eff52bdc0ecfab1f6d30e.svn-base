@@ -1,0 +1,252 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+        <h:head>
+            <f:facet name="first">
+                <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+                <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+			<meta http-equiv="Cache-Control" Content="no-cache"/>
+			<meta http-equiv="Pragma" Content="no-cache"/>
+			<meta http-equiv="Expires" Content="0"/>                   
+                <title>Working Platform Page</title>
+            </f:facet>
+        </h:head>
+<h:body>
+			<p:panel header="RFQ Details" id="panelgrid_rfqdetailreference_display" style="padding:0px 0px 0px 0px;">
+			     <p:panelGrid styleClass="panelGrid" style="width:100%;padding:0px 0px 0px 0px;">   				
+			     	<p:row>  
+						<p:column styleClass="tdtag" title="Form  Quote #" style="width:85px">Form#</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" style="width:120px"  colspan="3">#{workingPlatformMB.selectedQuoteItem.quote.formNumber}</p:column>
+						<p:column styleClass="tdtag" title="Avnet Quote #" style="width:80px">Avnet Quote#</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" style="width:80px">#{workingPlatformMB.selectedQuoteItem.alternativeQuoteNumber}</p:column>			
+						<p:column styleClass="tdtag" style="width:90px">Customer Type</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" style="width:120px">#{workingPlatformMB.selectedQuoteItem.customerType}</p:column>
+						<p:column styleClass="tdtag" style="width:70px">MFR</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" style="width:70px">#{workingPlatformMB.selectedQuoteItem.requestedMaterial.manufacturer.name}</p:column>
+						<p:column styleClass="tdtag" style="width:85px">Requested P/N</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" style="width:110px">#{workingPlatformMB.selectedQuoteItem.requestedMaterial.fullMfrPartNumber}</p:column>								
+						<p:column styleClass="tdtag" style="width:80px">Required Qty</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" style="width:70px">#{workingPlatformMB.convertNumber(workingPlatformMB.selectedQuoteItem.requestedQty)}</p:column>							
+						<p:column styleClass="tdtag" style="width:70px">EAU</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">#{workingPlatformMB.convertNumber(workingPlatformMB.selectedQuoteItem.eau)}</p:column>							
+					</p:row>			
+					<p:row>  			
+						<p:column styleClass="tdtag">Revert Version</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">#{workingPlatformMB.selectedQuoteItem.revertVersion}</p:column>			
+						<p:column styleClass="tdtag">Team</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.quote.team.name}</p:column>
+						<p:column styleClass="tdtag">Salesman</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.quote.sales.name}</p:column>
+						<p:column styleClass="tdtag">RFQ Status</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.status}</p:column>
+						<p:column styleClass="tdtag">Quoted P/N</p:column>
+						<p:column styleClass="tdmandatoryvalue">#{workingPlatformMB.selectedQuoteItem.quotedMaterial.fullMfrPartNumber}</p:column>											
+						<p:column styleClass="tdtag">Quoted Qty</p:column>
+						<p:column styleClass="tdmandatoryvalue">#{workingPlatformMB.selectedQuoteItem.quotedQty}</p:column>								
+						<p:column styleClass="tdtag">Qty Indicator</p:column>
+						<p:column styleClass="tdmandatoryvalue">#{workingPlatformMB.selectedQuoteItem.qtyIndicator}</p:column>									
+						<p:column styleClass="tdtag">Lead Time</p:column>
+						<p:column styleClass="tdmandatoryvalue">#{workingPlatformMB.selectedQuoteItem.leadTime}</p:column>
+					</p:row>
+					<p:row>  			
+						<p:column styleClass="tdtag">RFQ Submission Date</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">#{workingPlatformMB.convertDateToString(workingPlatformMB.selectedQuoteItem.quote.uploadTime)}</p:column>								
+						<p:column styleClass="tdtag">Sold To Code</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.soldToCustomer.customerNumber}</p:column>	
+						<p:column styleClass="tdtag">Sold To Party</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.soldToCustomerFullName}</p:column>
+						<p:column styleClass="tdtag">Resale Indicator</p:column>
+						<p:column styleClass="tdvalue editCell">#{workingPlatformMB.selectedQuoteItem.resaleIndicator}</p:column>
+						<p:column styleClass="tdtag">Target Resale</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+					        <h:outputText value="#{workingPlatformMB.selectedQuoteItem.targetResale}">
+					        </h:outputText>
+						</p:column>																	
+						<p:column styleClass="tdtag">Cost</p:column>
+						<p:column styleClass="tdmandatoryvalue">
+					        <h:outputText value="#{workingPlatformMB.selectedQuoteItem.costStr}">
+					        </h:outputText>
+						</p:column>												
+						<p:column styleClass="tdtag">Cost Indicator</p:column>
+						<p:column styleClass="tdmandatoryvalue" colspan="3">#{workingPlatformMB.selectedQuoteItem.costIndicator}</p:column>											
+					</p:row>
+					<p:row>  			
+						<p:column styleClass="tdtag">Quote Tyoe</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteTypeStr}" />  
+						</p:column>	
+										
+						<p:column styleClass="tdtag">End Customer Code</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.endCustomer.customerNumber}</p:column>
+						<p:column styleClass="tdtag">End Customer</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.endCustomerFullName}</p:column>
+						<p:column styleClass="tdtag">Multi-Usage</p:column>
+						<p:column styleClass="tdvalue editCell">#{workingPlatformMB.selectedQuoteItem.multiUsageFlagStr}</p:column>
+						<p:column styleClass="tdtag">T/P Margin %</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.targetMarginStr}">
+							</h:outputText>
+						</p:column>
+						<p:column styleClass="tdtag">Bottom Price</p:column>	
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.bottomPrice}</p:column>			
+						<p:column styleClass="tdtag">Min Sell Price</p:column>	
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">#{workingPlatformMB.selectedQuoteItem.minSellPrice}</p:column>
+					</p:row>
+			
+	
+					<p:row>  			
+						<p:column styleClass="tdtag">LOA</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.loaFlagStr}" />  
+						</p:column>							
+						<p:column styleClass="tdtag">BMT Biz</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.bmtCheckedFlagStr}" />  
+						</p:column>							
+						<p:column styleClass="tdtag">Ship To Code</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.endCustomer.customerNumber}</p:column>		
+						<p:column styleClass="tdtag">Ship To Party</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.endCustomerFullName}</p:column>
+						<p:column styleClass="tdtag">Valid RFQ</p:column>
+						<p:column styleClass="tdvalue editCell">#{workingPlatformMB.selectedQuoteItem.validFlagStr}</p:column>
+						<p:column styleClass="tdtag">Quoted Resale</p:column>
+						<p:column styleClass="tdmandatoryvalue">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quotedPriceStr}">								
+							</h:outputText>
+						</p:column>															
+						<p:column styleClass="tdtag">Quoted Margin %</p:column>
+						<p:column styleClass="tdvalue tdmandatoryvalue">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.resaleMarginStr}">								
+							</h:outputText>						
+						</p:column>
+						
+						<p:column styleClass="tdtag">Quoted Reference Margin %</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">
+							<h:outputText styleClass="inputInRFQDetailDataNumber" value="#{workingPlatformMB.selectedQuoteItem.referenceMargin}">
+		        				<f:convertNumber minFractionDigits="2" maxFractionDigits="2"/>									
+							</h:outputText>							
+						</p:column>
+					</p:row>		
+					<p:row>  			
+						<p:column styleClass="tdtag">RFQ Form Attachment</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">
+				        	<p:commandLink actionListener="#{workingPlatformMB.updateTableFormAttachments(workingPlatformMB.selectedQuoteItem)}" update=":form_pendinglist:attachment_no_delete_panel" oncomplete="PF('attachment_list_no_delete_dialog').show()" rendered="#{workingPlatformMB.isHasFormAttachment(workingPlatformMB.selectedQuoteItem)}">
+				        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>		        	
+				        	</p:commandLink> 							
+						</p:column>	
+						<p:column styleClass="tdtag">Product Group 1</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.quotedMaterial.productGroup1.name}</p:column>							
+						<p:column styleClass="tdtag">Pricer Remarks 1</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.priceListRemarks1}</p:column>
+						<p:column styleClass="tdtag">Price Validity</p:column>
+						<p:column styleClass="tdmandatoryvalue">#{workingPlatformMB.selectedQuoteItem.priceValidityStr}</p:column>
+						<p:column styleClass="tdtag">Shipment Validity</p:column>
+						<p:column styleClass="tdvalue editCell">#{workingPlatformMB.selectedQuoteItem.shipmentValidityStr}</p:column>		
+						<p:column styleClass="tdtag">Biz Program Type</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.programType}</p:column>							
+						<p:column styleClass="tdtag" rowspan="2">Quantity Break</p:column>	
+						<p:column styleClass="tdvalue readOnlyCell" rowspan="2" colspan="3">
+							<h:outputText value="#{rfq.requestedMaterial.programMaterial}" converter="webquote.commodity.Oqmsp" escape="false" />
+						</p:column>																	
+					</p:row>														
+					<p:row>  			
+						<p:column styleClass="tdtag">RFQ Item Attachment</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">
+				        	<p:commandLink actionListener="#{workingPlatformMB.updateTableAttachments(workingPlatformMB.selectedQuoteItem)}" update=":form_pendinglist:attachment_no_delete_panel" oncomplete="PF('attachment_list_no_delete_dialog').show()" rendered="#{workingPlatformMB.isHasAttachment(workingPlatformMB.selectedQuoteItem)}">
+				        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>		        	
+				        	</p:commandLink> 							
+						</p:column>	
+						<p:column styleClass="tdtag">Product Group 2</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.quotedMaterial.productGroup2.name}</p:column>							
+						<p:column styleClass="tdtag">Pricer Remarks 2</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.priceListRemarks2}</p:column>
+						<p:column styleClass="tdtag">MPQ</p:column>							
+						<p:column styleClass="tdmandatoryvalue">#{workingPlatformMB.selectedQuoteItem.mpqStr}</p:column>					
+						<p:column styleClass="tdtag">MOQ</p:column>
+						<p:column styleClass="tdmandatoryvalue">#{workingPlatformMB.selectedQuoteItem.moqStr}</p:column>												
+						<p:column styleClass="tdtag">MOV</p:column>
+						<p:column styleClass="tdmandatoryvalue">#{workingPlatformMB.selectedQuoteItem.movStr}</p:column>																	
+					</p:row>
+					<p:row>  			
+						<p:column styleClass="tdtag">Refresh Attachment</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">
+				        	<p:commandLink actionListener="#{workingPlatformMB.updateTableRefreshAttachments(workingPlatformMB.selectedQuoteItem)}" update=":form_pendinglist:attachment_no_delete_panel" oncomplete="PF('attachment_list_no_delete_dialog').show()" rendered="#{workingPlatformMB.isHasRefreshAttachment(workingPlatformMB.selectedQuoteItem)}">
+				        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>		        	
+				        	</p:commandLink> 							
+						</p:column>	
+						<p:column styleClass="tdtag">Product Group 3</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.quotedMaterial.productGroup3}</p:column>							
+						<p:column styleClass="tdtag">Pricer Remarks 3</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.priceListRemarks3}</p:column>
+						<p:column styleClass="tdtag">Allocation Part</p:column>	
+						<p:column styleClass="tdvalue editCell">#{workingPlatformMB.selectedQuoteItem.allocationFlagStr}</p:column>
+						<p:column styleClass="tdtag">MFR Quote #</p:column>	
+						<p:column styleClass="tdvalue editCell">#{workingPlatformMB.selectedQuoteItem.vendorQuoteNumber}</p:column>														
+						<p:column styleClass="tdtag">MFR Quote Qty</p:column>	
+						<p:column styleClass="tdvalue editCell">#{workingPlatformMB.selectedQuoteItem.vendorQuoteQty}</p:column>														
+						<p:column styleClass="tdtag">MFR Debit #</p:column>
+						<p:column styleClass="tdvalue editCell" colspan="3">#{workingPlatformMB.selectedQuoteItem.vendorDebitNumber}</p:column>														
+					</p:row>	
+					<p:row>  			
+						<p:column styleClass="tdtag">PM Attachment</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">
+				        	<p:commandLink actionListener="#{workingPlatformMB.updateTableInternalTransferAttachments(workingPlatformMB.selectedQuoteItem)}" update=":form_pendinglist:attachment_no_delete_panel" oncomplete="PF('attachment_list_no_delete_dialog').show()" rendered="#{workingPlatformMB.isHasInternalTransferAttachment(workingPlatformMB.selectedQuoteItem)}">
+				        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>		        	
+				        	</p:commandLink> 							
+						</p:column>	
+						<p:column styleClass="tdtag">Product Group 4</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.quotedMaterial.productGroup4}</p:column>							
+						<p:column styleClass="tdtag">Pricer Remarks 4</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.priceListRemarks4}</p:column>
+						<p:column styleClass="tdtag">Quotation T&amp;C</p:column>
+						<p:column styleClass="tdvalue editCell" colspan="3">#{workingPlatformMB.selectedQuoteItem.termsAndConditions}</p:column>								
+						<p:column styleClass="tdtag">Rescheduling Window</p:column>
+						<p:column styleClass="tdvalue editCell">#{workingPlatformMB.selectedQuoteItem.rescheduleWindow}</p:column>														
+						<p:column styleClass="tdtag">Cancellation Window</p:column>									
+						<p:column styleClass="tdvalue editCell" colspan="3">#{workingPlatformMB.selectedQuoteItem.cancellationWindow}</p:column>														
+					</p:row>		
+					<p:row>
+						<p:column styleClass="tdtag">DRMS Project ID</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">#{workingPlatformMB.selectedQuoteItem.drmsNumber}</p:column>							
+						<p:column styleClass="tdtag">Design Location</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.designLocation}</p:column>
+	
+						<p:column styleClass="tdtag">Competitor Info</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.competitorInformation}</p:column>							
+							
+						<p:column styleClass="tdtag">QC External Comment</p:column>
+						<p:column styleClass="tdvalue editCell" colspan="3">#{workingPlatformMB.selectedQuoteItem.aqcc}</p:column>
+						<p:column styleClass="tdtag">QC Internal Comment</p:column>
+						<p:column styleClass="tdvalue editCell" colspan="5">#{workingPlatformMB.selectedQuoteItem.internalComment}</p:column>								
+					</p:row>	
+					<p:row>
+						<p:column styleClass="tdtag">Local DR</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">#{workingPlatformMB.selectedQuoteItem.ardcStr}</p:column>							
+						<p:column styleClass="tdtag">Project Name</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.projectName}</p:column>	
+						<p:column styleClass="tdtag">PP Schedule</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.ppSchedule}</p:column>										
+						<p:column styleClass="tdtag">Remarks</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">#{workingPlatformMB.selectedQuoteItem.quote.remarks}</p:column>	
+						<p:column styleClass="tdtag">Item Remarks</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="5">#{workingPlatformMB.selectedQuoteItem.remarks}</p:column>
+					</p:row>												
+					<p:row>
+						<p:column styleClass="tdtag">MFR DR#</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">#{workingPlatformMB.selectedQuoteItem.supplierDrNumber}</p:column>							
+						<p:column styleClass="tdtag">Application</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.application}</p:column>	
+						<p:column styleClass="tdtag">MP Schedule</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">#{workingPlatformMB.selectedQuoteItem.mpSchedule}</p:column>	
+						<p:column styleClass="tdtag">Reason For Refresh</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">#{workingPlatformMB.selectedQuoteItem.reasonForRefresh}</p:column>	
+						<p:column styleClass="tdtag">PM Comment</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="5">#{workingPlatformMB.selectedQuoteItem.internalTransferComment}</p:column>	
+					</p:row>
+				</p:panelGrid>				
+			</p:panel>	        
+</h:body>
+</html>

@@ -1,0 +1,2 @@
+sql 001: SP INIT_PRICER_TYPE_MAPPING change
+sql 002: DRMS 2.6 related sql

@@ -1,0 +1,562 @@
+package com.avnet.emasia.webquote.web.stm.util;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.io.FileUtils;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+
+import com.avnet.emasia.webquote.entity.MfrFeedbackInfo;
+import com.avnet.emasia.webquote.entity.MfrRequestInfo;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.stm.annotation.TransAlias;
+import com.avnet.emasia.webquote.stm.annotation.TransAliasBean;
+import com.avnet.emasia.webquote.stm.constant.B2bStatusEnum;
+import com.avnet.emasia.webquote.stm.constant.StmConstant;
+import com.avnet.emasia.webquote.stm.constant.StmQuoteTypeEnum;
+import com.avnet.emasia.webquote.stm.dto.InBoundVo;
+import com.avnet.emasia.webquote.stm.dto.OutBoundVo;
+import com.avnet.emasia.webquote.stm.dto.StmConfigInfo;
+import com.avnet.emasia.webquote.stm.dto.VendorQuoteSearch;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+public class StmUtil {
+	public static TreeMap<String, TransAliasBean> getOutboundAnnotationTreeMap() {
+		return OUT_BOUND_ANNOTATION_TREEMAP;
+	}
+
+	public static TreeMap<String, TransAliasBean> getInboundAnnotationTreeMap() {
+		return INBOUND_ANNOTATION_TREEMAP;
+	}
+
+	private final static TreeMap<String,TransAliasBean>  OUT_BOUND_ANNOTATION_TREEMAP = getTransAliasAnnotation(OutBoundVo.class);
+	private final static TreeMap<String,TransAliasBean>  INBOUND_ANNOTATION_TREEMAP = getTransAliasAnnotation(InBoundVo.class);
+
+	private static final Logger LOGGER =Logger.getLogger(StmUtil.class.getName());
+	
+	public static Object[] getOutBoundTransAliasBeans(){
+		return OUT_BOUND_ANNOTATION_TREEMAP.entrySet().toArray();
+	}
+	
+	public static Object[] getInBoundTransAliasBeans(){
+		return INBOUND_ANNOTATION_TREEMAP.entrySet().toArray();		
+	}
+
+	public static Set<String> getOutBoundXmlFields(){
+		return OUT_BOUND_ANNOTATION_TREEMAP.keySet();
+	}
+	
+	public static Set<String> getInBoundXmlFields(){
+		return INBOUND_ANNOTATION_TREEMAP.keySet();		
+	}
+	
+	private static TreeMap <String,TransAliasBean> getTransAliasAnnotation(Class<?> beanClass) {
+		TreeMap<String,TransAliasBean> hash = new TreeMap<String,TransAliasBean>();
+
+		Field[] fields = beanClass.getDeclaredFields();
+
+		for (Field f : fields) {
+			f.setAccessible(true);
+			TransAlias annontation = f.getAnnotation(TransAlias.class);
+			if (annontation == null)
+				continue;
+
+			TransAliasBean bean = new TransAliasBean();
+
+			bean.setSgaMandatory(annontation.sgaMandatory());
+			bean.setSadaMandatory(annontation.sadaMandatory());
+			
+			bean.setXmlFieldName(annontation.xmlFieldName());
+			bean.setUiFieldName(annontation.uiFieldName());
+			bean.setFieldType(annontation.fieldType());
+			bean.setFieldName(f.getName());
+			bean.setFieldLength(Integer.valueOf(annontation.fieldLength()));
+
+			hash.put(bean.getXmlFieldName(), bean);
+		}
+
+		return hash;
+	}
+
+	public static void setter(Object obj, String att, Object value, Class<?> type) {
+		try {
+			Method method = obj.getClass().getMethod("set" + initStr(att), type); 
+			method.invoke(obj, value); // invoke set method
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Exception in getting setter of an object for attribute : "+att+" , Exception message : "+e.getMessage(), e);
+		}
+	}
+
+	public static Object getter(Object obj, String att) {
+		Object value = null;
+		try {
+			Method met = obj.getClass().getMethod("get" + initStr(att)); 
+			value =  met.invoke(obj); // invoke get method
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Exception in getting getter of an object for attribute : "+att+" , Exception message : "+e.getMessage(), e);
+		}
+		return value;
+	}
+
+	private static String initStr(String old) { // To capitalize the first letterof the word
+		String str = old.substring(0, 1).toUpperCase() + old.substring(1);
+		return str;
+	}
+
+	public static String printStackTrace2String(Exception e) {
+		StringWriter sw = new StringWriter();
+		e.printStackTrace(new PrintWriter(sw, true));
+		return sw.toString();
+	}
+	
+	public static boolean isValidDate(String sDate) {
+		String datePattern = "^(?:(?!0000)[0-9]{4}(?:(?:0[1-9]|1[0-2])(?:0[1-9]|1[0-9]|2[0-8])|"
+				+ "(?:0[13-9]|1[0-2])(?:29|30)|(?:0[13578]|1[02])-31)|(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])"
+				+ "|(?:0[48]|[2468][048]|[13579][26])00)-02-29)$";
+	     if ((sDate != null)) {
+	    	 Pattern pattern = Pattern.compile(datePattern);
+	    	 Matcher match = pattern.matcher(sDate);
+	             return match.matches();
+	     }
+	     return false;
+	}
+	
+	public static HashMap<String,Object> writeOutboundFileToLocal(String xmlContent,StmConfigInfo stmConfigInfo,String sendFileName){
+		String localFilePath = stmConfigInfo.getStmoutBoundpath() + sendFileName ;
+
+		HashMap<String,Object> hashMap = new HashMap<String,Object>();
+		StringBuffer message = new StringBuffer();
+		
+		try {
+			Document doc = Dom4jUtil.getDocumentXml(xmlContent);
+			Dom4jUtil.formatWrite(doc, localFilePath);
+			hashMap.put(StmConstant.RETURN_BOOL, true);
+		} catch (DocumentException e) {
+			LOGGER.log(Level.SEVERE, "Exception in write Outbound File To Local , file name : "+sendFileName+" , exception messsage : "+e.getMessage(), e);
+			message.append("write outBound file("+localFilePath+") failed");
+			hashMap.put(StmConstant.RETURN_BOOL, false);
+		}
+
+		hashMap.put(StmConstant.RETURN_MESSAGE, message.toString());
+		return hashMap;
+	}
+
+	public static HashMap<String,Object> inbound(String stmSendFile){
+		HashMap<String,Object> hashMap = new HashMap<String,Object>();
+		hashMap.put(StmConstant.RETURN_BOOL, false);
+		StringBuffer message = new StringBuffer();
+		
+		Document doc = null;
+		try {
+			doc = Dom4jUtil.read(stmSendFile);
+		} catch (DocumentException e) {
+			message.append("read " + stmSendFile + " failed:" + StmUtil.printStackTrace2String(e));
+			LOGGER.log(Level.WARNING, message.toString()+" , Exception message : "+e.getMessage());
+			hashMap.put(StmConstant.RETURN_MESSAGE, message.toString());
+			return hashMap;
+		}
+		Element root = doc.getRootElement();
+		String quoteType = null;
+		if(root!=null){
+			Element quoteTypeEle = root.element("QuoteType");			
+			quoteType = quoteTypeEle==null?null:quoteTypeEle.getText();
+		}
+
+		StmXmlProcessTemplate stmXmlProcessTemplate = new StmXmlProcessTemplate();
+		
+		if(StmQuoteTypeEnum.valueOf(quoteType) == null){
+			message.append("QuoteType can't be empty, only equal to the SGA or SADA <br/>");	
+			hashMap.put(StmConstant.RETURN_MESSAGE, message.toString());
+			return hashMap;
+		}
+
+		message.append(stmXmlProcessTemplate.validateXMLByXSD(1, doc.asXML(), StmConstant.INBOUD_XSD));
+		if (message.length() > 0) {
+			LOGGER.info(message.toString());
+			hashMap.put(StmConstant.RETURN_MESSAGE, message.toString());
+			return hashMap;
+		}
+		message.append(stmXmlProcessTemplate.verifyInBoundXMlContent(quoteType,doc));
+		if (message.length() > 0) {
+			LOGGER.info(message.toString());
+			hashMap.put(StmConstant.RETURN_MESSAGE, message.toString());
+			return hashMap;
+		} else {
+			InBoundVo vo = stmXmlProcessTemplate.covertInBoundXml2Bean(doc);
+			vo.setFileName(stmSendFile);
+			hashMap.put(StmConstant.RETURN_BOOL, true);
+			hashMap.put(StmConstant.RETURN_MESSAGE, message.toString());
+			hashMap.put(StmConstant.RETURN_OBJECT, vo);
+			return hashMap;
+		}
+		
+	}
+	
+	/**
+	 * Naming rules :
+	 * outbound xml file:OUT_STM_{messagetype}_{rfqcode}_{Timestamp}.xml   
+	 * 		such as:OUT_STM_REQOTE_WR2240416_1419904821741.xml
+	 * inbound  xml file:   IN_STM_{messagetype}_{rfqcode}_{Timestamp}.xml  
+	 * 		such as:IN_STM_QUOTES_WR2240416_1419904821741.xml
+	 * @param rfqCode  
+	 * @return
+	 */
+	public static String getSendFileName(String rfqCode){	
+		return "OUT_STM_"+StmConstant.MESSAGETYPE_REQOTE+"_"+rfqCode+"_"+System.currentTimeMillis()+".xml";
+	}
+	
+	public static boolean isValidInBoundFileName(String fileName){
+		if(fileName!=null&&fileName.startsWith("IN_STM_")&&fileName.toLowerCase().endsWith(".xml")){
+			return true;
+		}else{
+			return false;
+		}		
+	}
+	
+	public static  List<OutBoundVo> fillOutBoundVoForSendQuote(String quoteType,
+			List<OutBoundVo> searchResult) {
+
+		for(OutBoundVo vo:searchResult){
+			vo.setQuoteType(quoteType);
+			vo.setUnitOfCost("1");//Hard Code = 1
+			vo.setUnitOfResale("1");//Hard Code = 1
+			vo.setUnitOfQty("PCE");//Hard Code = PCE
+			vo.setCustCode(getCustomer(quoteType));					
+			vo.setItemRemark(combineItemRemarks(quoteType,vo));
+			if(quoteType!=null&&quoteType.equalsIgnoreCase(StmQuoteTypeEnum.SGA.name())){	
+				if(QuoteUtil.isEmpty(vo.getHeadRemark())){
+					vo.setHeadRemark("R-");
+				}				
+//				vo.setTgtCost("NA");
+				vo.setDeliveryStop(getDeliveryStopDate());
+				
+				//avnet edi team cannot handle empty xml tag like <ECBPM/>, they have to use <ECBPM></ECBPM>. below code is added for this purpose 
+				if(QuoteUtil.isEmpty(vo.getEcBpmCode())){
+					vo.setEcBpmCode(" ");;
+				}				
+				if(QuoteUtil.isEmpty(vo.getEcBPMName())){
+					vo.setEcBPMName(" ");;
+				}				
+				if(QuoteUtil.isEmpty(vo.getEcBPMCntCode())){
+					vo.setEcBPMCntCode(" ");;
+				}				
+				
+			}else{
+				vo.setDeliveryStop("NA");
+			}
+			vo.setDeliveryStart(getDeliveryStartDate());
+			vo.setSentAt(getSentAt());
+		
+		}
+		return searchResult;
+	}
+
+	private static MfrRequestInfo getMfrRequestInfo(QuoteItem quoteItem,List<MfrRequestInfo> searchResult2){
+		for(MfrRequestInfo bean :searchResult2){
+			if(bean.getQuoteItem().getId() == quoteItem.getId()){
+				return bean;
+			}
+		}
+		return null;
+		
+	}
+	public static List<OutBoundVo> fillOutBoundVoForQuoteItem(StmConfigInfo stmConfigInfo,
+			List<QuoteItem> searchResult,List<MfrRequestInfo> searchResult2) {
+		List<OutBoundVo> vos = new ArrayList<OutBoundVo>();
+		int i = 1;
+		for (QuoteItem quoteItem : searchResult) {
+			MfrRequestInfo bean = getMfrRequestInfo(quoteItem,searchResult2);
+			OutBoundVo vo = new OutBoundVo();
+			i = setOutBoundVo(i, quoteItem, vo);
+			if (bean != null) {
+				vo = fillOutBoundVo(vo, bean,"2");
+	
+			}else{
+				vo.setB2bStatus(B2bStatusEnum.New.name());
+			}
+			User user = UserInfo.getUser();
+			vo.setContactName(user.getName());
+			vo.setContactChannel(user.getEmailAddress());
+			vos = fillOutBoundVo(vos, quoteItem, vo);
+		}
+
+		return vos;
+	}
+
+	private static int setOutBoundVo(int i, QuoteItem quoteItem, OutBoundVo vo) {
+		vo.setSeq(i++);
+		vo.setAction(StmConstant.ACTION);
+		vo.setRfqCode(quoteItem.getQuoteNumber());
+		vo.setMfr(quoteItem.getQuotedMfr() == null ? "" : quoteItem
+				.getQuotedMfr().getName());
+		vo.setFullMPN(quoteItem.getQuotedPartNumber());
+		return i;
+	}
+
+	private static List<OutBoundVo> fillOutBoundVo(List<OutBoundVo> vos, QuoteItem quoteItem, OutBoundVo vo) {
+
+		if(quoteItem.getTargetResale() != null && quoteItem.getExRateRfq() !=null ){
+			
+			if(quoteItem.getHandling()==null){
+				quoteItem.setHandling(new BigDecimal("1"));
+			}
+			BigDecimal multiply = quoteItem.getExRateRfq().multiply(quoteItem.getHandling());
+			
+			BigDecimal TgtResale = BigDecimal.valueOf(quoteItem.getTargetResale()).divide(multiply);
+			
+			double doubleValue = TgtResale.doubleValue();
+			vo.setTgtResale(QuoteUtil.convertDoubleToString(doubleValue));
+		}
+		
+//		vo.setTgtResale(QuoteUtil.convertDoubleToString(quoteItem.getTargetResale()));
+		vo.setProject(quoteItem.getProjectName());
+		vo.setApplication(quoteItem.getApplication());
+		vo.setEau(quoteItem.getEau());
+		vo.setQuoteItem(quoteItem);
+		vo.setCurrency(StmConstant.CURRENCY);
+		vos.add(vo);
+		return vos;
+	}
+
+	private static OutBoundVo  fillOutBoundVo(OutBoundVo vo, MfrRequestInfo bean, String flowName) {
+		vo.setB2bStatus(bean.getStatus());
+		vo.setBpmCode(bean.getBpmCode());
+		vo.setBpmName(bean.getBpmName());
+		vo.setBpmCntCode(bean.getBpmCntCode());
+		vo.setEcBpmCode(bean.getEcBpmCode());
+		vo.setEcBPMName(bean.getEcBPMName());
+		vo.setEcBPMCntCode(bean.getEcBPMCntCode());
+		vo.setBqNumber(bean.getBqNumber());
+		vo.setProjectRegistrationNumber(bean.getProjectRegistrationNumber());
+		vo.setShipToCode(bean.getVendorShipTo());
+		if(bean.getReqQty()!=null){
+			vo.setReqQty(String.valueOf(bean.getReqQty()));
+		}
+		vo.setContactName(bean.getContactName());
+		vo.setContactChannel(bean.getContactChannel());
+		vo.setHeadRemark(bean.getHeadRemark());
+		vo.setTgtCost(QuoteUtil.convertDoubleToString(bean.getTgtCost()));
+		if("1".equals(flowName))
+		{
+			vo.setTgtResale(QuoteUtil.convertDoubleToString(bean.getTgtResale()));
+		}
+		vo.setMfrRequestInfo(bean);
+		if("2".equals(flowName))
+		{
+		vo.setSentOutTime(bean.getSentOutTime());
+		}
+		return vo;
+	}
+	
+	private static String combineItemRemarks(String quoteType,OutBoundVo vo){
+		String itemRemarks = "";
+		if(quoteType!=null&&quoteType.equalsIgnoreCase(StmQuoteTypeEnum.SGA.name())){
+			itemRemarks = "Project details <"+vo.getProject()+"> ; Application <"+vo.getApplication()+"> ; EAU <"+vo.getEau()+">; ";
+		}else{
+			itemRemarks = "BQ# <"+vo.getBqNumber()+">; Reg# < "+vo.getProjectRegistrationNumber()+">; ";
+		}
+		
+		itemRemarks = itemRemarks + "MP Schedule <" + vo.getQuoteItem().getMpSchedule() + ">; PP Schedule <" + vo.getQuoteItem().getPpSchedule() + ">";
+		
+		return itemRemarks;
+	}
+
+	public static void fillSeq2InOutBoundVo(OutBoundVo vo,int seq2) {
+		vo.setSeq2(seq2);			
+	}
+	
+	/**
+	 * sga :max (EAU/4, 10,000) 
+	 * sada:EAU
+	 * @return
+	 */
+	private static String getRequiredQty(String quoteType,Integer eau){
+		String returnVal = null;
+		if(quoteType!=null&&quoteType.equalsIgnoreCase(StmQuoteTypeEnum.SGA.name())){
+			
+			Integer temp = 10000;
+			if(eau!=null){
+				temp = Math.abs(eau/4);
+			}
+			if(temp>10000){
+				returnVal =  String.valueOf(temp);
+			}else{
+				returnVal =  "10000";
+			}
+		}else{
+			if(eau!=null){
+				returnVal = String.valueOf(eau);
+			}else{
+				returnVal =  "";
+			}
+		}
+		return returnVal;
+	}
+
+	public static void fillReqQtyDefaultValue(String quoteType,OutBoundVo vo) {
+		QuoteItem quoteItem = vo.getQuoteItem();
+		Integer eau = quoteItem.getEau();
+		vo.setReqQty(getRequiredQty(quoteType,eau) );			
+	}
+	
+	private static String getCustomer(String quoteType) {
+		if(quoteType!=null&&quoteType.equalsIgnoreCase(StmQuoteTypeEnum.SGA.name())){	
+			return "17000154";
+		}else{
+			return "17000932";
+		}
+	}
+	
+	/**
+	 * Delivery Start Date:Today + 1 day
+	 * @return
+	 */
+	private static String getDeliveryStartDate(){
+		Date nextDate = QuoteUtil.shiftDate(new Date(), 1);
+		String dateStr = com.avnet.emasia.webquote.utilities.util.QuoteUtil.dateToDateString(nextDate, StmConstant.YYYYMMDD);
+		return dateStr;
+	}
+
+	/**
+	 * sga:Delivery Stop Date:Today + 6 month
+	 * sada:N/A
+	 * @return
+	 * changed by Lenon 2017/02/22 ,Delivery Stop Date change to 1 year
+	 */
+	private static String getDeliveryStopDate(){
+		Calendar c = Calendar.getInstance();
+		 Date date = new Date();
+		 c.setTime(date);
+		 c.add(Calendar.MONTH, 12);
+		 SimpleDateFormat sdf = new SimpleDateFormat(StmConstant.YYYYMMDD);
+		 return sdf.format(c.getTime());
+	}
+	
+	private static String getSentAt(){
+		return com.avnet.emasia.webquote.utilities.util.QuoteUtil.dateToDateString(new Date(), StmConstant.YYYYMMDD);
+	}
+	
+	public static List<InBoundVo> covertReceiveVendorQuotation2Vo(List<MfrFeedbackInfo> searchResult) {
+		List<InBoundVo> vos = new ArrayList<InBoundVo>();
+		for(MfrFeedbackInfo bean:searchResult){
+			InBoundVo vo = new InBoundVo();
+			vo.setRfqCode( bean.getAvnetQuoteNumber());
+			vos.add(vo);
+		}
+		return vos;
+	}
+
+	public static List<OutBoundVo> fillHeaderRemarksDefaultValue(
+			String quoteType, List<OutBoundVo> selectedVos) {
+		for(OutBoundVo vo:selectedVos){
+			if(quoteType!=null&&quoteType.equalsIgnoreCase(StmQuoteTypeEnum.SGA.name())){	
+				if(QuoteUtil.isEmpty(vo.getHeadRemark())){
+					vo.setHeadRemark("R-");
+				}
+			}
+		}
+		return selectedVos;
+	}
+
+	/**
+	 * sga :Target Price * 0.9 or 0.001 if null
+	 * @param quoteType
+	 * @param selectedVos
+	 * @return
+	 */
+	public static void fillTargetResaleCostDefaultValue(String quoteType,OutBoundVo vo) {
+		if (quoteType != null){
+			vo.setTgtResale(null);
+			QuoteItem quoteItem = vo.getQuoteItem();
+			Double targetResale = quoteItem.getTargetResale();
+			
+			if (targetResale == null) {
+				vo.setTgtResale("0.001");
+				vo.setTgtCost("0.001");
+			} else {
+				vo.setTgtResale(QuoteUtil.convertDoubleToString(targetResale));
+				vo.setTgtCost(QuoteUtil.convertDoubleToString((targetResale * 0.9)));
+			}
+			
+			
+			/*if(quoteType.equalsIgnoreCase(StmQuoteTypeEnum.SGA.name())) {
+				if (targetResale == null) {
+					vo.setTgtCost("0.001");
+				} else {
+					vo.setTgtCost(QuoteUtil.convertDoubleToString((targetResale * 0.9)));
+				}
+			}else{
+				vo.setTgtResale(QuoteUtil.convertDoubleToString(targetResale));
+			}*/
+		}
+
+	}
+	
+	public static boolean isDecimal(String value) {
+		if (value != null && value.matches("^\\d{1,9}(\\.\\d{0,6})?$")) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public static void copyFileToExceptionDir(File file,String stmExceptionPath ) throws IOException{
+		FileUtils.copyFileToDirectory(file, new File(stmExceptionPath));
+		file.delete();
+	}
+	
+	public static void copyFileToBackUpDir(File file,String stmBackupPath ) throws IOException{
+		FileUtils.copyFileToDirectory(file, new File(stmBackupPath));
+		file.delete();
+	}
+
+	public static List<OutBoundVo> fillOutBoundVoForMfrRequestInfo(
+			StmConfigInfo stmConfigInfo, List<MfrRequestInfo> searchResult) {
+		List<OutBoundVo> vos = new ArrayList<OutBoundVo>();
+		int i = 1;
+		for (MfrRequestInfo bean : searchResult) {
+			QuoteItem quoteItem = bean.getQuoteItem();
+			OutBoundVo vo = new OutBoundVo();
+			i = setOutBoundVo(i, quoteItem, vo);
+			if (bean != null) {
+				vo = fillOutBoundVo(vo, bean,"1");
+			}
+			if(QuoteUtil.isEmpty(vo.getContactName())){
+				if(stmConfigInfo!=null){
+					vo.setContactName(stmConfigInfo.getContactName());
+				}	
+			}
+			if(QuoteUtil.isEmpty(vo.getContactChannel())){
+				if(stmConfigInfo!=null){
+					vo.setContactChannel(stmConfigInfo.getContactChannel());
+				}	
+			}
+			vos = fillOutBoundVo(vos, quoteItem, vo);
+		}
+		return vos;
+	}
+
+}

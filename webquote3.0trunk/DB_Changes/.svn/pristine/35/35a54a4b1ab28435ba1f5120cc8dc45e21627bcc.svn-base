@@ -1,0 +1,4 @@
+1) Fix ticket INC0521555  June Guo 2016/08/22
+2)change Free Stock Loading  match sap part number for material table to sap_materail table -- Lenon 2016-08-24
+3) add filter data export support on RIT page Jason Chen 2016/08/24
+4) change announcement description length to 110 on Webpromo page Jason Chen 2016/08/29

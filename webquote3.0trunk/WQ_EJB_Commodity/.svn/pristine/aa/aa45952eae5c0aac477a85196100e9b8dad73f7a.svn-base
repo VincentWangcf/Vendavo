@@ -1,0 +1,47 @@
+package com.avnet.emasia.webquote.commodity.constant;
+
+public enum PRICER_TYPE {
+
+	NORMAL("NormalPricer"),PROGRAM("ProgramPricer"), CONTRACT("ContractPricer"),
+	PARTMASTER("PART MASTER"), ALLPRICER("ALLPRICER")
+	,SIMPLE("SimplePricer"), SALESCOST("SalesCostPricer");
+
+	private String name;
+	private PRICER_TYPE( String name) {
+		this.setName(name);
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	private void setName(String name) {
+		this.name = name;
+	}
+
+	/*public static String getNameInDbByName(String name){
+		PRICER_TYPE[] pTypes = PRICER_TYPE.values();
+		for(PRICER_TYPE pType :pTypes ){
+			if(pType.getName().equalsIgnoreCase(name)){
+				return pType.getNameInDB();
+			}
+		}
+		return "";
+	}*/
+	public static PRICER_TYPE getPricerTypeByName(String name)
+	{
+		if(name==null || name.length()<1)
+		{
+			return null;
+		}
+		PRICER_TYPE[] pricerTypes = PRICER_TYPE.values();
+		for(PRICER_TYPE pricerType:pricerTypes)
+		{
+			if(pricerType.getName().equalsIgnoreCase(name))
+			{
+				return pricerType;
+			}
+		}
+		return null;
+	}
+}

@@ -1,0 +1,1313 @@
+package com.avnet.emasia.webquote.web.user;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+import javax.faces.event.AjaxBehaviorEvent;
+
+import org.eclipse.jetty.util.log.Log;
+import org.primefaces.context.RequestContext;
+import org.primefaces.model.DualListModel;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.DataAccess;
+import com.avnet.emasia.webquote.entity.Group;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.MaterialType;
+import com.avnet.emasia.webquote.entity.ProductGroup;
+import com.avnet.emasia.webquote.entity.ProgramType;
+import com.avnet.emasia.webquote.entity.Role;
+import com.avnet.emasia.webquote.entity.Team;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.CustomerSB;
+import com.avnet.emasia.webquote.quote.ejb.ManufacturerSB;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.user.ejb.GroupSB;
+import com.avnet.emasia.webquote.user.ejb.MaterialTypeSB;
+import com.avnet.emasia.webquote.user.ejb.ProductGroupSB;
+import com.avnet.emasia.webquote.user.ejb.ProgramTypeSB;
+import com.avnet.emasia.webquote.user.ejb.RoleSB;
+import com.avnet.emasia.webquote.user.ejb.TeamSB;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.user.vo.DataAccessVo;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.constants.Constants;
+
+@ManagedBean
+@SessionScoped
+public class UserDetailsMB implements Serializable {
+
+	private static final long serialVersionUID = -5283392873487054411L;
+
+	private static final Logger LOG = Logger.getLogger(UserDetailsMB.class.getName());
+
+	@EJB
+	private UserSB userSB;
+	
+	@EJB
+	private BizUnitSB bizUnitSB;
+	
+	@EJB
+	private RoleSB roleSB;
+	
+	@EJB
+	private ProductGroupSB productGroupSB;
+	
+	@EJB
+	private ProgramTypeSB programTypeSB;
+	
+	@EJB
+	private ManufacturerSB manufacturerSB;
+	
+	@EJB
+	private GroupSB groupSB;
+	
+	@EJB
+	private CustomerSB customerSB;
+	
+	@EJB
+	private TeamSB teamSB;
+	
+	@EJB
+	private MaterialTypeSB materialTypeSB;
+
+	private User user;
+
+	// used for Primefaces selectManyCheckbox
+	private List<String> selectedGroups = new ArrayList<String>();
+	private Map<String, Long> groupsMap = new HashMap<String, Long>();
+
+	// Data Access data table
+	private List<DataAccessVo> dataAccessVos;
+	private List<DataAccessVo> filteredDataAccessVos;
+
+	//drop down list in Data Access data table
+	private List<Manufacturer> manufacturers;
+
+	private List<ProductGroup> productGroups;
+
+	private List<Team> teams;
+	
+	private List<Team> allTeams;
+
+	private List<MaterialType> materialTypes;
+
+	private List<ProgramType> programTypes;
+
+	private List<BizUnit> lstBizUnits;
+
+	// used for Primefaces picklist
+	private DualListModel<Role> roles;
+
+	private DualListModel<BizUnit> bizUnits;
+
+	// used for PrimeFaces orderList
+
+	private List<User> css;
+
+	private List<User> sales;
+
+	private List<String> customers;
+
+	private boolean modifyMode = false;
+
+	private String copiedEmployeeId;
+
+	private String csEmployeeId;
+
+	private String salesEmployeeId;
+
+	private String customerNumber;
+	
+
+	private String salsCostAccessStr;
+	
+	public String getSalsCostAccessStr() {
+		return user.getSalsCostAccessStr();
+	}
+
+	public void setSalsCostAccessStr(String salsCostAccessStr) {
+//		this.salsCostAccessStr = salsCostAccessStr;
+		if(salsCostAccessStr.equals("Yes")){
+			user.setSalsCostAccessFlag(true);
+		}if(salsCostAccessStr.equals("No")){
+			user.setSalsCostAccessFlag(false);
+		}if(salsCostAccessStr.equals("ALL")){
+			user.setSalsCostAccessFlag(null);
+		}
+	}
+	
+	
+	public List<DataAccessVo> getFilteredDataAccessVos()
+	{
+		return filteredDataAccessVos;
+	}
+
+	public void setFilteredDataAccessVos(List<DataAccessVo> filteredDataAccessVos)
+	{
+		this.filteredDataAccessVos = filteredDataAccessVos;
+	}
+	
+	@PostConstruct
+	public void initialize() {
+		
+		User user = UserInfo.getUser();
+		
+		//lstBizUnits = bizUnitSB.findAll();
+		//List<BizUnit> bizUnits=userOwn.getAdminBizUnits();
+		List<BizUnit> bizUnits = user.getBizUnits();
+		//List<BizUnit> bizUnits = user.getAdminBizUnits();
+		manufacturers = manufacturerSB.findManufacturerByBizUnits(bizUnits);
+
+		productGroups = productGroupSB.findAll();
+
+		teams = teamSB.findByBizUnits(bizUnits);
+		
+		allTeams = teamSB.findByBizUnits(user.getDefaultBizUnit().getName());
+
+		materialTypes = materialTypeSB.findAll();
+
+		programTypes = programTypeSB.findAll();
+		lstBizUnits=bizUnitSB.findAll();
+		List<Group> groups = groupSB.findAll();
+
+		for (Group group : groups) {
+			groupsMap.put(group.getName(), group.getId());
+		}
+		
+		dataAccessVos= new ArrayList<DataAccessVo>();
+
+	}
+
+//	public List<BizUnit> DefaultRegionList(){
+//		//List<BizUnit> sourceBizUnit = new ArrayList<BizUnit>();
+//		//901518  as tw  ch 
+//		User adUser = UserInfo.getUser();
+//		List<BizUnit> defaultRegions = adUser.getAdminBizUnits();
+//		//04444     
+//		FacesContext context = FacesContext.getCurrentInstance();
+//		Map<String, String> params = context.getExternalContext().getRequestParameterMap();
+//		String employeeId = params.get("id");
+//		User uUser = userSB.findByEmployeeIdWithAllRelation(employeeId);
+//		List<BizUnit> userBizUnits = uUser.getBizUnits();
+//		
+////		for(BizUnit ubt:userBizUnits){
+////			for(BizUnit dr:defaultRegions){
+////				if(ubt.getName()==dr.getName()){
+////					break;
+////				}
+////			}
+////			}
+//		for(BizUnit ubt:userBizUnits){
+//			if(!defaultRegions.contains(ubt)){
+//				defaultRegions.add(ubt);
+//			}
+//		}
+//		return defaultRegions;
+//		
+//	}
+	
+	public String addNewUser() {
+		modifyMode = false;
+
+		user = new User();
+
+		user.setReportTo(new User());
+
+		user.setActive(true);
+
+		user.setTeam(new Team());
+
+		user.setDefaultBizUnit(new BizUnit());
+
+		roles = new DualListModel<Role>(roleSB.findAllForUserAdmin(), new ArrayList<Role>());
+
+		bizUnits = new DualListModel<BizUnit>(UserInfo.getUser().getBizUnits(), new ArrayList<BizUnit>());
+
+		selectedGroups.clear();
+
+		css = new ArrayList<User>();
+
+		sales = new ArrayList<User>();
+
+		customers = new ArrayList<String>();
+		
+		dataAccessVos = new ArrayList<DataAccessVo>();
+		
+		copiedEmployeeId = null;
+
+		if (filteredDataAccessVos != null){
+			filteredDataAccessVos.clear();
+		}		
+
+
+		return "/UserMgmt/UserCreation.xhtml";
+	}
+	
+	public String modifyUser() {
+		String message  = null;
+		//Current operator can't modify coss region user.
+		User userOwn = UserInfo.getUser();
+		List<BizUnit> adBt = userOwn.getAdminBizUnits();
+		ArrayList<String> aList= new ArrayList<String>();
+		
+		int size = adBt.size();
+		for(int i=0;i<size;i++){
+			BizUnit unit = adBt.get(i);
+			String name = unit.getName();
+			aList.add(name);
+		}
+		
+		//String name = unit.getName();
+		BizUnit defaultBizUnit = userOwn.getDefaultBizUnit();
+		List<BizUnit> bzLst = userOwn.getBizUnits();
+
+		//modifyMode = true;
+		modifyMode=false;
+		FacesContext context = FacesContext.getCurrentInstance();
+		Map<String, String> params = context.getExternalContext().getRequestParameterMap();
+		String employeeId = params.get("id");
+		user = userSB.findByEmployeeIdWithAllRelation(employeeId);
+		//List<BizUnit> userBizUnits = user.getAdminBizUnits();  
+		List<BizUnit> userBizUnits = user.getBizUnits();
+		for(int i=0;i<userBizUnits.size();i++){
+			BizUnit uunit = userBizUnits.get(i);
+			String name = uunit.getName();
+			if(aList.contains(name)){
+				//index++;
+				modifyMode=true;
+				break;
+			}
+		}
+		if(modifyMode==false){
+			 message = ResourceMB.getText("wq.message.userAdmin");
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, message,
+							""));
+			return null;
+		
+			
+		}
+		if (user.getReportTo() == null) {
+			user.setReportTo(new User());
+		}
+
+		if (user.getTeam() == null) {
+			user.setTeam(new Team());
+		}
+
+		if (user.getDefaultBizUnit() == null) {
+			user.setDefaultBizUnit(new BizUnit());
+		}
+		
+		//Current operator can't modify coss region user.
+//		if (bzLst.size() == 1)
+//		{
+//			if (!bzLst.get(0).getName().equalsIgnoreCase(defaultBizUnit.getName()))
+//			{
+//				 message = ResourceMB.getText("wq.message.userAdmin");
+//				FacesContext.getCurrentInstance().addMessage(null,
+//						new FacesMessage(FacesMessage.SEVERITY_ERROR, message,
+//								""));
+//				return null;
+//			}
+//		}
+		
+//		if (bzLst.size() > 1)
+//		{
+//			 message = ResourceMB.getText("wq.message.userAdmin");
+//			FacesContext.getCurrentInstance().addMessage(null,
+//					new FacesMessage(FacesMessage.SEVERITY_ERROR, message,
+//							""));
+//			return null;
+//		}
+		
+//		if (!defaultBizUnit.getName().equalsIgnoreCase(user.getDefaultBizUnit().getName()))
+//		{
+//		 message = ResourceMB.getText("wq.message.userAdmin");
+//			FacesContext.getCurrentInstance().addMessage(null,
+//					new FacesMessage(FacesMessage.SEVERITY_ERROR, message,
+//							""));
+//			return null;
+//		}
+
+		roles = new DualListModel<Role>(getSourceRole(user.getRoles()),	user.getRoles());
+
+		//bizUnits = new DualListModel<BizUnit>(getSourceBizUnit(user.getBizUnits()), user.getBizUnits()); 
+		bizUnits = new DualListModel<BizUnit>(getSourceBizUnit(userOwn.getAdminBizUnits()), user.getBizUnits()); 
+//		List<BizUnit> adminBizUnits2 = user.getAdminBizUnits();
+//		for(BizUnit bb:adminBizUnits2){
+//			String name = bb.getName();
+//		}
+		selectedGroups.clear();
+		
+		for (Group group : user.getGroups()) {
+			selectedGroups.add(String.valueOf(group.getId()));
+		}
+
+		css = user.getCsForSales();
+
+		sales = user.getSalesForCs();
+
+		customers = new ArrayList<String>();
+
+		for (Customer customer : user.getCustomers()) {
+			customers.add(customer.getCustomerNumber() + " " + customer.getCustomerFullName());
+		}
+
+		List<DataAccess> dataAccesses = user.getDataAccesses();
+		
+		dataAccessVos = new ArrayList<DataAccessVo>();
+		
+		for (int i = 0; i < dataAccesses.size(); i++) 
+		{
+			DataAccessVo vo = new DataAccessVo(dataAccesses.get(i));
+//			vo.setId(i);
+			vo.setSeq(i);
+			dataAccessVos.add(vo);		
+		}
+		
+		if (filteredDataAccessVos != null)
+		{
+			filteredDataAccessVos.clear();
+			for (DataAccessVo vo : dataAccessVos)
+			{
+				filteredDataAccessVos.add(vo);
+			}
+		}		
+
+//		filteredDataAccessVos = dataAccessVos;
+		copiedEmployeeId = null;
+
+		return "/UserMgmt/UserCreation.xhtml";
+
+	}
+
+	private List<Role> getSourceRole(List<Role> targetRole) {
+		List<Role> allRole = roleSB.findAllForUserAdmin();
+		List<Role> sourceRole = new ArrayList<Role>();
+		for (Role role : allRole) {
+			boolean found = false;
+			for (Role target : targetRole) {
+				if (role.getId() == target.getId()) {
+					found = true;
+					break;
+				}
+			}
+			if (found == false) {
+				sourceRole.add(role);
+			}
+		}
+		return sourceRole;
+	}
+
+//	private List<BizUnit> getSourceBizUnit(List<BizUnit> targetBizUnit) {
+//		List<BizUnit> allBizUnit = UserInfo.getUser().getBizUnits();
+//		List<BizUnit> sourceBizUnit = new ArrayList<BizUnit>();
+//		for (BizUnit bizUnit : allBizUnit) {
+//			boolean found = false;
+//			for (BizUnit target : targetBizUnit) {
+//				if (bizUnit.getName().equals(target.getName())) {
+//					found = true;
+//					break;
+//				}
+//			}
+//			if (found == false) {
+//				sourceBizUnit.add(bizUnit);
+//			}
+//		}
+//		return sourceBizUnit;
+//	}
+	private List<BizUnit> getSourceBizUnit(List<BizUnit> targetBizUnit) {
+		//901518   tw as ch 
+		List<BizUnit> allBizUnit = UserInfo.getUser().getAdminBizUnits();
+		List<BizUnit> sourceBizUnit = new ArrayList<BizUnit>();
+		for(BizUnit abt:allBizUnit){
+			sourceBizUnit.add(abt);
+		}
+		//List<BizUnit> sourceBizUnit = new ArrayList<BizUnit>();
+		FacesContext context = FacesContext.getCurrentInstance();
+		Map<String, String> params = context.getExternalContext().getRequestParameterMap();
+		String employeeId = params.get("id");
+		User uUser = userSB.findByEmployeeIdWithAllRelation(employeeId);
+		// 04444   anz as tw
+		List<BizUnit> temBt = uUser.getBizUnits();
+//		for(BizUnit at :allBizUnit){
+//			sourceBizUnit.add(at);
+//		}
+		for(BizUnit but:temBt){
+			if(sourceBizUnit.contains(but)){
+				sourceBizUnit.remove(but);
+			}
+		}
+		
+		return sourceBizUnit;
+	}
+
+	public String save() {
+		boolean succeed = commonSave();
+
+		if (succeed) {
+			
+			FacesContext context = FacesContext.getCurrentInstance();
+			UserMB userMB = (UserMB) context.getApplication().evaluateExpressionGet(context, "#{userMB}", UserMB.class);			
+			userMB.setUsers(null);
+			
+			return "/UserMgmt/UserManagement.xhtml";
+		} else {
+			if(user.getTeam() == null){
+				user.setTeam(new Team());
+			}
+			if(user.getReportTo() == null){
+				user.setReportTo(new User());
+			}			
+			return null;
+		}
+
+	}
+
+	public void saveAndCreateNewUser() {
+		boolean succeed = commonSave();
+		if (succeed) {
+			addNewUser();
+			return ;
+		} else {
+			if(user.getTeam() == null){
+				user.setTeam(new Team());
+			}
+			if(user.getReportTo() == null){
+				user.setReportTo(new User());
+			}			
+			copiedEmployeeId = null;
+			return ;
+		}		
+	}
+	
+	public void changeTeam(AjaxBehaviorEvent event) {
+
+		List<BizUnit> bizUnits = user.getBizUnits();
+		
+		String newTeamName =user.getTeam().getName();
+		LOG.log(Level.INFO, " new team  ==>> " + newTeamName);
+		Team newTeam = teamSB.findByNameAndBU(newTeamName, bizUnits);
+		user.setTeam(newTeam);
+	}
+	
+	public String cancel(){
+		
+		FacesContext context = FacesContext.getCurrentInstance();
+		UserMB userMB = (UserMB) context.getApplication().evaluateExpressionGet(context, "#{userMB}", UserMB.class);			
+		userMB.setUsers(null);
+		filteredDataAccessVos = null;
+		
+		return "/UserMgmt/UserManagement.xhtml?faces-redirect=true";
+	}
+	
+	private boolean commonSave() {
+		String message  = null;
+        FacesMessage msg = null;
+		
+		if(user.getEmployeeId() == null || user.getEmployeeId().equals("") || user.getName() == null || user.getName().equals("")){
+			message = ResourceMB.getText("wq.message.empIdAndNamecannotEmpty");
+			msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "", message+".");
+			FacesContext.getCurrentInstance().addMessage(null, msg);
+			return false;
+		}
+		
+		if(user.getId() == 0 && userSB.findByEmployeeIdLazily(user.getEmployeeId()) != null){
+			Object[] objArr = {user.getEmployeeId()};
+			message = ResourceMB.getParameterizedString("wq.message.CannotCreateEmployeeAlreadyExist",objArr);
+			msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "", message+".") ;
+			FacesContext.getCurrentInstance().addMessage(null, msg);
+			return false;
+		}
+		
+		if (bizUnits.getTarget() ==null || bizUnits.getTarget().size() == 0 || user.getDefaultBizUnit() == null || user.getDefaultBizUnit().getName().equals("")) {
+			message = ResourceMB.getText("wq.message.selectedAndDefaultRegionCannotEmpty");
+			msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "", message+".");
+			FacesContext.getCurrentInstance().addMessage(null, msg);
+			return false;
+		}else{
+			boolean found = false;
+			for(BizUnit bu : bizUnits.getTarget()){
+				if(bu.getName().equals(user.getDefaultBizUnit().getName())){
+					found = true;
+					break;
+				}
+			}
+			if(found == false){
+				message = ResourceMB.getText("wq.message.defaultRegionNotMatchSelectedRegion");
+				msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "", message+".");
+				FacesContext.getCurrentInstance().addMessage(null, msg);
+				return false;
+			}
+		}
+		
+		user.setBizUnits(bizUnits.getTarget());
+		
+		if (roles.getTarget() ==null || roles.getTarget().size() == 0 ) {
+			message = ResourceMB.getText("wq.message.selectedRolesCannotEmpty");
+			msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "", message+".");
+			FacesContext.getCurrentInstance().addMessage(null, msg);
+			return false;
+		
+		}		
+		user.setRoles(roles.getTarget());		
+		System.out.print(user.getTeam());
+		if (user.getTeam() == null || user.getTeam().getName() == null ||  user.getTeam().getName().equals("")) {
+			user.setTeam(null);
+		}
+		if (user.getId() == 0) {
+			//Material restructure and quote_item delinkage andy
+			user.setCreatedBy(UserInfo.getUser().getEmployeeId());
+			user.setCreatedOn(new Date());
+		} else {
+			//Material restructure and quote_item delinkage andy
+			user.setLastUpdatedBy(UserInfo.getUser().getEmployeeId());
+			user.setLastUpdatedOn(new Date());
+		}
+
+		List<Group> groups = new ArrayList<Group>();
+		for (String id : selectedGroups) {
+			Group group = new Group();
+			group.setId(Long.parseLong(id));
+			groups.add(group);
+		}
+		user.setGroups(groups);
+		
+		for(DataAccessVo vo : dataAccessVos){
+			if(vo.getManufacturer().equalsIgnoreCase("Select One") ){
+				message = ResourceMB.getText("wq.message.dataAccessInvalid");
+				msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "", message+".");
+				FacesContext.getCurrentInstance().addMessage(null, msg);
+				return false;
+			}
+			
+		}
+
+		List<DataAccess> dataAccesses = new ArrayList<DataAccess>();
+		for(DataAccessVo vo : dataAccessVos){
+			
+			if(vo.getManufacturer() == null && vo.getMaterialType() == null && vo.getProductGroup() == null && vo.getProgramType() == null && vo.getTeam() == null){
+				continue;
+			}
+			
+			DataAccess dataAccess = convertToDataAccess(vo);
+			if(dataAccess != null){
+				dataAccesses.add(convertToDataAccess(vo));
+			}
+			
+		}
+
+		user.setDataAccesses(dataAccesses);
+
+		user.setSalesForCs(sales);
+		user.setCsForSales(css);
+
+		List<Customer> cus = new ArrayList<Customer>();
+		for (String name : customers) {
+			Customer customer = new Customer();
+			customer.setCustomerNumber(name.substring(0, name.indexOf(" ")));
+			cus.add(customer);
+		}
+		user.setCustomers(cus);
+
+		String reportTo = user.getReportTo().getEmployeeId();
+		if (reportTo != null && !reportTo.equals("")) {
+			
+			if (user.getEmployeeId().equals(reportTo)) {
+				message = ResourceMB.getText("wq.message.emplIdCannotSameSupervisorId");
+				msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "", message);
+				FacesContext.getCurrentInstance().addMessage(null, msg);
+				return false;
+			}			
+			
+			User userReportTo = userSB.findByEmployeeIdLazily(reportTo);
+			
+			if (userReportTo == null) {
+				Object[] objArr = {reportTo};
+				message = ResourceMB.getParameterizedString("wq.message.supervisorIdNotFound",objArr);
+				
+				msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "", message+"!");
+				FacesContext.getCurrentInstance().addMessage(null, msg);
+				return false;
+			} else {
+				User editedUser = userSB.findByEmployeeIdLazily(user.getEmployeeId());
+				if(editedUser != null){
+					List<User> subordinates = userSB.findAllSubordinates(editedUser, 10);
+					for(User subordinate : subordinates){
+						if(subordinate.getEmployeeId().equals(reportTo)){
+							Object[] objArr = {reportTo,user.getEmployeeId()};
+							message = ResourceMB.getParameterizedString("wq.message.employeeSupervisorSubordinatesSame",objArr);
+							msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "", message);
+							FacesContext.getCurrentInstance().addMessage(null, msg);
+							return false;							
+						}
+					}
+				}
+			}
+			user.setReportTo(userReportTo);
+		} else {
+			user.setReportTo(null);
+		}		
+
+		try {
+			user.setUserLocale(Constants.ENGLISH_LOCALE_STRING);
+			userSB.saveWithAllRelation(user);
+			copiedEmployeeId = "";
+			LOG.info("User " + user.getEmployeeId() + " saved successfully");
+		} catch (Exception e) {
+			LOG.log(Level.SEVERE, "Save user " + user.getEmployeeId() + " failed. Exception message: "+MessageFormatorUtil.getParameterizedStringFromException(e) , e);
+			String s = e.getMessage();
+			
+			if(s != null && s.toUpperCase().contains("OptimisticLockException".toUpperCase())){
+				
+				message = ResourceMB.getText("wq.message.userProfileModify");
+				s = message;
+			}else{
+				if(e.getCause() != null){
+					s = s + ". " + e.getCause().getMessage();
+				}
+				
+			}
+			
+			msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "",	s);
+			FacesContext.getCurrentInstance().addMessage(null, msg);
+			return false;
+		}
+
+		return true;
+	}
+	
+	public void checkMfrMapToAll(ActionEvent event) {
+
+		RequestContext context = RequestContext.getCurrentInstance();
+
+		boolean found = false;
+
+		for (DataAccessVo vo : dataAccessVos) {
+			if (vo.getManufacturer().equalsIgnoreCase("ALL")) {
+				found = true;
+				break;
+			}
+		}
+
+		if (found == true) {
+			context.addCallbackParam("mfrMapToAllFound", "2");
+		}
+	}
+
+	public void addOneDataAccess() {
+		long seq = 0;
+		if (dataAccessVos.size() > 0)
+		{
+			seq = dataAccessVos.get(dataAccessVos.size() - 1).getSeq();
+		}
+		
+		long seqId = 0;
+		for(DataAccessVo vo : dataAccessVos){
+			System.out.println("addOneDataAccess id : " + vo.getId());
+			if(vo.getId() < seqId)
+			{
+				seqId = vo.getId();
+			}
+		}
+		
+		DataAccessVo vo = new DataAccessVo();
+		vo.setManufacturer("Select One");
+		vo.setMaterialType("ALL");
+		vo.setProductGroup("ALL");
+		vo.setProgramType("ALL");
+		vo.setTeam("ALL");
+//		vo.setId(++seq);
+		vo.setId(--seqId);
+		vo.setSeq(++seq);
+		dataAccessVos.add(vo);
+		if (filteredDataAccessVos != null)
+		{
+			filteredDataAccessVos.add(vo);
+		}
+		
+//		filteredDataAccessVos = dataAccessVos;
+	}
+	
+	public void removeDataAccess() {
+
+		FacesContext context = FacesContext.getCurrentInstance();
+		Map<String, String> params = context.getExternalContext().getRequestParameterMap();
+
+		long seq = Long.parseLong(params.get("id"));
+
+		if (dataAccessVos != null) {
+			for (int i = 0; i < dataAccessVos.size(); i++) {
+				if (dataAccessVos.get(i).getSeq() == seq) {
+					dataAccessVos.remove(i);
+				}
+			}
+		}
+
+		if (filteredDataAccessVos != null) {
+			for (int i = 0; i < filteredDataAccessVos.size(); i++) {
+				if (filteredDataAccessVos.get(i).getSeq() == seq) {
+					filteredDataAccessVos.remove(i);
+				}
+			}
+		}
+	}
+
+	public void addCustomer() {
+		String message = null;
+		
+		Customer customer = customerSB.findByPK(customerNumber);
+		
+		for(String sCustomer : customers){
+			if(sCustomer.equals(customer.getCustomerNumber() + " " + customer.getCustomerFullName())){
+				Object[] objArr = {customerNumber};
+				message = ResourceMB.getParameterizedString("wq.message.customerAlreadyInList",objArr);
+				FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "",	message);
+				FacesContext.getCurrentInstance().addMessage(null, msg);
+				return;
+			}
+		}		
+		
+		if (customer != null) {
+			customers.add(customer.getCustomerNumber() + " " + customer.getCustomerFullName());
+			customerNumber = "";
+		} else {
+			Object[] objArr = {customerNumber};
+			message = ResourceMB.getParameterizedString("wq.message.customerNotfound",objArr);
+			FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "",	message);
+			FacesContext.getCurrentInstance().addMessage(null, msg);
+		}
+
+	}
+
+	public void addCS() {
+		String message = null;
+		for(User user : css){
+			if(user.getEmployeeId().equalsIgnoreCase(csEmployeeId)){
+				Object[] objArr = {csEmployeeId};
+				message = ResourceMB.getParameterizedString("wq.message.alreadyInList",objArr);
+				FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "", message);
+				FacesContext.getCurrentInstance().addMessage(null, msg);				
+				return;
+			}
+		}
+
+		User user = userSB.findByEmployeeIdLazily(csEmployeeId);
+		if (user != null) {
+			css.add(user);
+			csEmployeeId = "";
+		} else {
+			Object[] objArr = {csEmployeeId};
+			message = ResourceMB.getParameterizedString("wq.message.userIsNotFound",objArr);
+			
+			FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "",
+					message+"!");
+			FacesContext.getCurrentInstance().addMessage(null, msg);
+		}
+
+	}
+
+	public void addSales() {
+		String message = null;
+		
+		for(User user : sales){
+			if(user.getEmployeeId().equalsIgnoreCase(salesEmployeeId)){
+				Object[] objArr = {salesEmployeeId};
+				message = ResourceMB.getParameterizedString("wq.message.alreadyInList",objArr);
+				FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "", message);
+				FacesContext.getCurrentInstance().addMessage(null, msg);				
+				return;
+			}
+		}
+
+
+		User user = userSB.findByEmployeeIdLazily(salesEmployeeId);
+		if (user != null) {
+			sales.add(user);
+			salesEmployeeId = "";
+		} else {
+			Object[] objArr = {salesEmployeeId};
+			message = ResourceMB.getParameterizedString("wq.message.userIsNotFound",objArr);
+			FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "", message+"!");
+			FacesContext.getCurrentInstance().addMessage(null, msg);
+		}
+	}
+
+	public void removeCustomer() {
+
+		FacesContext context = FacesContext.getCurrentInstance();
+		Map<String, String> params = context.getExternalContext().getRequestParameterMap();
+		String number = params.get("customerNumber");
+		for (int i = 0; i < customers.size(); i++) {
+			if (customers.get(i).equals(number)) {
+				customers.remove(i);
+			}
+		}
+	}
+
+	public void removeCS() {
+
+		FacesContext context = FacesContext.getCurrentInstance();
+		Map<String, String> params = context.getExternalContext()
+				.getRequestParameterMap();
+		long id = Long.parseLong(params.get("id"));
+		for (int i = 0; i < css.size(); i++) {
+			if (css.get(i).getId() == id) {
+				css.remove(i);
+			}
+		}
+	}
+
+	public void removeSales() {
+
+		FacesContext context = FacesContext.getCurrentInstance();
+		Map<String, String> params = context.getExternalContext()
+				.getRequestParameterMap();
+		long id = Long.parseLong(params.get("id"));
+		for (int i = 0; i < sales.size(); i++) {
+			if (sales.get(i).getId() == id) {
+				sales.remove(i);
+			}
+		}
+	}
+
+	public void copyUser() {
+		String message =null;
+
+		modifyMode = false;
+
+		if (copiedEmployeeId == null || copiedEmployeeId.equalsIgnoreCase("")) {
+			message = ResourceMB.getText("wq.message.userIdCannotBeEmpty");
+			FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "", message+".");
+			FacesContext.getCurrentInstance().addMessage(null, msg);
+			return;
+		}
+
+		User copiedUser = userSB.findByEmployeeIdAndBizUnits(copiedEmployeeId, UserInfo.getUser().getBizUnits());
+
+		if (copiedUser == null) {
+			
+			Object[] objArr = {copiedEmployeeId};
+			message = ResourceMB.getParameterizedString("wq.message.userIsNotFound",objArr);
+			FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "", message);
+			FacesContext.getCurrentInstance().addMessage(null, msg);
+			return;
+		}
+
+		if (copiedUser.getReportTo() == null) {
+			user.setReportTo(new User());
+		}else{
+			user.setReportTo(copiedUser.getReportTo());
+		}
+
+		if (copiedUser.getTeam() == null) {
+			user.setTeam(new Team());
+		}else{
+			user.setTeam(copiedUser.getTeam());
+		}
+
+		if (copiedUser.getDefaultBizUnit() == null) {
+			user.setDefaultBizUnit(new BizUnit());
+		}else{
+			user.setDefaultBizUnit(copiedUser.getDefaultBizUnit());
+		}
+
+		roles = new DualListModel<Role>(getSourceRole(copiedUser.getRoles()), copiedUser.getRoles());
+
+		bizUnits = new DualListModel<BizUnit>(getSourceBizUnit(copiedUser.getBizUnits()), copiedUser.getBizUnits());
+
+		css = copiedUser.getCsForSales();
+
+		sales = copiedUser.getSalesForCs();
+		
+		selectedGroups.clear();
+		for (Group group : copiedUser.getGroups()) {
+			selectedGroups.add(String.valueOf(group.getId()));
+		}
+		
+		dataAccessVos = new ArrayList<DataAccessVo>();
+		long i = 0;
+		long j = 0 ;
+		for(DataAccess dataAccess : copiedUser.getDataAccesses()){
+			DataAccessVo vo = new DataAccessVo(dataAccess);
+			vo.setId(--i);
+			vo.setSeq(j++);
+			dataAccessVos.add(vo);
+		}
+		
+		customers = new ArrayList<String>();
+		for (Customer customer : copiedUser.getCustomers()) {
+			customers.add(customer.getCustomerNumber() + " " + customer.getCustomerFullName());
+		}		
+
+	}
+	
+	private DataAccess convertToDataAccess(DataAccessVo vo){
+		
+		DataAccess dataAccess = new DataAccess();
+		
+		if(vo.getId() < 0){
+			dataAccess.setId(0);
+		}else{
+			dataAccess.setId(vo.getId());
+		}
+		
+		if(vo.getManufacturer() == null || vo.getManufacturer().equalsIgnoreCase("*ALL")){
+			dataAccess.setManufacturer(null);
+		}else{
+			boolean found = false;
+			for(Manufacturer mfr : this.manufacturers){
+				if(mfr.getName().equals(vo.getManufacturer())){
+					found = true;
+					dataAccess.setManufacturer(mfr);
+					break;
+				}
+			}
+			if(found == false){
+				return null;
+			}
+		}
+
+		
+		if(vo.getMaterialType()== null || vo.getMaterialType().equalsIgnoreCase("ALL")){
+			dataAccess.setMaterialType(null);
+		}else{
+			for(MaterialType materialType : this.materialTypes){
+				if(materialType.getName().equals(vo.getMaterialType())){
+					dataAccess.setMaterialType(materialType);
+					break;
+				}
+			}			
+		}
+
+		if(vo.getProgramType() == null || vo.getProgramType().equalsIgnoreCase("ALL")){
+			dataAccess.setProgramType(null);
+		}else{			
+			for(ProgramType programType : this.programTypes){
+				if(programType.getName().equals(vo.getProgramType())){
+					dataAccess.setProgramType(programType);
+					break;
+				}
+			}			
+		}
+
+		if(vo.getProductGroup() == null || vo.getProductGroup().equalsIgnoreCase("ALL")){
+			dataAccess.setProductGroup(null);
+		}else{
+			String sProductGroup = vo.getProductGroup();
+			
+			for(ProductGroup productGroup : this.productGroups){
+				if(productGroup.getName().equals(sProductGroup)){
+					dataAccess.setProductGroup(productGroup);
+					break;
+				}
+			}			
+		}
+
+		if(vo.getTeam() == null || vo.getTeam().equalsIgnoreCase("ALL")){
+			dataAccess.setTeam(null);
+		}else{
+			for(Team team : this.allTeams){
+				if(team.getName().equals(vo.getTeam())){
+					dataAccess.setTeam(team);
+					break;
+				}
+			}			
+		}
+		
+		return dataAccess;
+	}
+	
+	//Getters, Setters
+	public List<ProductGroup> getProductGroups() {
+		return productGroups;
+	}
+
+	public void setProductGroups(List<ProductGroup> productGroups) {
+		this.productGroups = productGroups;
+		// this.productGroups = rePopModel(productGroups, fullProductGroupList);
+	}
+
+	public List<ProgramType> getProgramTypes() {
+		return programTypes;
+	}
+
+	public void setProgramTypes(List<ProgramType> programTypes) {
+		this.programTypes = programTypes;
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+
+	public DualListModel<Role> getRoles() {
+		return roles;
+	}
+
+	public void setRoles(DualListModel<Role> roles) {
+		this.roles = roles;
+	}
+
+	public boolean isModifyMode() {
+		return modifyMode;
+	}
+
+	public void setModifyMode(boolean modifyMode) {
+		this.modifyMode = modifyMode;
+	}
+
+	public String getCopiedEmployeeId() {
+		return copiedEmployeeId;
+	}
+
+	public void setCopiedEmployeeId(String copiedEmployeeId) {
+		this.copiedEmployeeId = copiedEmployeeId;
+	}
+
+	public List<User> getSales() {
+		return sales;
+	}
+
+	public void setSales(List<User> sales) {
+		for (int i = 0; i < sales.size(); i++) {
+			for (User user2 : this.sales) {
+				if (sales.get(i).getId() == user2.getId()) {
+					sales.set(i, user2);
+					break;
+				}
+			}
+		}
+		this.sales = sales;
+	}
+
+	public List<User> getCss() {
+		return css;
+	}
+
+	public void setCss(List<User> css) {
+		for (int i = 0; i < css.size(); i++) {
+			for (User user2 : this.css) {
+				if (css.get(i).getId() == user2.getId()) {
+					css.set(i, user2);
+					break;
+				}
+			}
+		}
+		this.css = css;
+	}
+	
+	public String getCsEmployeeId() {
+		return csEmployeeId;
+	}
+
+	public void setCsEmployeeId(String csEmployeeId) {
+		this.csEmployeeId = csEmployeeId;
+	}
+
+	public String getSalesEmployeeId() {
+		return salesEmployeeId;
+	}
+
+	public void setSalesEmployeeId(String salesEmployeeId) {
+		this.salesEmployeeId = salesEmployeeId;
+	}
+
+	public List<Manufacturer> getManufacturers() {
+		return manufacturers;
+	}
+
+	public void setManufacturers(List<Manufacturer> manufacturers) {
+		this.manufacturers = manufacturers;
+	}
+
+	public List<String> getSelectedGroups() {
+		return selectedGroups;
+	}
+
+	public void setSelectedGroups(List<String> selectedGroups) {
+		this.selectedGroups = selectedGroups;
+	}
+
+	public Map<String, Long> getGroupsMap() {
+		return groupsMap;
+	}
+
+	public void setGroupsMap(Map<String, Long> groupsMap) {
+		this.groupsMap = groupsMap;
+	}
+
+	public List<String> getCustomers() {
+		return customers;
+	}
+
+	public void setCustomers(List<String> customers) {
+		this.customers = customers;
+	}
+
+	public String getCustomerNumber() {
+		return customerNumber;
+	}
+
+	public void setCustomerNumber(String customerNumber) {
+		this.customerNumber = customerNumber;
+	}
+
+	public List<Team> getTeams() {
+		return teams;
+	}
+
+	public void setTeams(List<Team> teams) {
+		this.teams = teams;
+	}
+
+	public List<MaterialType> getMaterialTypes() {
+		return materialTypes;
+	}
+
+	public void setMaterialTypes(List<MaterialType> materialTypes) {
+		this.materialTypes = materialTypes;
+	}
+
+	public DualListModel<BizUnit> getBizUnits() {
+		return bizUnits;
+	}
+
+	public void setBizUnits(DualListModel<BizUnit> bizUnits) {
+		this.bizUnits = bizUnits;
+	}
+
+	public List<BizUnit> getLstBizUnits() {
+		return lstBizUnits;
+	}
+
+	public void setLstBizUnits(List<BizUnit> lstBizUnits) {
+		this.lstBizUnits = lstBizUnits;
+	}
+
+	public List<DataAccessVo> getDataAccessVos() {
+		return dataAccessVos;
+	}
+
+	public void setDataAccessVos(List<DataAccessVo> dataAccessVos) {
+		this.dataAccessVos = dataAccessVos;
+	}
+	
+	/**
+	 * autocomplete supervisor's employee id accord to supervisor name that operator filled.
+	 */
+	public void onBlurSupervisorName(){
+		List<BizUnit> bizUnitLst = user.getBizUnits();
+		List<User> rltUserLst = new ArrayList<User>();
+		String name = user.getReportTo().getName();
+		String employeeId = ""; 
+		if (name.length() > 0) {
+			for (int i = name.length(); i > 1; i--) {
+				String digit = name.substring(i - 1, name.length());
+				String digitNull = name.substring(i - 2, i - 1);
+
+				if (digit.matches("[0-9]{1}[0-9]{0,9}")&& digitNull.equals(" ")) {
+					employeeId = name.substring(i - 1, name.length());
+					name = name.substring(0, i - 2);
+					break;
+				}
+			}
+		}
+		
+		if (bizUnitLst != null && bizUnitLst.size() > 0) {
+			rltUserLst = userSB.findAutoCompleteUser(name, bizUnitLst);
+		} else {
+			rltUserLst.add(userSB.findByEmployeeIdLazily(employeeId));
+		}
+
+		if (rltUserLst != null && rltUserLst.size() > 0) {
+			for (User usr : rltUserLst) {
+				if (usr != null) {
+					if (user.getReportTo().getName().equals(usr.getName() + " " + usr.getEmployeeId())) {
+						user.getReportTo().setEmployeeId(usr.getEmployeeId());
+						user.getReportTo().setName(usr.getName());
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * autocomplete supervisor name.
+	 * @param key
+	 * @return
+	 */
+	public List<String> autoCompleteSupervisorName(String key) {
+		List<String> result = new ArrayList<String>();
+		List<BizUnit> bizUnitLst = user.getBizUnits();
+		List<User> rltbizUnitLst = new ArrayList<User>();
+		if (bizUnitLst != null && bizUnitLst.size() > 0) {
+			rltbizUnitLst = userSB.findAutoCompleteUser(key, bizUnitLst);
+		} else {
+			rltbizUnitLst = userSB.findAutoCompleteUser(key);
+		}
+		for (User usr : rltbizUnitLst) {
+			result.add(usr.getName() + " " + usr.getEmployeeId());
+		}
+
+		return result;
+	}
+	
+	/**
+	 * Auto complete use modify supervisor employee ID.
+	 * @param key
+	 * @return
+	 */
+	public List<String> autoCompleteSupervisorEmployeeID(String key) {
+		List<String> result = new ArrayList<String>();
+		List<User> rltUsrLst = new ArrayList<User>();
+		rltUsrLst = userSB.findUserEmployeeIdByPartion(key);
+
+		for (User usr : rltUsrLst) {
+			result.add(usr.getEmployeeId());
+		}
+		return result;
+	}
+	
+	/**
+	 * Auto complete supervisor name according supervisor id.
+	 * @return
+	 */
+	public void onBlurSupervisorEmployeeID() {
+		String employeeId = user.getReportTo().getEmployeeId();
+		User usr = userSB.findByEmployeeIdWithAllRelation(employeeId);
+		if (usr != null) {
+			user.getReportTo().setName(usr.getName());
+		}
+
+	}
+
+	public List<Team> getAllTeams() {
+		return allTeams;
+	}
+
+	public void setAllTeams(List<Team> allTeams) {
+		this.allTeams = allTeams;
+	}
+}

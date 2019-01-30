@@ -1,0 +1,664 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.model.SelectItem;
+
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.avnet.emasia.webquote.commodity.constant.PRICER_TYPE;
+import com.avnet.emasia.webquote.commodity.util.PricerUtils;
+import com.avnet.emasia.webquote.constants.RemoteEjbClassEnum;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.CostExtractSB;
+import com.avnet.emasia.webquote.quote.ejb.FiscalMappingSB;
+import com.avnet.emasia.webquote.quote.vo.CostComparisonBean;
+import com.avnet.emasia.webquote.quote.vo.CostExtractSearchCriterial;
+import com.avnet.emasia.webquote.reports.ejb.ExcelReportSB;
+import com.avnet.emasia.webquote.reports.ejb.OfflineReportSB;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.common.CacheUtil;
+import com.avnet.emasia.webquote.utilities.common.OSTimeZone;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.vo.CostCompareVO;
+import com.avnet.emasia.webquote.vo.CostInfoVO;
+import com.avnet.emasia.webquote.vo.OfflineReportParam;
+import com.avnet.emasia.webquote.web.datatable.SelectableLazyDataModel;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.security.WQUserDetails;
+
+
+@ManagedBean
+@SessionScoped
+public class CostExtractMB implements Serializable{
+	
+	private static final Logger LOG = Logger.getLogger(CostExtractMB.class.getName());
+	private static final int MAX_MFR_SELECTION = 10;
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	//Bryan Start
+	@EJB
+	CacheUtil cacheUtil;
+	//Bryan End
+	
+	@EJB
+	CostExtractSB costExtractSB;
+	
+	@EJB
+	ExcelReportSB excelReportSB;
+	
+	@EJB
+	OfflineReportSB offlineReportSB;
+	
+	@EJB
+	BizUnitSB bizUnitSB;
+	
+	@EJB
+	FiscalMappingSB fiscalMappingSB;
+	
+	private List<CostInfoVO> costInfoVOs;
+	
+	private List<CostCompareVO> costCompareVOs;
+	
+	private CostExtractSearchCriterial costExtractSearchCriterial;
+	
+	private List<String> regionList;
+	
+	private SelectItem[] costSourceList;
+	
+	private List<String> salesCostPartList;
+	
+	private List<String> mfrList;
+	
+	private List<String> costIndicatorList;
+	
+	private User user;
+	
+	private String selectedRegionLabel = "No region selected";
+	private String selectedCostSourceLabel = "No cost source selected";
+	private String selectedMfrLabel = "No mfr selected";
+	private String selectedCostIndLabel = "No cost indicator selected";
+	
+	//Bryan Start
+	@EJB
+	private SysConfigSB sysConfigSB;
+	LazyDataModelForCostExtract beans = new LazyDataModelForCostExtract();
+	LazyDataModelForCostComparison costComparisonbean = new LazyDataModelForCostComparison();
+	
+	@EJB
+	UserSB userSB;
+	//Bryan End
+	
+	@PostConstruct
+	public void postContruct(){
+		costExtractSearchCriterial = new CostExtractSearchCriterial();
+		user =((WQUserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUser();
+		initSearchCriterialItem();
+		
+		setupDataAccessInCriteria();
+		setupFiscalCalendarPeriod();
+	}
+	
+	private void initSearchCriterialItem() {
+		regionList = new ArrayList<String>();
+		mfrList = new ArrayList<String>();
+		salesCostPartList = new ArrayList<String>();
+		
+		this.costSourceList = new SelectItem[4];
+		this.costSourceList[0] = new SelectItem(PRICER_TYPE.NORMAL.getName(), "Normal Pricer");
+		this.costSourceList[1] = new SelectItem(PRICER_TYPE.SIMPLE.getName(), "Simple Pricer");
+		this.costSourceList[2] = new SelectItem(PRICER_TYPE.CONTRACT.getName(), "Contract Pricer");
+		this.costSourceList[3] = new SelectItem("QuoteRecord", "Quote Record");
+		
+		for(String saleCostPart : QuoteConstant.SALES_COST_PART) {
+			salesCostPartList.add(saleCostPart);
+		}
+		
+		//Bryan Start
+		//costIndicatorList = removeDuplicateItem(CostIndicatorCacheManager.getCostIndicator());
+		costIndicatorList = removeDuplicateItem(cacheUtil.getCostIndicator());
+		//Bryan End
+		
+		List<BizUnit> userRegions = user.getBizUnits();
+		for(BizUnit bizUnit : userRegions) {
+			regionList.add(bizUnit.getName());
+			//Bryan Start
+			//List<Manufacturer> manufacturers = MfrCacheManager.getMfrListByBizUnit(bizUnit.getName());
+			List<Manufacturer> manufacturers = cacheUtil.getMfrListByBizUnit(bizUnit.getName());
+			//Bryan End
+			for(Manufacturer mfr : manufacturers) {
+				if(!mfrList.contains(mfr.getName())) {
+					mfrList.add(mfr.getName());
+				}
+			}
+		}
+		
+		Date quotationEffectiveDateFrom = PricerUtils.getTimesmorning(PricerUtils.getAfterMonth(-1));
+
+		costExtractSearchCriterial.setQuoteEffectiveDateFrom(quotationEffectiveDateFrom);
+		costExtractSearchCriterial.getSelectedRegions().add(user.getCurrenBizUnit().getName());
+		
+		selectRegionCheckbox();
+		selectCostIndCheckbox();
+		selectCostSourceCheckbox();
+		selectMfrCheckbox();
+	}
+	
+	
+	public void search() {
+		LOG.info("cost extract Search begin...");
+
+		long start = System.currentTimeMillis();
+		
+		try{
+			//validation		
+			if(!commonValidation()){
+				return;
+			}
+
+			costComparisonbean.startPagination();
+			beans.startPagination();
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOG.log(Level.SEVERE, "Error occured while searching, Exception message: " + e.getMessage(),
+					e);
+		}
+		
+		long end = System.currentTimeMillis();
+		LOG.info("cost extract end,takes " + (end - start) + " ms");
+	}
+	
+	public void reset() {
+		LOG.info("reset begin...");
+
+		costExtractSearchCriterial = new CostExtractSearchCriterial();
+		
+		selectedRegionLabel = "No region selected";
+		selectedCostSourceLabel = "No cost source selected";
+		selectedMfrLabel = "No mfr selected";
+		selectedCostIndLabel = "No cost indicator selected";
+		
+		initSearchCriterialItem();
+		
+		LOG.info("rest end");
+	}
+	
+	private List<String> removeDuplicateItem(List<String> stringItems) {
+		List<String> stringList = new ArrayList<String>();
+		if(stringItems != null && stringItems.size() > 0) {
+			for(String itemText : stringItems) {
+				if(!stringList.contains(itemText)) {
+					stringList.add(itemText);
+				}
+			}
+		}
+		return stringList;
+	}
+	
+	
+	public void sendCostInfoReport() {
+
+		LOG.info("call sendCostInfoReport");
+
+		//validation
+		if(!commonValidation()){
+			return;
+		}
+
+		String message ="";
+		OfflineReportParam param = new OfflineReportParam();
+		param.setCriteriaBeanValue(costExtractSearchCriterial);
+		param.setReportName(QuoteConstant.COST_EXTRACTION_INFO);
+		param.setEmployeeId(String.valueOf(user.getEmployeeId()));
+		param.setRemoteEjbClass(RemoteEjbClassEnum.COSTEXTRACTION_INFO_REMOTE_EJB.classSimpleName());
+		offlineReportSB.sendOffLineReportRemote(param);
+		message = ResourceMB.getText("wq.message.reqSubmitted");
+		FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_INFO, message ,"");
+
+		FacesContext.getCurrentInstance().addMessage("growl", msg);
+		return;
+	}
+	
+	public void sendCostCompareReport() {
+
+		LOG.info("call sendCostCompareReport");
+
+		//validation
+		if(!commonValidation()){
+			return;
+		}
+		
+		int count = costExtractSB.countCostComparisonTemp(this.user);
+		if(count > 0){
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.costExtract.costComparisonInProgress"), ""));
+			return;
+		}
+		
+		String message ="";
+		OfflineReportParam param = new OfflineReportParam();
+		param.setCriteriaBeanValue(costExtractSearchCriterial);
+		param.setReportName(QuoteConstant.COST_EXTRACTION_COMPARISON);
+		param.setEmployeeId(String.valueOf(user.getEmployeeId()));
+		param.setRemoteEjbClass(RemoteEjbClassEnum.COSTEXTRACTION_COMPARISON_REMOTE_EJB.classSimpleName());
+		offlineReportSB.sendOffLineReportRemote(param);
+        message = ResourceMB.getText("wq.message.reqSubmitted");
+		FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_INFO, message ,"");
+		
+		FacesContext.getCurrentInstance().addMessage("growl", msg);
+		return;
+	}
+	
+	public List<CostInfoVO> getCostInfoVOs() {
+		return costInfoVOs;
+	}
+
+	public void setCostInfoVOs(List<CostInfoVO> costInfoVOs) {
+		this.costInfoVOs = costInfoVOs;
+	}
+
+	public List<CostCompareVO> getCostCompareVOs() {
+		return costCompareVOs;
+	}
+
+	public void setCostCompareVOs(List<CostCompareVO> costCompareVOs) {
+		this.costCompareVOs = costCompareVOs;
+	}
+
+	public CostExtractSearchCriterial getCostExtractSearchCriterial() {
+		return costExtractSearchCriterial;
+	}
+
+	public void setCostExtractSearchCriterial(CostExtractSearchCriterial costExtractSearchCriterial) {
+		this.costExtractSearchCriterial = costExtractSearchCriterial;
+	}	
+
+	public List<String> getRegionList() {
+		return regionList;
+	}
+
+	public void setRegionList(List<String> regionList) {
+		this.regionList = regionList;
+	}
+
+	public SelectItem[] getCostSourceList() {
+		return costSourceList;
+	}
+
+	public void setCostSourceList(SelectItem[] costSourceList) {
+		this.costSourceList = costSourceList;
+	}
+	
+
+	public List<String> getMfrList() {
+		return mfrList;
+	}
+
+	public void setMfrList(List<String> mfrList) {
+		this.mfrList = mfrList;
+	}
+
+	public List<String> getSalesCostPartList() {
+		return salesCostPartList;
+	}
+
+	public void setSalesCostPartList(List<String> salesCostPartList) {
+		this.salesCostPartList = salesCostPartList;
+	}	
+
+	public List<String> getCostIndicatorList() {
+		return costIndicatorList;
+	}
+
+	public void setCostIndicatorList(List<String> costIndicatorList) {
+		this.costIndicatorList = costIndicatorList;
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+	
+	public class LazyDataModelForCostExtract extends SelectableLazyDataModel<CostExtractSearchCriterial> {
+
+		//sets maximum no. of pages that can be stored in cache at a time
+		@Override
+		public void startPagination() {
+			super.startPagination();
+			String cachePageSizeVal = sysConfigSB.getProperyValue(SelectableLazyDataModel.CACHE_PAGE_SIZE);
+			try {
+				setCachePageSize(Integer.parseInt(cachePageSizeVal));
+			} catch (Exception e) {
+				LOG.log(Level.SEVERE, "Error occured while setting size of cache, Exception message: " + e.getMessage(),
+						e);
+			}
+
+		}
+
+		//finds count of records to be fetched
+		@Override
+		public int findLazyDataCount(String sortField, String sortOrder, Map<String, Object> filters) {
+			return costExtractSB.countCostInformation(costExtractSearchCriterial, true);
+		}
+
+		//finds data for current page when not present in cache
+		@Override
+		public List<CostExtractSearchCriterial> findLazyData(int first, int pageSize, String sortField, String sortOrder,
+				Map<String, Object> filters) {
+			
+			List<CostExtractSearchCriterial> lazyItems = costExtractSB.searchCostInformation(costExtractSearchCriterial, true, first, pageSize);
+			
+			return lazyItems;
+		}
+
+		@Override
+		//return data for pagination
+		protected SelectableLazyDataModel<CostExtractSearchCriterial> getLazyData() {
+			return beans;
+		}
+
+	}
+	
+	public class LazyDataModelForCostComparison extends SelectableLazyDataModel<CostComparisonBean> {
+
+		//sets maximum no. of pages that can be stored in cache at a time
+		@Override
+		public void startPagination() {
+
+			super.startPagination();
+			String cachePageSizeVal = sysConfigSB.getProperyValue(SelectableLazyDataModel.CACHE_PAGE_SIZE);
+			try {
+				setCachePageSize(Integer.parseInt(cachePageSizeVal));
+			} catch (Exception e) {
+				LOG.log(Level.SEVERE, "Error occured while setting size of cache, Exception message: " + e.getMessage(),
+						e);
+			}
+
+		}
+
+		//finds count of records to be fetched
+		@Override
+		public int findLazyDataCount(String sortField, String sortOrder, Map<String, Object> filters) {
+			return costExtractSB.countCostComparison(costExtractSearchCriterial, true);
+		}
+
+		//finds data for current page when not present in cache
+		@Override
+		public List<CostComparisonBean> findLazyData(int first, int pageSize, String sortField, String sortOrder,
+				Map<String, Object> filters) {
+			
+			List<CostComparisonBean> lazyItems = costExtractSB.searchCostComparison(costExtractSearchCriterial, true, first, pageSize);
+
+			return lazyItems;
+		}
+
+		@Override
+		//return data for pagination
+		protected SelectableLazyDataModel<CostComparisonBean> getLazyData() {
+			return costComparisonbean;
+		}
+
+	}
+	
+	public LazyDataModelForCostExtract getBeans() {
+		return beans;
+	}
+
+	public void setBeans(LazyDataModelForCostExtract beans) {
+		this.beans = beans;
+	}
+	
+	public void setupDataAccessInCriteria() {
+		costExtractSearchCriterial.setDataAccesses(userSB.findAllDataAccesses(user));
+	}
+	
+	private void setupFiscalCalendarPeriod(){
+		DateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		sdf.setTimeZone(OSTimeZone.getOsTimeZone());
+		
+		DateFormat sdf2 = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+		sdf2.setTimeZone(OSTimeZone.getOsTimeZone());
+
+		Calendar now = Calendar.getInstance();
+		now.add(Calendar.MONTH, -3);
+		String[] last3MthPeriod = fiscalMappingSB.getPeriodByDate(sdf.format(now.getTime()));
+		
+		now = Calendar.getInstance();
+		now.add(Calendar.MONTH, -6);
+		String[] last6MthPeriod = fiscalMappingSB.getPeriodByDate(sdf.format(now.getTime()));
+	
+		now = Calendar.getInstance();
+		now.add(Calendar.MONTH, -12);
+		String[] last12MthPeriod = fiscalMappingSB.getPeriodByDate(sdf.format(now.getTime()));
+
+
+
+		try {
+			Calendar endDate = Calendar.getInstance();
+			endDate.set(Calendar.SECOND, 59);
+			endDate.set(Calendar.MINUTE, 59);
+			endDate.set(Calendar.HOUR_OF_DAY, 23);
+			endDate.add(Calendar.DATE, -1);
+
+			costExtractSearchCriterial.setQuoteEffectiveDate3MthFrom(sdf2.parse(last3MthPeriod[0] + " 00:00:00"));
+			costExtractSearchCriterial.setQuoteEffectiveDate3MthTo(endDate.getTime());
+
+			costExtractSearchCriterial.setQuoteEffectiveDate6MthFrom(sdf2.parse(last6MthPeriod[0] + " 00:00:00"));
+			costExtractSearchCriterial.setQuoteEffectiveDate6MthTo(endDate.getTime());
+
+			costExtractSearchCriterial.setQuoteEffectiveDate12MthFrom(sdf2.parse(last12MthPeriod[0] + " 00:00:00"));
+			costExtractSearchCriterial.setQuoteEffectiveDate12MthTo(endDate.getTime());
+
+			LOG.info("criteria.getQuoteEffectiveDate3MthFrom(): " + costExtractSearchCriterial.getQuoteEffectiveDate3MthFrom());
+			LOG.info("criteria.getQuoteEffectiveDate3MthTo(): " + costExtractSearchCriterial.getQuoteEffectiveDate3MthTo());
+
+			LOG.info("criteria.getQuoteEffectiveDate6MthFrom(): " + costExtractSearchCriterial.getQuoteEffectiveDate6MthFrom());
+			LOG.info("criteria.getQuoteEffectiveDate6MthTo(): " + costExtractSearchCriterial.getQuoteEffectiveDate6MthTo());
+
+			LOG.info("criteria.getQuoteEffectiveDate12MthFrom(): " + costExtractSearchCriterial.getQuoteEffectiveDate12MthFrom());
+			LOG.info("criteria.getQuoteEffectiveDate12MthTo(): " + costExtractSearchCriterial.getQuoteEffectiveDate12MthTo());
+
+
+		} catch (ParseException e) {
+			LOG.log(Level.WARNING, "Error occureed in parsing the date :: " + e.getMessage(), e);
+		}
+	}
+
+	public LazyDataModelForCostComparison getCostComparisonbean() {
+		return costComparisonbean;
+	}
+
+	public void setCostComparisonbean(LazyDataModelForCostComparison costComparisonbean) {
+		this.costComparisonbean = costComparisonbean;
+	}
+	
+	private boolean commonValidation(){
+		
+		boolean result = true;
+		String errorMessage = "";
+		
+		//validation
+		if (costExtractSearchCriterial.getSelectedRegions() != null && costExtractSearchCriterial.getSelectedRegions().size() == 0 ) {
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.costExtract.selectRegion"), ""));
+			return false;
+		}
+		
+		if (costExtractSearchCriterial.getSelectedCostSoures() != null && costExtractSearchCriterial.getSelectedCostSoures().size() == 0 ) {
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.costExtract.selectCostSource"), ""));
+			return false;
+		}
+		
+		if (costExtractSearchCriterial.getSelectedMfrs() != null && costExtractSearchCriterial.getSelectedMfrs().size() == 0 ) {
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.costExtract.selectMfr"), ""));
+			return false;
+		}
+		
+		if (costExtractSearchCriterial.getSelectedMfrs() != null && costExtractSearchCriterial.getSelectedMfrs().size() > 10 ) {
+			errorMessage = ResourceMB.getParameterizedText("wq.message.costExtract.selectMfrMax", String.valueOf(MAX_MFR_SELECTION));
+			
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, errorMessage, ""));
+			return false;
+		}
+		
+		if (costExtractSearchCriterial.getQuoteEffectiveDateFrom() == null) {
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.costExtract.quoteEffectiveDateFromRequired"), ""));
+			return false;
+		}
+		
+		if (costExtractSearchCriterial.getQuoteEffectiveDateFrom() != null && costExtractSearchCriterial.getQuoteEffectiveDateTo() != null
+				&& costExtractSearchCriterial.getQuoteEffectiveDateFrom().compareTo(costExtractSearchCriterial.getQuoteEffectiveDateTo()) > 0 ) {
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.date"), ""));
+			return false;
+		}
+		
+		Calendar nextYearCal = Calendar.getInstance();
+		nextYearCal.setTime(costExtractSearchCriterial.getQuoteEffectiveDateFrom());
+		nextYearCal.add(Calendar.YEAR, 1);
+		
+		Date nextYear = nextYearCal.getTime();
+		
+		if(costExtractSearchCriterial.getQuoteEffectiveDateTo() != null 
+				&& costExtractSearchCriterial.getQuoteEffectiveDateTo().compareTo(nextYear) > 0  ){
+			
+			errorMessage = ResourceMB.getParameterizedText("wq.message.costExtract.dateOverRange", "1 year");
+			
+			FacesContext.getCurrentInstance().addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, errorMessage, ""));
+			return false;
+		}
+		
+		return result;
+	}
+	
+	public void selectRegionCheckbox()
+	{
+		if(costExtractSearchCriterial.getSelectedRegions().size()==1)
+		{
+			selectedRegionLabel = costExtractSearchCriterial.getSelectedRegions().get(0);
+		}
+		else if(costExtractSearchCriterial.getSelectedRegions().size()==0)
+		{
+			selectedRegionLabel = "- Select -";
+		}
+		else if(costExtractSearchCriterial.getSelectedRegions().size()>1)
+		{ 
+			selectedRegionLabel = "More than 1 region selected";
+		}
+	}
+	
+	public void selectCostSourceCheckbox()
+	{
+		if(costExtractSearchCriterial.getSelectedCostSoures().size()==1)
+		{
+			selectedCostSourceLabel = costExtractSearchCriterial.getSelectedCostSoures().get(0);
+		}
+		else if(costExtractSearchCriterial.getSelectedCostSoures().size()==0)
+		{
+			selectedCostSourceLabel = "- Select -";
+		}
+		else if(costExtractSearchCriterial.getSelectedCostSoures().size()>1)
+		{ 
+			selectedCostSourceLabel = "More than 1 cost source selected";
+		}
+	}
+	
+	public void selectMfrCheckbox()
+	{
+		if(costExtractSearchCriterial.getSelectedMfrs().size()==1)
+		{
+			selectedMfrLabel = costExtractSearchCriterial.getSelectedMfrs().get(0);
+		}
+		else if(costExtractSearchCriterial.getSelectedMfrs().size()==0)
+		{
+			selectedMfrLabel = "- Select -";
+		}
+		else if(costExtractSearchCriterial.getSelectedMfrs().size()>1)
+		{ 
+			selectedMfrLabel = "More than 1 MFR selected";
+		}
+	}
+	
+	public void selectCostIndCheckbox()
+	{
+		if(costExtractSearchCriterial.getSelectedCostIndicators().size()==1)
+		{
+			selectedCostIndLabel = costExtractSearchCriterial.getSelectedCostIndicators().get(0);
+		}
+		else if(costExtractSearchCriterial.getSelectedCostIndicators().size()==0)
+		{
+			selectedCostIndLabel = "- Select -";
+		}
+		else if(costExtractSearchCriterial.getSelectedCostIndicators().size()>1)
+		{ 
+			selectedCostIndLabel = "More than 1 cost indicator selected";
+		}
+	}
+
+	public String getSelectedRegionLabel() {
+		return selectedRegionLabel;
+	}
+
+	public void setSelectedRegionLabel(String selectedRegionLabel) {
+		this.selectedRegionLabel = selectedRegionLabel;
+	}
+
+	public String getSelectedCostSourceLabel() {
+		return selectedCostSourceLabel;
+	}
+
+	public void setSelectedCostSourceLabel(String selectedCostSourceLabel) {
+		this.selectedCostSourceLabel = selectedCostSourceLabel;
+	}
+
+	public String getSelectedMfrLabel() {
+		return selectedMfrLabel;
+	}
+
+	public void setSelectedMfrLabel(String selectedMfrLabel) {
+		this.selectedMfrLabel = selectedMfrLabel;
+	}
+
+	public String getSelectedCostIndLabel() {
+		return selectedCostIndLabel;
+	}
+
+	public void setSelectedCostIndLabel(String selectedCostIndLabel) {
+		this.selectedCostIndLabel = selectedCostIndLabel;
+	}
+	
+}

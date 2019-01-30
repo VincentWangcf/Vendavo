@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite verbose="0" name="Failed suite [Command line suite]">
+  <test name="Command line test(failed)">
+    <classes>
+      <class name="com.avnet.emasia.webquote.entity.MoneyTest">
+        <methods>
+          <include name="setup"/>
+        </methods>
+      </class> <!-- com.avnet.emasia.webquote.entity.MoneyTest -->
+      <class name="com.avnet.emasia.webquote.vo.RfqItemVOTest">
+        <methods>
+          <include name="matchAQConditionsTest7"/>
+          <include name="setup"/>
+          <include name="matchAQConditionsTest8"/>
+          <include name="matchAQConditionsTest5"/>
+          <include name="matchAQConditionsTest2"/>
+          <include name="matchAQConditionsTest1"/>
+        </methods>
+      </class> <!-- com.avnet.emasia.webquote.vo.RfqItemVOTest -->
+      <class name="com.avnet.emasia.webquote.entity.QtyBreakPricerTest">
+        <methods>
+          <include name="setup"/>
+        </methods>
+      </class> <!-- com.avnet.emasia.webquote.entity.QtyBreakPricerTest -->
+      <class name="com.avnet.emasia.webquote.entity.MaterialRegionalTest">
+        <methods>
+          <include name="setUp"/>
+        </methods>
+      </class> <!-- com.avnet.emasia.webquote.entity.MaterialRegionalTest -->
+      <class name="com.avnet.emasia.webquote.entity.BizUnitTest">
+        <methods>
+          <include name="setup"/>
+        </methods>
+      </class> <!-- com.avnet.emasia.webquote.entity.BizUnitTest -->
+      <class name="com.avnet.emasia.webquote.entity.CostIndicatorTest">
+        <methods>
+          <include name="setup"/>
+        </methods>
+      </class> <!-- com.avnet.emasia.webquote.entity.CostIndicatorTest -->
+      <class name="com.avnet.emasia.webquote.entity.QtyCalTest">
+        <methods>
+          <include name="calMoqTest2"/>
+          <include name="calMoqTest1"/>
+          <include name="setup"/>
+        </methods>
+      </class> <!-- com.avnet.emasia.webquote.entity.QtyCalTest -->
+      <class name="com.avnet.emasia.webquote.entity.ManufacturerTest">
+        <methods>
+          <include name="setUp"/>
+        </methods>
+      </class> <!-- com.avnet.emasia.webquote.entity.ManufacturerTest -->
+      <class name="com.avnet.emasia.webquote.entity.PricerTest">
+        <methods>
+          <include name="setup"/>
+        </methods>
+      </class> <!-- com.avnet.emasia.webquote.entity.PricerTest -->
+      <class name="com.avnet.emasia.webquote.entity.MaterialTest">
+        <methods>
+          <include name="fillInPricerInfoTest"/>
+          <include name="fillInPricerInfoTest30"/>
+          <include name="fillInPricerInfoTest2"/>
+          <include name="fillInPricerInfoTest3"/>
+          <include name="fillInPricerInfoTest4"/>
+          <include name="setup"/>
+        </methods>
+      </class> <!-- com.avnet.emasia.webquote.entity.MaterialTest -->
+      <class name="com.avnet.emasia.webquote.entity.ManufacturerDetailTest">
+        <methods>
+          <include name="setUp"/>
+        </methods>
+      </class> <!-- com.avnet.emasia.webquote.entity.ManufacturerDetailTest -->
+    </classes>
+  </test> <!-- Command line test(failed) -->
+</suite> <!-- Failed suite [Command line suite] -->

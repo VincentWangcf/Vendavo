@@ -1,0 +1,19 @@
+:normalEnd:
+file: \WQ_Web\WebContent\UserMgmt\UserProfile.xhtml
+fromUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/branches/V3.0/3.1.1/WQ_Web/WebContent/UserMgmt/UserProfile.xhtml
+fromRevision: 22974
+toUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/branches/V3.0/3.1.1/WQ_Web/WebContent/UserMgmt/UserProfile.xhtml
+toRevision: 22975
+force: false
+recurse: false
+ignore: false
+depth: 0
+Summary result: type: 0 category: Updated number: 1
+Summary result: type: 1 category: Updated number: 1
+
+workspaceUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/trunk/WQ_Web/WebContent/UserMgmt/UserProfile.xhtml
+workspaceRevision: 22982
+lowerRevision: 22974
+upperRevision: 22975
+merge -r22974:22975 http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/branches/V3.0/3.1.1/WQ_Web/WebContent/UserMgmt/UserProfile.xhtml C:/Damon/webquote3.0trunk/WQ_Web/WebContent/UserMgmt/UserProfile.xhtml
+Message: 3   U         C:/Damon/webquote3.0trunk/WQ_Web/WebContent/UserMgmt/UserProfile.xhtml

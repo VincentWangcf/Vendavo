@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+<f:view contentType="text/html">
+	<h:head>
+		<f:facet name="first">
+			<meta http-equiv="X-UA-Compatible"  content="IE=edge"/>
+			<meta content='text/html; charset=UTF-8' http-equiv="Content-Type" />
+			<title>RFQ Submission</title>
+		</f:facet>
+	</h:head>
+	<h:body>
+		<p:panel header="Cache Manager" style="font-size:12pt">
+			<h:panelGrid columns="1" cellpadding="0">
+	        	<p:commandLink value="Refresh Cache" actionListener="#{cacheMB.refreshCache}"></p:commandLink> 	
+	        	<p:commandLink value="POS Summary" actionListener="#{cacheMB.summarizePos2}"></p:commandLink> 	
+			</h:panelGrid>
+		</p:panel>
+	</h:body>
+</f:view>
+
+</html>

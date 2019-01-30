@@ -1,0 +1,14 @@
+package com.avnet.emasia.webquote.columndata;
+
+import java.io.InputStream;
+
+public interface ColumnDataSource {
+	int getSeq();
+	boolean hasNext();
+	void next();
+	String getColumnValue(String columnName);
+	
+	static ColumnDataSource create(InputStream is, String type) {
+		return null;
+	}
+}

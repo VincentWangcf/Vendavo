@@ -1,0 +1,674 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.application.FacesMessage.Severity;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.model.SelectItem;
+import javax.jms.JMSException;
+import javax.naming.NamingException;
+
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.FlowEvent;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.StreamedContent;
+import org.primefaces.model.UploadedFile;
+
+import com.avnet.emasia.webquote.commodity.constant.CatalogSearchConstant;
+import com.avnet.emasia.webquote.commodity.constant.CatalogSearchConstant;
+import com.avnet.emasia.webquote.commodity.constant.PRICER_TYPE;
+import com.avnet.emasia.webquote.commodity.constant.PricerConstant;
+import com.avnet.emasia.webquote.constants.RemoteEjbClassEnum;
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.CustomerSale;
+import com.avnet.emasia.webquote.entity.RestrictedCustomerMapping;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.CustomerSB;
+import com.avnet.emasia.webquote.quote.ejb.CatalogSearchSB;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.quote.vo.CatalogSearchItemBean;
+import com.avnet.emasia.webquote.quote.vo.CatalogSearchResult;
+import com.avnet.emasia.webquote.reports.ejb.OfflineReportSB;
+import com.avnet.emasia.webquote.reports.ejb.remote.impl.CatalogResultOffLineReport;
+import com.avnet.emasia.webquote.reports.ejb.remote.impl.OffLineReport;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.AllPricerProcessSheet;
+import com.avnet.emasia.webquote.utilites.web.util.CatalogSearchBuilderProcessSheet;
+import com.avnet.emasia.webquote.utilites.web.util.DeploymentConfiguration;
+import com.avnet.emasia.webquote.utilites.web.util.DownloadUtil;
+import com.avnet.emasia.webquote.utilites.web.util.Excel20007Reader;
+import com.avnet.emasia.webquote.utilites.web.util.POIUtils;
+import com.avnet.emasia.webquote.utilites.web.util.PricerUploadHelper;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.DateUtils;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.vo.OfflineReportParam;
+import com.avnet.emasia.webquote.vo.PricerInfo;
+import com.avnet.emasia.webquote.web.catalogsearch.helper.CatalogSearchResultDownLoadStrategy;
+import com.avnet.emasia.webquote.web.catalogsearch.helper.CatalogSearchUploadStrategy;
+import com.avnet.emasia.webquote.web.pricerupload.PricerDownLoadStrategy;
+import com.avnet.emasia.webquote.web.quote.cache.SalesOrgCacheManager;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.quote.vo.RestrictedCustomerPopupModel;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+
+//@Named("instantPriceCheckMB")
+@ManagedBean
+@SessionScoped
+public class CatalogSearchMB implements Serializable {
+	
+	private static final long serialVersionUID = 862167152222258478L;
+	//public final static long MAX_UPLOAD_FILE_SIZE = 10 * 1024 * 1024;// 10M
+	          
+	private static final Logger LOG =Logger.getLogger(CatalogSearchMB.class.getName());	
+
+	@EJB
+	CatalogSearchSB catalogSearchSB;
+	@EJB
+	CustomerSB customerSB;
+	@EJB
+	private BizUnitSB bizUnitSB;
+	@EJB
+	private OfflineReportSB offlineReprtSB;
+	
+	User user = null;
+	
+	private List<CatalogSearchItemBean> catalogSearchItems;
+	
+	private List<CatalogSearchItemBean> filteredCatalogSearchItems;
+ 
+	private List<PricerInfo> catalogSearchResults;
+	
+	private List<PricerInfo> filteredCatalogSearchResults;
+	
+	private List<PricerInfo> selectedResults;
+
+	private List<String> bizUnitSelection;
+	
+	private SelectItem[] regionList;
+	
+	private String region;
+	
+	private String initSelectedBizUnit;
+	
+	private RestrictedCustomerPopupModel restrictedCustomerPopupModel;
+	
+	private transient UploadedFile uploadFile;
+	
+	private transient StreamedContent downloadSelected;
+	
+	private transient StreamedContent downloadAll;
+	
+	private CatalogSearchResultDownLoadStrategy downloadSrategy  = new CatalogSearchResultDownLoadStrategy();
+	 
+	private String uploadFileName;
+	//private CatalogSearchResultDownLoadStrategy downloadSrategy = null;
+	@PostConstruct
+	public void postContruct(){
+		user = UserInfo.getUser();
+		this.regionList = QuoteUtil.getUserRegionDownListByOrder(user.getAllBizUnits(), bizUnitSB.getAllBizUnitsByOrder());
+		this.region = user.getDefaultBizUnit().getName();
+		
+	}
+	
+	public void handleChange(){  
+		initSelectedBizUnit = region;
+		LOG.log(Level.INFO, "Region " + region + " selected");
+	}
+	
+	public CatalogSearchMB() {
+
+		catalogSearchItems = new ArrayList<CatalogSearchItemBean>();
+		
+		catalogSearchResults = new ArrayList<PricerInfo>();
+		addFiveItem();
+		
+	}	
+	
+	/*
+	 * Wizard to control the work flow
+	 */
+    public String onFlowProcess(FlowEvent event) {
+		User user = UserInfo.getUser();
+		int validRow = 0 ; 
+		
+    	if(event.getNewStep().equalsIgnoreCase("instantPriceCheck_result"))
+    	{
+    		if(catalogSearchItems==null || catalogSearchItems.size()==0)
+    		{
+    			FacesContext.getCurrentInstance().addMessage("growl_1", new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.enterOneItemAtLeast") , ""));
+    			return event.getOldStep();
+    		}
+    		for(CatalogSearchItemBean ipci : catalogSearchItems)
+    		{
+    			if(!((ipci.getMfr()==null || ipci.getMfr().isEmpty()) && (ipci.getFullMfrPart()==null || ipci.getFullMfrPart().isEmpty())))
+    			{
+    				validRow ++;
+    			}
+    			if(validRow==0)
+    			{
+    				FacesContext.getCurrentInstance().addMessage("growl_1", new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.enterOneItemAtLeast") , ""));
+    			 
+    				return event.getOldStep();
+    			}
+    			
+    			if(!((ipci.getMfr()==null || ipci.getMfr().isEmpty())))
+    			{
+	    			if(ipci.getFullMfrPart()==null || ipci.getFullMfrPart().isEmpty())
+	    			{
+	    				FacesContext.getCurrentInstance().addMessage("growl_1", new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.mendateFieldReqPN") , ""));
+	    			
+	    				return event.getOldStep();
+	    			}
+    			}
+    		}
+    		CatalogSearchUploadStrategy uploadStrategy = new CatalogSearchUploadStrategy();
+    		String errMsg = uploadStrategy.verifyFields(catalogSearchItems);
+    		if(errMsg.length()>0) {
+    			FacesContext.getCurrentInstance().addMessage("growl_1", new FacesMessage(FacesMessage.SEVERITY_ERROR, errMsg , ""));
+				return event.getOldStep();
+    		}
+    		try{
+    			if(catalogSearchResults !=null) {
+    				catalogSearchResults.clear();
+    			}else {
+    				catalogSearchResults = new ArrayList<PricerInfo>();
+    			}
+    			catalogSearchResults.addAll(catalogSearchSB.checkPrice(catalogSearchItems, user, region ,CatalogSearchConstant.CATALOG_RESULT_MAX_RESULTS));
+    			//catalogSearchResults = catalogSearchSB.checkPrice(catalogSearchItems, user, region);
+    			selectedResults = null;
+    		}catch(Exception e){
+    			LOG.log(Level.SEVERE, "Error occured in InstantPriceCheck SB, between Step "+event.getOldStep()+" and Step "+event.getNewStep()+", Exception message: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+					 FacesContext.getCurrentInstance().addMessage("testGrowl", new FacesMessage(FacesMessage.SEVERITY_ERROR, e.getMessage() , ""));					 
+   					return event.getOldStep();
+    		}
+    	}
+    	 return event.getNewStep();  
+    } 	
+
+	/*
+	 * add 1 more entry for price checking
+	 */	
+	public void addOneItem(){
+		CatalogSearchItemBean item = new CatalogSearchItemBean();
+		catalogSearchItems.add(item);
+	}
+
+	/*
+	 * add 5 more entry for price checking
+	 */	
+	public void addFiveItem(){
+		for(int i=0; i<5; i++){
+			CatalogSearchItemBean item = new CatalogSearchItemBean();
+			catalogSearchItems.add(item);
+		}
+	}
+	
+	public void clearSearchCriteria(){
+		if(catalogSearchItems!=null)
+		{
+			catalogSearchItems.clear();
+		}
+		catalogSearchItems = new ArrayList<CatalogSearchItemBean>();
+		if(catalogSearchResults!=null)
+		{
+			catalogSearchResults.clear();
+		}
+		catalogSearchResults = new ArrayList<PricerInfo>();
+		
+		addOneItem();		
+	}
+	
+	
+	/*
+	 * convert the selected search result to RFQ Form
+	 */
+	public String convertToRfqForm(){
+		
+		if(selectedResults.size() == 0){
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.selRecord") +"!", ""));
+			return null;
+		}
+		
+		if(region == null || region.equals(""))
+		{
+			region = initSelectedBizUnit;
+		}
+		
+		Set<String> bizUnits = new HashSet<String>();
+		for(PricerInfo result : selectedResults){
+			bizUnits.add(result.getBizUnit());
+		}
+		if(bizUnits.size() != 1){
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.selSameRegion"), ""));
+			return null;
+		}
+
+		boolean hasFuturnPrice = false;
+		for(PricerInfo result :selectedResults)
+		{
+
+			Date currentDate = DateUtils.getCurrentAsiaDateObj();
+			if(result.getQuotationEffectiveDate()!=null && result.getQuotationEffectiveDate().after(currentDate))
+			{
+				hasFuturnPrice= true;
+				break;
+			}
+		}
+		if(hasFuturnPrice)
+		{
+			RequestContext.getCurrentInstance().execute("PF('futurePrice_confirmDialog').show()");
+			return null;
+		}
+		else
+		{
+			LOG.info(UserInfo.getUser().getEmployeeId() + " convert instant price check result to RFQ: " +  selectedResults);
+		    return "RFQSubmissionLayout.xhtml?faces-redirect=true&quoteId=0&action=" + QuoteConstant.ACTION_INSTANT_PRICE_CHECK;
+			
+		}
+		
+	}
+	
+	/****upload excel for step1 *****/ 
+	public void handleFileUpload() throws IOException {
+		
+		CatalogSearchUploadStrategy uploadStrategy = new CatalogSearchUploadStrategy();
+		uploadStrategy.setUser(user);
+		boolean isUploadFile = uploadStrategy.isValidateUpload(uploadFile);
+		if (!isUploadFile) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.pleaseSelectFile"));
+			return;
+		}
+	
+		this.setUploadFileName(uploadFile.getFileName());
+
+		long start = System.currentTimeMillis();
+
+		boolean isExcelFile = uploadStrategy.isExcelFile(uploadFile);
+		if (!isExcelFile) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.selExcelFile"));
+			return;
+		}
+		//uploadStrategy.isValidateFileColumn(currentUploadSheet, index, templateName, columnOfLength)
+		boolean isRequiredFile = uploadStrategy.isValidateFileColumn(uploadFile);
+		if (!isRequiredFile) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.excelFileFormat"));
+			return;
+		}
+		Excel20007Reader reader = new Excel20007Reader(uploadFile, 0, new CatalogSearchBuilderProcessSheet());
+		int countRows = reader.getCountrows();
+		LOG.info("catalog search upload user : " + user.getName() + " upload size: " + countRows + " upload file :"
+				+ uploadFile.getFileName());
+		boolean isExceedAllowMaxNum = uploadStrategy.isExceedAllowMaxNum(countRows,
+				CatalogSearchConstant.SEARCH_NUMBER_OF_ALLOW_MAX_UPLOAD + CatalogSearchConstant.SEARCH_TEMPLATE_HEADER_ROW_NUMBER);
+		if (isExceedAllowMaxNum) {
+			String errMsg = ResourceMB.getText("wq.message.maximum") + " " + CatalogSearchConstant.SEARCH_NUMBER_OF_ALLOW_MAX_UPLOAD
+					+ ResourceMB.getText("wq.message.recordsAllowed") + countRows;
+			this.showMessage(FacesMessage.SEVERITY_ERROR, errMsg);
+			return;
+		} else {
+			if (countRows == CatalogSearchConstant.SEARCH_TEMPLATE_HEADER_ROW_NUMBER) {
+				this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.noDataUploadFile"));
+				return;
+			}
+		}
+
+		@SuppressWarnings("unchecked")
+		List<CatalogSearchItemBean> beans = reader.excel2Beans(null);
+
+		if (beans == null || beans.size() == 0) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.noDataUploadFile"));
+			return;
+		}
+		String errMsg = uploadStrategy.verifyFields(beans);
+		if (PricerUploadHelper.isHaveErrorMsg(errMsg)) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, errMsg);
+			return;
+		}
+		
+		long end = System.currentTimeMillis();
+		LOG.info("upload end,takes " + (end - start) + " ms proceed record size " + beans.size());
+		this.setCatalogSearchItems(beans);
+		reset();
+	}
+	
+	public void showMessage(Severity severityError, String errMsg) {
+		FacesContext.getCurrentInstance().addMessage("msgId", new FacesMessage(severityError, errMsg, ""));
+		reset();
+	}
+
+	private void reset() {
+		uploadFile = null;
+		//uploadFileName = null;
+		//action = null;
+	}
+	
+
+	/**
+	 * Download normal pricer template.
+	 * 
+	 * @return
+	 */
+	public StreamedContent getSearchTemplate() {
+		String filePath = DeploymentConfiguration.configPath + File.separator + CatalogSearchConstant.SEARCH_TEMPLATE_NAME;
+		FileInputStream in = null;
+		StreamedContent searchTemplate = null;
+		try {
+			in = new FileInputStream(filePath);
+			if (in != null)
+				searchTemplate = new DefaultStreamedContent(in,
+						DownloadUtil.getMimeType(CatalogSearchConstant.SEARCH_TEMPLATE_NAME),
+						CatalogSearchConstant.SEARCH_TEMPLATE_NAME);
+		} catch (FileNotFoundException e) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.downloadfail") + ".");
+			LOG.log(Level.SEVERE, "File on this path " + filePath + " not found, Exception message: " + e.getMessage(),
+					e);
+		}
+		return searchTemplate;
+	}
+	
+	public String confirmToConvertRfqForm()
+	{
+		LOG.info(UserInfo.getUser().getEmployeeId() + " convert instant price check result to RFQ: " +  selectedResults);
+		return "RFQSubmissionLayout.xhtml?faces-redirect=true&quoteId=0&action=" + QuoteConstant.ACTION_INSTANT_PRICE_CHECK;
+	}
+	
+	
+    public List<String> autoCompleteSoldToCustomerNameLabelList(String key){
+    	
+		List<String> accountGroup = new ArrayList<String>();
+		accountGroup.add(QuoteSBConstant.ACCOUNT_GROUP_SOLDTO);	    	
+       	List<Customer> customers = customerSB.findCustomerByCustomerNameContain(key, null, accountGroup,UserInfo.getUser().getDefaultBizUnit(), QuoteConstant.DEFAULT_AUTOCOMPLETE_FIRST_RESULT, QuoteConstant.DEFAULT_AUTOCOMPLETE_MAX_RESULTS);
+       	
+       	return autoCompleteCustomerNameLabelList(customers);
+    }
+    
+    public List<String> autoCompleteEndCustomerNameLabelList(String key){
+
+    	List<String> accountGroup = new ArrayList<String>();
+		accountGroup.add(QuoteSBConstant.ACCOUNT_GROUP_ENDCUSTOMER);	      		
+		List<Customer> customers = customerSB.findCustomerByCustomerNameContain(key, null, accountGroup, UserInfo.getUser().getDefaultBizUnit(), QuoteConstant.DEFAULT_AUTOCOMPLETE_FIRST_RESULT, QuoteConstant.DEFAULT_AUTOCOMPLETE_MAX_RESULTS);
+
+    	return autoCompleteCustomerNameLabelList(customers);
+    }    
+
+    public List<String> autoCompleteCustomerNameLabelList(List<Customer> customers){
+    	
+		
+    	List<String> list = null;
+    	if(customers != null){
+    		list = new ArrayList<String>();
+    		List<String> dupList = new ArrayList<String>();
+	    	for(Customer customer : customers){
+	    		if(customer != null){
+	    			//updated  function getcustomerName1 to getCustomerFulname by damon
+		    		if(!QuoteUtil.isEmpty(customer.getCustomerFullName()) && !QuoteUtil.isEmpty(customer.getCustomerNumber())){
+			       		String customerName = customer.getName();    			
+			    		String customerNumber = customer.getCustomerNumber();
+			    		String salesOrg = convertCustomerSalesToSalesOrg(customer.getCustomerSales(), UserInfo.getUser().getDefaultBizUnit().getName());
+			    		
+			    		String label = customerName+QuoteConstant.AUTOCOMPLETE_SEPARATOR+customerNumber+QuoteConstant.AUTOCOMPLETE_SEPARATOR+salesOrg;
+			    		
+			    		if(!dupList.contains(label)){
+			    			list.add(label);
+			    			dupList.add(label);
+			    		}
+		    		}
+	    		}
+	    	}
+    	}
+    	
+    	return list;
+    }
+	
+	private String convertCustomerSalesToSalesOrg(List<CustomerSale> customerSales, String bizUnitName){
+		String salesOrg = "";
+		if(customerSales != null){
+			List<String> salesOrgCodes = SalesOrgCacheManager.getSalesOrgCodesByBizUnit(bizUnitName);			
+			for(CustomerSale customerSale : customerSales){
+				if(salesOrgCodes.contains(customerSale.getSalesOrgBean().getName())){
+					if(salesOrg.length() > 0)
+						salesOrg += " "+QuoteConstant.SALES_ORG_SEPARATER+" ";
+					salesOrg += customerSale.getSalesOrgBean().getName();
+				}
+			}
+		}
+		return salesOrg;
+	}	
+
+	public void updateSoldToCustomer(int rowIndex){
+		CatalogSearchItemBean item = catalogSearchItems.get(rowIndex);
+		
+		item.setSoldToCode(extractCustomerNumberFromCustomerNameLabel(item.getSoldToParty()));
+		item.setSoldToParty(extractCustomerNameFromCustomerNameLabel(item.getSoldToParty()));
+
+	}
+	
+	public void updateEndCustomer(int rowIndex){
+		CatalogSearchItemBean item = catalogSearchItems.get(rowIndex);
+		
+		item.setEndCustomerCode(extractCustomerNumberFromCustomerNameLabel(item.getEndCustomer()));
+		item.setEndCustomer(extractCustomerNameFromCustomerNameLabel(item.getEndCustomer()));
+
+	}
+	
+	public String extractCustomerNumberFromCustomerNameLabel(String label){
+
+		String[] labels = label.split(QuoteConstant.AUTOCOMPLETE_SEPARATOR);
+		if(labels.length == 1)
+			return null;
+		
+		return labels[1].trim();
+	}
+	
+	public void createOfflineReportRep()
+	{
+		LOG.info("call createOfflineReportRep");
+		OfflineReportParam param = new OfflineReportParam();
+		param.setResultBean(this.getCatalogSearchResults());
+		param.setReportName(QuoteConstant.CATALOG_SEARCH_RESULT);
+		param.setEmployeeId(String.valueOf(user.getEmployeeId()));
+		//discard now but later will be added possible
+		//TODO
+		//param.setRemoteEjbClass(RemoteEjbClassEnum.CATALOGRESULT_REMOTE_EJB.classSimpleName());
+		offlineReprtSB.sendOffLineReportRemote(param);
+        String message = ResourceMB.getText("wq.message.reqSubmitted");
+		FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_INFO, message ,"");
+		FacesContext.getCurrentInstance().addMessage("growl", msg);
+		LOG.info("call createOfflineReportRep end");
+		return;
+	}
+	
+	/*if(this.getTargetResale()==null || this.getTargetResale() ==0) {
+		 User user = UserInfo.getUser();
+		 return MessageFormatorUtil.getParameterizedString(user.getUserLocale(), "wq.message.getQuote");
+				 //dbResource["wq.message.getQuote"];
+	}*/
+	//return QuoteUtil.convertDoubleToString(this.getTargetResale());
+	
+	// DONE
+	public StreamedContent getDownloadSelected() {
+		 //CatalogSearchResultDownLoadStrategy downloadSrategy  = new CatalogSearchResultDownLoadStrategy();
+			if (this.selectedResults == null || this.selectedResults.size() == 0) {
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+						ResourceMB.getText("wq.message.selectOneRecord"), ""));
+				return null;
+			}
+			downloadSelected = downloadSrategy.getDownloadFile(this.getRegion(), this.selectedResults,
+					CatalogSearchConstant.RESULT_TEMPLATE_NAME);
+	
+		if (downloadSelected == null) {
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+					ResourceMB.getText("wq.message.downloadError") + "!", ""));
+			return null;
+		}
+		return downloadSelected;
+	}
+	
+	// DONE
+	public StreamedContent getDownloadAll() {
+		
+		if (this.catalogSearchResults == null || this.catalogSearchResults.size() == 0) {
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+					ResourceMB.getText("wq.message.selectOneRecord"), ""));
+			return null;
+		}
+		downloadAll = downloadSrategy.getDownloadFile(this.getRegion(), this.catalogSearchResults,
+				CatalogSearchConstant.RESULT_TEMPLATE_NAME);
+	
+		if (downloadAll == null) {
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+					ResourceMB.getText("wq.message.downloadError") + "!", ""));
+			return null;
+		}
+		return downloadAll;
+	}
+		
+	//TODO
+	public void addSelectionToCart() {
+		
+	}
+
+	public String extractCustomerNameFromCustomerNameLabel(String label){
+		
+		String[] labels = label.split(QuoteConstant.AUTOCOMPLETE_SEPARATOR);
+		
+		return labels[0].trim();
+	}	
+	
+	
+	
+	//Getter, Setters
+
+	public List<CatalogSearchItemBean> getCatalogSearchItems() {
+		return catalogSearchItems;
+	}
+
+	public void setCatalogSearchItems(
+			List<CatalogSearchItemBean> catalogSearchItems) {
+		this.catalogSearchItems = catalogSearchItems;
+	}
+
+	public List<PricerInfo> getCatalogSearchResults() {
+		return catalogSearchResults;
+	}
+
+	public void setCatalogSearchResults(
+			List<PricerInfo> catalogSearchResults) {
+		this.catalogSearchResults = catalogSearchResults;
+	}
+
+	public List<PricerInfo> getSelectedResults() {
+		return selectedResults;
+	}
+
+	public void setSelectedResults(List<PricerInfo> selectedResults) {
+		this.selectedResults = selectedResults;
+	}
+
+	public List<CatalogSearchItemBean> getFilteredCatalogSearchItems() {
+		return filteredCatalogSearchItems;
+	}
+
+
+	public void setFilteredCatalogSearchItems(
+			List<CatalogSearchItemBean> filteredCatalogSearchItems) {
+		this.filteredCatalogSearchItems = filteredCatalogSearchItems;
+	}
+
+
+	public List<PricerInfo> getFilteredCatalogSearchResults() {
+		return filteredCatalogSearchResults;
+	}
+
+
+	public void setFilteredCatalogSearchResults(
+			List<PricerInfo> filteredCatalogSearchResults) {
+		this.filteredCatalogSearchResults = filteredCatalogSearchResults;
+	}
+
+	public List<String> getBizUnitSelection() {
+		return bizUnitSelection;
+	}
+
+	public void setBizUnitSelection(List<String> bizUnitSelection) {
+		this.bizUnitSelection = bizUnitSelection;
+	}
+
+	public String getRegion() {
+		return region;
+	}
+
+	public void setRegion(String selectedBizUnit) {
+		this.region = selectedBizUnit;
+	}
+	
+	public void popupRestrictedCustomerList(int itemNumber)
+	{
+		PricerInfo seletedResult = catalogSearchResults.get(itemNumber-1);
+				
+		restrictedCustomerPopupModel = new RestrictedCustomerPopupModel(new ArrayList<RestrictedCustomerMapping>());	
+	}
+
+	public RestrictedCustomerPopupModel getRestrictedCustomerPopupModel()
+	{
+		return restrictedCustomerPopupModel;
+	}
+
+	public void setRestrictedCustomerPopupModel(
+			RestrictedCustomerPopupModel restrictedCustomerPopupModel)
+	{
+		this.restrictedCustomerPopupModel = restrictedCustomerPopupModel;
+	}
+	public String convertNumber(String value)
+	{
+		if(value!=null && value.equalsIgnoreCase("0"))
+			value="";
+		return QuoteUtil.convertNumber(value);
+	}
+	
+	public SelectItem[] getRegionList() {
+		return regionList;
+	}
+
+	public void setRegionList(SelectItem[] regionList) {
+		this.regionList = regionList;
+	}
+
+	public UploadedFile getUploadFile() {
+		return uploadFile;
+	}
+
+	public void setUploadFile(UploadedFile uploadFile) {
+		this.uploadFile = uploadFile;
+	}
+
+	
+	public String getUploadFileName() {
+		return uploadFileName;
+	}
+
+	public void setUploadFileName(String uploadFileName) {
+		this.uploadFileName = uploadFileName;
+	}
+}
+          

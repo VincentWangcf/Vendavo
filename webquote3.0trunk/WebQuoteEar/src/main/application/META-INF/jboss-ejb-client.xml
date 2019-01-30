@@ -1,0 +1,9 @@
+<jboss-ejb-client xmlns:jboss="urn:jboss:ejb-client:1.2">
+	<client-context>
+		<ejb-receivers>
+			<remoting-ejb-receiver outbound-connection-ref="remote-ejb-connection" />
+			<remoting-ejb-receiver outbound-connection-ref="remote-ejb-connection1" />
+			<remoting-ejb-receiver outbound-connection-ref="remote-ejb-connection2" />
+		</ejb-receivers>
+	</client-context>
+</jboss-ejb-client>

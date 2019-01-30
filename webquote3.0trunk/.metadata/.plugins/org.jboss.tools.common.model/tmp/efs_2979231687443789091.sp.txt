@@ -1,0 +1,215 @@
+
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="style-005.css" />
+	<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	<h:form id="form" onkeypress="if(window.event.keyCode==13) return false;" >
+
+	<p:panel header="#{dbResource['wq.header.copyQuoteList']}" style="font-size:12pt">
+		<p:messages id="messages" showDetail="true" autoUpdate="true" closable="true" escape="false"/>
+	    <p:dataTable	var="vo"
+	    				value="#{copyQuoteMB.quoteItemVos}" 
+	    				rowKey="#{vo.quoteItem.quoteNumber}" 
+	    				rowIndexVar="rowIndex"
+	                 	id="datatable_copyquotelist"
+	                 	rows="10"
+    					rowsPerPageTemplate="10,20,50"                 
+	                 	editable="true"
+	                 	editMode="cell"
+	                 	cellEditEvent="click"     
+	                 	scrollable="true"
+	                 	rowStyleClass="#{vo.errRow ? 'errorRow' : null}"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">	                   	              
+		           		 
+			<p:column headerText="#{dbResource['wq.label.no']}" sortBy="#{vo.seq}" filterBy="#{vo.seq}"  filterMatchMode="contains" styleClass="column_seq readOnlyCell">
+			#{vo.seq2}
+			</p:column>
+					
+			<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quote']}#" sortBy="#{vo.quoteItem.quoteNumber}" filterBy="#{vo.quoteItem.quoteNumber}"  filterMatchMode="contains" styleClass="column_quoteNumber readOnlyCell">
+			#{vo.quoteItem.quoteNumber}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.form']}" sortBy="#{vo.quoteItem.quote.formNumber}" filterBy="#{vo.quoteItem.quote.formNumber}" filterMatchMode="contains" styleClass="column_formNumber readOnlyCell" >
+			<h:outputText value="#{vo.quoteItem.quote.formNumber}" />
+			</p:column>
+			
+  			<p:column headerText="#{dbResource['wq.label.custmrName']}&lt;br/&gt;(#{dbResource['wq.label.SoldToParty']})" sortBy="#{vo.quoteItem.soldToCustomer.customerFullName}" filterBy="#{vo.quoteItem.soldToCustomer.customerFullName}" styleClass="column_soldToCustomerName readOnlyCell">
+			#{vo.quoteItem.soldToCustomer.customerFullName}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.soldTo']}&lt;br/&gt;#{dbResource['wq.label.code']}" sortBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}" filterBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}" filterMatchMode="contains" styleClass="column_soldToCustomerNumber readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quote.soldToCustomer.customerNumber}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{vo.quoteItem.quotedMaterial.manufacturer.name}" filterBy="#{vo.quoteItem.quotedMaterial.manufacturer.name}" styleClass="column_mfr readOnlyCell">
+			#{vo.quoteItem.quotedMfr.name}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.avnetQPN']}" sortBy="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}" filterBy="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}" styleClass="column_quotedPartNumber readOnlyCell">
+			#{vo.quoteItem.quotedPartNumber}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.reasonRefresh']}" sortBy="#{vo.quoteItem.reasonForRefresh}" filterBy="#{item.reasonForCopy}" styleClass="column_reasonForRefresh tdmandatoryvalue">
+						<p:inputText value="#{vo.quoteItem.reasonForRefresh}"  style="width:100%;"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.rfqcurr']}" sortBy="#{vo.quoteItem.rfqCurr}"   filterBy="#{vo.quoteItem.rfqCurr}" filterMatchMode="contains" styleClass="column_salesCostType">
+			<h:outputText value="#{vo.quoteItem.rfqCurr}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.target']}&lt;br/&gt;#{dbResource['wq.label.resale']}" sortBy="#{vo.quoteItem.targetResale}" filterBy="#{vo.quoteItem.targetResale}" styleClass="column_targetResale align_right tdmandatoryvalue">
+						<p:inputText value="#{vo.quoteItem.targetResale}" id="txt_target_resale_in" onkeyup="updateDecimal(#{rowIndex}, 'form', 'txt_target_resale', 'datatable_copyquotelist');"/>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quoted']}&lt;br/&gt;#{dbResource['wq.label.price']}" sortBy="#{vo.quoteItem.quotedPrice}" filterBy="#{vo.quoteItem.quotedPrice}" styleClass="column_quotedPrice align_right readOnlyCell">
+			#{vo.quoteItem.convertToRfqValueWithDouble(vo.quoteItem.quotedPrice)}
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}" sortBy="#{vo.quoteItem.requestedQty}" filterBy="#{vo.quoteItem.requestedQty}" styleClass="column_requestedQty align_right tdmandatoryvalue">
+						<p:inputText value="#{vo.quoteItem.requestedQty}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.EAU']}" sortBy="#{vo.eau}" filterBy="#{vo.eau}" styleClass="column_eau align_right editCell">
+						<p:inputText id="txt_eau_in" value="#{vo.eau}" onkeyup="updateInteger2(#{rowIndex}, 'form', 'txt_eau', 'datatable_copyquotelist');" onkeypress="return isInteger(event)"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.header.requester']}&lt;br/&gt;#{dbResource['wq.label.reference']}" sortBy="#{vo.quoteItem.quote.yourReference}" filterBy="#{vo.quoteItem.quote.yourReference}" styleClass="column_yourReference editCell">
+						<p:inputText value="#{vo.quoteItem.quote.yourReference}" style="width:100%;"/>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.refresh']}&lt;br/&gt;#{dbResource['wq.label.attachment']}" styleClass="column_icon editCell" style="text-align: center">
+	        	<p:commandLink update=":form:attachment_panel" actionListener="#{copyQuoteMB.listAttachments}" oncomplete="PF('attachment_list_dialog').show()">
+	        		<h:graphicImage library="images" name="icon_magnifier.png" styleClass="iconLink"/>
+	        		<f:param name="id" value="#{vo.quoteItem.id}"/>
+	        	</p:commandLink>			
+			</p:column>
+
+        	<p:column headerText="#{dbResource['wq.label.QuoteType']}" sortBy="#{vo.quoteItem.quoteType}" filterBy="#{vo.quoteItem.quoteType}" styleClass="column_bidToBuy editCell">
+        		<p:selectOneMenu value="#{vo.quoteItem.quoteType}" >
+					<f:selectItems value="#{copyQuoteMB.quoteTypeList}" var="quotetype"
+						itemLabel="#{quotetype}" itemValue="#{quotetype}" />
+				</p:selectOneMenu>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.resale']}&lt;br/&gt;#{dbResource['wq.label.indicator']}" sortBy="#{vo.quoteItem.resaleIndicator}" filterBy="#{vo.quoteItem.resaleIndicator}" styleClass="column_resalesIndicator readOnlyCell">
+			#{vo.quoteItem.resaleIndicator}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.message.multiUsage']}" sortBy="#{vo.quoteItem.multiUsageFlag}" filterBy="#{vo.quoteItem.multiUsageFlag}" filterMatchMode="contains" styleClass="column_multiUsage readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.multiUsageFlag? 'Yes':'No'}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.PMOQ']}" sortBy="#{vo.quoteItem.pmoq}" filterBy="#{vo.quoteItem.pmoq}"  styleClass="column_pmoq readOnlyCell">
+			#{vo.quoteItem.pmoq}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.MPQ']}" sortBy="#{vo.quoteItem.mpq}" filterBy="#{vo.quoteItem.mpq}" styleClass="column_mpq align_right readOnlyCell">
+			#{vo.quoteItem.mpq}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.mov']}" sortBy="#{vo.quoteItem.moq}" filterBy="#{vo.quoteItem.moq}" styleClass="column_moq align_right readOnlyCell">
+			#{vo.quoteItem.moq}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.QuoteExpiry']}&lt;br/&gt;#{dbResource['wq.label.date']}&lt;br/&gt;(DD/MM/YYYY)" sortBy="#{vo.quoteItem.quoteExpiryDate}" filterBy="#{vo.quoteItem.quoteExpiryDate}" styleClass="column_quoteExpiryDate readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quoteExpiryDate}">
+				<f:convertDateTime  pattern="dd/MM/yyyy" />
+			</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.valid']}&lt;br/&gt;#{dbResource['wq.label.for']}&lt;br/&gt;#{dbResource['wq.label.ordering']}" sortBy="#{vo.readyForOrder}" filterBy="#{vo.readyForOrder}" styleClass="column_productGroup readOnlyCell">
+				<h:outputText value="#{vo.readyForOrder? 'Yes':'No'}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.invalidOrdering']}&lt;br/&gt;(#{dbResource['wq.label.reason']})" sortBy="#{vo.reasonForNotReadyForOrder}" filterBy="#{vo.reasonForNotReadyForOrder}" styleClass="column_reasonForNotReadyForOrder readOnlyCell">
+			#{vo.reasonForNotReadyForOrder}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.salesman']}&lt;br/&gt;#{dbResource['wq.label.name']}" sortBy="#{vo.quoteItem.quote.sales.name}" filterBy="#{vo.quoteItem.quote.sales.name}" styleClass="column_employeeName readOnlyCell">
+			#{vo.quoteItem.quote.sales.name}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.sales']}&lt;br/&gt;#{dbResource['wq.label.employee']}&lt;br/&gt;#{dbResource['wq.label.code']}" sortBy="#{vo.quoteItem.quote.sales.employeeId}" filterBy="#{vo.quoteItem.quote.sales.employeeId}" styleClass="column_salesEmployeeNumber readOnlyCell">
+			#{vo.quoteItem.quote.sales.employeeId}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.endCust']}" sortBy="#{vo.quoteItem.endCustomer.customerFullName}" filterBy="#{vo.quoteItem.endCustomer.customerFullName}" filterMatchMode="contains" styleClass="column_endCustomerName readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.endCustomer.customerFullName}"/>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.end']}&lt;br/&gt;#{dbResource['wq.label.cust']}&lt;br/&gt;#{dbResource['wq.label.code']}" sortBy="#{vo.quoteItem.endCustomer.customerNumber}" filterBy="#{vo.quoteItem.endCustomer.customerNumber}" filterMatchMode="contains" styleClass="column_endCustomerNumber readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.endCustomer.customerNumber}"/>
+			</p:column>
+			
+			<f:facet name="footer">        	
+	        	<p:commandButton value="#{dbResource['wq.button.confirmCopyQuote']}" update="@form" icon="ui-icon ui-icon-circle-arrow-n" action="#{copyQuoteMB.copyQuote}"/>
+	        	<p:commandButton value="#{dbResource['wq.button.BackMyQuoteSearch']}" icon="ui-icon ui-icon-circle-arrow-w" action="#{myQuoteSearchMB.getMyQuotePage}" ajax="false"/>
+	        </f:facet>
+			
+			 	                                
+	    </p:dataTable>
+	    
+	    
+	</p:panel>         	
+	
+	<p:dialog header="#{dbResource['wq.header.attchmntList']}" widgetVar="attachment_list_dialog" resizable="true" >
+		<p:panel header=""  id="attachment_panel" style="font-size:12pt">
+		
+		<p:fileUpload fileUploadListener="#{copyQuoteMB.addAttachment}" 
+			update=":form:datatable_attachment" 
+			allowTypes="/(\.|\/)(xls|xlsx|zip|doc|docx|msg|pdf|txt|jpg|png|ppt|pptx|7z|XLS|XLSX|ZIP|DOC|DOCX|MSG|PDF|TXT|JPG|PNG|PPT|PPTX|7Z)$/" />
+									
+		    <p:dataTable	var="attachment"
+		    				value="#{copyQuoteMB.attachments}"
+		    				rowKey="#{attachment.id}" 		
+		    				rowIndexVar="attachment_rowIndex"
+		                 	id="datatable_attachment"
+		                 	style="margin:5px 0px 0px 0px;"
+		                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">		
+            	
+		        <p:column headerText="#{dbResource['wq.label.no']}">
+			        #{attachment_rowIndex + 1}
+		        </p:column>						      				       
+						
+		        <p:column headerText="#{dbResource['wq.label.fileName']}">
+		        	<p:commandLink >
+			        	<h:outputLabel value="#{attachment.fileName}" />  
+			    	</p:commandLink>
+		        </p:column>
+		        
+				<p:column headerText="">
+		        	<p:commandButton value="#{dbResource['wq.button.download']}" ajax="false">
+		        		<p:fileDownload value="#{copyQuoteMB.getFile(attachment.fileName)}" />
+					</p:commandButton>		        
+		        </p:column>
+		        
+				<p:column headerText="">
+		        	<p:commandButton value="#{dbResource['wq.label.delete']}"  
+		        	oncomplete="PF('confirmation').show(); var a = document.getElementById('form:confirmDialog_modal'); a.style.width=0" actionListener="#{copyQuoteMB.setDeleteFileName(attachment.fileName)}" >
+		        	</p:commandButton>
+		        </p:column>		        		        	
+		        
+		    </p:dataTable>
+		    
+		</p:panel>
+	</p:dialog>    
+
+	<p:confirmDialog id="confirmDialog" message="#{dbResource['wq.dialog.confirmDelAttchmnt']}" header="#{dbResource['wq.label.alert']}" severity="alert" widgetVar="confirmation">
+			<p:commandButton value="#{dbResource['wq.button.yes']}" actionListener="#{copyQuoteMB.deleteAttachment}" update=":form:datatable_attachment" oncomplete="PF('confirmation').hide()" />
+			<p:commandButton value="#{dbResource['wq.button.no']}" onclick="PF('confirmation').hide()" type="button" />
+	</p:confirmDialog>
+
+	</h:form>
+		
+	</ui:define>
+</ui:composition>

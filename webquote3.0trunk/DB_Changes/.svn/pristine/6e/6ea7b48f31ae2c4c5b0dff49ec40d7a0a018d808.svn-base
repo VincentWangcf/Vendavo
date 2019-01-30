@@ -1,0 +1,11 @@
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), (select id from role where name='ROLE_PM'));
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), (select id from role where name='ROLE_PM_BUM'));
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), (select id from role where name='ROLE_PM_MD'));
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), (select id from role where name='ROLE_PM_SPM'));
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), (select id from role where name='ROLE_QC_Director'));
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), (select id from role where name='ROLE_QC_OPERATION'));
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), (select id from role where name='ROLE_QC_PRICING'));
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), (select id from role where name='ROLE_QCO_MANAGER'));
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), (select id from role where name='ROLE_QCP_MANAGER'));
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), (select id from role where name='ROLE_CENTRAL_PRICING'));
+COMMIT;

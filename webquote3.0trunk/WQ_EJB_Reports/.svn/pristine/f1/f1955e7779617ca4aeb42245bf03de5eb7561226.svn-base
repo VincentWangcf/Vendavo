@@ -1,0 +1,136 @@
+package com.avnet.emasia.webquote.reports.util;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import com.avnet.emasia.webquote.utilities.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+
+import com.avnet.emasia.webquote.entity.DrProjectHeader;
+import com.avnet.emasia.webquote.entity.OfflineReport;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.reports.constant.ReportConstant;
+import com.avnet.emasia.webquote.reports.ejb.job.OfflineRptJob;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+
+/**
+ * @author punit.singh
+ *
+ */
+public class ReportsUtil {
+	
+	final static String BATCH_SQL = "select a from OfflineReport a where a.employeeId=:employeeId and a.createdOn=:createdOn and a.serviceBeanId=:serviceBeanId and a.sendFlag = 0";
+	
+	
+	
+	private static Logger logger = Logger.getLogger(ReportsUtil.class
+			.getName());
+	/**
+	 * @param lst
+	 * @param em
+	 * @return
+	 */
+	public static Map<Long, DrProjectHeader> findDrpjHeaderSalesQuote(List<Long> lst, EntityManager em){
+		Map<Long, DrProjectHeader> rmap = new HashMap<Long, DrProjectHeader>();
+		List<DrProjectHeader> drLst = new ArrayList<DrProjectHeader>();
+		if (lst != null && lst.size() > 0)
+		{
+			while (lst.size() > 1000)
+			{
+				TypedQuery<DrProjectHeader> q = em
+						.createQuery(
+								"select d from DrProjectHeader d where d.projectId in :idLst",
+								DrProjectHeader.class);
+				q.setParameter("idLst", lst);
+				drLst.addAll((List<DrProjectHeader>) q.getResultList());
+				lst.removeAll(lst.subList(0, 999));
+			}
+			TypedQuery<DrProjectHeader> q = em
+					.createQuery(
+							"select d from DrProjectHeader d where d.projectId in :idLst",
+							DrProjectHeader.class);
+			q.setParameter("idLst", lst);
+			drLst.addAll((List<DrProjectHeader>) q.getResultList());
+		}
+
+		if (drLst.size() > 0)
+		{
+			for (DrProjectHeader d : drLst)
+			{
+				rmap.put(d.getProjectId(), d);
+			}
+		}
+		return rmap;
+	}
+	
+	/**
+	 * @param rpt
+	 * @param em
+	 * @return
+	 */
+	public static List<OfflineReport> findBatchRequestForOffineAndPartMaster(OfflineReport rpt, EntityManager em) {
+		Query query = em.createQuery(BATCH_SQL);
+		query.setParameter("employeeId", rpt.getEmployeeId());
+		query.setParameter("createdOn", rpt.getCreatedOn());
+		query.setParameter("serviceBeanId", rpt.getServiceBeanId());
+		List<OfflineReport> offlineReps = (List<OfflineReport>) query.getResultList();
+		return offlineReps;
+	}
+
+	/**
+	 * @param user
+	 * @param suffixStr,
+	 *            the param should be xml, if want to generate xml file
+	 * @return
+	 */
+	public static String generateOfflineReportFileName(String user, String suffixStr,String reportName) {
+		DateFormat df = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+		Calendar calendar = Calendar.getInstance();
+		String prefixName = df.format(calendar.getTime());
+		return "WebQuote_Offline_Report"+ReportConstant.UNDERLINE_SIGN  + reportName +ReportConstant.HYPHEN_SIGN+ user +ReportConstant.HYPHEN_SIGN+ prefixName + "." + suffixStr;
+	}
+
+	/**
+	 * @param fileName
+	 * @return
+	 */
+	public static String extractEmployeeIdFromFileName(String fileName) {
+
+		return fileName.substring(fileName.indexOf(ReportConstant.HYPHEN_SIGN) + 1, fileName.lastIndexOf(ReportConstant.HYPHEN_SIGN));
+	}
+	
+	/**
+	 * @param fileName
+	 * @return
+	 * @throws ParseException 
+	 */
+	public static Date extractDateFromFileName(String fileName) throws ParseException {
+		String timeStr = fileName.substring(fileName.lastIndexOf(ReportConstant.HYPHEN_SIGN), fileName.indexOf("."));
+		DateFormat df = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+		Date date = null;
+		try {
+			date = df.parse(timeStr);
+
+		} catch (ParseException e) {
+			logger.log(Level.SEVERE,"extract Date From FileName!, Exception message" + e.getMessage(),e);
+			throw e;
+		}
+		return date;
+	}
+	
+	
+	
+}

@@ -1,0 +1,135 @@
+--------------------------------------------------------
+--  DDL for DROP TABLE INDEX AND CONSTRAINT
+--------------------------------------------------------
+
+ALTER TABLE APP_LABEL DROP CONSTRAINT APP_LABEL_FK;
+ALTER TABLE APP_MESSAGES DROP CONSTRAINT APP_MESSAGES_FK;
+
+DROP TABLE LOCALE_MASTER PURGE;
+-- The following two is commented by DamonChen, as the PK will be droped when table is droped 
+---ALTER TABLE LOCALE_MASTER DROP CONSTRAINT LOCALE_MASTER_PK1;
+DROP sequence LOCALE_MASTER_SEQ;
+
+--------------------------------------------------------
+--  DDL for Table LOCALE_MASTER
+--------------------------------------------------------
+  CREATE TABLE "LOCALE_MASTER" 
+   (	"LOCALE_ID" VARCHAR2(5 CHAR) NOT NULL, 
+	"LOCALE_NAME" VARCHAR2(20 CHAR) NOT NULL
+   );
+--------------------------------------------------------
+--  DDL for Index APP_LABEL_PK
+--------------------------------------------------------
+ALTER TABLE LOCALE_MASTER ADD (CONSTRAINT LOCALE_MASTER_PK1 PRIMARY KEY (LOCALE_ID));
+--------------------------------------------------------
+  
+---CREATE SEQUENCE  "LOCALE_MASTER_SEQ"  MINVALUE 1 MAXVALUE 9999999999999999999999999999 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE  NOPARTITION ;
+
+
+--------------------------------------------------------
+--  New column USER_LOCALE added in table app_user 
+--------------------------------------------------------
+alter table APP_USER add USER_LOCALE VARCHAR2(20 BYTE) DEFAULT 'en' NOT NULL ENABLE;
+
+--------------------------------------------------------
+--  DDL for DROP TABLE INDEX AND CONSTRAINT
+--------------------------------------------------------
+DROP TABLE APP_LABEL PURGE;
+
+-- The following two is commented by DamonChen, as the PK and UK will be droped when table is droped 
+--ALTER TABLE APP_LABEL DROP CONSTRAINT APP_LABEL_PK;
+--ALTER TABLE APP_LABEL DROP CONSTRAINT APP_LABEL_UK;
+---moved to the top by DamonChen
+---ALTER TABLE APP_LABEL DROP CONSTRAINT APP_LABEL_FK;
+DROP sequence APP_LABEL_SEQ;
+
+--------------------------------------------------------
+--  DDL for Table APP_LABEL
+--------------------------------------------------------
+
+  CREATE TABLE "APP_LABEL" 
+   (	"ID" NUMBER(*,0), 
+	"LOCALE_ID" VARCHAR2(5 BYTE), 
+	"MESSAGE_CODE" VARCHAR2(60 BYTE), 
+	"MESSAGE" NVARCHAR2(512)
+   );
+--------------------------------------------------------
+--  DDL for Index APP_LABEL_PK
+--------------------------------------------------------
+
+ALTER TABLE APP_LABEL ADD (CONSTRAINT APP_LABEL_PK PRIMARY KEY (ID));
+--------------------------------------------------------
+--  DDL for Index APP_LABEL_UK1
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "APP_LABEL_UK" ON "APP_LABEL" ("LOCALE_ID", "MESSAGE_CODE") ;
+
+--------------------------------------------------------
+--  Ref Constraints for Table APP_MESSAGES
+--------------------------------------------------------
+
+  ALTER TABLE "APP_LABEL" ADD CONSTRAINT "APP_LABEL_FK" FOREIGN KEY ("LOCALE_ID")
+	  REFERENCES "LOCALE_MASTER" ("LOCALE_ID") ENABLE;
+
+
+--------------------------------------------------------
+--  DDL for Trigger APP_LABEL_SEQ
+--------------------------------------------------------
+
+ ------CREATE SEQUENCE  "APP_LABEL_SEQ"  MINVALUE 1 MAXVALUE 9999999999999999999999999999 INCREMENT BY 1 START WITH 41 CACHE 20 NOORDER  NOCYCLE  NOPARTITION ;
+ 
+ 
+ 
+ --------------------------------------------------------
+--  DDL for Table APP_MESSAGES
+--------------------------------------------------------
+
+
+--------------------------------------------------------
+--  DDL for DROP TABLE INDEX AND CONSTRAINT
+--------------------------------------------------------
+DROP TABLE APP_MESSAGES PURGE;
+-- The following two is commented by DamonChen, as the PK and UK will be droped when table is droped 
+--ALTER TABLE APP_MESSAGES DROP CONSTRAINT APP_MESSAGES_PK;
+--ALTER TABLE APP_MESSAGES DROP CONSTRAINT APP_MESSAGES_UK;
+
+-----moved to the top by DamonChen
+---ALTER TABLE APP_MESSAGES DROP CONSTRAINT APP_MESSAGES_FK;
+DROP sequence APP_MESSAGES_SEQ;
+
+
+  CREATE TABLE "APP_MESSAGES" 
+   (	"ID" NUMBER(*,0), 
+	"LOCALE_ID" VARCHAR2(5 BYTE), 
+	"MESSAGE_CODE" VARCHAR2(60 BYTE), 
+	"MESSAGE" NVARCHAR2(512)
+   );
+
+--------------------------------------------------------
+--  DDL for Index APP_MESSAGES_PK
+--------------------------------------------------------
+ALTER TABLE APP_MESSAGES ADD (CONSTRAINT APP_MESSAGES_PK PRIMARY KEY (ID));
+--------------------------------------------------------
+--  DDL for Index APP_MESSAGES_UK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "APP_MESSAGES_UK" ON "APP_MESSAGES" ("LOCALE_ID", "MESSAGE_CODE");
+
+--------------------------------------------------------
+--  Ref Constraints for Table APP_MESSAGES
+--------------------------------------------------------
+
+  ALTER TABLE "APP_MESSAGES" ADD CONSTRAINT "APP_MESSAGES_FK" FOREIGN KEY ("LOCALE_ID")
+	  REFERENCES "LOCALE_MASTER" ("LOCALE_ID") ENABLE;
+
+
+--------------------------------------------------------
+--  DDL for Trigger APP_MESSAGES_SEQ
+--------------------------------------------------------
+
+ CREATE SEQUENCE  "APP_MESSAGES_SEQ"  MINVALUE 1 MAXVALUE 9999999999999999999999999999 INCREMENT BY 1 START WITH 41 CACHE 20 NOORDER  NOCYCLE  NOPARTITION ;
+ 
+ 
+ 
+ 
+

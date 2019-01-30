@@ -1,0 +1,60 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.math.BigDecimal;
+
+
+public enum RoundIndicator {
+	ROUND_UP("Round up",BigDecimal.ROUND_UP) ,
+	ROUND_DOWN("Round down",BigDecimal.ROUND_DOWN),
+	ROUND_OFF("Round off",BigDecimal.ROUND_HALF_UP);
+	private String roundName;
+	private int roundType;
+	
+	RoundIndicator(String roundName, int roundType){
+		this.roundName=roundName;
+		this.roundType=roundType;
+	}
+
+	public String getRoundName() {
+		return roundName;
+	}
+
+	public void setRoundName(String roundName) {
+		this.roundName = roundName;
+	}
+	
+	public int getRoundType() {
+		return roundType;
+	}
+
+	public void setRoundType(int roundType) {
+		this.roundType = roundType;
+	}
+
+	public static RoundIndicator getRoundIndicatorByName(String name) {
+		if(name==null || name.length()<1) {
+			return null;
+		}
+		RoundIndicator[] values = RoundIndicator.values();
+		for(RoundIndicator v:values) {
+			if(v.getRoundName().equalsIgnoreCase(name)) {
+				return v;
+			}
+		}
+		return null;
+	}
+	
+	public static RoundIndicator getRoundIndicatorByType(int type) {
+		if(type<0) {
+			return null;
+		}
+		RoundIndicator[] values = RoundIndicator.values();
+		for(RoundIndicator v:values) {
+			if(v.getRoundType()==type) {
+				return v;
+			}
+		}
+		return null;
+	}
+	
+}

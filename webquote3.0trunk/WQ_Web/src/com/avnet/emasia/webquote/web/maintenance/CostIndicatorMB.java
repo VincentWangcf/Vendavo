@@ -1,0 +1,247 @@
+package com.avnet.emasia.webquote.web.maintenance;
+
+import java.io.Serializable;
+import com.avnet.emasia.webquote.utilities.SimpleDateFormat;
+import java.util.List;
+import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.event.UnselectEvent;
+
+import com.avnet.emasia.webquote.entity.CostIndicator;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.CostIndicatorSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+@ManagedBean
+@SessionScoped
+public class CostIndicatorMB implements Serializable {
+
+	private static final SimpleDateFormat SDF = new SimpleDateFormat("dd/MM/yyyy");
+	private static final long serialVersionUID = -3705122712201855188L;
+	private static final Logger LOG = Logger.getLogger(CostIndicatorMB.class
+			.getName());
+
+	@EJB
+	private CostIndicatorSB costIndicatorSB;
+
+	//Cost Indicator
+	private List<CostIndicator> costIndicators;
+	private CostIndicator selectedCostIndicator;
+	private boolean updateSuccess;
+	private String errorMessage;
+	private String code;
+	private String description;
+	private boolean status;
+	private boolean confirmEdit;
+
+
+
+	public boolean isConfirmEdit() {
+		return confirmEdit;
+	}
+
+	public void setConfirmEdit(boolean confirmEdit) {
+		this.confirmEdit = confirmEdit;
+	}
+
+	public String getCode() {
+		return code;
+	}
+
+	public void setCode(String code) {
+		this.code = code;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public boolean getStatus() {
+		return status;
+	}
+
+	public void setStatus(boolean status) {
+		this.status = status;
+	}
+
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+
+	public void setErrorMessage(String errorMessage) {
+		this.errorMessage = errorMessage;
+	}
+
+	public boolean isUpdateSuccess() {
+		return updateSuccess;
+	}
+
+	public void setUpdateSuccess(boolean updateSuccess) {
+		this.updateSuccess = updateSuccess;
+	}
+
+	public CostIndicator getSelectedCostIndicator() {
+		return selectedCostIndicator;
+	}
+
+	public void setSelectedCostIndicator(CostIndicator selectedCostIndicator) {
+		this.selectedCostIndicator = selectedCostIndicator;
+	}
+
+	public List<CostIndicator> getCostIndicators() {
+		return costIndicators;
+	}
+
+	public void setCostIndicators(List<CostIndicator> costIndicators) {
+		this.costIndicators = costIndicators;
+	}
+
+	@PostConstruct
+	public void init() {
+		costIndicators = costIndicatorSB.findAll();
+		updateSuccess = false;
+		errorMessage = "";
+		status = true;
+		confirmEdit = false;
+	}
+
+	public void onRowSelect(SelectEvent event) 
+	{
+		code = selectedCostIndicator.getName();
+		description = selectedCostIndicator.getDescription();
+		status = selectedCostIndicator.getStatus();
+	}
+
+	public void onRowUnselect(UnselectEvent event) 
+	{
+	}
+
+	public void addCostIndicator()
+	{
+		//Check code null/empty
+		if(null == code || code.equals(""))
+		{
+			updateSuccess = false;
+			errorMessage = ResourceMB.getText("wq.message.costIndCode");
+			return;
+		}
+
+		//Check description null/empty
+		if(null == description || description.equals(""))
+		{
+			updateSuccess = false;
+			errorMessage = ResourceMB.getText("wq.message.costIndDescription");
+			return;
+		}
+
+		//Check duplicates
+		for(int i = 0 ; i < costIndicators.size() ; i++)
+		{
+			if(costIndicators.get(i).getName().equals(code))
+			{
+				updateSuccess = false;
+				errorMessage = ResourceMB.getText("wq.message.codeexists");
+				return;
+			}
+		}
+
+		//Checks completed, process saving
+		CostIndicator costIndicator = new CostIndicator();
+		costIndicator.setName(code);
+		costIndicator.setDescription(description);
+		costIndicator.setStatus(status);
+
+		LOG.info("Adding a new cost indicator");
+		costIndicatorSB.saveCostIndicator(costIndicator);
+		LOG.info("Added");
+
+		//reference cost indicators
+		costIndicators = costIndicatorSB.findAll();
+
+		updateSuccess = true;
+		clearMBData();
+		errorMessage = ResourceMB.getText("wq.message.costInd");
+		FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,errorMessage, ""));
+	}
+
+	public void editCostIndicator()
+	{
+		//Check description null/empty
+		if(null == description || description.equals(""))
+		{
+			updateSuccess = false;
+			errorMessage = ResourceMB.getText("wq.message.costIndDescription");
+			return;
+		}
+
+		//Check duplicates
+		for(int i = 0 ; i < costIndicators.size() ; i++)
+		{
+			if(costIndicators.get(i).getName().equals(code) && 
+					!costIndicators.get(i).getName().equals(selectedCostIndicator.getName()))
+			{
+				updateSuccess = false;
+				errorMessage = ResourceMB.getText("wq.message.codeexists");
+				return;
+			}
+		}
+
+		//Checks completed, process saving
+		CostIndicator costIndicator = selectedCostIndicator;
+		costIndicator.setDescription(description);
+		costIndicator.setStatus(status);
+
+		LOG.info("Update cost indicator:" + costIndicator.getName());
+		costIndicatorSB.updateCostIndicator(costIndicator);
+		LOG.info("Updated");
+
+		//reference cost indicators
+		costIndicators = costIndicatorSB.findAll();
+
+		updateSuccess = true;
+		clearMBData();
+		errorMessage = ResourceMB.getText("wq.message.editCost");
+		FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_INFO,errorMessage, ""));
+	}
+
+	public void onChangeStatus()
+	{
+		errorMessage = ResourceMB.getText("wq.message.impactAllPricingInfo");
+		FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_WARN,errorMessage, ""));
+	}
+	
+	public void checkSelectedCostIndicatorEditCostIndicator()
+	{
+		if(selectedCostIndicator!=null)
+		{
+			RequestContext.getCurrentInstance().execute("PF('dialogEditCostIndicatorWidget').show()");
+		}
+		else
+		{
+			errorMessage = ResourceMB.getText("wq.message.pleaseCostIndicator");
+			FacesContext.getCurrentInstance().addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_ERROR,errorMessage, ""));
+		}
+	}
+	
+	private void clearMBData()
+	{
+		code = null;
+		description = null;
+		errorMessage = null;
+		selectedCostIndicator = null;
+	}
+
+}

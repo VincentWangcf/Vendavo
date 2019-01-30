@@ -1,0 +1,27 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	
+<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	<ui:define name="content">
+		<p:ajaxStatus onstart="start();" onsuccess="stop();"
+			onerror="stopWithError();" />
+		<h:form>
+
+					<p:panel header="" style="font-size:12pt">
+						<p:messages id="msgId" escape="false" closable="true" autoUpdate="true"/>				
+							<p:commandButton value="clear cache" onclick="#{dispatcherControlMB.getClearAllCachePostJs()}"  />
+					</p:panel>										
+		</h:form>
+		
+	</ui:define>
+</ui:composition>
+	
+	 

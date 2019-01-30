@@ -1,0 +1,129 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	
+	<ui:define name="css">
+	 	<style type="text/css">
+            .errorRow {
+                background-color: #6CE26C !important;
+                color: red !important;
+            }
+        </style> 
+	</ui:define>
+	
+	<ui:define name="content">
+		<p:ajaxStatus onstart="start();" onsuccess="stop();"
+			onerror="stopWithError();" />
+		<h2><h:outputText value="#{dbResource['wq.header.pricerUpload']}"/></h2>
+		<h:form id="uploadProgramItem" enctype="multipart/form-data">
+
+					<p:panel header="#{dbResource['wq.button.upload']}" style="font-size:12pt">	
+						<p:messages id="msgId" escape="false" closable="true" autoUpdate="true"/>				
+						<h:panelGrid columns="8" cellpadding="0">
+							<h:outputText value="#{dbResource['wq.label.action']}:" style="font-size:12pt;padding:0px 2px 0px 3px"/>							
+							<h:selectOneMenu id="action" value="#{pricerUploadMB.action}">
+								<f:selectItems value="#{pricerUploadMB.actionSelectList}"/>														
+							</h:selectOneMenu>
+							
+							<p:fileUpload label="#{dbResource['wq.button.chooseFile']}" value="#{pricerUploadMB.uploadFile}" allowTypes="/(\.|\/)(xls|xlsx|XLS|XLSX)$/" mode="simple" skinSimple="true"/>	
+		        				
+							<p:commandButton value="#{dbResource['wq.button.upload']}" icon="ui-icon-circle-check" 
+							update=":uploadProgramItem:Confirm" actionListener="#{pricerUploadMB.handleFileUpload}" onclick="PrimeFaces.monitorDownload(start, stop)"  ajax="false"/>
+							<p:commandButton value="#{dbResource['wq.button.uploadOffline']}" ajax ="false" onclick="PrimeFaces.monitorDownload(start, stop)" action="#{pricerUploadMB.uploadByExceloffline}"  />
+							
+							<p:panelGrid columns="1">
+								<p:commandLink value="#{dbResource['wq.label.downloadPricerTemplate']}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">
+									<p:fileDownload value="#{pricerUploadMB.pricerTemplate}" />
+							    </p:commandLink>							    
+		
+					 		</p:panelGrid>
+					 		<h:outputText id="uploadFileName" value="#{pricerUploadMB.uploadFileName}"/>
+						</h:panelGrid>
+					</p:panel>										
+					<p:panel header="#{dbResource['wq.header.confirm']}" rendered="#{pricerUploadMB.pricerUploadComfirmAllowed}" >
+						 <p:panelGrid  columns="3" >
+							<h:outputText value="#{dbResource['wq.button.no']}" />
+							<h:outputText value="#{dbResource['wq.label.actn']}"  />
+				            <h:outputText value="#{dbResource['wq.header.records']}"/>
+				          	<h:outputText value="1" />
+				            <h:outputText value="#{dbResource['wq.header.recordsPartCreated']}"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.addedPartCount}"/>
+				            
+				            <h:outputText value="2" />
+				            <h:outputText value="#{dbResource['wq.header.recordsPartUpdated']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.updatedPartCount}"/>  
+				            
+				           	<h:outputText value="3" />
+				            <h:outputText value="#{dbResource['wq.header.recordsPartRemoved']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.removedPartCount}"/> 
+				            
+				            <h:outputText value="4" />
+				            <h:outputText value="#{dbResource['wq.header.normalPricerAdded']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.addedNormalCount}"/>
+				            
+				            <h:outputText value="5" />
+				            <h:outputText value="#{dbResource['wq.header.normalPricerUpdated']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.updatedNormalCount}"/>
+				    
+				    		<h:outputText value="6" />
+				            <h:outputText value="#{dbResource['wq.header.normalPricerRemoved']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.removedNormalCount}"/>
+				            
+				            <h:outputText value="7" />
+				            <h:outputText value="#{dbResource['wq.header.programPricerAdded']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.addedProgramCount}"/>
+				            
+				            <h:outputText value="8" />
+				            <h:outputText value="#{dbResource['wq.header.programPricerUpdated']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.updatedProgramCount}"/>
+				            
+				            <h:outputText value="9" />
+				            <h:outputText value="#{dbResource['wq.header.programPricerRemoved']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.removedProgramCount}"/>
+				            
+				            <h:outputText value="10" />
+				            <h:outputText value="#{dbResource['wq.header.contractPricerAdded']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.addedContractPriceCount}"/>
+				            
+				            <h:outputText value="11" />
+				            <h:outputText value="#{dbResource['wq.header.contractPricerUpdated']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.updatedContractPriceCount}"/>
+				            
+				            <h:outputText value="12" />
+				            <h:outputText value="#{dbResource['wq.header.contractPricerRemoved']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.removedContractPriceCount}"/>
+				            
+				            <h:outputText value="13" />
+				            <h:outputText value="#{dbResource['wq.header.simplePricerAdded']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.addedSimplePricerCount}"/>
+				            
+				            <h:outputText value="14" />
+				            <h:outputText value="#{dbResource['wq.header.simplePricerUpdated']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.updatedSimplePricerCount}"/>
+				            <h:outputText value="15" />
+				            <h:outputText value="#{dbResource['wq.header.simplePricerRemoved']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.removedSimplePricerCount}"/>
+				            
+				            
+				            <h:outputText value="16" />
+				            <h:outputText value="#{dbResource['wq.header.salesCostPricerAdded']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.addedSalesCostPricerCount}"/>
+				            <h:outputText value="17" />
+				            <h:outputText value="#{dbResource['wq.header.salesCostPricerUpdated']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.updatedSalesCostPricerCount}"/>
+				            <h:outputText value="18" />
+				            <h:outputText value="#{dbResource['wq.header.salesCostPricerRemoved']}:"/>
+				            <h:outputText value="#{pricerUploadMB.countBean.removedSalesCostPricerCount}"/>
+						</p:panelGrid>
+						<p:spacer width="500" height="30"/>
+
+					</p:panel>
+
+		</h:form>
+		
+	</ui:define>
+</ui:composition>

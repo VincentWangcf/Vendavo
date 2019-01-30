@@ -1,0 +1,598 @@
+package com.avnet.emasia.webquote.web.pricerupload;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.application.FacesMessage.Severity;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.model.SelectItem;
+
+import org.jboss.logmanager.Level;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.StreamedContent;
+import org.primefaces.model.UploadedFile;
+
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadParametersBean;
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadTemplateBean;
+import com.avnet.emasia.webquote.commodity.bean.ProgramItemUploadCounterBean;
+import com.avnet.emasia.webquote.commodity.constant.PRICER_TYPE;
+import com.avnet.emasia.webquote.commodity.constant.PricerConstant;
+import com.avnet.emasia.webquote.commodity.constant.UPLOAD_ACTION;
+import com.avnet.emasia.webquote.commodity.ejb.PricerOfflineSB;
+import com.avnet.emasia.webquote.commodity.util.PricerTypeAndUkComparator;
+import com.avnet.emasia.webquote.commodity.util.PricerUtils;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.Quote;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.ManufacturerSB;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.AllPricerProcessSheet;
+import com.avnet.emasia.webquote.utilites.web.util.DeploymentConfiguration;
+import com.avnet.emasia.webquote.utilites.web.util.DownloadUtil;
+import com.avnet.emasia.webquote.utilites.web.util.Excel20007Reader;
+import com.avnet.emasia.webquote.utilites.web.util.POIUtils;
+import com.avnet.emasia.webquote.utilites.web.util.PricerUploadHelper;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+@ManagedBean
+@SessionScoped
+public class PricerUploadMB extends PricerUploadCommonMB implements Serializable {
+
+	private static final long serialVersionUID = -8153729292839377421L;
+	private static final Logger LOG = Logger.getLogger(PricerUploadMB.class.getName());
+	public final static long ONLINE_MAX_UPLOAD_FILE_SIZE = 10 * 1024 * 1024;// 10M
+	public final static long OFFLINE_MAX_UPLOAD_FILE_SIZE = 50 * 1024 * 1024;// 50M
+	private User user = null;
+
+	private transient UploadedFile uploadFile;
+	private String uploadFileName;
+
+	private ProgramItemUploadCounterBean countBean;
+
+	private boolean pricerUploadComfirmAllowed = false;
+
+	@EJB
+	SystemCodeMaintenanceSB sysCodeMaintSB;
+	@EJB
+	BizUnitSB bizUnitSB;
+	
+	@EJB
+	MailUtilsSB mailUtilsSB;
+	@EJB
+	PricerOfflineSB pricerOfflineSB;
+	@EJB
+	ManufacturerSB manufacturerSB;
+
+	private SelectItem[] actionSelectList;
+
+	private String action;
+
+	@PostConstruct
+	public void postContruct() {
+		user = UserInfo.getUser();
+		this.initPullDownMenu();
+	}
+
+	public void uploadByExceloffline() {
+		long start = System.currentTimeMillis();
+		PriceUploadStrategy uploadStrategy = new PriceUploadStrategy();
+		uploadStrategy.setUser(user);
+		boolean isSelectAction = uploadStrategy.verifyAction(action);
+		if (!isSelectAction) {
+
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.pleaseSelectAction"));
+			return;
+		}
+		boolean isUploadFile = uploadStrategy.isValidateUpload(uploadFile);
+		if (!isUploadFile) {
+
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.pleaseSelectFile"));
+			return;
+		}
+		boolean isMoreThanMaxFileSize = uploadStrategy.isMoreThanMaxFileSize(uploadFile.getSize(),
+				OFFLINE_MAX_UPLOAD_FILE_SIZE);
+
+		if (isMoreThanMaxFileSize) {
+
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.invalidFileSize"));
+			return;
+		}
+		boolean isExcelFile = uploadStrategy.isExcelFile(uploadFile);
+		if (!isExcelFile) {
+
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.selExcelFile"));
+			return;
+		}
+
+		boolean isRequiredFile = POIUtils.isValidateFileColumn(uploadFile);
+		if (!isRequiredFile) {
+
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.excelFileFormat"));
+			return;
+		}
+		Excel20007Reader reader = new Excel20007Reader(uploadFile, 0, new AllPricerProcessSheet());
+		int countRows = reader.getCountrows();
+		LOG.info("upload user : " + user.getName() + " upload size: " + countRows + " upload file :"
+				+ uploadFile.getFileName());
+		boolean isExceedAllowMaxNum = uploadStrategy.isExceedAllowMaxNum(countRows,
+				100000 + PricerConstant.PRICER_TEMPLATE_HEADER_ROW_NUMBER);
+		if (isExceedAllowMaxNum) {
+			String errMsg = ResourceMB.getText("wq.message.maximum") + " " + 100000
+					+ ResourceMB.getText("wq.message.recordsAllowed") + countRows;
+			this.showMessage(FacesMessage.SEVERITY_ERROR, errMsg);
+			return;
+		} else {
+			if (countRows == PricerConstant.PRICER_TEMPLATE_HEADER_ROW_NUMBER) {
+				this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.noDataUploadFile"));
+				return;
+			}
+		}
+
+		List<PricerUploadTemplateBean> beans = reader.excel2Beans(new PricerTypeAndUkComparator());
+
+		if (beans == null || beans.size() == 0) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.noDataUploadFile"));
+			return;
+		}
+		PRICER_TYPE[] pricerTypes = PRICER_TYPE.values();
+		String errMsg = "";
+
+		errMsg = errMsg + uploadStrategy.verifyPricerType(beans);
+		if (PricerUploadHelper.isHaveErrorMsg(errMsg)) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, errMsg);
+			return;
+		}
+		
+		HashMap<String, List<PricerUploadTemplateBean>> hashMapList = new HashMap<String, List<PricerUploadTemplateBean>>();
+		for (int i = 0; i < pricerTypes.length; i++) {
+			PRICER_TYPE pricertType = pricerTypes[i];
+			String pricerType = pricertType.getName();
+			List<PricerUploadTemplateBean> currentBeans = PricerUploadHelper.getUploadBeansByPricerType(beans,
+					pricerType);
+			if (currentBeans == null || currentBeans.size() == 0) {
+				continue;
+			}
+			boolean isRemoveForPartMaster = uploadStrategy.verifyRemoveForPartMaster(action, pricerType);
+			if (!isRemoveForPartMaster) {
+				errMsg = errMsg + ResourceMB.getText("wq.message.removePartMasterFileType");
+			}
+			hashMapList.put(pricerType, currentBeans);
+
+			boolean isRemoveForAllPricer = uploadStrategy.verifyRemoveAllPricer(action, pricerType);
+			if (!isRemoveForAllPricer) {
+				errMsg = errMsg + ResourceMB.getText("wq.message.removeAllPricerTypeFile");
+			}
+
+			if (UPLOAD_ACTION.ADD_UPDATE.getName().equals(action)) {
+				errMsg = errMsg + uploadStrategy.verifyFields(currentBeans);
+			} else if (UPLOAD_ACTION.REMOVE_PRICER_ONLY.getName().equals(action)) {
+				errMsg = errMsg + uploadStrategy.verifyFieldsForRemove(currentBeans);
+			} else if (UPLOAD_ACTION.REMOVE_ALL_PRICER.getName().equals(action)) {
+				errMsg = errMsg + uploadStrategy.verifyFieldsForRemoveAllPricer(currentBeans);
+			}
+			long end = System.currentTimeMillis();
+			LOG.info("verifyFields end,takes " + (end - start) + " ms");
+		}
+		/**** verify the invalid verifyDataValue data ****/
+		for (int i = 0; i < pricerTypes.length; i++) {
+			PRICER_TYPE pricertType = pricerTypes[i];
+			String pricerType = pricertType.getName();
+			List<PricerUploadTemplateBean> currentBeans = hashMapList.get(pricerType);
+			if (currentBeans == null || currentBeans.size() == 0)
+				continue;
+			try {
+				errMsg = errMsg + uploadStrategy.verifyDataValue(pricerType, user, currentBeans, action);
+			} catch (Exception e) {
+				LOG.log(Level.SEVERE, "Exception occured for file: " + uploadFileName + ", Reason for failure: "
+						+ MessageFormatorUtil.getParameterizedStringFromException(e), e);
+				String fromEmailAddr = sysCodeMaintSB.getBuzinessProperty("OFFLINE_REPORT_FROM",
+						user.getDefaultBizUnit().getName());
+				sendSystemEmail(new Date(), uploadFileName, user, e.toString(), fromEmailAddr);
+			}
+			long end = System.currentTimeMillis();
+			LOG.info(pricerType + " verifyCombinationData end,takes " + (end - start) + " ms");
+
+		}
+
+		if (PricerUploadHelper.isHaveErrorMsg(errMsg)) {
+			String fromEmailAddr = sysCodeMaintSB.getBuzinessProperty("OFFLINE_REPORT_FROM",
+					user.getDefaultBizUnit().getName());
+			sendEmail(new Date(), uploadFile.getFileName(), user, errMsg, null, fromEmailAddr);
+			FacesContext.getCurrentInstance().addMessage("msgId", new FacesMessage(FacesMessage.SEVERITY_ERROR,
+					ResourceMB.getText("wq.message.fileFormatVerification"), ""));
+			return;
+		} else {
+			String pricerUploadOfflinePath = sysCodeMaintSB.getPricerUploadOfflinePath();
+			String fileName = new Date().getTime() + uploadFile.getFileName();
+			pricerOfflineSB.saveToDb(user, action, "ALL", fileName);
+			pricerOfflineSB.saveToDisk(pricerUploadOfflinePath, fileName, uploadFile.getContents());
+			reset();
+			FacesContext.getCurrentInstance().addMessage("msgId", new FacesMessage(FacesMessage.SEVERITY_INFO,
+					ResourceMB.getText("wq.message.selectedPricerFiles"), ""));
+		}
+	}
+
+	public void handleFileUpload() throws IOException {
+		PriceUploadStrategy uploadStrategy = new PriceUploadStrategy();
+		uploadStrategy.setUser(user);
+
+		boolean isSelectAction = uploadStrategy.verifyAction(action);
+		UPLOAD_ACTION actionEnum = UPLOAD_ACTION.getActionByName(action);
+		if (!isSelectAction || actionEnum == null) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.pleaseSelectAction"));
+			return;
+		}
+
+		boolean isUploadFile = uploadStrategy.isValidateUpload(uploadFile);
+		if (!isUploadFile) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.pleaseSelectFile"));
+			return;
+		}
+		boolean isMoreThanMaxFileSize = uploadStrategy.isMoreThanMaxFileSize(uploadFile.getSize(),
+				ONLINE_MAX_UPLOAD_FILE_SIZE);
+
+		if (isMoreThanMaxFileSize) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.invalidFileSize"));
+			return;
+		}
+		pricerUploadComfirmAllowed = false;
+		setUploadFileName(uploadFile.getFileName());
+
+		long start = System.currentTimeMillis();
+
+		boolean isExcelFile = uploadStrategy.isExcelFile(uploadFile);
+		if (!isExcelFile) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.selExcelFile"));
+			return;
+		}
+
+		boolean isRequiredFile = POIUtils.isValidateFileColumn(uploadFile);
+		if (!isRequiredFile) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.excelFileFormat"));
+			return;
+		}
+		Excel20007Reader reader = new Excel20007Reader(uploadFile, 0, new AllPricerProcessSheet());
+		int countRows = reader.getCountrows();
+		LOG.info("upload user : " + user.getName() + " upload size: " + countRows + " upload file :"
+				+ uploadFile.getFileName());
+		boolean isExceedAllowMaxNum = uploadStrategy.isExceedAllowMaxNum(countRows,
+				PricerConstant.NUMBER_OF_ALLOW_MAX_UPLOAD + PricerConstant.PRICER_TEMPLATE_HEADER_ROW_NUMBER);
+		if (isExceedAllowMaxNum) {
+			String errMsg = ResourceMB.getText("wq.message.maximum") + " " + PricerConstant.NUMBER_OF_ALLOW_MAX_UPLOAD
+					+ ResourceMB.getText("wq.message.recordsAllowed") + countRows;
+			this.showMessage(FacesMessage.SEVERITY_ERROR, errMsg);
+			return;
+		} else {
+			if (countRows == PricerConstant.PRICER_TEMPLATE_HEADER_ROW_NUMBER) {
+				this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.noDataUploadFile"));
+				return;
+			}
+		}
+
+		List<PricerUploadTemplateBean> beans = reader.excel2Beans(new PricerTypeAndUkComparator());
+
+		if (beans == null || beans.size() == 0) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.noDataUploadFile"));
+			return;
+		}
+
+		PRICER_TYPE[] pricerTypes = PRICER_TYPE.values();
+		HashMap<String, List<PricerUploadTemplateBean>> hashMapList = new HashMap<String, List<PricerUploadTemplateBean>>();
+		HashMap<String, PricerUploadParametersBean> hashMapPubean = new HashMap<String, PricerUploadParametersBean>();
+		HashMap<String, List<Manufacturer>> hashMapManufacturerLst = new HashMap<String, List<Manufacturer>>();
+		/**** verify data include format and logic ***/
+		String errMsg = "";
+
+		errMsg = errMsg + uploadStrategy.verifyPricerType(beans);
+		if (PricerUploadHelper.isHaveErrorMsg(errMsg)) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, errMsg);
+			return;
+		}
+
+		for (int i = 0; i < pricerTypes.length; i++) {
+			PRICER_TYPE pricertType = pricerTypes[i];
+			String pricerType = pricertType.getName(); // fix defect 346 June
+			List<PricerUploadTemplateBean> currentBeans = PricerUploadHelper.getUploadBeansByPricerType(beans,
+					pricerType);
+			if (currentBeans == null || currentBeans.size() == 0) {
+				continue;
+			}
+			hashMapList.put(pricerType, currentBeans);
+
+			boolean isRemoveForPartMaster = uploadStrategy.verifyRemoveForPartMaster(action, pricerType);
+			if (!isRemoveForPartMaster) {
+				this.showMessage(FacesMessage.SEVERITY_ERROR,
+						ResourceMB.getText("wq.message.removePartMasterFileType"));
+				return;
+			}
+
+			boolean isRemoveForAllPricer = uploadStrategy.verifyRemoveAllPricer(action, pricerType);
+			if (!isRemoveForAllPricer) {
+				this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.removeAllPricerTypeFile"));
+				return;
+			}
+			LOG.info(pricerType + " verifyFields bigin,takes");
+			start = System.currentTimeMillis();
+			if (UPLOAD_ACTION.ADD_UPDATE.getName().equals(action)) {
+				errMsg = errMsg + uploadStrategy.verifyFields(currentBeans);
+			} else if (UPLOAD_ACTION.REMOVE_PRICER_ONLY.getName().equals(action)) {
+				errMsg = errMsg + uploadStrategy.verifyFieldsForRemove(currentBeans);
+			} else if (UPLOAD_ACTION.REMOVE_ALL_PRICER.getName().equals(action)) {
+				errMsg = errMsg + uploadStrategy.verifyFieldsForRemoveAllPricer(currentBeans);
+			}
+
+			long end = System.currentTimeMillis();
+			LOG.info(pricerType + " verifyFields end,takes " + (end - start) + " ms");
+
+		}
+		if (PricerUploadHelper.isHaveErrorMsg(errMsg)) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, errMsg);
+			return;
+		}
+		/**** verify the invalid verifyDataValue data ****/
+		for (int i = 0; i < pricerTypes.length; i++) {
+			PRICER_TYPE pricertType = pricerTypes[i];
+			String pricerType = pricertType.getName();
+			List<PricerUploadTemplateBean> currentBeans = hashMapList.get(pricerType);
+			if (currentBeans == null || currentBeans.size() == 0)
+				continue;
+			try {
+				errMsg = errMsg + uploadStrategy.verifyDataValue(pricerType, user, currentBeans, action);
+			} catch (Exception e) {
+				LOG.log(Level.SEVERE, "Exception occured for file: " + uploadFileName + ", Reason for failure: "
+						+ MessageFormatorUtil.getParameterizedStringFromException(e), e);
+				String fromEmailAddr = sysCodeMaintSB.getBuzinessProperty("OFFLINE_REPORT_FROM",
+						user.getDefaultBizUnit().getName());
+				sendSystemEmail(new Date(), uploadFileName, user, e.toString(), fromEmailAddr);
+			}
+			long end = System.currentTimeMillis();
+			LOG.info(pricerType + " verifyCombinationData end,takes " + (end - start) + " ms");
+
+		}
+		if (PricerUploadHelper.isHaveErrorMsg(errMsg)) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, errMsg);
+			return;
+		}
+		/**** valid the data in DB ****/
+		for (int i = 0; i < pricerTypes.length; i++) {
+			PRICER_TYPE pricertType = pricerTypes[i];
+			String pricerType = pricertType.getName(); // fix defect 346 June
+														// Guo 20150305
+			List<PricerUploadTemplateBean> currentBeans = hashMapList.get(pricerType);
+			if (currentBeans == null || currentBeans.size() == 0)
+				continue;
+			PricerUploadParametersBean puBean = new PricerUploadParametersBean();
+			/*List<Manufacturer> manufacturers = null;
+			List<Manufacturer> manufacturerLst =null;*/
+			List<Manufacturer>  manufacturers = manufacturerSB.findManufacturerByBizUnit(user.getDefaultBizUnit());
+			List<Manufacturer> manufacturerLst = PricerUtils.getMfrInUploadFile(currentBeans, manufacturers);
+			
+		
+			
+			hashMapManufacturerLst.put(pricerType, manufacturerLst);
+			try {
+				if (UPLOAD_ACTION.ADD_UPDATE.getName().equals(action)) {
+					errMsg = errMsg
+							+ this.verifyInDBForAddUpdate(pricerType, currentBeans, user, puBean, manufacturerLst);
+				} else if (UPLOAD_ACTION.REMOVE_PRICER_ONLY.getName().equals(action)) {
+					errMsg = errMsg + this.verifyInDBForRemove(pricerType, currentBeans, user, manufacturerLst);
+				}
+			} catch (Exception e) {
+				LOG.log(Level.SEVERE, "Exception occured for file: " + uploadFileName + ", Reason for failure: "
+						+ MessageFormatorUtil.getParameterizedStringFromException(e), e);
+				String fromEmailAddr = sysCodeMaintSB.getBuzinessProperty("OFFLINE_REPORT_FROM",
+						user.getDefaultBizUnit().getName());
+				sendSystemEmail(new Date(), uploadFileName, user, e.toString(), fromEmailAddr);
+			}
+			long end = System.currentTimeMillis();
+			LOG.info(pricerType + " verifyInDBForAddUpdate end,takes " + (end - start) + " ms");
+			hashMapPubean.put(pricerType, puBean);
+		}
+
+		if (PricerUploadHelper.isHaveErrorMsg(errMsg)) {
+			LOG.info( "verifyInDBForAddUpdate end and check out some error:::: " +errMsg);
+			this.showMessage(FacesMessage.SEVERITY_ERROR, errMsg);
+			return;
+		}
+		
+		Map<String, Set<String>> currencyMapRegion = bizUnitSB.findAll().stream().
+				collect(toMap(BizUnit::getName, BizUnit::getAllowCurrencies)) ;
+		
+		/**** valid the ACCESS TO DATA ****/
+		for (String pricerType : hashMapList.keySet()) {
+			LOG.info(pricerType + " valid the ACCESS TO DATA begin.");
+			List<PricerUploadTemplateBean> currentBeans = hashMapList.get(pricerType);
+			if (currentBeans == null || currentBeans.size() == 0)
+				continue;
+			
+			try {
+				errMsg = errMsg + uploadStrategy.verifyDataAccess(pricerType, user, currentBeans, actionEnum, currencyMapRegion);
+			} catch (Exception e) {
+				LOG.log(Level.SEVERE, "Exception occured for file: " + uploadFileName + ", Reason for failure: "
+						+ MessageFormatorUtil.getParameterizedStringFromException(e), e);
+				String fromEmailAddr = sysCodeMaintSB.getBuzinessProperty("OFFLINE_REPORT_FROM",
+						user.getDefaultBizUnit().getName());
+				sendSystemEmail(new Date(), uploadFileName, user, e.toString(), fromEmailAddr);
+			}
+			long end = System.currentTimeMillis();
+			LOG.info(pricerType + " verifyDataAccess end,takes " + (end - start) + " ms");
+
+		}
+
+		if (PricerUploadHelper.isHaveErrorMsg(errMsg)) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, errMsg);
+			return;
+		}
+		/**** insert data to db ***/
+		countBean = new ProgramItemUploadCounterBean();
+		try {
+			StringBuffer msg = new StringBuffer();
+			List<String> comparedMfrs = new ArrayList<String>();
+
+			for (int k = 0; k < pricerTypes.length; k++) {
+				PRICER_TYPE pricertType = pricerTypes[k];
+				String pricerType = pricertType.getName(); // fix defect 346
+															// June Guo 20150305
+				List<PricerUploadTemplateBean> currentBeans = hashMapList.get(pricerType);
+				if (currentBeans == null || currentBeans.size() == 0)
+					continue;
+				PricerUploadParametersBean puBean = hashMapPubean.get(pricerType);
+				List<Manufacturer> manufacturerLst = hashMapManufacturerLst.get(pricerType);
+
+				// to check if update product group 2 fixed by June Guo 20150519
+				// msg.append(verifyUpdatePG2(beans,user,manufacturerLst,comparedMfrs));
+
+				this.beansToDataBase(countBean, action, pricerType, currentBeans, user, puBean, manufacturerLst);
+
+				long end = System.currentTimeMillis();
+				LOG.info("upload " + pricerType + " end,takes " + (end - start) + " ms proceed record size "
+						+ currentBeans.size());
+				pricerUploadComfirmAllowed = true;
+			}
+			if (null != msg && !QuoteUtil.isEmpty(msg.toString())) {
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_INFO, msg.toString(), null));
+			}
+			this.savePricerUploadSummary2Db(countBean, uploadFileName, user);
+		} catch (Exception e) {
+			String fromEmailAddr = sysCodeMaintSB.getBuzinessProperty("OFFLINE_REPORT_FROM",
+					user.getDefaultBizUnit().getName());
+			sendSystemEmail(new Date(), uploadFileName, user, e.getMessage(), fromEmailAddr);
+			LOG.log(Level.SEVERE, "Exception occured for file: " + uploadFileName + ", Reason for failure: "
+					+ MessageFormatorUtil.getParameterizedStringFromException(e), e);
+		}
+		long end = System.currentTimeMillis();
+		LOG.info("upload end,takes " + (end - start) + " ms proceed record size " + beans.size());
+		reset();
+	}
+
+	public void showMessage(Severity severityError, String errMsg) {
+		if(errMsg.length()>=PricerConstant.STRING_MAX_LENGTH) {
+			errMsg = errMsg.substring(0, PricerConstant.STRING_MAX_LENGTH-1);
+		}
+		FacesContext.getCurrentInstance().addMessage("msgId", new FacesMessage(severityError, errMsg, ""));
+		reset();
+	}
+
+	private void reset() {
+		uploadFile = null;
+		uploadFileName = null;
+		action = null;
+	}
+
+	/**
+	 * Download normal pricer template.
+	 * 
+	 * @return
+	 */
+	public StreamedContent getPricerTemplate() {
+		String filePath = DeploymentConfiguration.configPath + File.separator + PricerConstant.PRICER_TEMPLATE_NAME;
+		FileInputStream in = null;
+		StreamedContent pricerUploadTemplate = null;
+		try {
+			in = new FileInputStream(filePath);
+
+			if (in != null)
+				pricerUploadTemplate = new DefaultStreamedContent(in,
+						DownloadUtil.getMimeType(PricerConstant.PRICER_TEMPLATE_NAME),
+						PricerConstant.PRICER_TEMPLATE_NAME);
+		} catch (FileNotFoundException e) {
+			this.showMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.downloadfail") + ".");
+			LOG.log(Level.SEVERE, "File on this path " + filePath + " not found, Exception message: " + e.getMessage(),
+					e);
+		}
+		return pricerUploadTemplate;
+	}
+
+	public void backToHome() {
+		FacesContext f = FacesContext.getCurrentInstance();
+		f.getApplication().getNavigationHandler().handleNavigation(f, null,
+				"/PricerUpload/PricerUpload?faces-redirect=true");
+	}
+
+	public UploadedFile getUploadFile() {
+		return uploadFile;
+	}
+
+	public void setUploadFile(UploadedFile uploadFile) {
+		this.uploadFile = uploadFile;
+	}
+
+	public String getUploadFileName() {
+		return uploadFileName;
+	}
+
+	public void setUploadFileName(String uploadFileName) {
+		this.uploadFileName = uploadFileName;
+	}
+
+	public ProgramItemUploadCounterBean getCountBean() {
+		return countBean;
+	}
+
+	public void setCountBean(ProgramItemUploadCounterBean countBean) {
+		this.countBean = countBean;
+	}
+
+	public boolean isPricerUploadComfirmAllowed() {
+		return pricerUploadComfirmAllowed;
+	}
+
+	public void setPricerUploadComfirmAllowed(boolean pricerUploadComfirmAllowed) {
+		this.pricerUploadComfirmAllowed = pricerUploadComfirmAllowed;
+	}
+
+	public void initPullDownMenu() {
+		this.actionSelectList = new SelectItem[4];
+		this.actionSelectList[0] = new SelectItem("", "");
+		this.actionSelectList[1] = new SelectItem(UPLOAD_ACTION.ADD_UPDATE.getName(),
+				UPLOAD_ACTION.ADD_UPDATE.getName());
+		this.actionSelectList[2] = new SelectItem(UPLOAD_ACTION.REMOVE_PRICER_ONLY.getName(),
+				UPLOAD_ACTION.REMOVE_PRICER_ONLY.getName());
+		this.actionSelectList[3] = new SelectItem(UPLOAD_ACTION.REMOVE_ALL_PRICER.getName(),
+				UPLOAD_ACTION.REMOVE_ALL_PRICER.getName());
+	}
+
+	public SelectItem[] getActionSelectList() {
+		return actionSelectList;
+	}
+
+	public void setActionSelectList(SelectItem[] actionSelectList) {
+		this.actionSelectList = actionSelectList;
+	}
+
+	public String getAction() {
+		return action;
+	}
+
+	public void setAction(String action) {
+		this.action = action;
+	}
+
+}

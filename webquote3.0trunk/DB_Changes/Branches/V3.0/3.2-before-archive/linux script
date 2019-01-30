@@ -1,0 +1,5 @@
+mkdir -m 777 /app/eap62/webquote/b2bfiles/TIS
+cd /app/eap62/webquote/b2bfiles/TIS
+mkdir -m 777 inbound
+mkdir -m 777 exception
+mkdir -m 777 backup

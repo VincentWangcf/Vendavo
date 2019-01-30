@@ -1,0 +1,18 @@
+Insert into APP_MESSAGES(ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) 
+VALUES((select max(id)+1 from APP_MESSAGES),'en','wq.error.noaccesscurrency','Must input a Buy Currency that is supported by your default region.');
+
+Insert into APP_MESSAGES(ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) 
+VALUES((select max(id)+1 from APP_MESSAGES),'en','wq.error.notCurrencyType','Must input a Buy Currency that is supported by your excel.');
+
+Insert into APP_MESSAGES(ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) 
+VALUES((select max(id)+1 from APP_MESSAGES),'en','wq.error.mustinputbuycurr','Must input a value in Buy Currency column.');
+
+
+insert into APP_LABEL(ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) values((select max(id)+1 from APP_LABEL),'en','wq.label.finalcurr','FNL CUR');
+insert into APP_LABEL(ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) values((select max(id)+1 from APP_LABEL),'en','wq.label.finalprice','Final Price');
+insert into APP_LABEL(ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) values((select max(id)+1 from APP_LABEL),'en','wq.label.dLinkFlag','$Link');
+insert into APP_LABEL(ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) values((select max(id)+1 from APP_LABEL),'en','wq.label.rfqcurr','RFQ CUR');
+insert into APP_LABEL(ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) values((select max(id)+1 from APP_LABEL),'en','wq.label.buycurr','BUY CUR');
+insert into APP_LABEL(ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) values((select max(id)+1 from APP_LABEL),'en','wq.label.buyTargetResale','Target Resale (BUY CUR)');
+insert into APP_LABEL(ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) values((select max(id)+1 from APP_LABEL),'en','wq.label.rfqTargetResale','Target Resale (RFQ CUR)');
+insert into APP_LABEL(ID,LOCALE_ID,MESSAGE_CODE,MESSAGE) values((select max(id)+1 from APP_LABEL),'en','wq.label.exRateStr','Exchange Rate');

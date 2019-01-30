@@ -1,0 +1,19 @@
+:normalEnd:
+file: \WQ_Web\src\com\avnet\emasia\webquote\ejb\QuoteBuilderSB.java
+fromUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/branches/funtional_branch/use_jms_to_create_sap_quote/WQ_Web/src/com/avnet/emasia/webquote/ejb/QuoteBuilderSB.java
+fromRevision: 24023
+toUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/branches/funtional_branch/use_jms_to_create_sap_quote/WQ_Web/src/com/avnet/emasia/webquote/ejb/QuoteBuilderSB.java
+toRevision: 24068
+force: false
+recurse: false
+ignore: false
+depth: 0
+Summary result: type: 1 category: Updated number: 1
+Summary result: type: 0 category: Conflicts number: 1
+
+workspaceUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/trunk/WQ_Web/src/com/avnet/emasia/webquote/ejb/QuoteBuilderSB.java
+workspaceRevision: 24083
+lowerRevision: 24023
+upperRevision: 24068
+merge -r24023:24068 http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/branches/funtional_branch/use_jms_to_create_sap_quote/WQ_Web/src/com/avnet/emasia/webquote/ejb/QuoteBuilderSB.java C:/Damon/webquote3.0trunk/WQ_Web/src/com/avnet/emasia/webquote/ejb/QuoteBuilderSB.java
+Message: 3   U         C:/Damon/webquote3.0trunk/WQ_Web/src/com/avnet/emasia/webquote/ejb/QuoteBuilderSB.java

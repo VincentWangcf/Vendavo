@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CommitComments>	<CommitComment>add app_label </CommitComment>
+	<CommitComment>comment//fileLocation</CommitComment>
+	<CommitComment>merge for QB.</CommitComment>
+	<CommitComment>comment quoteItem.setExRateFnl </CommitComment>
+	<CommitComment>add decimalPointList for check </CommitComment>
+	<CommitComment>quoteItem.setValidFlag(true);</CommitComment>
+	<CommitComment>call  updateByBuyCurrChanged</CommitComment>
+	<CommitComment>comment !currencyMap.containsKey(exCurrency)</CommitComment>
+	<CommitComment> add quote_item setBuyCurrency</CommitComment>
+	<CommitComment>chnage p:menuitem massQuoteRequest</CommitComment>
+</CommitComments>

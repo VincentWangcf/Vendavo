@@ -1,0 +1,402 @@
+package com.avnet.emasia.webquote.poi;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import com.avnet.emasia.webquote.entity.ExcelReport;
+import com.avnet.emasia.webquote.entity.ExcelReportColumn;
+import com.avnet.emasia.webquote.entity.ExcelReportSeq;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+
+public class ExcelGenerator {
+	
+	private static final Logger LOG = Logger.getLogger(ExcelGenerator.class.getName());
+	
+	public static final String FORMAT_SHORT_DATE = "dd/MM/yyyy";
+	public static final String FORMAT_LONG_DATE = "dd/MM/yyyy hh:mm:ss";
+    public static final int INT_FORMAT = 0;
+    public static final int DOUBLE_FORMAT = 1;
+    public static final int STRING_FORMAT = 2;
+    public static final int SHORT_DATE_FORMAT = 3;
+    public static final int LONG_DATE_FORMAT = 4;
+    public static final String FORMMAT_ONE = "#,##0.00000";
+    public static final String FORMMAT_TWO = "#,##";
+    
+    
+    public static final String TEMPLATE1 = "-999999";
+    public static final String TEMPLATE2 = "0.0";
+    public static final String TEMPLATE3 = "-999999.0";
+    public static final String TEMPLATE4 = "null";
+    public static final String TEMPLATE5 = "0";
+    public static final String TEMPLATE_BLANK = "";
+    
+    public static final String TEMPLATE_GET = "get";
+    
+    public static Map<String, Map<Integer,CellStyle>> styleMap = new HashMap<String,Map<Integer,CellStyle>>();
+    
+    /**
+     * 
+     * @param excelReport
+     * @param sheetName
+     * @param templatePath
+     * @return
+     * @throws WebQuoteException
+     */
+	public static SXSSFWorkbook generateExcelTemplate(ExcelReport excelReport, String sheetName, String templatePath)
+			throws WebQuoteException {
+		LOG.info("Call  function generateExcelTemplate begin");
+		LOG.info("the excelReport is:"+excelReport.toString());
+		SXSSFWorkbook wb = null;
+		if (StringUtils.isNotBlank(excelReport.getTemplateName())) {
+			String templateFile = templatePath + File.separator + excelReport.getTemplateName();
+			LOG.info("templatePath:"+templatePath );
+			LOG.info("templateFile:"+templateFile );
+			wb = createFileTemplate(excelReport,templateFile);
+		} else {
+			wb = createReportTemplate(excelReport, sheetName);
+		}
+		LOG.info("Call  function generateExcelTemplate end");
+		return wb;
+	}
+	
+	private static SXSSFWorkbook createReportTemplate(ExcelReport excelReport, String sheetName){
+		LOG.info("Call  function createReportTemplate begin");
+		LOG.info("the excelReport is:"+excelReport.toString());
+		SXSSFWorkbook wb = null;
+		List<ExcelReportSeq> reportSeqs = excelReport.getExcelReportSeqs();
+		Collections.sort(reportSeqs, (e1, e2) -> {
+			return e1.getSeqNo() - e2.getSeqNo();
+		});
+		String[] headerArray = new String[reportSeqs.size()];
+		for (int i = 0; i < reportSeqs.size(); i++) {
+			ExcelReportColumn reportColumn = reportSeqs.get(i).getExcelReportColumn();
+			headerArray[i] = reportColumn.getHeaderName();
+		}
+		wb = new SXSSFWorkbook(100);
+		SXSSFSheet sh = (SXSSFSheet) wb.createSheet();
+		sh.setRandomAccessWindowSize(100);
+		addSheetHeader(wb, sh, 0, headerArray, null);
+		LOG.info("Call  function createReportTemplate end");
+        return wb;
+	}
+	
+	public static SXSSFWorkbook createFileTemplate(ExcelReport excelReport,String templateFile) throws WebQuoteException {
+		SXSSFWorkbook wb = null;
+		LOG.info("Call  function createFileTemplate begin");
+		try {
+			Map<Integer,CellStyle> cellStyleMap = styleMap.get(excelReport.getReportName());
+			if(cellStyleMap == null) {
+				cellStyleMap = new HashMap<Integer,CellStyle>();
+			}
+			Integer sheetIdx = (excelReport.getSheetNo() != null && excelReport.getSheetNo() > 0) ? excelReport.getSheetNo() : 0;
+			FileInputStream inputStream = new FileInputStream(templateFile);
+			XSSFWorkbook template = new XSSFWorkbook(inputStream);
+			inputStream.close();
+			Sheet tempSheet = template.getSheetAt(0);
+			Row firstRow = tempSheet.getRow(tempSheet.getFirstRowNum());
+			for(int i = 0; i < firstRow.getPhysicalNumberOfCells();i++) {
+				Cell c = firstRow.getCell(i);
+				CellStyle style = c.getCellStyle();
+				cellStyleMap.put(i, style);
+			}
+			styleMap.put(excelReport.getReportName(), cellStyleMap);
+			wb = new SXSSFWorkbook(template,100);
+			wb.setCompressTempFiles(true);
+	        SXSSFSheet sh = (SXSSFSheet) wb.getSheetAt(sheetIdx);
+	        sh.setRandomAccessWindowSize(100);// keep 100 rows in memory, exceeding rows will be flushed to disk
+		} catch (IOException e) {
+			throw new WebQuoteException(e);
+		}
+		LOG.info("Call  function createFileTemplate end");
+        return wb;
+	}
+	
+	/**
+	 * 
+	 * @param workbook
+	 * @param resultList
+	 * @param excelReport
+	 * @return
+	 * @throws WebQuoteException
+	 */
+	@SuppressWarnings("rawtypes")
+	public static SXSSFWorkbook generateExcelFile(SXSSFWorkbook workbook, List resultList, ExcelReport excelReport)
+			throws WebQuoteException {
+		return generateExcelFile(workbook,resultList,excelReport,new DefaultExcelReportFormat());
+	}
+	
+	public static SXSSFWorkbook generateExcelFile(SXSSFWorkbook workbook, List resultList, ExcelReport excelReport,ExcelReportFormat reportFormat)
+			throws WebQuoteException {
+		SXSSFSheet sh = (SXSSFSheet) workbook.getSheetAt(0);
+		reportFormat.setColumnWidth(sh);
+		Object bean = null;
+		CellStyle intStyle = workbook.createCellStyle();
+		CellStyle doubleStyle = workbook.createCellStyle();
+		CreationHelper shortDateHelper = workbook.getCreationHelper();
+		CellStyle shortDateStyle = workbook.createCellStyle();
+		shortDateStyle.setDataFormat(shortDateHelper.createDataFormat().getFormat(FORMAT_SHORT_DATE));
+		CellStyle longDateStyle = workbook.createCellStyle();
+		longDateStyle.setDataFormat(shortDateHelper.createDataFormat().getFormat(FORMAT_LONG_DATE));
+		if(resultList != null && resultList.size() > 0) {
+			for (int idx = 0; idx < resultList.size(); idx++) {
+				int lastRowIndex = sh.getLastRowNum();
+				bean = resultList.get(idx);
+				Row row = sh.createRow(lastRowIndex + 1);
+				row = createRowData(workbook, row, bean,excelReport,intStyle,doubleStyle,shortDateStyle,longDateStyle,reportFormat);
+			}
+		}
+		return workbook;
+	}
+	
+	/**
+	 * 
+	 * @param workbook
+	 * @param row
+	 * @param bean
+	 * @param excelReport
+	 * @param intStyle
+	 * @param doubleStyle
+	 * @param shortDateStyle
+	 * @param longDateStyle
+	 * @return
+	 * @throws WebQuoteException
+	 */
+	private static Row createRowData(SXSSFWorkbook workbook, Row row, Object bean, ExcelReport excelReport,
+			CellStyle intStyle,CellStyle doubleStyle,CellStyle shortDateStyle,CellStyle longDateStyle,ExcelReportFormat reportFormat)
+			throws WebQuoteException {
+		int dataTypeIndicator = -1;
+		int lineNumber = -1;
+		String methName = "";
+		Cell cell = null;
+		try {
+			List<ExcelReportSeq> reportSeqs = excelReport.getExcelReportSeqs();
+			Collections.sort(reportSeqs, (e1, e2) -> {
+				return e1.getSeqNo() - e2.getSeqNo();
+			});
+			String[] columnArray = new String[reportSeqs.size()];
+			String[] dataTypeArray = new String[reportSeqs.size()];
+			for (int i = 0; i < reportSeqs.size(); i++) {
+				ExcelReportColumn reportColumn = reportSeqs.get(i).getExcelReportColumn();
+				columnArray[i] = reportColumn.getBeanProperty();
+				dataTypeArray[i] = reportColumn.getCellDataType();
+			}
+			DataFormat format = workbook.createDataFormat();
+			DataFormat format2 = workbook.createDataFormat();
+			short dataTypeDouble = format.getFormat(FORMMAT_ONE);
+			short dataTypeInt = format2.getFormat(FORMMAT_TWO);
+			Map<Integer,CellStyle> cellStyleMap = styleMap.get(excelReport.getReportName());
+			for (int i = 0; i < columnArray.length; i++) {
+				CellStyle cellStyle = null;
+				lineNumber = i;
+				String fieldName = columnArray[i];
+				Field field = getDeclaredField(bean,fieldName);
+				Class<?> fieldType = field.getType();
+				fieldName = fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1, fieldName.length());
+				String methodName = TEMPLATE_GET + fieldName;
+				methName = methodName.trim();
+				Method m = getDeclaredMethod(bean,methodName, new Class[] {});
+				cell = row.createCell((short) i);
+				if(cellStyleMap != null) {
+					cellStyle = cellStyleMap.get(i);
+				}
+				if(cellStyle != null) {
+					cell.setCellStyle(cellStyle);
+				}
+				dataTypeIndicator = Integer.valueOf(dataTypeArray[i].trim());
+				if (fieldType.equals(Date.class)) {
+					Date value = (Date) m.invoke(bean, new Object[] {});
+					if (null != value) {
+						if (dataTypeIndicator == LONG_DATE_FORMAT) {
+							if(cellStyle != null) {
+								cellStyle.setDataFormat(longDateStyle.getDataFormat());
+								cell.setCellStyle(cellStyle);
+							} else {
+								cell.setCellStyle(longDateStyle);
+							}
+							
+							cell.setCellValue(value);
+						} else if (dataTypeIndicator == SHORT_DATE_FORMAT) {
+							if(cellStyle != null) {
+								cellStyle.setDataFormat(shortDateStyle.getDataFormat());
+								cell.setCellStyle(cellStyle);
+							} else {
+								cell.setCellStyle(shortDateStyle);
+							}
+							
+							cell.setCellValue(value);
+						} else {
+							cell.setCellValue(value);
+						}
+					}
+				} else {
+					Object o = m.invoke(bean, new Object[] {});
+					String value = String.valueOf(o);
+					// convert the default value
+					if (TEMPLATE1.equalsIgnoreCase(value)) {
+						value = TEMPLATE5;
+					} else if (TEMPLATE2.equalsIgnoreCase(value)) {
+						value = TEMPLATE5;
+					} else if (TEMPLATE3.equalsIgnoreCase(value)) {
+						value = TEMPLATE5;
+					} else if (TEMPLATE4.equalsIgnoreCase(value)) {
+						value = TEMPLATE_BLANK;
+					}
+					if (dataTypeIndicator == INT_FORMAT || dataTypeIndicator == DOUBLE_FORMAT) {
+
+						// it means it should be numeric data type
+						if (value != null && value.length() > 0) {
+							// for data convert,you need to change it with the
+							// data format indicator
+							if (dataTypeIndicator == INT_FORMAT) {
+								if(cellStyle != null) {
+									cellStyle.setDataFormat(dataTypeInt);
+									cell.setCellStyle(cellStyle);
+								} else {
+									intStyle.setDataFormat(dataTypeInt);
+									cell.setCellStyle(intStyle);
+								}
+								
+								cell.setCellValue(Integer.parseInt(value));
+							} else if (dataTypeIndicator == DOUBLE_FORMAT) {
+								if(cellStyle != null) {
+									cellStyle.setDataFormat(dataTypeDouble);
+									cell.setCellStyle(cellStyle);
+								} else {
+									doubleStyle.setDataFormat(dataTypeDouble);
+									cell.setCellStyle(doubleStyle);
+								}
+								cell.setCellValue(Double.parseDouble(value));
+							}
+						}
+					}
+					cell.setCellValue(value);
+				}
+				
+				reportFormat.setCellStyle(workbook, cell, i);
+				
+			}
+
+		} catch (Exception e) {
+			LOG.severe("Wrong Line " + lineNumber + " |type is : " + dataTypeIndicator + "|Method Name: " + methName);
+			LOG.log(Level.SEVERE, "Wrong Line " + lineNumber + " |type is : " + dataTypeIndicator + "|Method Name: " + methName,e);
+			throw new WebQuoteException(e);
+		}
+		return row;
+	}
+	
+	
+	private static Field getDeclaredField(Object object, String fieldName){  
+        Field field = null ;
+        Class<?> clazz = object.getClass() ;
+        for(; clazz != Object.class ; clazz = clazz.getSuperclass()) {  
+            try {  
+                field = clazz.getDeclaredField(fieldName) ;  
+                return field ;  
+            } catch (Exception e) {  
+            }   
+        }  
+      
+        return null;  
+    }  
+	
+	
+	private static Method getDeclaredMethod(Object object, String methodName, Class<?> ... parameterTypes){  
+        Method method = null ;  
+        for(Class<?> clazz = object.getClass() ; clazz != Object.class ; clazz = clazz.getSuperclass()) {  
+            try {  
+                method = clazz.getDeclaredMethod(methodName, parameterTypes) ; 
+                return method ;  
+            } catch (Exception e) {  
+            }  
+        }  
+          
+        return null;  
+    }  	
+	
+	/**
+	 * 
+	 * @param workbook
+	 * @param sheet
+	 * @param rowIndex
+	 * @param headerArray
+	 * @param userCellStyle
+	 * @return
+	 */
+	public static Sheet addSheetHeader(SXSSFWorkbook workbook, SXSSFSheet sheet, int rowIndex, String[] headerArray,
+			CellStyle userCellStyle) {
+		Row row = sheet.createRow(rowIndex);
+		CellStyle cellStyle = (userCellStyle == null) ? getDefaultCellStyle(workbook) : userCellStyle;
+		Cell cell = null;
+		for (int i = 0; i < headerArray.length; i++) {
+			cell = row.createCell((short) i);
+			cell.setCellValue(headerArray[i]);
+			cell.setCellStyle(cellStyle);
+		}
+		return sheet;
+	}
+
+	private static CellStyle getDefaultCellStyle(SXSSFWorkbook workbook) {
+		CellStyle style = workbook.createCellStyle();
+		style.setBorderRight(CellStyle.BORDER_THIN);
+		style.setBorderTop(CellStyle.BORDER_MEDIUM_DASHED);
+		return style;
+	}
+	
+	/**
+	 * 
+	 * @param workbook
+	 * @param fileName
+	 * @throws WebQuoteException
+	 */
+	public static void outputExcelFile(SXSSFWorkbook workbook,String fileName) throws WebQuoteException {
+		try {
+			FileOutputStream out = new FileOutputStream(fileName);
+			workbook.write(out);
+			out.close();
+			workbook.dispose();
+		} catch (IOException e) {
+			throw new WebQuoteException(e);
+		}
+	}
+	
+	/**
+	 * 
+	 * @param excelReport
+	 * @param sheetName
+	 * @param templatePath
+	 * @param resultList
+	 * @param fileName
+	 * @throws WebQuoteException
+	 */
+	@SuppressWarnings("rawtypes")
+	public static void outputExcelFile(ExcelReport excelReport, String sheetName, String templatePath, List resultList,
+			String fileName) throws WebQuoteException {
+		SXSSFWorkbook workbook = generateExcelTemplate(excelReport, sheetName, templatePath);
+		workbook = generateExcelFile(workbook, resultList, excelReport);
+		outputExcelFile(workbook, fileName);
+	}
+	
+}

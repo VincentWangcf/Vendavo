@@ -1,0 +1,9 @@
+1)Fix ticket INC0212022  June Guo 2015/08/24
+2)Fix ticket INC0177237  Tough
+3)Fix ticket INC0177869  Jason    2015/08/25
+4)Fix ticket INC0203335  June Guo  comments: this ticket is duplicate with ticket INC0177237  . that already be fixed by Tough
+5)Fix ticket INC0216767, Tough
+6)Fix ticket INC0210325  June Guo  comments: this ticket is duplicate with ticket INC0177237  . that already be fixed by Tough
+7)Fix ticket INC0206096  June guo 2015/08/27
+8)Fix ticket INC0190503  Jason    2015/08/28
+9)Fix Defect ID : 17  June Guo 2015/09/10

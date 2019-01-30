@@ -1,0 +1,17 @@
+package com.avnet.emasia.webquote.constants;
+
+import java.math.BigDecimal;
+
+public class Constants {
+	
+	/** The Constant JAPANESE_LOCALE_STRING. */
+	public final static String JAPANESE_LOCALE_STRING="ja";
+	public static final Long JAPANESE_LOCALE_ID = 2L;
+	/** The Constant ENGLISH_LOCALE_STRING. */
+	public final static String ENGLISH_LOCALE_STRING="en";
+	public static final Long ENGLISH_LOCALE_ID = 1L;
+	
+	public static final int SCALE = 5;
+	public static final int ROUNDING_MODE = BigDecimal.ROUND_HALF_UP; // BigDecimal.ROUND_HALF_UP = 4 
+
+}

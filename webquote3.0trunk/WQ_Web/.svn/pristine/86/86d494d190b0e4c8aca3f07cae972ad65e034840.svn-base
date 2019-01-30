@@ -1,0 +1,106 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="windowTitle">
+		#{dbResource['wq.header.systemConfig']}
+	</ui:define>
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+		<h2>#{dbResource['wq.header.systemProperties']}</h2>
+		<h:form id="form">
+			<p:growl id="messages" showDetail="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" />
+			<p:dataTable value="#{ConfigurationMB.pModel}" var="item"
+				paginator="true" rows="10" id="propertyList" editable="true"
+				selection="#{ConfigurationMB.selectedProperty}"
+				emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+				<p:ajax event="rowEdit" listener="#{ConfigurationMB.onEdit}"
+					update=":form:messages" />
+				<p:ajax event="rowEditCancel" listener="#{ConfigurationMB.onCancel}"
+					update=":form:messages" />
+				<p:column selectionMode="multiple" />
+				<p:column headerText="#{dbResource['wq.label.key']}" style="width:20%">
+					<p:cellEditor>
+						<f:facet name="output">
+							<h:outputText value="#{item.propKey}" />
+						</f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{item.propKey}" style="width:100%" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.val']}" style="width:30%">
+					<p:cellEditor>
+						<f:facet name="output">
+							<h:outputText value="#{item.propValue}" />
+						</f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{item.propValue}" style="width:100%" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.describe']}" style="width:30%">
+					<p:cellEditor>
+						<f:facet name="output">
+							<h:outputText value="#{item.propDesc}" />
+						</f:facet>
+						<f:facet name="input">
+							<p:inputText value="#{item.propDesc}" style="width:100%" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.reserved']}">
+					<p:cellEditor>
+						<f:facet name="output">
+							<h:selectBooleanCheckbox value="#{item.propReserved}" />
+						</f:facet>
+						<f:facet name="input">
+							<h:selectBooleanCheckbox value="#{item.propReserved}" />
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				<ui:remove><p:column style="width:20%">
+					<p:rowEditor />
+				</p:column>
+				</ui:remove>
+			</p:dataTable>
+			<p:commandButton value="#{dbResource['wq.button.add']}" oncomplete="PF('PropDialogA').show()" />
+			<ui:remove> <p:commandButton id="deletProperty" value="#{dbResource['wq.label.delete']}"
+				oncomplete="PF('PropDialogD').show()" /> </ui:remove>
+			<p:dialog header="#{dbResource['wq.header.addProperty']}" widgetVar="PropDialogA" width="550"
+				showEffect="explode" hideEffect="explode">
+				<p:panelGrid id="display" columns="2" bgcolor="#eff5fa">
+					<h:outputText value="#{dbResource['wq.label.key']}:" />
+					<p:inputText id="pKey"
+						value="#{ConfigurationMB.newProperty.propKey}" />
+					<h:outputText value="#{dbResource['wq.label.val']}:" />
+					<p:inputText id="pValue"
+						value="#{ConfigurationMB.newProperty.propValue}" />
+					<h:outputText value="#{dbResource['wq.label.description']}:" />
+					<p:inputText id="pDescription"
+						value="#{ConfigurationMB.newProperty.propDesc}" size="40" />
+					<h:outputText value="p#{dbResource['wq.label.reserved']}:" />
+					<p:selectBooleanCheckbox
+						value="#{ConfigurationMB.newProperty.propReserved}" />
+				</p:panelGrid>
+				<p:commandButton id="add" value="#{dbResource['wq.button.add']}"
+					actionListener="#{ConfigurationMB.addDestroyEvent}"
+					oncomplete="PF('PropDialogA').hide()" />
+				<p:commandButton id="canceladd" value="#{dbResource['wq.button.cancel']}"
+					onclick="PF('PropDialogA').close()" />
+			</p:dialog>
+			<p:dialog header="#{dbResource['wq.header.addProperty']}" widgetVar="PropDialogD" width="250"
+				showEffect="explode" hideEffect="explode">
+				<p>#{dbResource['wq.message.sureDelete']}?</p>
+				<p:commandButton id="dlt" value="#{dbResource['wq.label.delete']}"
+					actionListener="#{ConfigurationMB.deleteDestroyEvent}"
+					oncomplete="PF('PropDialogD').hide()" />
+			</p:dialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

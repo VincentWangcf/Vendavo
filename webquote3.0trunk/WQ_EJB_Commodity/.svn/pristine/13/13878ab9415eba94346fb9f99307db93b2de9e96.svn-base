@@ -1,0 +1,114 @@
+package com.avnet.emasia.webquote.commodity.ejb; 
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
+import javax.persistence.Column;
+import javax.persistence.Query;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadParametersBean;
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadTemplateBean;
+import com.avnet.emasia.webquote.commodity.bean.VerifyEffectiveDateResult;
+import com.avnet.emasia.webquote.commodity.constant.PRICER_TYPE;
+import com.avnet.emasia.webquote.commodity.constant.PricerConstant;
+import com.avnet.emasia.webquote.commodity.constant.QED_CHECK_STATE;
+import com.avnet.emasia.webquote.commodity.dao.PricerUploadCommonSB;
+import com.avnet.emasia.webquote.commodity.util.CommodityUtil;
+import com.avnet.emasia.webquote.commodity.util.PricerUtils;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.ContractPricer;
+import com.avnet.emasia.webquote.entity.CostIndicator;
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.MaterialRegional;
+import com.avnet.emasia.webquote.entity.NormalPricer;
+import com.avnet.emasia.webquote.entity.Pricer;
+import com.avnet.emasia.webquote.entity.ProductCategory;
+import com.avnet.emasia.webquote.entity.ProgramPricer;
+import com.avnet.emasia.webquote.entity.SalesCostPricer;
+import com.avnet.emasia.webquote.entity.SalesCostType;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+
+@Stateless
+@TransactionManagement(TransactionManagementType.BEAN)
+public class MaterialRegionalUploadSB  extends PricerUploadCommonSB {
+	
+	private static final Logger LOG =Logger.getLogger(SimplePricerUploadSB.class.getName());
+		
+	public MaterialRegional findMRegional(Material material, String bizUnit) {
+		if(material == null ||material.getId()<1 ||bizUnit == null){
+			return null;
+		}
+		String sql = "SELECT m FROM MaterialRegional m WHERE m.material =:material AND m.bizUnit.name =:bizUnit" ;
+		Query query = em.createQuery(sql);
+		query.setParameter("material", material);
+		query.setParameter("bizUnit", bizUnit.toUpperCase());
+		Object obj = query.getSingleResult();
+		//(Material)
+		List<MaterialRegional> list = query.getResultList();
+		if(list.isEmpty()) {
+			return null;
+		}
+		//Log
+		return (MaterialRegional)list.get(0);
+	}
+	
+	public MaterialRegional findMRegional(String mfr, String fullPartNumber, String bizUnit) {
+		
+		if(mfr == null ||fullPartNumber == null ||bizUnit ==null){
+			return null;
+		}
+		String sql = "SELECT m FROM MaterialRegional m fetch join material mt WHERE mt.fullPartNumber =:fullPartNumber"
+				+ "AND mt.manufacturer.name =:mfr AND m.bizUnit.name =:bizUnit" ;
+		Query query = em.createQuery(sql);
+		 
+		query.setParameter("bizUnit", bizUnit.toUpperCase());
+		query.setParameter("fullPartNumber", fullPartNumber.toUpperCase());
+		query.setParameter("mfr", mfr.toUpperCase());
+		//(Material)
+		List<MaterialRegional> list = query.getResultList();
+		if(list.isEmpty()) {
+			return null;
+		}
+		//Log
+		return (MaterialRegional)list.get(0);
+	}
+	//TODO
+	public Material findMaterial(String mfr, String fullPartNumber) {
+		if(mfr == null ||fullPartNumber == null ){
+			return null;
+		}
+		String sql = "SELECT m FROM Material m JOIN Manufacturer mf WHERE "
+				+ " mf.name = :mfr AND m.fullMfrPartNumber =:fullPartNumber" ;
+		Query query = em.createQuery(sql);
+		query.setParameter("fullPartNumber", fullPartNumber.toUpperCase());
+		query.setParameter("mfr", mfr.toUpperCase());
+		List<Material> list = query.getResultList();
+		if(list.isEmpty()) {
+			return null;
+		}
+		//Log
+		return (Material)list.get(0);
+		
+	}
+}

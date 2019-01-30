@@ -1,0 +1,128 @@
+package com.avnet.emasia.webquote.cluster.dispatcher;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.MessageFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.Resource;
+import javax.ejb.EJB;
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.*;
+
+import org.eclipse.jetty.util.log.Log;
+import org.primefaces.context.RequestContext;
+import org.slf4j.helpers.MessageFormatter;
+import org.wildfly.clustering.dispatcher.Command;
+ 
+import org.wildfly.clustering.dispatcher.CommandDispatcherFactory;
+import org.wildfly.clustering.dispatcher.CommandResponse;
+import org.wildfly.clustering.group.Group;
+import org.wildfly.clustering.group.Node;
+
+import com.avnet.emasia.webquote.cache.ActionIndicator;
+ 
+
+
+@WebServlet(name = "CacheSynCommandClusterService", urlPatterns = {"/CacheSynCommandClusterService"})
+public class CacheSynCommandClusterService extends HttpServlet {
+	Logger logger = Logger.getLogger(CacheSynCommandClusterService.class.getName());
+	//REFERECE URL 
+	//http://www.mastertheboss.com/jboss-server/jboss-cluster/dispatching-commands-on-wildfly-cluster
+    @Resource(lookup = "java:jboss/clustering/group/web")
+    private Group channelGroup;
+    //jboss-deployment-structure
+    @Resource(lookup = "java:jboss/clustering/dispatcher/web")
+    private CommandDispatcherFactory factory;
+ 
+    
+    //private final Command<String, Node> command = new CacheSynchronizationCommand();
+  
+    @EJB
+    CommandDispatcherBean ejb;
+ 
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        PrintWriter out = response.getWriter();
+        String actionStr = request.getParameter(getParamKey());
+        ActionIndicator actionIndicator = null;
+        if(ActionIndicator.hasValue(actionStr)) {
+        	actionIndicator = ActionIndicator.valueOf(actionStr);
+        } else {
+        	logger.log(Level.WARNING, MessageFormat.format("parameter [{0}] can not be inited to ActionIndicator", actionStr));
+        	return;
+        }
+        try {
+            List<Node> nodes = channelGroup.getNodes();
+            Map<Node, CommandResponse<String>> map = ejb.executeOnCluster(new 
+            		CacheSynchronizationCommand(actionIndicator), null);
+ 
+            for (Map.Entry<Node, CommandResponse<String>> entry : map.entrySet()) {
+                out.println(entry.getValue() + " executed on " + entry.getKey());
+            }
+ 
+        } catch (Exception ex) {
+        	logger.log(Level.SEVERE, null, ex);
+        }
+ 
+        out.close();
+    }
+ 
+  
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+ 
+  
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+    
+    
+    public static void doClearExRatesCache() {
+    	doCallBackService(ActionIndicator.CLEAREXRATES);
+    }
+    
+    public static void doClearAllCache() {
+    	doCallBackService(ActionIndicator.CLEARALL);
+    }
+    
+    
+    
+    private static void doCallBackService(ActionIndicator actionIndicator) {
+    	//REFERECE URL 
+    	//http://www.mastertheboss.com/jboss-server/jboss-cluster/dispatching-commands-on-wildfly-cluster
+		try {
+			String s = getCallBackJs(actionIndicator);
+			RequestContext.getCurrentInstance().execute(s);
+		} catch (Exception e) {
+			Log.info("Error in doCallBackService(), jq :" + getCallBackJs(actionIndicator) +"\n" + e.getMessage() + e.getStackTrace());
+		}
+    }
+    
+    public static String getCallBackJs(ActionIndicator actionIndicator) {
+	    WebServlet anotation = CacheSynCommandClusterService.class.getAnnotation(WebServlet.class);
+   		String url = anotation.urlPatterns()[0];
+		FacesContext fContext = FacesContext.getCurrentInstance();
+		ExternalContext extContext = fContext.getExternalContext();
+		String fullPathUrl =extContext.getRequestContextPath() + url;
+		String fullPathUrlWithParam =fullPathUrl + "?" + getParamKey() + "=" + actionIndicator.toString();
+		String s = "$.post('"+fullPathUrlWithParam+"')";
+		return s;
+   }
+   
+   private static String getParamKey() {
+	   return  ActionIndicator.class.getSimpleName();
+   }
+}

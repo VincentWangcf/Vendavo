@@ -1,0 +1,326 @@
+package com.avnet.emasia.webquote.entity;
+
+
+import static org.testng.Assert.assertEquals;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+
+@Test
+public class PricerTest {
+	
+	private Material material;
+	private NormalPricer np;
+	private ContractPricer cp;
+	private ProgramPricer pp;
+	private SalesCostPricer sp;
+	
+	private Customer soldTo;
+	private Customer end;
+	private List<Customer> allowedCustomers;
+	
+	private RfqItemVO rfqItem;
+
+	
+	@BeforeMethod
+	public void setup() {
+		material =  MaterialFactory.getInstance().createMaterial();
+		np =  (NormalPricer) material.getPricers().get(0);
+		cp =  (ContractPricer) material.getPricers().get(1);
+		pp = (ProgramPricer) material.getPricers().get(2);
+		sp = (SalesCostPricer) material.getPricers().get(3);
+		
+		soldTo = new Customer()	;
+		soldTo.setCustomerNumber("soldTo");
+		
+		end = new Customer();
+		end.setCustomerNumber("end");
+		
+		allowedCustomers = new ArrayList<>();
+		allowedCustomers.add(soldTo);
+
+		rfqItem = new RfqItemVO();
+		rfqItem.setRequiredQty("100");
+		rfqItem.setMpq(300);
+		rfqItem.setMoq(1100);
+		rfqItem.setMov(650);
+		rfqItem.setCost(0.5d);
+		rfqItem.setQtyIndicator(null);
+		
+	}
+	
+
+
+	
+	public void calPriceValidityDateTest1() {
+		NormalPricer np = new NormalPricer();
+		np.setPriceValidity("30");
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date());
+		cal.add(Calendar.DATE, Integer.valueOf(30));
+		Calendar priceValidity = Calendar.getInstance();
+		priceValidity.setTime(np.calPriceValidityDate());
+		assertEquals(priceValidity.get(Calendar.YEAR), cal.get(Calendar.YEAR));
+		assertEquals(priceValidity.get(Calendar.MONTH), cal.get(Calendar.MONTH));
+		assertEquals(priceValidity.get(Calendar.DATE), cal.get(Calendar.DATE));
+	}	
+	
+	public void calPriceValidityDateTest2() {
+		NormalPricer np = new NormalPricer();
+		np.setPriceValidity("30/06/2018");
+		Calendar cal =  Calendar.getInstance();
+		cal.set(Calendar.YEAR, 2018);
+		cal.set(Calendar.MONTH, Calendar.JUNE);
+		cal.set(Calendar.DATE, 30);
+		Calendar priceValidity = Calendar.getInstance();
+		priceValidity.setTime(np.calPriceValidityDate());
+		assertEquals(priceValidity.get(Calendar.YEAR), cal.get(Calendar.YEAR));
+		assertEquals(priceValidity.get(Calendar.MONTH), cal.get(Calendar.MONTH));
+		assertEquals(priceValidity.get(Calendar.DATE), cal.get(Calendar.DATE));
+	}
+
+	
+	public void calPmoqTest0() {
+		
+		
+	}
+	
+	public void calPmoqTest1() {
+		rfqItem.setQtyIndicator("LIMIT");
+		
+		rfqItem.setRequiredQty("1");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "300-900");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("1000");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "1200-2700");
+
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("2999");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "1200-2700");
+
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("3000");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "3000+");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("4000");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "3000+");
+		
+	}
+	
+	public void calPmoqTest2() {
+		sp.getQuantityBreakPrices().get(2).setSalesCost(null);
+
+		rfqItem.setQtyIndicator("LIMIT");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("1");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "300-900");
+
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("1000");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "1200-2700");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("2999");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "1200-2700");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("3000");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), null);
+		
+
+	}
+	
+	
+	
+	public void calPmoqTest3() {
+		rfqItem.setQtyIndicator("Exact");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("1");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "1");
+
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("1000");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "1000");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("2999");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "2999");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("3000");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "3000");
+		
+	
+	}
+	
+	
+	
+	public void calPmoqTest4() {
+		rfqItem.setQtyIndicator("MPQ");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("1");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "300+");
+
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("1000");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "300+");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("2999");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "300+");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("3000");
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "300+");
+		
+	}
+	/*
+
+	public void calPmoqTest5() {
+		
+		rfqItem.setQtyIndicator("MOQ");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("1");
+		rfqItem.calQty();
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "1100+");
+
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("1000");
+		rfqItem.calQty();
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "1100+");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("2999");
+		rfqItem.calQty();
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "3000+");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("3000");
+		rfqItem.calQty();
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "3000+");
+		
+	}
+	
+
+	
+	public void calPmoqTest6() {
+		rfqItem.setQtyIndicator("MOV");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("1");
+		rfqItem.calQty();
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "1500+");
+
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("1000");
+		rfqItem.calQty();
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "1500+");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("2999");
+		rfqItem.calQty();
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "3000+");
+		
+		rfqItem.setPmoq(null);
+		rfqItem.setRequiredQty("3000");
+		rfqItem.calQty();
+		sp.fillPmoq(rfqItem);
+		assertEquals(rfqItem.getPmoq(), "3000+");
+		
+
+	}
+	*/
+	public void isEffectivePricerTest() {
+		Date now = new Date();
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.MONTH, 1);
+		Date oneMonthLate = cal.getTime();
+		NormalPricer np = new NormalPricer();
+		np.setQuotationEffectiveDate(now);
+		
+	}
+	
+	public void isSalesCostTypeMatchedTest1() {
+		material.getMaterialRegaional("China").setSalesCostFlag(true);
+
+		
+	}
+	
+	public void isSalesCostTypeMatchedTest2() {
+		material.getMaterialRegaional("China").setSalesCostFlag(false);
+
+		
+	}
+	
+	public void isCustomerMatchedTest1(){
+		assertEquals(np.isCustomerMatched(soldTo, end, allowedCustomers), true);
+		assertEquals(cp.isCustomerMatched(soldTo, end, allowedCustomers), true);
+		assertEquals(pp.isCustomerMatched(soldTo, end, allowedCustomers), true);
+		assertEquals(sp.isCustomerMatched(soldTo, end, allowedCustomers), true);
+	}
+
+	public void isCustomerMatchedTest2(){
+		soldTo.setCustomerNumber("9999");
+		assertEquals(np.isCustomerMatched(soldTo, end, allowedCustomers), true);
+		assertEquals(cp.isCustomerMatched(soldTo, end, allowedCustomers), false);
+		assertEquals(pp.isCustomerMatched(soldTo, end, allowedCustomers), true);
+		assertEquals(sp.isCustomerMatched(soldTo, end, allowedCustomers), true);
+	}
+	
+
+	public void isCustomerMatchedTest3(){
+		allowedCustomers.get(0).setCustomerNumber("9999");
+		assertEquals(np.isCustomerMatched(soldTo, end, allowedCustomers), true);
+		assertEquals(cp.isCustomerMatched(soldTo, end, allowedCustomers), false);
+		assertEquals(pp.isCustomerMatched(soldTo, end, allowedCustomers), true);
+		assertEquals(sp.isCustomerMatched(soldTo, end, allowedCustomers), true);
+	}
+	
+	public void isCustomerMatchedTest4(){
+		allowedCustomers.clear();
+		assertEquals(np.isCustomerMatched(soldTo, end, allowedCustomers), true);
+		assertEquals(cp.isCustomerMatched(soldTo, end, allowedCustomers), false);
+		assertEquals(pp.isCustomerMatched(soldTo, end, allowedCustomers), true);
+		assertEquals(sp.isCustomerMatched(soldTo, end, allowedCustomers), true);
+	}
+
+} 

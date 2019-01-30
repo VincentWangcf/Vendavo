@@ -1,0 +1,486 @@
+*{
+	font: 12px calibri;
+	word-wrap: break-word !important;
+}
+
+.confirmData {
+	font-weight:bold;
+	font-size:14px;
+	text-decoration:underline;
+	padding:0px 0px 0px 0px !important;
+	margin:0px 0px 0px 0px !important;
+}
+
+.tdtag {
+	font-weight:bold;
+	background-color:rgb(224, 234, 243) !important;	
+}
+
+.baseWidth {
+	width:1300px !important;
+}
+
+.wp_baseWidth {
+	width:1600px !important;
+}
+
+/* @media screen and (max-width:1366px){	 */
+/* 	.wp_baseWidth { */
+/* 		width:100% !important; */
+/* 	} */
+/* } */
+.wp_baseWidth_left {
+	width:800px !important;
+	float:left;	
+}
+
+.wp_baseWidth_right {
+	width:800px !important;
+	float:left;	
+}
+
+.iconLink {
+	border:0px;
+}
+
+.ajaxStatus {	
+	font-size:14px;
+	font-weight:bold;
+}
+
+.ui-widget-content {
+	border:1px solid rgb(153, 188, 232) !important;
+	background:none !important;
+	background-color:rgb(255, 255, 255) !important;
+}
+
+.ui-panel .ui-panel-content {
+	padding:0px 0px 0px 0px !important;
+}
+
+.ui-datatable th div.ui-dt-c, .ui-datatable .ui-datatable-data td div.ui-dt-c, .ui-datatable .ui-datatable-data-empty td div.ui-dt-c, .ui-datatable tfoot td div.ui-dt-c {
+	padding:0px 0px 0px 0px !important;
+	margin:0px 0px 0px 0px !important;
+	text-align:center;
+}
+
+.ui-datatable th {
+	vertical-align:bottom;
+	padding:0px 0px 0px 0px !important;
+	margin:0px 0px 0px 0px !important;
+	border-bottom:3px solid rgb(153, 188, 232) !important;
+}
+
+.ui-datatable td {
+	vertical-align:middle;
+	text-align:center;
+	padding:0px 5px 0px 5px !important;
+	margin:0px 0px 0px 0px !important;
+}
+
+.ui-inputfield {
+	color:rgb(0, 0, 0);
+	font: 12px calibri !important;
+	padding:2px 2px 2px 2px !important;
+}
+
+.ui-datatable .ui-inputfield {
+	padding:0px 0px 0px 0px !important;
+}
+
+.ui-datatable .ui-column-filter {
+	width:100%; 
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
+	text-align: center;
+}
+
+.ui-growl {
+    position:absolute !important;
+    top:50% !important;
+    left:50% !important;
+    z-index:9999 !important;
+	border: 0px 000000 solid !important;	    
+}
+
+ .ui-autocomplete {
+ 	 width:96% !important;
+ }
+ 
+ .ui-accordion .ui-accordion-content {
+     padding: 0px !important;
+ }
+ 
+ .ui-column-filter{
+       width:95% !important;      
+}
+ 
+.menubar {
+	z-index:200;
+}
+
+.input_text {
+	padding: 0px 0px 0px 0px !important;	
+	width:99%;
+	height:100%;
+	border: 0px solid !important;	
+	color:#000000 !important;
+}
+
+.input_text_quoted_margin {
+	padding: 0px 0px 0px 0px !important;	
+	width:70%;
+	height:100%;
+	border: 0px solid !important;	
+	color:#000000 !important;
+}
+
+.tdmandatoryvalue {
+	font-weight:bold;
+	background-color:rgb(251, 236, 136) !important;	
+}
+
+.mandatory_input_text {
+	padding: 0px 0px 0px 0px !important;	
+	width:99%;
+	height:100%;
+	border: 0px solid !important;
+	background-color:rgb(251, 236, 136) !important;	
+	color:#000000 !important;
+}
+
+.editCell {
+	font-weight:bold;	
+	background-color:rgb(242, 220,219) !important;	
+}
+
+.optional_input_text {
+	padding: 0px 0px 0px 0px !important;	
+	width:99%;
+	height:100%;
+	border: 0px solid !important;
+	background-color:rgb(242, 220,219) !important;	
+	color:#000000 !important;
+}
+
+
+
+
+.input_text_half {
+	padding: 0px 0px 0px 0px !important;	
+	width:99%;
+	height:100%;
+	border: 0px solid !important;	
+	color:#000000 !important;	
+	width:70px !important;
+}
+
+.input_5digit {
+	width:40px !important;
+}
+
+.input_5char {
+	width:40px !important;
+}
+.input_8digit {
+	width:70px !important;
+}
+
+.input_8char {
+	width:70px !important;
+}
+
+.input_50char {
+	width:120px !important;
+}
+
+.tdhighlight {
+	background-color:rgb(226, 92,95) !important;	
+	color:rgb(0, 0, 0) !important;	
+}
+
+.tdhighlightborder {
+	border:2px rgb(182,59,60) solid !important;
+	color:rgb(0, 0, 0) !important;
+}
+
+.inputInRFQDetailDataNumber {
+	width:100%;
+	/*background-color:rgb(226, 92,95) !important;*/	
+	border-width:0px !important;
+	/*border-color:rgb(226, 92,95) !important;*/
+	line-height: auto;
+	color:rgb(0, 0, 0) !important;
+	font: 12px calibri !important;
+	padding:0px 0px 0px 0px !important;	
+	
+}
+
+.inputInRFQDetailDataText {
+	width:100%;
+	/*background-color:rgb(226, 92,95) !important;*/
+	border-width:0px !important;
+	/*border-color:rgb(226, 92,95) !important;*/
+	color:rgb(0, 0, 0) !important;
+	font: 12px calibri !important;
+	padding:0px 0px 0px 0px !important;
+	width:200px;
+}
+
+.popup_table th {
+	padding:2px 2px 2px 2px !important;
+	margin:0px 0px 0px 0px !important;
+	text-align:center;
+	border-top:3px solid rgb(186, 52, 52) !important;
+	border-bottom:3px solid rgb(186, 52, 52) !important;
+	border-left:1px solid rgb(186, 52, 52) !important;
+	border-right:1px solid rgb(186, 52, 52) !important;
+}
+
+.popup_table th div.ui-dt-c {
+	padding:2px 2px 2px 2px !important;
+	margin:0px 0px 0px 0px !important;
+	text-align:center;
+	color:#ffffff;
+	background-color:rgb(226, 92, 92) !important;
+}
+
+.popup_table td {
+	padding:2px 2px 2px 2px !important;
+	margin:0px 0px 0px 0px !important;
+	text-align:center;
+	border:1px solid rgb(186, 52, 52) !important;
+	background-color:rgb(255, 255, 255) !important;
+}
+
+.alignTop {
+	vertical-align:top;
+}
+
+.drmsSuggestPart tr {
+	border:1px solid rgb(186, 52, 52) !important;
+	background-color:rgb(186, 52, 52) !important;	
+}
+
+.drmsSuggestPart td {
+	background-color:rgb(144, 244, 52) !important;	
+}
+
+.ui-datatable .ui-datatable-data .ui-state-highlight td {
+	background-color:rgb(255, 255, 255);
+	color:rgb(215, 0, 0);
+}
+
+.readOnlyCell {
+	background-color:#FFFFFF !important;	
+}
+.readOnlyCell_Yellow {
+	font-weight:bold;
+	background-color:rgb(251, 236, 136) !important;	
+}
+
+.popup {
+	padding:2px 2px 2px 2px !important;
+	margin:0px 0px 0px 0px !important;
+}
+
+
+.southPanel{
+	vertical-align:top;
+	width:100% !Important; 
+	height:100% !Important; 
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
+}
+
+.southPanel_column_filterPanel {
+	align:left;
+	vertical-align:top;
+	width:200px;
+	height:100% !Important; 
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
+}
+.southPanel_column_programPanel {
+	align:left;
+	vertical-align:top;
+	width:auto !Important; 
+	height:100% !Important; 
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
+}
+.southPanel_filterPanel {
+	width:210px;
+	height:330px; 
+	overflow: scroll;
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
+}
+
+.webpromo_announcmentPanel {
+	vertical-align:top;
+	width: 55%;
+}
+.webpromo_promotionItemPanel {
+	vertical-align:top;
+	width: 45%;
+}
+.announceTable {
+
+}
+.promotionItemTable {
+
+}
+.noBorder tr,.noBorder td 
+{
+    border: none !important;
+}
+
+.orderQtyMinSellPrice
+{
+	width: 100%;
+	padding: 0px 0px 0px 0px;
+    margin: 0px 0px 0px 0px;
+     
+}
+.orderQtyMinSellPrice tr,.orderQtyMinSellPrice td 
+{
+    border: none !important;
+    border-collapse:collapse;
+    border-spacing:0;
+    padding: 0px 0px 0px 0px;
+    margin: 0px 0px 0px 0px;
+}
+
+.img-button-attachment-add { 
+	background-image: url('../../resources/images/icon_upload.png') !important; 
+}
+.img-button-attachment-add { 
+	background-image: url('../../resources/images/icon_magnifier.png') !important; 
+}
+.img-button-item-delete { 
+	background-image: url('../../resources/images/icon_cross.png') !important; 
+}
+.img-button-item-getQuote { 
+	background-image: url('./../../resources/images/getQuote.png') !important; 
+}
+
+.webpromoMaintance_button{
+	width: 20px;
+	height: 20px;
+}
+.webpromo_search_button {
+    width: 50px;
+	height: 22px;
+}
+
+.bottom_noBorder
+{
+	width:100%;
+}
+.bottom_noBorder tr,.bottom_noBorder td 
+{
+    border: none !important;
+}
+.bottom_noBorder_leftColumn
+{
+	align:left;
+	text-align:left;
+}
+.bottom_noBorder_rightColumn
+{
+	align:right;
+	text-align:right;
+}
+
+
+.webpromo_standardTCsPanel {
+	vertical-align:top;
+	width: 50%;
+	height: 100%;
+}
+.webpromo_specialTCsPanel {
+	vertical-align:top;
+	width: 50%;
+	height: 100%;
+}
+.submissionTable{
+	width: 100%;
+}
+
+.redRow
+{
+   background-image: none !important;
+   background-color: rgb(160, 0, 0) !important;
+   color: #3D3D3D;
+}
+
+.align_center{text-align:center;}
+
+.align_right {text-align: right;}
+
+/* 
+.ui-layout, .ui-layout-doc, .ui-layout-unit, .ui-layout-wrap, .ui-layout-bd, .ui-layout-hd{
+    border: 0;
+}
+
+.ui-widget-content{
+	background-color:white !important; border: 0pt none !important;
+}
+	background: url('../../resources/images/error_icon.jpg') !important; 
+	background-image: url('../../resources/images/error_icon.jpg') !important; 
+		background: url("#{resource['primefaces:growl/images/error.png']}") no-repeat;
+*/
+
+.ui-growl-image-error
+{
+	background: url('../resources/images/error_icon.jpg') no-repeat !important;
+
+}
+.ui-growl-image-warn
+{
+	background: url('../resources/images/warn_icon.jpg') no-repeat !important; 
+}
+
+.updateSprDialog label{
+	margin-right:8px;
+}
+
+.updateSprDialog a img{
+	vertical-align:bottom;
+}
+.bold{
+	font-weight:bold;
+}
+
+.upload_view{
+	float: left;
+} 
+.query_view{
+	float: left;
+	padding-left: 10px;
+}
+
+.ui-datatable tbody td, .ui-datatable tfoot td {
+	white-space: normal !important;
+}
+
+.break-all {
+	word-break: break-all !important;
+} 
+.statusCounter span{
+	padding:0px 20px 0px 0px;
+}
+
+.statusCounter span:last-child{
+	padding:0px 20px 0px 0px;
+}
+
+.ui-selectmanycheckbox label {
+    vertical-align: middle;
+    cursor: pointer;
+    margin: 0 5px 0 5px !important;
+    outline: medium none;
+    z-index: 1;
+    display: inline-block;
+}

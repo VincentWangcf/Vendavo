@@ -1,0 +1,140 @@
+package com.avnet.emasia.webquote.web.maintenance;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.InetAddress;
+import java.util.List;
+import java.util.logging.Logger;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jboss.logmanager.Level;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.StreamedContent;
+
+import com.avnet.emasia.webquote.commodity.constant.PricerConstant;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.DeploymentConfiguration;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+
+public abstract class  DownLoadStrategy implements Serializable{
+	static final Logger LOGGER =Logger.getLogger(DownLoadStrategy.class.getSimpleName());
+
+	private static final long serialVersionUID = -4949714284863640649L;
+
+	public abstract void setDateTosheet(XSSFWorkbook wb,List<?> data);
+	
+	/**
+	 * online download 
+	 * @param bizUnitName
+	 * @param datas
+	 * @param templateName
+	 * @return
+	 */
+	public StreamedContent getDownloadFile(String bizUnitName,List<?> datas,String templateName) {
+		StreamedContent downloadReport = null;
+		
+		/*if(datas.size()==0){
+			return downloadReport;
+		}*/
+		
+		ByteArrayOutputStream  byteOut = null;
+		ByteArrayInputStream  byteIn = null;
+		FileInputStream input = null;
+		String filePath = DeploymentConfiguration.configPath+File.separator+templateName;
+		/*need delete*
+		//TODO
+		try { 
+           String address = InetAddress.getLocalHost().getHostName().toString();
+           if("cis2115vmts".equalsIgnoreCase(address)) { 
+        	   filePath = "C:\\david\\sharefolder\\tempd"+File.separator+templateName;
+           }
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+        }*/ 
+		 
+		try {
+			input = new FileInputStream(filePath);
+			XSSFWorkbook wb = new XSSFWorkbook(input);
+		
+			byteOut = new ByteArrayOutputStream ();	
+			
+			this.setDateTosheet(wb, datas);
+			wb.write(byteOut);
+			byteOut.flush();			
+			byteIn = new ByteArrayInputStream(byteOut.toByteArray());
+			downloadReport = new DefaultStreamedContent(byteIn, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", templateName);	
+		}  catch (IOException e) {			
+			LOGGER.log(Level.SEVERE, "Error in download all for business unit : "+bizUnitName+", Template name : "+templateName+", Message"+e.getMessage(), e);
+			return downloadReport;
+		}finally{
+			try {
+				
+				if (byteIn != null) {
+					byteIn.close();
+					byteOut.close();
+					input.close();
+				}
+			} catch (IOException e) {
+				 FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+						 ResourceMB.getText("wq.message.downloadfail")+".", ""));
+				LOGGER.log(Level.SEVERE, "Exception in closing stream"+e.getMessage(), e);
+			}
+			input = null;
+			byteIn = null;
+			byteOut = null;
+		}
+		return downloadReport;
+	}
+
+	public StreamedContent getTemplateFile(String templateName) {
+		StreamedContent downloadReport = null;		
+		ByteArrayOutputStream  byteOut = null;
+		ByteArrayInputStream  byteIn = null;
+		FileInputStream input = null;
+		String filePath = DeploymentConfiguration.configPath+File.separator+templateName;
+		try {
+			input = new FileInputStream(filePath);
+			XSSFWorkbook wb = new XSSFWorkbook(input);
+		
+			byteOut = new ByteArrayOutputStream ();	
+			wb.write(byteOut);
+			byteOut.flush();			
+			byteIn = new ByteArrayInputStream(byteOut.toByteArray());
+			downloadReport = new DefaultStreamedContent(byteIn, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", templateName);	
+		} catch (IOException e) {
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+					 ResourceMB.getText("wq.message.downloadfail")+".", ""));
+			LOGGER.log(Level.SEVERE, "Exception in getting in stream content for template name : "+templateName+" , Exception message"+e.getMessage(), e);
+			return downloadReport;
+		} finally {
+			try {
+				if (byteIn != null) {
+					byteIn.close();
+					byteOut.close();
+					input.close();
+				}
+			} catch (IOException e) {
+
+				LOGGER.log(Level.SEVERE, "Exception in closing stream for template name : " + templateName
+						+ " , Exception message" + e.getMessage(), e);
+				return downloadReport;
+			}
+			input = null;
+			byteIn = null;
+			byteOut = null;
+		}
+		return downloadReport;
+	}
+	
+	
+	
+}

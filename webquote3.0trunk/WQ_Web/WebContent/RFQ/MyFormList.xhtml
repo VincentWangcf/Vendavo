@@ -1,0 +1,168 @@
+
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:func="http://emasia.avnet.com/functions"
+	>
+
+
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+		
+<h:form id="form">
+
+	<p:remoteCommand name="lazyload" update=":form:datatable_myquotelist" autoRun="true" actionListener="#{myFormSearchMB.search}" rendered="#{myFormSearchMB.firstTimeSearch}"/>
+
+	<p:accordionPanel id="accordionPanel" >
+		<p:tab title="#{dbResource['wq.header.myQuoteSearchCritria']}">
+		
+			<h:panelGrid id="panelGrid1" cellpadding="0" style="width:100%;" columns="8">
+				
+				<h:outputText value="#{dbResource['wq.header.form']} #:" />
+				<p:inputTextarea value="#{myFormSearchMB.criteria.sFormNumber}" size="8"  autoResize="false"/>
+
+				<h:outputText value="#{dbResource['wq.label.mfr']}:" />
+				<p:autoComplete value="#{myFormSearchMB.criteria.sMfr}" completeMethod="#{myQuoteSearchMB.autoCompleteForManufacturer}" minQueryLength="1" style="width:80%;" >
+				   <p:ajax event="query" global="false"/>
+				</p:autoComplete>
+				
+				<h:outputText value="#{dbResource['wq.label.custmrName']}:"/>
+				<p:autoComplete value="#{myFormSearchMB.criteria.sCustomerName}" completeMethod="#{myQuoteSearchMB.autoCompleteForCustomerName}" minQueryLength="3" >
+								   <p:ajax event="query" global="false"/>
+				</p:autoComplete>
+
+				<h:outputText value="#{dbResource['wq.label.SoldToCode']}:" />
+				<p:inputText value="#{myFormSearchMB.criteria.sSoldToCode}" />
+			
+				<h:outputText value="#{dbResource['wq.label.endCust']}:" />
+				<p:autoComplete value="#{myFormSearchMB.criteria.sEndCustomerName}" completeMethod="#{myQuoteSearchMB.autoCompleteForCustomerName}" minQueryLength="3" >
+								   <p:ajax event="query" global="false"/>
+				</p:autoComplete>
+											
+				<h:outputText value="#{dbResource['wq.label.empName']}:" />
+				<p:autoComplete value="#{myFormSearchMB.criteria.sSalesName}" completeMethod="#{myQuoteSearchMB.autoCompleteForEmployeeNameForSales}" minQueryLength="4" >
+								   <p:ajax event="query" global="false"/>
+				</p:autoComplete>
+							
+				<h:outputText value="#{dbResource['wq.label.reqRef']}:"/>
+				<p:inputText value="#{myFormSearchMB.criteria.sYourReference}" />
+
+			</h:panelGrid>
+			
+			<h:panelGrid id="panelGrid2" cellpadding="0"  columns="11" style="width:100%">
+								
+				<h:outputText value="#{dbResource['wq.label.quoteRelDate']}"/>
+				<h:outputText value="#{dbResource['wq.header.from']}" />
+				<p:calendar value="#{myFormSearchMB.criteria.pageSentOutDateFrom}" showOn="button" pattern="dd/MM/yyyy" /> 
+				<h:outputText value="#{dbResource['wq.header.To']}" />
+				<p:calendar value="#{myFormSearchMB.criteria.pageSentOutDateTo}" showOn="button" pattern="dd/MM/yyyy" />
+						
+				<h:outputText value="" style="width:20px;"/>		
+
+				<h:outputText value="#{dbResource['wq.label.rfqSubmissionDate']}" />
+				<h:outputText value="#{dbResource['wq.header.from']}" />
+				<p:calendar value="#{myFormSearchMB.criteria.pageUploadDateFrom}" showOn="button"  pattern="dd/MM/yyyy" /> 
+				<h:outputText value="#{dbResource['wq.header.To']}"/>
+				<p:calendar value="#{myFormSearchMB.criteria.pageUploadDateTo}" showOn="button" pattern="dd/MM/yyyy" />
+
+			</h:panelGrid>
+
+							
+			<h:panelGrid columns="2" cellpadding="0" >
+				<p:commandButton value="#{dbResource['wq.button.search']}" actionListener="#{myFormSearchMB.search}" update=":form:datatable_myquotelist" icon="ui-icon-search"/>
+				<p:commandButton value="#{dbResource['wq.label.reset']}"  icon="ui-icon-triangle-1-w" actionListener="#{myFormSearchMB.reset}" update=":form:accordionPanel"/>
+			</h:panelGrid>
+			
+		</p:tab>
+		</p:accordionPanel>
+		
+
+	<p:panel header="#{dbResource['wq.message.myQuoteList']}" style="font-size:12pt" >
+		<p:growl id="messages"  closable="true" autoUpdate="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}"  />
+
+	    <p:dataTable	var="vo"
+	    				value="#{myFormSearchMB.results}" 
+	    				rowKey="#{vo.quote.formNumber}" 
+	    				paginator="true" 
+	    				rowIndexVar="rowIndex"
+	    				rows="10"
+    					rowsPerPageTemplate="10,20,50"
+	                 	id="datatable_myquotelist"
+	                  	editable="false"
+	                 	paginatorPosition="top"
+	                 	scrollable="true"
+	                 	scrollHeight="100%"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}." >
+			
+			<p:column headerText="#{dbResource['wq.header.form']} #" sortBy="#{vo.quote.formNumber}" filterBy="#{vo.quote.formNumber}" styleClass="width:20%">
+			<h:outputText value="#{vo.quote}" converter="webquote.rfq.FormNumber" escape="false"/>
+			</p:column>		
+			
+			<p:column headerText="#{dbResource['wq.header.requester']}&lt;br/&gt;#{dbResource['wq.label.reference']}" sortBy="#{vo.quote.yourReference}" filterBy="#{vo.quote.yourReference}" styleClass="width:40%">
+			#{vo.quote.yourReference}
+			</p:column>
+
+			
+			<p:column headerText="#{dbResource['wq.label.custNameSP']}" sortBy="#{vo.quote.soldToCustomer.name}" filterBy="#{vo.quote.soldToCustomer.name}" styleClass="myquote_column_soldToCustomerName">
+			<h:outputText value="#{vo.quote.soldToCustomer.name}"/>
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.header.COMPLETENESS']}" styleClass="width:5%;">
+			#{vo.completed} / #{vo.total} 
+			</p:column>			
+
+						
+			<p:column headerText="#{dbResource['wq.header.saleman']}&lt;br/&gt;#{dbResource['wq.label.name']}" sortBy="#{vo.quote.sales.name}" filterBy="#{vo.quote.sales.name}" styleClass="width:15%">
+			#{vo.quote.sales.name}
+			</p:column>
+												
+			<p:column headerText="#{dbResource['wq.label.team']}" sortBy="#{vo.quote.team.name}" filterBy="#{vo.quote.team.name}" styleClass="width:15%">
+			#{vo.quote.team.name}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.remarks']}" sortBy="#{vo.quote.remarks}" filterBy="#{vo.quote.remarks}" styleClass="width:15%">
+			#{vo.quote.remarks}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.header.rfqSubmission']}&lt;br/&gt;#{dbResource['wq.label.time']}" sortBy="#{vo.quote.quoteItems[0].submissionDate}" 
+			filterBy="#{func:formatDate(vo.quote.quoteItems[0].submissionDate,'dd/MM/yyyy HH:mm:ss')}" styleClass="column_sentOutTime">
+			<h:outputText value="#{vo.quote.quoteItems[0].submissionDate}">
+				<f:convertDateTime  pattern="dd/MM/yyyy HH:mm:ss"  />
+			</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.quoteRelease']}&lt;br/&gt;#{dbResource['wq.label.date']}" sortBy="#{quote.rfqItem.sentOutTime}" 
+			filterBy="#{func:formatDate(vo.quote.quoteItems[0].sentOutTime,'dd/MM/yyyy HH:mm:ss')}" styleClass="column_sentOutTime">
+			<h:outputText value="#{vo.quote.quoteItems[0].sentOutTime}">
+				<f:convertDateTime  pattern="dd/MM/yyyy HH:mm:ss" />
+			</h:outputText>
+			</p:column>
+            
+			<p:column headerText="#{dbResource['wq.header.rfqForm']}&lt;br/&gt;#{dbResource['wq.label.attachment']}" exportable="false" styleClass="myquote_column_attachmentId  align_center">
+	        	<p:commandLink update=":form:attachment_list_panel" actionListener="#{attachmentDownloadMB.listAttachments}" oncomplete="PF('attachment_list_dialog').show()">
+	        		<h:graphicImage library="images" name="icon_magnifier.png" styleClass="iconLink" rendered="#{vo.quote.formAttachmentFlag}"/>
+	        		<f:param name="id" value="#{vo.quote.id}"/>
+	        		<f:param name="type" value="RFQ Form Attachment"/>				        	
+	        	</p:commandLink> 						        				        						        
+			</p:column>
+            
+			<p:column headerText="#{dbResource['wq.header.quoteDetails']}" styleClass="align_center">
+				<p:commandButton id="selectButton" icon="ui-icon-search" title="#{dbResource['wq.header.quoteDetails']}" action="#{myFormSearchMB.showQuoteItemDetail}">
+					<f:param name="id" value="#{vo.quote.id}"/>
+				</p:commandButton>
+			</p:column>
+	        </p:dataTable>
+     
+    </p:panel>
+    
+    <ui:include src="AttachmentListDialog.xhtml" />
+
+</h:form>
+
+</ui:define>
+</ui:composition>

@@ -1,0 +1,435 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.FlowEvent;
+
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.CustomerSale;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.masterData.util.DateUtils;
+import com.avnet.emasia.webquote.quote.ejb.CustomerSB;
+import com.avnet.emasia.webquote.quote.ejb.InstantPriceCheckSB;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.quote.vo.InstantPriceCheckItem;
+import com.avnet.emasia.webquote.quote.vo.InstantPriceCheckResult;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.web.quote.cache.SalesOrgCacheManager;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.quote.vo.RestrictedCustomerPopupModel;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+
+//@Named("instantPriceCheckMB")
+@ManagedBean
+@SessionScoped
+public class InstantPriceCheckMB implements Serializable {
+	
+	private static final long serialVersionUID = 862167152222258478L;
+	
+	private static final Logger LOG =Logger.getLogger(InstantPriceCheckMB.class.getName());	
+
+	@EJB
+	InstantPriceCheckSB instantPriceCheckSB;
+	
+	@EJB
+	CustomerSB customerSB;
+	
+	
+	private List<InstantPriceCheckItem> instantPriceCheckItems;
+	
+	private List<InstantPriceCheckItem> filteredInstantPriceCheckItems;
+ 
+	private List<InstantPriceCheckResult> instantPriceCheckResults;
+	
+	private List<InstantPriceCheckResult> filteredInstantPriceCheckResults;
+	
+	private List<InstantPriceCheckResult> selectedResults;
+
+	private List<String> bizUnitSelection;
+	
+	private String selectedBizUnit;
+	
+	private String initSelectedBizUnit;
+	
+	private RestrictedCustomerPopupModel restrictedCustomerPopupModel;
+		
+	@PostConstruct
+	public void postContruct(){
+		bizUnitSelection = new ArrayList<String>();
+		User user = UserInfo.getUser();
+		
+		for(int i = 0 ; i < user.getBizUnits().size() ; i++)
+		{
+			String bizUnitName = user.getBizUnits().get(i).getName();
+
+			bizUnitSelection.add(bizUnitName);
+		}
+		
+		String defaultBizUnit = user.getDefaultBizUnit().getName();
+		
+		for(String bizUnit: bizUnitSelection)
+		{
+			if(bizUnit.equals(defaultBizUnit))
+			{
+				selectedBizUnit = defaultBizUnit;
+				initSelectedBizUnit = selectedBizUnit;
+			}
+		}
+	}
+	
+	public void handleChange(){  
+		initSelectedBizUnit = selectedBizUnit;
+		LOG.log(Level.INFO, "Region " + selectedBizUnit + " selected");
+	}
+	
+	public InstantPriceCheckMB() {
+
+		instantPriceCheckItems = new ArrayList<InstantPriceCheckItem>();
+		
+		instantPriceCheckResults = new ArrayList<InstantPriceCheckResult>();
+		addFiveItem();
+		
+	}	
+	
+	/*
+	 * Wizard to control the work flow
+	 */
+    public String onFlowProcess(FlowEvent event) {
+		User user = UserInfo.getUser();
+		int validRow = 0 ; 
+		
+    	if(event.getNewStep().equalsIgnoreCase("instantPriceCheck_result"))
+    	{
+    		if(instantPriceCheckItems==null || instantPriceCheckItems.size()==0)
+    		{
+    			FacesContext.getCurrentInstance().addMessage("growl_1", new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.enterOneItemAtLeast") , ""));
+    			return event.getOldStep();
+    		}
+    		for(InstantPriceCheckItem ipci : instantPriceCheckItems)
+    		{
+    			if(!((ipci.getMfr()==null || ipci.getMfr().isEmpty()) && (ipci.getFullMfrPart()==null || ipci.getFullMfrPart().isEmpty())))
+    			{
+    				validRow ++;
+    			}
+    			if(validRow==0)
+    			{
+    				FacesContext.getCurrentInstance().addMessage("growl_1", new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.enterOneItemAtLeast") , ""));
+    			 
+    				return event.getOldStep();
+    			}
+    			
+    			if(!((ipci.getMfr()==null || ipci.getMfr().isEmpty())))
+    			{
+	    			if(ipci.getFullMfrPart()==null || ipci.getFullMfrPart().isEmpty())
+	    			{
+	    				FacesContext.getCurrentInstance().addMessage("growl_1", new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.mendateFieldReqPN") , ""));
+	    			
+	    				return event.getOldStep();
+	    			}
+    			}
+    		}
+    	
+    		try{
+    			instantPriceCheckResults = instantPriceCheckSB.checkPrice(instantPriceCheckItems, user, selectedBizUnit);
+    			selectedResults = null;
+    		}catch(Exception e){
+    			LOG.log(Level.SEVERE, "Error occured in InstantPriceCheck SB, between Step "+event.getOldStep()+" and Step "+event.getNewStep()+", Exception message: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+					 FacesContext.getCurrentInstance().addMessage("testGrowl", new FacesMessage(FacesMessage.SEVERITY_ERROR, e.getMessage() , ""));					 
+   					return event.getOldStep();
+    		}
+    	}
+    	 return event.getNewStep();  
+    } 	
+
+	/*
+	 * add 1 more entry for price checking
+	 */	
+	public void addOneItem(){
+		InstantPriceCheckItem item = new InstantPriceCheckItem();
+		instantPriceCheckItems.add(item);
+	}
+
+	/*
+	 * add 5 more entry for price checking
+	 */	
+	public void addFiveItem(){
+		for(int i=0; i<5; i++){
+			InstantPriceCheckItem item = new InstantPriceCheckItem();
+			instantPriceCheckItems.add(item);
+		}
+	}
+	
+	public void clearSearchCriteria(){
+		if(instantPriceCheckItems!=null)
+		{
+			instantPriceCheckItems.clear();
+		}
+		instantPriceCheckItems = new ArrayList<InstantPriceCheckItem>();
+		if(instantPriceCheckResults!=null)
+		{
+			instantPriceCheckResults.clear();
+		}
+		instantPriceCheckResults = new ArrayList<InstantPriceCheckResult>();
+		
+		addOneItem();		
+	}
+	
+	
+	/*
+	 * convert the selected search result to RFQ Form
+	 */
+	public String convertToRfqForm(){
+		
+		if(selectedResults.size() == 0){
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.selRecord") +"!", ""));
+			return null;
+		}
+		
+		if(selectedBizUnit == null || selectedBizUnit.equals(""))
+		{
+			selectedBizUnit = initSelectedBizUnit;
+		}
+		
+		Set<String> bizUnits = new HashSet<String>();
+		for(InstantPriceCheckResult result : selectedResults){
+			bizUnits.add(result.getBizUnit());
+		}
+		if(bizUnits.size() != 1){
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.selSameRegion"), ""));
+			return null;
+		}
+
+		boolean hasFuturnPrice = false;
+		for(InstantPriceCheckResult result :selectedResults)
+		{
+
+			Date currentDate = DateUtils.getCurrentAsiaDateObj();
+			if(result.getQuotationEffectiveDate()!=null && result.getQuotationEffectiveDate().after(currentDate))
+			{
+				hasFuturnPrice= true;
+				break;
+			}
+		}
+		if(hasFuturnPrice)
+		{
+			RequestContext.getCurrentInstance().execute("PF('futurePrice_confirmDialog').show()");
+			return null;
+		}
+		else
+		{
+			LOG.info(UserInfo.getUser().getEmployeeId() + " convert instant price check result to RFQ: " +  selectedResults);
+		    return "RFQSubmissionLayout.xhtml?faces-redirect=true&quoteId=0&action=" + QuoteConstant.ACTION_INSTANT_PRICE_CHECK;
+			
+		}
+		
+	}
+	
+	public String confirmToConvertRfqForm()
+	{
+		LOG.info(UserInfo.getUser().getEmployeeId() + " convert instant price check result to RFQ: " +  selectedResults);
+		return "RFQSubmissionLayout.xhtml?faces-redirect=true&quoteId=0&action=" + QuoteConstant.ACTION_INSTANT_PRICE_CHECK;
+	}
+	
+	
+    public List<String> autoCompleteSoldToCustomerNameLabelList(String key){
+    	
+		List<String> accountGroup = new ArrayList<String>();
+		accountGroup.add(QuoteSBConstant.ACCOUNT_GROUP_SOLDTO);	    	
+       	List<Customer> customers = customerSB.findCustomerByCustomerNameContain(key, null, accountGroup,UserInfo.getUser().getDefaultBizUnit(), QuoteConstant.DEFAULT_AUTOCOMPLETE_FIRST_RESULT, QuoteConstant.DEFAULT_AUTOCOMPLETE_MAX_RESULTS);
+       	
+       	return autoCompleteCustomerNameLabelList(customers);
+    }
+    
+    public List<String> autoCompleteEndCustomerNameLabelList(String key){
+
+    	List<String> accountGroup = new ArrayList<String>();
+		accountGroup.add(QuoteSBConstant.ACCOUNT_GROUP_ENDCUSTOMER);	      		
+		List<Customer> customers = customerSB.findCustomerByCustomerNameContain(key, null, accountGroup, UserInfo.getUser().getDefaultBizUnit(), QuoteConstant.DEFAULT_AUTOCOMPLETE_FIRST_RESULT, QuoteConstant.DEFAULT_AUTOCOMPLETE_MAX_RESULTS);
+
+    	return autoCompleteCustomerNameLabelList(customers);
+    }    
+
+    public List<String> autoCompleteCustomerNameLabelList(List<Customer> customers){
+    	
+		
+    	List<String> list = null;
+    	if(customers != null){
+    		list = new ArrayList<String>();
+    		List<String> dupList = new ArrayList<String>();
+	    	for(Customer customer : customers){
+	    		if(customer != null){
+	    			//updated  function getcustomerName1 to getCustomerFulname by damon
+		    		if(!QuoteUtil.isEmpty(customer.getCustomerFullName()) && !QuoteUtil.isEmpty(customer.getCustomerNumber())){
+			       		String customerName = customer.getName();    			
+			    		String customerNumber = customer.getCustomerNumber();
+			    		String salesOrg = convertCustomerSalesToSalesOrg(customer.getCustomerSales(), UserInfo.getUser().getDefaultBizUnit().getName());
+			    		
+			    		String label = customerName+QuoteConstant.AUTOCOMPLETE_SEPARATOR+customerNumber+QuoteConstant.AUTOCOMPLETE_SEPARATOR+salesOrg;
+			    		
+			    		if(!dupList.contains(label)){
+			    			list.add(label);
+			    			dupList.add(label);
+			    		}
+		    		}
+	    		}
+	    	}
+    	}
+    	
+    	return list;
+    }
+	
+	private String convertCustomerSalesToSalesOrg(List<CustomerSale> customerSales, String bizUnitName){
+		String salesOrg = "";
+		if(customerSales != null){
+			List<String> salesOrgCodes = SalesOrgCacheManager.getSalesOrgCodesByBizUnit(bizUnitName);			
+			for(CustomerSale customerSale : customerSales){
+				if(salesOrgCodes.contains(customerSale.getSalesOrgBean().getName())){
+					if(salesOrg.length() > 0)
+						salesOrg += " "+QuoteConstant.SALES_ORG_SEPARATER+" ";
+					salesOrg += customerSale.getSalesOrgBean().getName();
+				}
+			}
+		}
+		return salesOrg;
+	}	
+
+	public void updateSoldToCustomer(int rowIndex){
+		InstantPriceCheckItem item = instantPriceCheckItems.get(rowIndex);
+		
+		item.setSoldToCode(extractCustomerNumberFromCustomerNameLabel(item.getSoldToParty()));
+		item.setSoldToParty(extractCustomerNameFromCustomerNameLabel(item.getSoldToParty()));
+
+	}
+	
+	public void updateEndCustomer(int rowIndex){
+		InstantPriceCheckItem item = instantPriceCheckItems.get(rowIndex);
+		
+		item.setEndCustomerCode(extractCustomerNumberFromCustomerNameLabel(item.getEndCustomer()));
+		item.setEndCustomer(extractCustomerNameFromCustomerNameLabel(item.getEndCustomer()));
+
+	}
+	
+	public String extractCustomerNumberFromCustomerNameLabel(String label){
+
+		String[] labels = label.split(QuoteConstant.AUTOCOMPLETE_SEPARATOR);
+		if(labels.length == 1)
+			return null;
+		
+		return labels[1].trim();
+	}
+	
+	
+	public String extractCustomerNameFromCustomerNameLabel(String label){
+		
+		String[] labels = label.split(QuoteConstant.AUTOCOMPLETE_SEPARATOR);
+		
+		return labels[0].trim();
+	}	
+	
+	
+	
+	//Getter, Setters
+
+	public List<InstantPriceCheckItem> getInstantPriceCheckItems() {
+		return instantPriceCheckItems;
+	}
+
+	public void setInstantPriceCheckItems(
+			List<InstantPriceCheckItem> instantPriceCheckItems) {
+		this.instantPriceCheckItems = instantPriceCheckItems;
+	}
+
+	public List<InstantPriceCheckResult> getInstantPriceCheckResults() {
+		return instantPriceCheckResults;
+	}
+
+	public void setInstantPriceCheckResults(
+			List<InstantPriceCheckResult> instantPriceCheckResults) {
+		this.instantPriceCheckResults = instantPriceCheckResults;
+	}
+
+	public List<InstantPriceCheckResult> getSelectedResults() {
+		return selectedResults;
+	}
+
+	public void setSelectedResults(List<InstantPriceCheckResult> selectedResults) {
+		this.selectedResults = selectedResults;
+	}
+
+	public List<InstantPriceCheckItem> getFilteredInstantPriceCheckItems() {
+		return filteredInstantPriceCheckItems;
+	}
+
+	public void setFilteredInstantPriceCheckItems(
+			List<InstantPriceCheckItem> filteredInstantPriceCheckItems) {
+		this.filteredInstantPriceCheckItems = filteredInstantPriceCheckItems;
+	}
+
+	public List<InstantPriceCheckResult> getFilteredInstantPriceCheckResults() {
+		return filteredInstantPriceCheckResults;
+	}
+
+	public void setFilteredInstantPriceCheckResults(
+			List<InstantPriceCheckResult> filteredInstantPriceCheckResults) {
+		this.filteredInstantPriceCheckResults = filteredInstantPriceCheckResults;
+	}
+
+	public List<String> getBizUnitSelection() {
+		return bizUnitSelection;
+	}
+
+	public void setBizUnitSelection(List<String> bizUnitSelection) {
+		this.bizUnitSelection = bizUnitSelection;
+	}
+
+	public String getSelectedBizUnit() {
+		return selectedBizUnit;
+	}
+
+	public void setSelectedBizUnit(String selectedBizUnit) {
+		this.selectedBizUnit = selectedBizUnit;
+	}
+	
+	public void popupRestrictedCustomerList(int itemNumber)
+	{
+		InstantPriceCheckResult seletedResult = instantPriceCheckResults.get(itemNumber-1);
+				
+		restrictedCustomerPopupModel = new RestrictedCustomerPopupModel(seletedResult.getRestrictedCustMappingList());	
+	}
+
+	public RestrictedCustomerPopupModel getRestrictedCustomerPopupModel()
+	{
+		return restrictedCustomerPopupModel;
+	}
+
+	public void setRestrictedCustomerPopupModel(
+			RestrictedCustomerPopupModel restrictedCustomerPopupModel)
+	{
+		this.restrictedCustomerPopupModel = restrictedCustomerPopupModel;
+	}
+	public String convertNumber(String value)
+	{
+		if(value!=null && value.equalsIgnoreCase("0"))
+			value="";
+		return QuoteUtil.convertNumber(value);
+	}
+}
+          

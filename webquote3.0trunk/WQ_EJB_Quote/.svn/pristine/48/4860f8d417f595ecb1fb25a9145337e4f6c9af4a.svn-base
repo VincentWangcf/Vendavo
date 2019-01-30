@@ -1,0 +1,69 @@
+package com.avnet.emasia.webquote.columndata;
+
+import java.util.List;
+
+import javax.validation.Validator;
+
+public class FieldDefinition {
+	
+	private String fieldName;
+	private Converter converter;
+	private String columnName;
+	private int columnPosition;
+	private java.lang.reflect.Field field;
+	
+	
+	public String getFieldName() {
+		return fieldName;
+	}
+	public void setFieldName(String fieldName) {
+		this.fieldName = fieldName;
+	}
+	public Converter getConverter() {
+		return converter;
+	}
+	public void setConverter(Converter converter) {
+		this.converter = converter;
+	}
+	public String getColumnName() {
+		return columnName;
+	}
+	public void setColumnName(String columnName) {
+		this.columnName = columnName;
+	}
+	public int getColumnPosition() {
+		return columnPosition;
+	}
+	public void setColumnPosition(int columnPosition) {
+		this.columnPosition = columnPosition;
+	}
+	
+	public java.lang.reflect.Field getField() {
+		return field;
+	}
+	public void setField(java.lang.reflect.Field field) {
+		this.field = field;
+	}
+	
+	public static FieldDefinition create(java.lang.reflect.Field field) {
+		if (field == null) {
+			throw new IllegalArgumentException();
+		}
+		
+		FieldDefinition fieldDef = new FieldDefinition();
+		fieldDef.field = field;
+		fieldDef.fieldName = field.getName();
+		Column annotation = field.getAnnotation(Column.class);
+
+		if (annotation != null) {
+			fieldDef.columnName = annotation.columnName();
+		} else {
+			fieldDef.columnName = field.getName().toUpperCase();
+		}
+		
+		fieldDef.converter = Converter.get(field);
+		return fieldDef;
+	}
+	
+
+}

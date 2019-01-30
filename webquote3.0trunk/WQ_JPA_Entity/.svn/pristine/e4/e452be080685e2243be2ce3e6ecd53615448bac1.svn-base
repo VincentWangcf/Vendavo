@@ -1,0 +1,856 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+
+import javax.persistence.*;
+
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.vo.PricerInfo;
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+
+import java.util.Date;
+import java.util.List;
+
+
+/**
+ * The persistent class for the CONTRACT_PRICE database table.
+ * 
+ */
+@Entity
+public class ContractPricer extends Pricer implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+
+	@Column(name="AVNET_QC_COMMENTS", length=512)
+	private String aventQcCommnets;
+
+
+	@Column(length=5)
+	private String currency;
+
+	@Column(name="MIN_SELL_PRICE", nullable=false)
+	private Double minSellPrice;
+
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="START_DATE", nullable=false)
+	private Date startDate;
+
+
+	@Column(name="VENDOR_QUOTE_NUMBER", length=255)
+	private String vendorQuoteNumber;
+
+	@Column(name="VENDOR_QUOTE_QUANTITY")
+	private Integer vendorQuoteQuantity;
+
+	//uni-directional many-to-one association to Customer
+	@ManyToOne
+	@JoinColumn(name="END_CUSTOMER_ID")
+	private Customer endCustomer;
+	
+	@Column(name="END_CUSTOMER_NAME")
+	private String endCustomerName;
+	
+	//uni-directional many-to-one association to Customer
+	@ManyToOne
+	@JoinColumn(name="SOLD_CUSTOMER_ID", nullable=false)
+	private Customer soldtoCustomer;
+
+	
+	@Column(name="OVERRIDE_FLAG", length=1)
+	private Boolean overrideFlag;
+	
+	
+	public ContractPricer() {
+	}
+
+
+	public String getAventQcCommnets() {
+		return this.aventQcCommnets;
+	}
+
+	public void setAventQcCommnets(String aventQuoteCentreCommnets) {
+		this.aventQcCommnets = aventQuoteCentreCommnets;
+	}
+
+	public String getCurrency() {
+		return this.currency;
+	}
+
+	public void setCurrency(String currency) {
+		this.currency = currency;
+	}
+
+	public Double getMinSellPrice() {
+		return this.minSellPrice;
+	}
+
+	public void setMinSellPrice(Double minSellPrice) {
+		this.minSellPrice = minSellPrice;
+	}
+
+	public Date getStartDate() {
+		return this.startDate;
+	}
+
+	public void setStartDate(Date startDate) {
+		this.startDate = startDate;
+	}
+
+
+	public String getVendorQuoteNumber() {
+		return this.vendorQuoteNumber;
+	}
+
+	public void setVendorQuoteNumber(String vendorQuoteNumber) {
+		this.vendorQuoteNumber = vendorQuoteNumber;
+	}
+
+	public Integer getVendorQuoteQuantity() {
+		return this.vendorQuoteQuantity;
+	}
+
+	public void setVendorQuoteQuantity(Integer vendorQuoteQuantity) {
+		this.vendorQuoteQuantity = vendorQuoteQuantity;
+	}
+
+	public Customer getEndCustomer() {
+		return this.endCustomer;
+	}
+
+	public void setEndCustomer(Customer endCustomer) {
+		this.endCustomer = endCustomer;
+	}
+
+	public Customer getSoldtoCustomer() {
+		return this.soldtoCustomer;
+	}
+
+	public void setSoldtoCustomer(Customer soldtoCustomer) {
+		this.soldtoCustomer = soldtoCustomer;
+	}
+
+
+
+	public String getEndCustomerName() {
+		return endCustomerName;
+	}
+
+	public void setEndCustomerName(String endCustomerName) {
+		this.endCustomerName = endCustomerName;
+	}
+
+	public Boolean getOverrideFlag()
+	{
+		return overrideFlag;
+	}
+
+	public void setOverrideFlag(Boolean overrideFlag)
+	{
+		this.overrideFlag = overrideFlag;
+	}
+
+	@Override
+	public int hashCode() {
+		return Long.valueOf(super.getId()).intValue();
+	}
+
+
+	@Override
+	int getPriority() {
+		return this.getOverrideFlag() ? 2 : 1;
+	}
+	
+	@Override
+	public RfqItemVO fillInPricer(RfqItemVO itemVo) {
+		Material material = this.getMaterial();
+		if(material != null) {
+			Pricer abookPricer = material.getEffectiveOrExpiredABookCostPricer(getBizUnitBean().getName());
+			//fill in abook pricer info
+			if(abookPricer != null) {
+				itemVo = abookPricer.fillInPricer(itemVo);
+				///itemVo = ((NormalPricer)abookPricer).fillInWithABookThis(itemVo);
+				//Contract Pricer mapping enhancement
+				//if(!QuoteUtil.hasContractPrice(rfqItem, lowestCostMaterial)){
+				//	rfqItem.setMinSell(materialDetail.getMinSell());
+				//}
+				itemVo.setBottomPrice(null);
+			}
+		}
+		//fill in Contract Pricer info
+		itemVo.setCost(this.getCost());
+		itemVo.setCostIndicator(this.getCostIndicator().getName());
+		itemVo.setMinSellPrice(this.getMinSellPrice());
+		itemVo.setShipmentValidity(this.getShipmentValidity());
+		itemVo.setPriceValidity(this.getPriceValidity());
+		if(this.getMpq()!=null)
+		   itemVo.setMpq(this.getMpq());
+		if(this.getMoq()!=null)
+		   itemVo.setMoq(this.getMoq());
+		if(this.getTermsAndConditions()!=null && !this.getTermsAndConditions().isEmpty())
+		{
+		   itemVo.setTermsAndCondition(this.getTermsAndConditions());
+		}
+		if(this.getAventQcCommnets()!=null && !this.getAventQcCommnets().isEmpty())
+		{
+			 itemVo.setQcComment(this.getAventQcCommnets());
+		}
+		super.fillInPricer(itemVo);
+		
+		fillInRfqVOByCostIndicator(itemVo);
+		return itemVo;
+	}
+
+
+	@Override
+	public String getCostIndicatorType() {
+		return RFQ_COST_INDICATOR_TYPE_C;
+	}
+
+
+	private boolean isValidForAllowedCustomers(List<Customer> customers) {
+		return customers.contains(soldtoCustomer);
+	}
+
+
+	@Override
+	boolean allowOverride() {
+		return this.getOverrideFlag();
+	}
+
+
+	@Override
+	boolean isValidFor(String region, Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers) {
+		return super.isEffectivePricer() && 
+				super.isRegionMatched(region) && 
+				isValidForAllowedCustomers(allowedCustomers) && 
+				isCustomerMatched(soldToCustomer,  endCustomer, allowedCustomers);
+	}
+
+
+	@Override
+	public void fillupPricerInfo(PricerInfo pricerInfo) {
+
+		super.fillupPricerInfo(pricerInfo);
+		
+		pricerInfo.setNormalSell(minSellPrice);
+		pricerInfo.setProgramType(null);
+		pricerInfo.setContractPricer(true);
+		Customer contractSoldToCustomer = soldtoCustomer;
+		if(contractSoldToCustomer!=null) {
+			pricerInfo.setContractSoldToCustomerNumber(contractSoldToCustomer.getCustomerNumber());
+			pricerInfo.setContractSoldToCustomerName(contractSoldToCustomer.getName());
+		}
+		
+		pricerInfo.setMaterialTypeId("NORMAL");
+		pricerInfo.setProgramType(null);
+
+		fillupPricerInfoByCostIndicator(pricerInfo);
+		fillupPriceInfoValidity(pricerInfo);
+		
+		
+		//copied from the code before refactoring. do not know why to set these fields again. 
+	    pricerInfo.setMpq(super.getMpq());
+	    pricerInfo.setMoq(super.getMoq());
+	    pricerInfo.setTermsAndConditions(super.getTermsAndConditions());
+	    pricerInfo.setQcComment(aventQcCommnets);
+		
+	}
+
+
+	private void fillupPricerInfoByCostIndicator(final PricerInfo pricerInfo){
+		//CostIndicatorSB  costIndicatorSB;
+		CostIndicator costIndicator = this.getCostIndicator() ;
+
+		if(costIndicator == null){
+			return;
+		}
+		NormalPricer aBookCostthis =this.getMaterial().getEffectiveOrExpiredABookCostPricer(getBizUnitBean().getName());
+		 
+		//LOG.info("===QuoteSB fillPricingInfoForMappingTable costIndicator:"+pricerInfo.toString());	
+		/*
+		 ************************************************
+		 *MPQ
+		 */
+		if(costIndicator.getMpq() == null || costIndicator.getMpq() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND)
+		{
+			//LOG.info("===QuoteSB fillPricingInfoForMappingTable fill MPQ: COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND");	
+			if(costIndicator.getMpqValue() != null)
+			{
+				if(costIndicator.getMpqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MPQ))
+				{
+				    pricerInfo.setMpq(aBookCostthis == null ? null : aBookCostthis.getMpq());
+				}
+				else if(costIndicator.getMpqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOQ))
+				{
+					
+					pricerInfo.setMpq(aBookCostthis == null ? null : aBookCostthis.getMoq());
+					
+				}
+				else if(costIndicator.getMpqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOV))
+				{
+					pricerInfo.setMpq(aBookCostthis == null ? null : aBookCostthis.getMov());
+				}
+			}
+			
+		}
+		else if(costIndicator.getMpq() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) 
+		{
+			//LOG.info("===QuoteSB fillPricingInfoForMappingTable fill MPQ: COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY");	
+			if(costIndicator.getMpqValue() != null)
+			{
+				if(costIndicator.getMpqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MPQ))
+				{
+					pricerInfo.setMpq(aBookCostthis == null ? null : aBookCostthis.getMpq());
+				}
+				else if(costIndicator.getMpqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOQ))
+				{
+					pricerInfo.setMpq(aBookCostthis == null ? null : aBookCostthis.getMoq());
+				}
+				else if(costIndicator.getMpqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOV))
+				{
+					pricerInfo.setMpq(aBookCostthis == null ? null : aBookCostthis.getMov());
+				}			
+			}
+			
+		}
+		else if(costIndicator.getMpq() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND)
+		{
+			//LOG.info("===QuoteSB fillPricingInfoForMappingTable fill MPQ: set null");	
+			pricerInfo.setMpq(null);
+		}
+		else if (costIndicator.getMpq() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY)
+		{
+			//LOG.info("===QuoteSB fillPricingInfoForMappingTable fill MPQ: COST_INDICATOR_RULE_BLANK_DIRECTLY");	
+			pricerInfo.setMpq(null);
+		}
+		/*
+		 ************************************************
+		 *MOQ
+		 */
+		if(costIndicator.getMoq() == null || costIndicator.getMoq() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND)
+		{
+			
+			if(costIndicator.getMoqValue() != null)
+			{
+				if(costIndicator.getMoqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MPQ))
+				{
+				 
+					pricerInfo.setMoq(aBookCostthis == null ? null : aBookCostthis.getMpq());
+				}
+				else if(costIndicator.getMoqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOQ))
+				{
+					pricerInfo.setMoq(aBookCostthis == null ? null : aBookCostthis.getMoq());			
+				}
+				else if(costIndicator.getMoqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOV))
+				{
+					pricerInfo.setMoq(aBookCostthis == null ? null : aBookCostthis.getMov());
+				}
+				
+			}
+		}
+		else if(costIndicator.getMoq() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) 
+		{
+			if(costIndicator.getMoqValue() != null)
+			{
+				if(costIndicator.getMoqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MPQ))
+				{
+					pricerInfo.setMoq(aBookCostthis == null ? null : aBookCostthis.getMpq());
+				}
+				else if(costIndicator.getMoqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOQ))
+				{
+					pricerInfo.setMoq(aBookCostthis == null ? null : aBookCostthis.getMoq());
+				}
+				else if(costIndicator.getMoqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOV))
+				{
+					pricerInfo.setMoq(aBookCostthis == null ? null : aBookCostthis.getMov());
+				}			
+			}
+			
+		}else if(costIndicator.getMoq() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND){
+			
+			if(this==null || this.getMoq()==null)
+			{
+				pricerInfo.setMoq(null);
+			}
+			else
+			{
+				pricerInfo.setMoq(this.getMoq());
+			}
+		}
+		else if (costIndicator.getMoq() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY)
+		{
+			pricerInfo.setMoq(null);	
+		}		
+		
+		/*
+		 ************************************************
+		 *MOV
+		 */
+		if(costIndicator.getMov() == null || costIndicator.getMov() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND)
+		{
+
+			if(costIndicator.getMovValue() != null)
+			{
+				if(costIndicator.getMovValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MPQ))
+				{
+					pricerInfo.setMov(aBookCostthis == null ? null : aBookCostthis.getMpq());
+				 
+				}
+				else if(costIndicator.getMovValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOQ))
+				{
+					pricerInfo.setMov(aBookCostthis == null ? null : aBookCostthis.getMoq());
+				}
+				else if(costIndicator.getMovValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOV))
+				{
+				    pricerInfo.setMov(aBookCostthis == null ? null : aBookCostthis.getMov());
+				}
+				
+			}
+			
+		}
+		else if(costIndicator.getMov() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) 
+		{
+			
+			if(costIndicator.getMovValue() != null)
+			{
+				if(costIndicator.getMovValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MPQ))
+				{
+					pricerInfo.setMov(aBookCostthis == null ? null : aBookCostthis.getMpq());
+				}
+				else if(costIndicator.getMovValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOQ))
+				{
+					pricerInfo.setMov(aBookCostthis == null ? null : aBookCostthis.getMoq());
+				}
+				else if(costIndicator.getMovValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOV))
+				{
+					pricerInfo.setMov(aBookCostthis == null ? null : aBookCostthis.getMov());
+				}			
+			}
+			
+		}else if(costIndicator.getMov() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND){			
+			pricerInfo.setMov(null);
+		}
+		else if (costIndicator.getMov() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY)
+		{
+			pricerInfo.setMov(null);	
+		}		
+		
+		/*
+		 ************************************************
+		 *Lead Time
+		 */
+		
+		if(costIndicator.getLeadTime() == null || costIndicator.getLeadTime() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND)
+		{
+			pricerInfo.setLeadTime(aBookCostthis == null ? null : aBookCostthis.getLeadTime());
+		}
+		else if(costIndicator.getLeadTime() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) 
+		{
+			pricerInfo.setLeadTime(aBookCostthis == null ? null : aBookCostthis.getLeadTime());
+		}
+		else if(costIndicator.getLeadTime() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND) 
+		{
+			pricerInfo.setLeadTime(null);	
+		}
+		else if(costIndicator.getLeadTime() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY){
+			pricerInfo.setLeadTime(null);	
+		}
+		
+		/*
+		 ************************************************
+		 *pricer list remarks 1-4
+		 */
+		if(costIndicator.getPriceListRemarks() == null || costIndicator.getPriceListRemarks() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND)
+		{
+		    pricerInfo.setPriceListRemarks1(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks1());
+		    pricerInfo.setPriceListRemarks2(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks2());
+		    pricerInfo.setPriceListRemarks3(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks3());
+		    pricerInfo.setPriceListRemarks4(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks4());
+		}
+		else if(costIndicator.getPriceListRemarks() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) 
+		{
+			pricerInfo.setPriceListRemarks1(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks1());
+			pricerInfo.setPriceListRemarks2(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks2());
+			pricerInfo.setPriceListRemarks3(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks3());
+			pricerInfo.setPriceListRemarks4(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks4());
+		}
+		else if(costIndicator.getPriceListRemarks() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND) 
+		{			 
+			pricerInfo.setPriceListRemarks1(null);
+			pricerInfo.setPriceListRemarks2(null);
+			pricerInfo.setPriceListRemarks3(null);
+			pricerInfo.setPriceListRemarks4(null);
+			 
+		}
+		else if(costIndicator.getPriceListRemarks() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY)
+		{
+			pricerInfo.setPriceListRemarks1(null);
+			pricerInfo.setPriceListRemarks2(null);
+			pricerInfo.setPriceListRemarks3(null);
+			pricerInfo.setPriceListRemarks4(null);
+			
+		}
+
+		/*
+		 ************************************************
+		 *part description
+		 */
+		if(costIndicator.getPartDescription() == null || costIndicator.getPartDescription() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND)
+		{
+		    pricerInfo.setDescription(aBookCostthis == null ? null : aBookCostthis.getDescription());
+		}
+		else if(costIndicator.getPartDescription() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) 
+		{
+			pricerInfo.setDescription(aBookCostthis == null ? null : aBookCostthis.getDescription());
+		}
+		else if(costIndicator.getPartDescription() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND) 
+		{
+			pricerInfo.setDescription(null);
+
+		}
+		else if(costIndicator.getPartDescription() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY)
+		{
+			pricerInfo.setDescription(null);
+		}
+	}
+	
+	private void fillupPriceInfoValidity(final PricerInfo pricerInfo){
+		CostIndicator costIndicator = this.getCostIndicator() ;
+
+		if(costIndicator == null){
+			return;
+		}
+		NormalPricer aBookCostMaterialDetail =this.getMaterial().getEffectiveOrExpiredABookCostPricer(getBizUnitBean().getName());
+	    //Price validity
+		if(costIndicator.getPriceValidity() == null || costIndicator.getPriceValidity() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND){
+			pricerInfo.setPriceValidity(this.getPriceValidity());
+		}else if(costIndicator.getPriceValidity() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) {
+			pricerInfo.setPriceValidity(aBookCostMaterialDetail == null ? null : aBookCostMaterialDetail.getPriceValidity());
+		}else if(costIndicator.getPriceValidity() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND){
+			pricerInfo.setPriceValidity(this.getPriceValidity());
+		}else if(costIndicator.getPriceValidity() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY){
+			pricerInfo.setPriceValidity(null);
+		}
+		
+		//Shipment validity
+		if(costIndicator.getShipmentValidity() == null || costIndicator.getShipmentValidity() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND){
+			pricerInfo.setShipmentValidity(this.getShipmentValidity());
+		}else if(costIndicator.getShipmentValidity() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) {
+			pricerInfo.setShipmentValidity(aBookCostMaterialDetail == null ? null : aBookCostMaterialDetail.getShipmentValidity());
+		}else if(costIndicator.getShipmentValidity() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND){
+			pricerInfo.setShipmentValidity(this.getShipmentValidity());
+		}else if(costIndicator.getPriceValidity() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY){
+			pricerInfo.setShipmentValidity(null);
+		}
+	}
+
+	private void fillInRfqVOByCostIndicator(final RfqItemVO rfqItem){
+		//CostIndicatorSB  costIndicatorSB;
+		CostIndicator costIndicator = this.getCostIndicator() ;
+
+		if(costIndicator == null){
+			return;
+		}
+		NormalPricer aBookCostthis =this.getMaterial().getEffectiveOrExpiredABookCostPricer(getBizUnitBean().getName());
+		 
+		//LOG.info("===QuoteSB fillPricingInfoForMappingTable costIndicator:"+rfqItem.toString());	
+		/*
+		 ************************************************
+		 *MPQ
+		 */
+		if(costIndicator.getMpq() == null || costIndicator.getMpq() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND)
+		{
+			//LOG.info("===QuoteSB fillPricingInfoForMappingTable fill MPQ: COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND");	
+			if(costIndicator.getMpqValue() != null)
+			{
+				if(costIndicator.getMpqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MPQ))
+				{
+				    rfqItem.setMpq(aBookCostthis == null ? null : aBookCostthis.getMpq());
+				}
+				else if(costIndicator.getMpqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOQ))
+				{
+					
+					rfqItem.setMpq(aBookCostthis == null ? null : aBookCostthis.getMoq());
+					
+				}
+				else if(costIndicator.getMpqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOV))
+				{
+					rfqItem.setMpq(aBookCostthis == null ? null : aBookCostthis.getMov());
+				}
+			}
+			
+		}
+		else if(costIndicator.getMpq() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) 
+		{
+			//LOG.info("===QuoteSB fillPricingInfoForMappingTable fill MPQ: COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY");	
+			if(costIndicator.getMpqValue() != null)
+			{
+				if(costIndicator.getMpqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MPQ))
+				{
+					rfqItem.setMpq(aBookCostthis == null ? null : aBookCostthis.getMpq());
+				}
+				else if(costIndicator.getMpqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOQ))
+				{
+					rfqItem.setMpq(aBookCostthis == null ? null : aBookCostthis.getMoq());
+				}
+				else if(costIndicator.getMpqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOV))
+				{
+					rfqItem.setMpq(aBookCostthis == null ? null : aBookCostthis.getMov());
+				}			
+			}
+			
+		}
+		else if(costIndicator.getMpq() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND)
+		{
+			//LOG.info("===QuoteSB fillPricingInfoForMappingTable fill MPQ: set null");	
+			rfqItem.setMpq(null);
+		}
+		else if (costIndicator.getMpq() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY)
+		{
+			//LOG.info("===QuoteSB fillPricingInfoForMappingTable fill MPQ: COST_INDICATOR_RULE_BLANK_DIRECTLY");	
+			rfqItem.setMpq(null);
+		}
+		/*
+		 ************************************************
+		 *MOQ
+		 */
+		if(costIndicator.getMoq() == null || costIndicator.getMoq() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND)
+		{
+			
+			if(costIndicator.getMoqValue() != null)
+			{
+				if(costIndicator.getMoqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MPQ))
+				{
+				 
+					rfqItem.setMoq(aBookCostthis == null ? null : aBookCostthis.getMpq());
+				}
+				else if(costIndicator.getMoqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOQ))
+				{
+					rfqItem.setMoq(aBookCostthis == null ? null : aBookCostthis.getMoq());			
+				}
+				else if(costIndicator.getMoqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOV))
+				{
+					rfqItem.setMoq(aBookCostthis == null ? null : aBookCostthis.getMov());
+				}
+				
+			}
+		}
+		else if(costIndicator.getMoq() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) 
+		{
+			if(costIndicator.getMoqValue() != null)
+			{
+				if(costIndicator.getMoqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MPQ))
+				{
+					rfqItem.setMoq(aBookCostthis == null ? null : aBookCostthis.getMpq());
+				}
+				else if(costIndicator.getMoqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOQ))
+				{
+					rfqItem.setMoq(aBookCostthis == null ? null : aBookCostthis.getMoq());
+				}
+				else if(costIndicator.getMoqValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOV))
+				{
+					rfqItem.setMoq(aBookCostthis == null ? null : aBookCostthis.getMov());
+				}			
+			}
+			
+		}else if(costIndicator.getMoq() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND){
+			
+			if(this==null || this.getMoq()==null)
+			{
+				rfqItem.setMoq(null);
+			}
+			else
+			{
+				rfqItem.setMoq(this.getMoq());
+			}
+		}
+		else if (costIndicator.getMoq() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY)
+		{
+			rfqItem.setMoq(null);	
+		}		
+		
+		/*
+		 ************************************************
+		 *MOV
+		 */
+		if(costIndicator.getMov() == null || costIndicator.getMov() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND)
+		{
+
+			if(costIndicator.getMovValue() != null)
+			{
+				if(costIndicator.getMovValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MPQ))
+				{
+					rfqItem.setMov(aBookCostthis == null ? null : aBookCostthis.getMpq());
+				 
+				}
+				else if(costIndicator.getMovValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOQ))
+				{
+					rfqItem.setMov(aBookCostthis == null ? null : aBookCostthis.getMoq());
+				}
+				else if(costIndicator.getMovValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOV))
+				{
+				    rfqItem.setMov(aBookCostthis == null ? null : aBookCostthis.getMov());
+				}
+				
+			}
+			
+		}
+		else if(costIndicator.getMov() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) 
+		{
+			
+			if(costIndicator.getMovValue() != null)
+			{
+				if(costIndicator.getMovValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MPQ))
+				{
+					rfqItem.setMov(aBookCostthis == null ? null : aBookCostthis.getMpq());
+				}
+				else if(costIndicator.getMovValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOQ))
+				{
+					rfqItem.setMov(aBookCostthis == null ? null : aBookCostthis.getMoq());
+				}
+				else if(costIndicator.getMovValue().equalsIgnoreCase(QuoteSBConstant.COST_INDICATOR_RULE_MOV))
+				{
+					rfqItem.setMov(aBookCostthis == null ? null : aBookCostthis.getMov());
+				}			
+			}
+			
+		}else if(costIndicator.getMov() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND){			
+			rfqItem.setMov(null);
+		}
+		else if (costIndicator.getMov() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY)
+		{
+			rfqItem.setMov(null);	
+		}		
+		
+		/*
+		 ************************************************
+		 *Lead Time
+		 */
+		
+		if(costIndicator.getLeadTime() == null || costIndicator.getLeadTime() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND)
+		{
+			rfqItem.setLeadTime(aBookCostthis == null ? null : aBookCostthis.getLeadTime());
+		}
+		else if(costIndicator.getLeadTime() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) 
+		{
+			rfqItem.setLeadTime(aBookCostthis == null ? null : aBookCostthis.getLeadTime());
+		}
+		else if(costIndicator.getLeadTime() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND) 
+		{
+			rfqItem.setLeadTime(null);	
+		}
+		else if(costIndicator.getLeadTime() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY){
+			rfqItem.setLeadTime(null);	
+		}
+		
+		/*
+		 ************************************************
+		 *pricer list remarks 1-4
+		 */
+		if(costIndicator.getPriceListRemarks() == null || costIndicator.getPriceListRemarks() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND)
+		{
+		    rfqItem.setPriceListRemarks1(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks1());
+		    rfqItem.setPriceListRemarks2(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks2());
+		    rfqItem.setPriceListRemarks3(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks3());
+		    rfqItem.setPriceListRemarks4(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks4());
+		}
+		else if(costIndicator.getPriceListRemarks() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) 
+		{
+			rfqItem.setPriceListRemarks1(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks1());
+			rfqItem.setPriceListRemarks2(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks2());
+			rfqItem.setPriceListRemarks3(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks3());
+			rfqItem.setPriceListRemarks4(aBookCostthis == null ? null : aBookCostthis.getPriceListRemarks4());
+		}
+		else if(costIndicator.getPriceListRemarks() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND) 
+		{			 
+			rfqItem.setPriceListRemarks1(null);
+			rfqItem.setPriceListRemarks2(null);
+			rfqItem.setPriceListRemarks3(null);
+			rfqItem.setPriceListRemarks4(null);
+			 
+		}
+		else if(costIndicator.getPriceListRemarks() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY)
+		{
+			rfqItem.setPriceListRemarks1(null);
+			rfqItem.setPriceListRemarks2(null);
+			rfqItem.setPriceListRemarks3(null);
+			rfqItem.setPriceListRemarks4(null);
+			
+		}
+
+		/*
+		 ************************************************
+		 *part description
+		 */
+		if(costIndicator.getPartDescription() == null || costIndicator.getPartDescription() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND)
+		{
+		    rfqItem.setDescription(aBookCostthis == null ? null : aBookCostthis.getDescription());
+		}
+		else if(costIndicator.getPartDescription() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) 
+		{
+			rfqItem.setDescription(aBookCostthis == null ? null : aBookCostthis.getDescription());
+		}
+		else if(costIndicator.getPartDescription() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND) 
+		{
+			rfqItem.setDescription(null);
+
+		}
+		else if(costIndicator.getPartDescription() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY)
+		{
+			rfqItem.setDescription(null);
+		}
+		
+ 		//Rfq validity
+		if(costIndicator.getPriceValidity() == null || costIndicator.getPriceValidity() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND){
+			rfqItem.setPriceValidity(this.getPriceValidity());
+		}else if(costIndicator.getPriceValidity() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) {
+			rfqItem.setPriceValidity(aBookCostthis == null ? null : aBookCostthis.getPriceValidity());
+		}else if(costIndicator.getPriceValidity() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND){
+			rfqItem.setPriceValidity(this.getPriceValidity());
+		}else if(costIndicator.getPriceValidity() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY){
+			rfqItem.setPriceValidity(null);
+		}
+		
+		//Shipment validity
+		if(costIndicator.getShipmentValidity() == null || costIndicator.getShipmentValidity() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_IF_NOT_FOUND){
+			rfqItem.setShipmentValidity(this.getShipmentValidity());
+		}else if(costIndicator.getShipmentValidity() == QuoteSBConstant.COST_INDICATOR_RULE_USE_A_BOOK_DIRECTLY) {
+			rfqItem.setShipmentValidity(aBookCostthis == null ? null : aBookCostthis.getShipmentValidity());
+		}else if(costIndicator.getShipmentValidity() == QuoteSBConstant.COST_INDICATOR_RULE_USE_BLANK_IF_NOT_FOUND){
+			rfqItem.setShipmentValidity(this.getShipmentValidity());
+		}else if(costIndicator.getPriceValidity() == QuoteSBConstant.COST_INDICATOR_RULE_BLANK_DIRECTLY){
+			rfqItem.setShipmentValidity(null);
+		}
+	}
+	@Override
+	boolean isCustomerMatched(Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers) {
+		if (soldToCustomer == null) {
+			return false;
+		}
+		
+		if (allowedCustomers.isEmpty() || ! allowedCustomers.contains(soldToCustomer)) {
+			return false;
+		}
+		
+		if (endCustomer != null) {
+			if (this.endCustomer == null) {
+				return soldToCustomer.equals(this.soldtoCustomer);
+			} else {
+				return soldToCustomer.equals(this.soldtoCustomer) && endCustomer.equals(this.endCustomer);
+			}
+		} else {
+			return soldToCustomer.equals(this.soldtoCustomer) && this.endCustomer == null;
+		}
+				
+	}
+
+	@Override
+	boolean isEffectivePricer() {
+		return super.isEffectivePricer() && startDate.before(new Date());
+	}
+	
+	
+	
+	
+}

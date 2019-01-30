@@ -1,0 +1,64 @@
+package com.avnet.emasia.webquote.columndata;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+public class DefaultBean implements Bean{
+	
+	private int seq;
+	private Map<String, String> convertErrors = new HashMap<>();
+	private Set<String> validationErrors = new HashSet<>();
+	
+
+	@Override
+	public int getSeq() {
+		return seq;
+	}
+
+	@Override
+	public void setSeq(int seq) {
+		this.seq = seq;
+		
+	}
+
+
+	@Override
+	public String putConvertError(String field, String convertError) {
+		
+		return convertErrors.put(field, convertError);
+	}
+
+	@Override
+	public String getConvertError(String field) {
+		return convertErrors.get(field);
+	}
+
+	@Override
+	public String getConvertErrors() {
+		return convertErrors.toString();
+	}
+
+	@Override
+	public boolean addValidationError(String validationError) {
+		return validationErrors.add(validationError);
+	}
+
+	@Override
+	public String getValidationErrors() {
+
+		return validationErrors.toString();
+	}
+
+	@Override
+	public boolean isConvertSuccessful() {
+		return convertErrors.size() > 0 ? false : true;
+	}
+
+	@Override
+	public boolean isValid() {
+		return validationErrors.size() > 0 ? false : true;
+	}
+
+}

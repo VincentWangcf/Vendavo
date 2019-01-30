@@ -1,0 +1,87 @@
+
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+
+	<ui:define name="content">
+<h:form  rendered="#{!menuMB.isAccessible('Session Counter')}">
+   <h1>#{dbResource['wq.title.sessionList']} </h1>
+	<h2>#{dbResource['wq.message.notAutho']} .</h2>
+</h:form>
+<h:form  rendered="#{menuMB.isAccessible('Session Counter')}">
+   <h2>#{dbResource['wq.title.sessionList']} </h2>
+
+			<p:panel>
+				<p:dataTable value="#{activeSessionMB.sessionList}" 
+				var="vo" 
+				paginator="true"
+				rowIndexVar="rowIndex"  
+				rows="10" 
+				id="sessionList" 
+				emptyMessage="#{dbResource['wq.message.noRecordFound']}." >
+				<p:column style="width:50px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.no']}"/>
+					</f:facet>
+					<h:outputText value="#{rowIndex+1}" />
+				</p:column>
+				
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="#{dbResource['wq.label.EmpID']}" />
+						</f:facet>
+			
+						<h:outputText value="#{vo.userId}" />
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="#{dbResource['wq.label.logintime']}" />
+						</f:facet>
+						<h:outputText value="#{vo.loginTime}" >
+							<f:convertDateTime type="date" pattern="yyyy-MM-dd hh:mm:ss"/>
+						</h:outputText>
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="#{dbResource['wq.label.clientInfo']}" />
+						</f:facet>
+						<h:outputText value="#{vo.clientInfo}" >
+						</h:outputText>
+					</p:column>
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="#{dbResource['wq.label.sessionID']}" />
+						</f:facet>
+						<h:outputText value="#{vo.sessionId}" >
+						</h:outputText>
+					</p:column>
+					
+					<p:column>
+						<f:facet name="header">
+							<h:outputText value="#{dbResource['wq.label.serverName']}" />
+						</f:facet>
+						<h:outputText value="#{vo.severName}" />
+					</p:column>
+					
+					
+				</p:dataTable>
+				<p:commandButton value="#{dbResource['wq.label.refresh']}" 
+		      			update="@form" 
+		      			actionListener="#{activeSessionMB.refreshSession}"
+		      			onstart="start();" 
+		      			oncomplete="stop();;"
+		      			onerror="stopWithError();" 
+		      			global="false" >  
+		      </p:commandButton>			
+			</p:panel>	
+</h:form>
+	</ui:define>
+
+	
+
+</ui:composition>
+

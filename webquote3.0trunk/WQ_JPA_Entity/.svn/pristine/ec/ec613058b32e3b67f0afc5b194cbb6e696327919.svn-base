@@ -1,0 +1,564 @@
+package com.avnet.emasia.webquote.entity.util;
+
+import java.lang.reflect.InvocationTargetException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.logging.Logger;
+
+import javax.persistence.EntityManager;
+import javax.persistence.FlushModeType;
+import javax.persistence.Query;
+
+import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.lang.StringUtils;
+import org.eclipse.persistence.descriptors.DescriptorEvent;
+import org.eclipse.persistence.descriptors.DescriptorEventAdapter;
+import org.eclipse.persistence.queries.SQLCall;
+import org.eclipse.persistence.queries.UpdateObjectQuery;
+import org.eclipse.persistence.sessions.UnitOfWork;
+import org.eclipse.persistence.sessions.changesets.ChangeRecord;
+
+import com.avnet.emasia.webquote.constants.ActionEnum;
+import com.avnet.emasia.webquote.constants.StageEnum;
+import com.avnet.emasia.webquote.constants.StatusEnum;
+import com.avnet.emasia.webquote.entity.AuditQuoteItem;
+import com.avnet.emasia.webquote.entity.AuditQuoteItemPK;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.QuoteResponseTimeHistory;
+
+public class QuoteItemListener extends DescriptorEventAdapter {
+	private final static String JPQL_QUERY_USER_NAME = "Select o.name FROM User o where o.employeeId = :employeeId";
+	private final static String UPDATE_SQL_RBQ_RBIT = "update QUOTE_RESPONSE_TIME_HISTORY set VERSION = (VERSION+1),LAST_UPDATED_BY = '{LASTUPDATEDBY}', LAST_OUT_DATE = to_date('{outDate}','yyyy/MM/dd HH24:MI:SS'), LAST_UPDATED_TIME = to_date('{LASTUPDATEDTIME}','yyyy/MM/dd HH24:MI:SS') where id = (select id from (select ID from QUOTE_RESPONSE_TIME_HISTORY where LAST_OUT_DATE is null and PENDING_BY = '{PendingBy}' and QUOTE_ITEM_ID = {quoteItemId} order by LAST_OUT_DATE DESC) where rownum = 1)";
+	private final static String UPDATE_SQL = "update QUOTE_RESPONSE_TIME_HISTORY set VERSION = (VERSION+1),LAST_UPDATED_BY = '{LASTUPDATEDBY}', LAST_OUT_DATE = to_date('{outDate}','yyyy/MM/dd HH24:MI:SS'), LAST_UPDATED_TIME = to_date('{LASTUPDATEDTIME}','yyyy/MM/dd HH24:MI:SS') where id = (select id from (select ID from QUOTE_RESPONSE_TIME_HISTORY where PENDING_BY = '{PendingBy}' and QUOTE_ITEM_ID = {quoteItemId} order by LAST_OUT_DATE DESC) where rownum = 1)";
+	private final static String SQL_QUERY_FISCAL_YEAT = "SELECT fy,qtr,to_char(to_date(mth, 'MM'),'MON')  FROM fiscal_mapping where fis_from <= to_date(?,'yyyy/MM/dd HH24:MI:SS') AND fis_to >= to_date(?,'yyyy/MM/dd HH24:MI:SS')";
+	//private final static String SQL_QUERY_MATERIAL_TYPE = "SELECT count(1) FROM MATERIAL_DETAIL md left join MATERIAL m on m.id = md.material_id WHERE m.full_mfr_part_number = ? AND m.manufacturer_id = ? AND md.material_category = 'PROGRAM' AND md.biz_unit = ? AND to_char(md.program_closing_date, 'YYYYMMDD') >= ? ";
+	private final static String SQL_PARM_OUTDATE = "{outDate}";
+	private final static String SQL_PARM_PENDING_BY = "{PendingBy}";
+	private final static String SQL_PARM_QUOTE_ITEM_ID = "{quoteItemId}";
+	private final static String SQL_PARM_LAST_UPDATED_BY = "{LASTUPDATEDBY}";
+	private final static String SQL_PARM_LAST_UPDATED_TIME = "{LASTUPDATEDTIME}";
+	private final static String DATE_FORMAT = "yyyy/MM/dd HH:mm:ss";
+	private final static String PENDING_PM = "PM";
+	private final static String PENDING_BMT = "BMT";
+	
+	protected static final Logger LOGGER = Logger.getLogger(QuoteItemListener.class.getName());
+
+	public void preInsert(DescriptorEvent event) {
+		QuoteItem item = (QuoteItem) event.getSource();
+
+		try {
+			EntityManager em = EntityManagerUtils.getEntityManager();
+			em.setFlushMode(FlushModeType.COMMIT);
+			if (item.getQuoteNumber() != null && !"".equals(item.getQuoteNumber())) {
+					//item=preInsertQuery(item, em);
+				}
+				item=commonQuery(item, em);
+		} catch (Exception e) {
+			LOGGER.severe("updateFiscalYear error: " + e.getMessage());
+		}
+		if(!StringUtils.equals(item.getAction(), ActionEnum.WP_ALTERNATIVE_QUOTE.name()) &&
+				   !StringUtils.equals(item.getAction(), ActionEnum.MYQUOTE_QUOTE_RATE_REQUEST_CREATE.name())){
+			changeLastDateBeforeInsert(item);
+		}
+	}
+
+	/*private QuoteItem preInsertQuery(final QuoteItem item, final EntityManager em) {
+		Query query = em.createNativeQuery(SQL_QUERY_MATERIAL_TYPE);
+		query.setParameter(1, item.getQuotedPartNumber());
+		query.setParameter(2, item.getQuotedMfr().getId());
+		query.setParameter(3, item.getQuote().getBizUnit().getName());
+		SimpleDateFormat sdf = new SimpleDateFormat("YYYYMMDD");
+		query.setParameter(4, sdf.format(new Date()));
+
+		long count = ((Number) query.getSingleResult()).longValue();
+		if (count > 0) {
+			item.setMaterialTypeId("PROGRAM");
+		} else {
+			item.setMaterialTypeId("NORMAL");
+		}
+		return item;
+	}*/
+
+	/**
+	 * this method only called when entity fields update
+	 */
+	public void preUpdateWithChanges(DescriptorEvent event) {
+		AuditQuoteItem aqi = null;
+		try {
+			QuoteItem item = (QuoteItem) event.getSource();
+			QuoteItem old = getOldQuoteItem(event);
+			EntityManager em = EntityManagerUtils.getEntityManager();//this entityManager only can be using query
+			em.setFlushMode(FlushModeType.COMMIT);//important setup, if without this, the query will be get exception
+			if ((old != null && ((!item.getQuotedMfr().equals(old.getQuotedMfr()) || !StringUtils.equals(item.getQuotedPartNumber(), old.getQuotedPartNumber())
+					|| !StringUtils.equals(item.getQuoteNumber(), old.getQuoteNumber()) || item.getCost() != old.getCost())
+					|| !StringUtils.equals(item.getCostIndicator(), old.getCostIndicator())
+					|| !StringUtils.equals(item.getLeadTime(), old.getLeadTime())
+					|| item.getMoq() != old.getMoq()
+					|| item.getMov() != old.getMov()
+					|| item.getMpq() != old.getMpq()
+					|| item.getPmoq() != old.getPmoq()
+					|| !StringUtils.equals(item.getQtyIndicator(), old.getQtyIndicator())
+					|| item.getQuotedQty() != old.getQuotedQty()
+					|| !StringUtils.equals(item.getResaleIndicator(), old.getResaleIndicator())
+					|| item.getShipmentValidity() != old.getShipmentValidity()
+					|| !StringUtils.equals(item.getStatus(), old.getStatus())
+					|| item.getBottomPrice() != old.getBottomPrice()
+					|| item.getMinSellPrice() != old.getMinSellPrice()
+					|| !StringUtils.equals(item.getPriceValidity(), old.getPriceValidity())
+					|| !StringUtils.equals(item.getStage(), old.getStage())
+					|| item.getFinalQuotationPrice() != old.getFinalQuotationPrice()
+					|| item.getQuotedPrice() != old.getQuotedPrice()
+					|| !StringUtils.equals(item.getCustomerType(), old.getCustomerType())
+					|| !StringUtils.equals(item.getMaterialTypeId(), old.getMaterialTypeId())
+					|| !StringUtils.equals(item.getDesignInCat(), old.getDesignInCat()) || !StringUtils.equals(item.getQuoteType(), old.getQuoteType())))) {
+				if (item.getQuoteNumber() != null && !"".equals(item.getQuoteNumber())
+						&& (old == null || (old.getQuoteNumber() == null || "".equals(old.getQuoteNumber())))) {
+					//item=preInsertQuery(item, em);
+				}
+				item=commonQuery(item, em);
+				// add log
+				Query userNameQuery = em.createQuery(JPQL_QUERY_USER_NAME);
+				userNameQuery.setParameter("employeeId", item.getLastUpdatedBy());
+				String name = userNameQuery.getSingleResult().toString();
+				aqi = auditLog(item, old, name);
+				//be care for, can not using lookup entityManager to execute update object at here
+				event.getSession().insertObject(aqi);
+
+			}
+			item=changeLastDateBeforeUpdate(item, old);
+			updateQuoteResponseTimeHistoryBeforeUpdate(event, item, old);//TODO move to other try part
+		} catch (Exception e) {
+			
+			LOGGER.severe("preUpdateWithChanges Audit Quote Item ID " +aqi.getId()+" , Bussiness unit : "+aqi.getBizUnit()+" , Exception message"+ e.getMessage());
+			if(aqi != null){
+				LOGGER.severe("preUpdateWithChanges error quote id: " + aqi.getId().getQuoteId() +" item id: "+ aqi.getId().getQuoteItemId() +" update date: "+ aqi.getId().getUpdateDate());
+			}
+		}
+	}
+
+	private QuoteItem commonQuery(final QuoteItem item, final EntityManager em) {
+		/*if ("0+".equals(item.getPmoq()) && item.getMoq() != null && !"".equals(item.getMoq())) {
+			item.setPmoq(item.getMoq() + "+");
+		}
+		if ("INVALID".equals(item.getStage()) && item.getQuoteExpiryDate() == null) {
+			item.setQuoteExpiryDate(new Date());// TODO: sysdate-30
+		}*/
+		return updateFiscalYear(em, item);
+	}
+
+	public void postInsert(DescriptorEvent event) {
+		AuditQuoteItem aqi = null;
+		try {
+			QuoteItem item = (QuoteItem) event.getSource();
+			aqi = auditLog(item, null, item.getQuote().getCreatedName());
+			event.getSession().insertObject(aqi);
+			if(!StringUtils.equals(item.getAction(), ActionEnum.WP_ALTERNATIVE_QUOTE.name()) &&
+					  !StringUtils.equals(item.getAction(), ActionEnum.MYQUOTE_QUOTE_RATE_REQUEST_CREATE.name())){
+			 insertQuoteResponseTimeHistoryAfterInsertQuoteItem(event, item);
+			}
+		} catch (Exception e) {
+			LOGGER.severe("postInsert error: Audit Quote Item ID " +aqi.getId()+" , Bussiness unit : "+aqi.getBizUnit()+" , Exception message"+ e.getMessage());
+			if(aqi != null){
+				LOGGER.severe("postInsert error quote id: " + aqi.getId().getQuoteId() +" item id: "+ aqi.getId().getQuoteItemId() +" update date: "+ aqi.getId().getUpdateDate());
+			}
+		}
+	}
+
+	private void updateQuoteResponseTimeHistoryBeforeUpdate(DescriptorEvent event, QuoteItem item, QuoteItem old) {
+		try {
+			SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+			String pendingBy = "";
+			String updateOutDate = "";
+			if (!old.getStatus().equals(StatusEnum.BQ.name()) && StatusEnum.BQ.name().equals(item.getStatus())) {
+				pendingBy = PENDING_BMT;
+			} else if ((!old.getStatus().equals(StatusEnum.RBQ.name()) && StatusEnum.RBQ.name().equals(item.getStatus()))
+					|| (!old.getStatus().equals(StatusEnum.RBIT.name()) && StatusEnum.RBIT.name().equals(item.getStatus()))) {
+				updateOutDate = UPDATE_SQL_RBQ_RBIT.replace(SQL_PARM_PENDING_BY, PENDING_BMT);
+				pendingBy = StatusEnum.QC.name();
+			} else if (!old.getStatus().equals(StatusEnum.BIT.name()) && StatusEnum.BIT.name().equals(item.getStatus())) {
+				if(old.getStatus().equals(StatusEnum.SQ.name())){
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, StatusEnum.SQ.name());
+				}else if(old.getStatus().equals(StatusEnum.IT.name())){//add by SDD 1.2.11 update
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, PENDING_PM);					
+				}else{
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, StatusEnum.QC.name());
+				}
+				pendingBy = PENDING_BMT;
+			} else if (!old.getStatus().equals(StatusEnum.QC.name()) && StatusEnum.QC.name().equals(item.getStatus())) {
+				if(old.getStatus().equals(StatusEnum.IT.name())){
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, PENDING_PM);
+				} else if(old.getStatus().equals(StatusEnum.SQ.name())){
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, StatusEnum.SQ.name());					
+				}
+				pendingBy = StatusEnum.QC.name();
+			} else if (!old.getStatus().equals(StatusEnum.IT.name()) && StatusEnum.IT.name().equals(item.getStatus())) {
+				if(old.getStatus().equals(StatusEnum.SQ.name())){
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, StatusEnum.SQ.name());
+				}else if(old.getStatus().equals(StatusEnum.BIT.name()) || old.getStatus().equals(StatusEnum.BQ.name())){
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, PENDING_BMT);
+				}else{
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, StatusEnum.QC.name());
+				}				
+				pendingBy = PENDING_PM;
+			} else if (!old.getStatus().equals(StatusEnum.RIT.name()) && StatusEnum.RIT.name().equals(item.getStatus())) {
+				updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, PENDING_PM);
+				pendingBy = StatusEnum.QC.name();
+			} else if (!old.getStatus().equals(StatusEnum.SQ.name()) && StatusEnum.SQ.name().equals(item.getStatus())) {
+				if(old.getStatus().equals(StatusEnum.IT.name())){
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, PENDING_PM);					
+				}else if(old.getStatus().equals(StatusEnum.BIT.name()) || old.getStatus().equals(StatusEnum.BQ.name())){
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, PENDING_BMT);
+				}else{
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, StatusEnum.QC.name());
+				}
+				pendingBy = StatusEnum.SQ.name();
+			}
+
+			if ((!StageEnum.FINISH.name().equals(old.getStage()) && StageEnum.FINISH.name().equals(item.getStage()))
+					|| (!StageEnum.INVALID.name().equals(old.getStage()) && StageEnum.INVALID.name().equals(item.getStage()))) {
+				if(old.getStatus().equals(StatusEnum.SQ.name())){
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, StatusEnum.SQ.name());
+				}else if(old.getStatus().equals(StatusEnum.IT.name())){
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, PENDING_PM);					
+				}else if(old.getStatus().equals(StatusEnum.BQ.name()) || old.getStatus().equals(StatusEnum.BIT.name())){
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, PENDING_BMT);					
+				}else{
+					updateOutDate = UPDATE_SQL.replace(SQL_PARM_PENDING_BY, StatusEnum.QC.name());
+				}				
+			}
+
+			if (pendingBy.length() > 0) {
+				QuoteResponseTimeHistory qrth = new QuoteResponseTimeHistory();
+				qrth.setLastInDate(new Date());
+				qrth.setQuoteItem(item);
+				qrth.setCreatedBy(item.getLastUpdatedBy());
+				qrth.setLastUpdatedBy(item.getLastUpdatedBy());
+				qrth.setLastUpdatedTime(new Date());
+				qrth.setCreatedTime(new Date());
+				qrth.setPendingBy(pendingBy);
+				event.getSession().insertObject(qrth);
+			}
+
+			if (updateOutDate.length() > 0) {
+				updateOutDate = updateOutDate.replace(SQL_PARM_LAST_UPDATED_BY, item.getLastUpdatedBy()).replace(SQL_PARM_LAST_UPDATED_TIME, sdf.format(new Date())).replace(SQL_PARM_OUTDATE, sdf.format(new Date())).replace(SQL_PARM_QUOTE_ITEM_ID, String.valueOf(item.getId()));
+				//be care for, can not using lookup entityManager to execute update script at here
+				UnitOfWork uow = event.getSession().acquireUnitOfWork();
+				uow.executeNonSelectingCall(new SQLCall(updateOutDate));
+				uow.commit();
+			}
+		} catch (Exception e) {
+			LOGGER.severe("updateQuoteResponseTimeHistoryBeforeUpdate for quote Item "+item.getQuoteNumber()+" , EXception message : " + e.getMessage());
+			
+		}
+	}
+
+	private void insertQuoteResponseTimeHistoryAfterInsertQuoteItem(DescriptorEvent event, QuoteItem item) {
+		try {
+			String pendingBy = "";
+			if (StringUtils.equals(item.getStatus(), StatusEnum.BQ.name())) {
+				pendingBy = PENDING_BMT;
+			} else if (StringUtils.equals(item.getStatus(), StatusEnum.QC.name()) || StringUtils.equals(item.getStatus(), StatusEnum.RBQ.name())) {//add by HK Mike request at 10:54 in same time
+				pendingBy = StatusEnum.QC.name();
+			} else if (StringUtils.equals(item.getStatus(), StatusEnum.IT.name())) {
+				pendingBy = PENDING_PM;
+			}
+			if (pendingBy.length() > 0) {
+				QuoteResponseTimeHistory qrth = new QuoteResponseTimeHistory();
+				qrth.setLastInDate(new Date());
+				qrth.setQuoteItem(item);
+				qrth.setCreatedTime(new Date());
+				qrth.setCreatedBy(item.getLastUpdatedBy());
+				qrth.setPendingBy(pendingBy);
+				qrth.setLastUpdatedBy(item.getLastUpdatedBy());
+				qrth.setLastUpdatedTime(new Date());
+				event.getSession().insertObject(qrth);
+			}
+		} catch (Exception e) {
+			
+			LOGGER.severe("insertQuoteResponseTimeHistoryAfterInsertQuoteItem for quote Item "+item.getQuoteNumber()+" , EXception message : " + e.getMessage());
+			
+		}
+	}
+
+	/**
+	 * the event.getOriginalObject() method return object is not old Object,
+	 * this method will find before update fields data and return.
+	 * 
+	 * @param event DescriptorEvent
+	 * @return really Original QuoteItem Object
+	 * @throws IllegalAccessException
+	 * @throws InvocationTargetException
+	 * @throws NoSuchMethodException
+	 */
+	private QuoteItem getOldQuoteItem(DescriptorEvent event) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		QuoteItem old = (QuoteItem) event.getOriginalObject();
+		if (event.getQuery() != null && event.getQuery() instanceof UpdateObjectQuery) {
+			UpdateObjectQuery query = (UpdateObjectQuery) event.getQuery();
+			for (ChangeRecord cr : query.getObjectChangeSet().getChanges()) {
+				if (query.getObject().getClass().equals(QuoteItem.class)) {
+					PropertyUtils.setProperty(old, cr.getAttribute(), cr.getOldValue());
+				}
+			}
+		}
+		return old;
+	}
+
+	private QuoteItem changeLastDateBeforeUpdate(QuoteItem item, QuoteItem old) {
+		try {
+			// BMT SDD v.1.2.8 8.5.2
+			if (old == null || !StringUtils.equals(old.getStatus(), item.getStatus())) {
+				if (StringUtils.equals(item.getStatus(), StatusEnum.QC.name()) 
+						|| StringUtils.equals(item.getStatus(), StatusEnum.RBQ.name())
+						|| StringUtils.equals(item.getStatus(), StatusEnum.RIT.name())) {
+					item.setLastQcInDate(new Date());
+					item.setLastQcOutDate(null);
+				}
+				if (StringUtils.equals(item.getStatus(), StatusEnum.QC.name())) {//update by Mike request in email at 20160802 15:04
+					if(StringUtils.equals(old.getStatus(), StatusEnum.SQ.name())){
+						item.setLastSqOutDate(new Date());
+					}					
+				}
+				if (StringUtils.equals(item.getStatus(), StatusEnum.IT.name())) {
+					item.setLastRitUpdateTime(null);
+					item.setLastItUpdateTime(new Date());
+					if (StringUtils.equals(old.getStatus(), StatusEnum.SQ.name())) {
+						item.setLastSqOutDate(new Date());
+					}else{
+						item.setLastQcOutDate(new Date());						
+					}
+				}
+				if (StringUtils.equals(item.getStatus(), StatusEnum.BIT.name())) {
+					item.setLastBmtInDate(new Date());
+					item.setLastQcOutDate(new Date());
+					item.setLastBmtOutDate(null);
+					if(StringUtils.equals(old.getStatus(), StatusEnum.SQ.name())){
+						item.setLastSqOutDate(new Date());
+						item.setLastBmtInDate(new Date());
+						item.setLastBmtOutDate(null);
+					}
+				}
+				if (StringUtils.equals(item.getStatus(), StatusEnum.SQ.name())) {
+					item.setLastSqInDate(new Date());
+					item.setLastQcOutDate(new Date());
+					item.setLastSqOutDate(null);
+				}
+				if (StringUtils.equals(item.getStatus(), StatusEnum.BQ.name())) {
+					item.setLastBmtInDate(new Date());
+					item.setLastBmtOutDate(null);
+				}
+				
+				if (StringUtils.equals(item.getStatus(), StatusEnum.BIT.name())) {
+					item.setLastBmtInDate(new Date());
+					item.setLastBmtOutDate(null);
+					if(StringUtils.equals(old.getStatus(), StatusEnum.SQ.name())){
+						item.setLastSqOutDate(new Date());
+					}else{
+						item.setLastQcOutDate(new Date());
+					}
+				}
+				
+				if (StringUtils.equals(old.getStatus(), StatusEnum.IT.name()) 
+						&& (StringUtils.equals(item.getStatus(), StatusEnum.QC.name())||
+						StringUtils.equals(item.getStatus(), StatusEnum.SQ.name())||
+						StringUtils.equals(item.getStatus(), StatusEnum.BIT.name()))) {
+					item.setLastRitUpdateTime(new Date());
+				}
+		 
+				if (StringUtils.equals(item.getStatus(), StatusEnum.RBQ.name()) ||
+						StringUtils.equals(item.getStatus(), StatusEnum.RBIT.name())||
+						StringUtils.equals(item.getStatus(), StatusEnum.SQ.name())||
+						StringUtils.equals(item.getStatus(), StatusEnum.IT.name())) {
+					if (StringUtils.equals(old.getStatus(), StatusEnum.BQ.name()) || 
+							StringUtils.equals(old.getStatus(), StatusEnum.BIT.name())) {
+						item.setLastBmtOutDate(new Date());
+					}					
+				}
+				if ( StringUtils.equals(item.getStatus(), StatusEnum.RBIT.name())) {
+					item.setLastBmtOutDate(new Date());
+					item.setLastQcInDate(new Date());
+					item.setLastQcOutDate(null);
+				}
+			}
+			
+			if (old != null && !StringUtils.equals(old.getStage(), item.getStage())) {
+				//update by SDD 1.2.12
+				if(StringUtils.equals(item.getStage(), StageEnum.FINISH.name()) || StringUtils.equals(item.getStage(), StageEnum.INVALID.name())){
+					if((StringUtils.equals(old.getStatus(), StatusEnum.QC.name()) 
+							|| StringUtils.equals(old.getStatus(), StatusEnum.RBQ.name()) 
+							|| StringUtils.equals(old.getStatus(), StatusEnum.RBIT.name())
+							|| StringUtils.equals(old.getStatus(), StatusEnum.RIT.name()))){//add by HK Mike request at 20160707 17:30:51 in sametime
+						item.setLastQcOutDate(new Date());
+					}
+					if(StringUtils.equals(old.getStatus(), StatusEnum.BQ.name())||StringUtils.equals(old.getStatus(), StatusEnum.BIT.name())){
+						item.setLastBmtOutDate(new Date());
+					}
+					if(StringUtils.equals(old.getStatus(), StatusEnum.SQ.name())){
+						item.setLastSqOutDate(new Date());
+					}
+					if(StringUtils.equals(old.getStatus(), StatusEnum.IT.name())){
+						item.setLastRitUpdateTime(new Date());
+					}
+				}
+			}
+
+			if ((StringUtils.equals(item.getStatus(), StatusEnum.RIT.name()) && (old == null || (old != null && !StringUtils.equals(old.getStatus(),
+					item.getStatus()))))
+					|| (old != null && StringUtils.equals(old.getStatus(), StatusEnum.IT.name()) && StringUtils.equals(item.getStatus(), StatusEnum.QC.name()))
+					|| (old != null && StringUtils.equals(item.getStage(), StageEnum.FINISH.name()) && StringUtils
+							.equals(old.getStatus(), StatusEnum.IT.name()))) {
+				item.setLastRitUpdateTime(new Date());
+			}
+		} catch (Exception e) {
+			LOGGER.severe("changeLastDateBeforeUpdate for quote Item "+item.getQuoteNumber()+" , EXception message : " + e.getMessage());
+			
+		}
+		return item;
+	}
+
+	private void changeLastDateBeforeInsert(QuoteItem item) {
+		try {
+			// BMT SDD v.1.2.8 8.5.2
+			if (StringUtils.equals(item.getStatus(), StatusEnum.QC.name())
+					||StringUtils.equals(item.getStatus(), StatusEnum.RBQ.name())
+					||StringUtils.equals(item.getStatus(), StatusEnum.RBIT.name())
+					||StringUtils.equals(item.getStatus(), StatusEnum.RIT.name())) {
+				item.setLastQcInDate(new Date());
+				item.setLastQcOutDate(null);
+			}
+			if (StringUtils.equals(item.getStatus(), StatusEnum.IT.name()) || StringUtils.equals(item.getStatus(), StatusEnum.BIT.name())) {
+				item.setLastItUpdateTime(new Date());
+				item.setLastQcOutDate(new Date());
+				
+			}
+			if (StringUtils.equals(item.getStatus(), StatusEnum.BQ.name())
+					||StringUtils.equals(item.getStatus(), StatusEnum.BIT.name())) {
+				item.setLastBmtInDate(new Date());
+				item.setLastBmtOutDate(null);
+			}
+			if (StringUtils.equals(item.getStatus(), StatusEnum.RIT.name())) {
+				item.setLastRitUpdateTime(new Date());
+			}
+			if (StringUtils.equals(item.getStatus(), StatusEnum.IT.name())) {
+				item.setLastRitUpdateTime(null);
+			}
+			if (StringUtils.equals(item.getStatus(), StatusEnum.SQ.name())) {
+				item.setLastSqInDate(new Date());
+			}
+//			if (StringUtils.equals(item.getStatus(), StatusEnum.RBQ.name())
+//					||StringUtils.equals(item.getStatus(), StatusEnum.RBIT.name())) {
+//				item.setLastBmtOutDate(new Date());
+//			}			
+		} catch (Exception e) {
+			LOGGER.severe("changeLastDateBeforeInsert for quote Item "+item.getQuoteNumber()+" , EXception message : " + e.getMessage());
+			
+		}
+	}
+
+
+	private QuoteItem updateFiscalYear(EntityManager em, QuoteItem item) {
+		try {
+			if (item.getSentOutTime() != null) {
+				Query query = em.createNativeQuery(SQL_QUERY_FISCAL_YEAT);
+				SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+
+				String sendOutTime = sdf.format(item.getSentOutTime());
+				query.setParameter(1, sendOutTime);
+				query.setParameter(2, sendOutTime);
+				Object[] outcome = (Object[]) query.getSingleResult();
+				item.setFisYear("FY" + outcome[0]);
+				item.setFisMth("FY" + outcome[0] + " " + outcome[2]);
+				item.setFisQtr("FY" + outcome[0] + " Q" + outcome[1]);
+			}
+		} catch (Exception e) {
+			LOGGER.severe("updateFiscalYear for quote Item "+item.getQuoteNumber()+" , EXception message : " + e.getMessage());
+			
+		}
+		return item;
+	}
+
+	/**
+	 * build a new AuditQuoteItem object by old and new QuoteItem
+	 * 
+	 * @param item QuoteItem
+	 * @param old QuoteItem
+	 * @param name last update user name 
+	 * @return AuditQuoteItem
+	 */
+	private AuditQuoteItem auditLog(QuoteItem item, QuoteItem old, String name) {
+
+		AuditQuoteItemPK aqiPK = new AuditQuoteItemPK();
+		aqiPK.setQuoteId(item.getQuote().getId());
+		aqiPK.setQuoteItemId(item.getId());
+		aqiPK.setUpdateDate(new Date());
+
+		AuditQuoteItem audit = new AuditQuoteItem();
+		audit.setId(aqiPK);
+		audit.setQuoteNumber(item.getQuoteNumber());
+		audit.setStageNew(item.getStage());
+		if (item.getQuotedMfr() != null) {
+			audit.setQuotedMfrNew(String.valueOf(item.getQuotedMfr().getId()));
+			audit.setQuotedMfrNameNew(item.getQuotedMfr().getName());
+		}
+		audit.setQuotedPartNumberNew(item.getQuotedPartNumber());
+		audit.setQuotedQtyNew(item.getQuotedQty());
+		audit.setPmoqNew(item.getPmoq());
+		audit.setQtyIndicatorNew(item.getQtyIndicator());
+		audit.setCostIndicatorNew(item.getCostIndicator());
+		audit.setCostNew(item.getCost());
+		audit.setLeadTimeNew(item.getLeadTime());
+		audit.setMpqNew(item.getMpq());
+		audit.setMoqNew(item.getMoq());
+		audit.setMovNew(item.getMov());
+		audit.setPriceValidityNew(item.getPriceValidity());
+		audit.setShipmentValidityNew(item.getShipmentValidity());
+		audit.setUpdateBy(item.getLastUpdatedBy());
+		audit.setResaleIndicatorNew(item.getResaleIndicator());
+		audit.setFormNumber(item.getQuote().getFormNumber());
+		audit.setBizUnit(item.getQuote().getBizUnit().getName());
+		audit.setQuotedPriceNew(item.getQuotedPrice());
+		audit.setUpdateByName(name);
+		audit.setUpdateById(item.getLastUpdatedBy());
+		audit.setCustomerTypeNew(item.getCustomerType());
+		audit.setMaterialTypeNew(item.getMaterialTypeId());
+		audit.setDesignInCatNew(item.getDesignInCat());
+		audit.setQuoteTypNew(item.getQuoteType());
+		audit.setStatusNew(item.getStatus());
+		audit.setQuotedQtyNew(item.getQuotedQty());
+		audit.setPmoqNew(item.getPmoq());
+		audit.setQtyIndicatorNew(item.getQtyIndicator());
+		audit.setQuotedPriceNew(item.getQuotedPrice());
+		
+		if (old != null) {
+			if (old.getQuotedMfr() != null) {
+				audit.setQuotedMfrOld(String.valueOf(old.getQuotedMfr().getId()));
+				audit.setQuotedMfrNameOld(old.getQuotedMfr().getName());
+			}
+			audit.setQuotedPriceOld(old.getQuotedPrice());
+			audit.setQtyIndicatorOld(old.getQtyIndicator());
+			audit.setPmoqOld(old.getPmoq());
+			audit.setQuotedQtyOld(old.getQuotedQty());
+			audit.setStageOld(old.getStage());
+			audit.setStatusOld(old.getStatus());
+			audit.setQuotedPartNumberOld(old.getQuotedPartNumber());
+			audit.setQuotedQtyOld(old.getQuotedQty());
+			audit.setPmoqOld(old.getPmoq());
+			audit.setCostIndicatorOld(old.getCostIndicator());
+			audit.setLeadTimeOld(old.getLeadTime());
+			audit.setCostOld(old.getCost());
+			audit.setMpqOld(old.getMpq());
+			audit.setMoqOld(old.getMoq());
+			audit.setMovOld(old.getMov());
+			audit.setPriceValidityOld(old.getPriceValidity());
+			audit.setQuotedPriceOld(old.getQuotedPrice());
+			audit.setShipmentValidityOld(old.getShipmentValidity());
+			audit.setResaleIndicatorOld(old.getResaleIndicator());
+			audit.setCustomerTypeOld(old.getCustomerType());
+			audit.setMaterialTypeOld(old.getMaterialTypeId());
+			audit.setDesignInCatOld(old.getDesignInCat());
+			audit.setQuoteTypOld(old.getQuoteType());
+		}
+
+		return audit;
+	}
+
+}

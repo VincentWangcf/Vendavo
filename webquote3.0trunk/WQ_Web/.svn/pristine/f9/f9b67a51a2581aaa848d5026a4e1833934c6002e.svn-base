@@ -1,0 +1,154 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="style-005.css" />
+	<h:outputStylesheet library="css" name="columns.css" />
+	<h:outputScript library="javascript" name="common-002.js" />	
+	</ui:define>
+	
+	<ui:define name="content">
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+		<h:form id="rorForm">
+			<p:messages id="mgId" escape="false" closable="true" autoUpdate="true"/>
+			<p:accordionPanel>
+				<p:tab title="#{dbResource['wq.label.rorRptSrchCrt']}">
+					<h:panelGrid cellpadding="0" style="width:100%;" columns="8">												
+						<h:outputText value="#{dbResource['wq.label.cust']}:"  escape="false" />
+						<p:autoComplete value="#{rorReportMB.criteria.customer}" completeMethod="#{rorReportMB.autoCompleteForCustomer}" minQueryLength="3" style="width:80%;" >
+						<p:ajax event="query" global="false"/>
+						</p:autoComplete>
+						
+						<h:outputText value="#{dbResource['wq.label.empName']}:"  escape="false" />
+						<p:autoComplete value="#{rorReportMB.criteria.employeeName}" completeMethod="#{rorReportMB.autoCompleteSale}" minQueryLength="3" style="width:80%;" >
+						<p:ajax event="query" global="false"/>
+						</p:autoComplete>
+						
+						<h:outputText value="#{dbResource['wq.label.team']}:"  escape="false" />
+						<p:autoComplete value="#{rorReportMB.criteria.team}" completeMethod="#{rorReportMB.autoCompleteTeam}" minQueryLength="3" style="width:80%;" >
+						<p:ajax event="query" global="false"/>
+						</p:autoComplete>
+						
+						<h:outputText value="#{dbResource['wq.label.mfr']}:"  escape="false" />
+						<p:autoComplete value="#{rorReportMB.criteria.mfr}" completeMethod="#{rorReportMB.autoCompleteMfr}" minQueryLength="1" style="width:80%;" >
+						<p:ajax event="query" global="false"/>
+						</p:autoComplete>	
+
+						<h:outputText value="#{dbResource['wq.label.quoteStage']}:"  escape="false" />
+						<p:selectManyCheckbox value="#{rorReportMB.criteria.stage}" label="stage">
+							<f:selectItems itemValue="#{stage}" itemLabel="#{stage}"  value="#{rorReportMB.criteria.pageStage}" var="stage" />
+						</p:selectManyCheckbox>	
+										
+						<h:outputText value="#{dbResource['wq.label.rfqCreatedForm']}:"  escape="false" />
+						<p:calendar value="#{rorReportMB.criteria.startDate}" showOn="button"  pattern="dd/MM/yyyy" />
+						
+						<h:outputText value="#{dbResource['wq.label.rfqCreated']}:"  escape="false" />
+						<p:calendar value="#{rorReportMB.criteria.endDate}" showOn="button"  pattern="dd/MM/yyyy" />
+					</h:panelGrid>
+					
+					<h:panelGrid columns="3" cellpadding="0" >
+						<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search" actionListener="#{rorReportMB.searchRORReport}" ajax="false" update="@form"/>
+						<p:commandButton value="#{dbResource['wq.label.reset']}"  icon="ui-icon-triangle-1-w" actionListener="#{rorReportMB.resetCriteria}" ajax="false" update="@form" />
+					</h:panelGrid>
+				</p:tab>
+			</p:accordionPanel>
+			<p:panel header="#{dbResource['wq.header.rorReport']}" style="font-size:12pt">
+				<h:panelGrid columns="11" cellpadding="0">
+						<p:commandButton value="#{dbResource['wq.button.xlsDownload']}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">
+			        		<p:fileDownload value="#{rorReportMB.rorReport}" />  	        
+			          	</p:commandButton>
+				</h:panelGrid>
+			</p:panel>
+			 <p:dataTable	var="vo"
+	    				value="#{rorReportMB.rorReportList}" 
+	    				rowKey="#{rowIndex}" 
+	    				paginator="true" 
+	    				rowIndexVar="rowIndex" 
+	    				rows="10" 
+    					rowsPerPageTemplate="10,20,50" 
+	                 	filteredValue="#{rorReportMB.filteredRorReportList}"
+	                 	id="RORReport_dataTable" 
+	                 	paginatorPosition="top"
+	                 	scrollable="true"
+	                 	scrollHeight="300"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+				<p:column headerText="#{dbResource['wq.label.no']}" styleClass="column_seq">
+					<h:outputText value="#{rowIndex+1}" />
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.custmrName']}" sortBy="#{vo.customer}" filterBy="#{vo.customer}" filterMatchMode="contains" styleClass="column_soldToCustomerName">
+					<h:outputText value="#{vo.customer}" />
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.endCust']}" sortBy="#{vo.endCustomer}" filterBy="#{vo.endCustomer}" filterMatchMode="contains" styleClass="column_endCustomerName">
+					<h:outputText value="#{vo.endCustomer}" />
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.salesman']}&lt;br/&gt;#{dbResource['wq.label.name']}" sortBy="#{vo.employeeName}" filterBy="#{vo.employeeName}" filterMatchMode="contains" styleClass="column_salesEmployeeName">
+					<h:outputText value="#{vo.employeeName}" />
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.salesman']}&lt;br/&gt;#{dbResource['wq.label.employee']}&lt;br/&gt;#{dbResource['wq.label.code']}" sortBy="#{vo.salesmanCode}" filterBy="#{vo.salesmanCode}" filterMatchMode="contains" styleClass="column_salesEmployeeNumber">
+					<h:outputText value="#{vo.salesmanCode}" />
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.team']}" sortBy="#{vo.team}" filterBy="#{vo.team}" filterMatchMode="contains" styleClass="column_team">
+					<h:outputText value="#{vo.team}"/>
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.itmRemark']}" sortBy="#{vo.itemRemarks}" filterBy="#{vo.itemRemarks}" filterMatchMode="contains" styleClass="column_itemRemarks">
+					<h:outputText value="#{vo.itemRemarks}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{vo.mfr}" filterBy="#{vo.mfr}" filterMatchMode="contains" styleClass="column_mfr">
+					<h:outputText value="#{vo.mfr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.requested']}&lt;br/&gt;#{dbResource['wq.label.pn']}" sortBy="#{vo.requestedPartNumber}" filterBy="#{vo.requestedPartNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+					<h:outputText value="#{vo.requestedPartNumber}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quoted']}&lt;br/&gt;#{dbResource['wq.label.pn']}" sortBy="#{vo.quotedPartNumber}" filterBy="#{vo.quotedPartNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+					<h:outputText value="#{vo.quotedPartNumber}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}" sortBy="#{vo.requiredQty}" filterBy="#{vo.requiredQty}" filterMatchMode="contains" styleClass="column_requiredQty">
+					<h:outputText value="#{vo.requiredQty}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.target']}&lt;br/&gt;#{dbResource['wq.label.resale']}" sortBy="#{vo.targetResales}" filterBy="#{vo.targetResales}" filterMatchMode="contains" styleClass="column_targetResale">
+					<h:outputText value="#{vo.targetResales}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.reqRef']}" sortBy="#{vo.yourReference}" filterBy="#{vo.yourReference}" filterMatchMode="contains" styleClass="column_yourReference">
+					<h:outputText value="#{vo.yourReference}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.quote']}&lt;br/&gt;#{dbResource['wq.label.stage']}" sortBy="#{vo.stage}" filterBy="#{vo.stage}" filterMatchMode="contains" styleClass="column_stage">				
+					<h:outputText value="#{vo.stage}">
+				</h:outputText>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.rfq']}&lt;br/&gt;#{dbResource['wq.header.submissionDate']}" sortBy="#{vo.uploadTime}" filterBy="#{vo.uploadTime}" filterMatchMode="contains" styleClass="column_stage">
+				<h:outputText value="#{vo.uploadTimeStr}">	
+				</h:outputText>
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.form']}" sortBy="#{vo.formNumber}" filterBy="#{vo.formNumber}" filterMatchMode="contains" styleClass="column_quoteCreateDate">
+				<h:outputText value="#{vo.formNumber}">				
+				</h:outputText>
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.CopyToCS']}" sortBy="#{vo.copyToCs}" filterBy="#{vo.copyToCs}" filterMatchMode="contains" styleClass="column_copyToCs">
+					<h:outputText value="#{vo.copyToCs}"/>
+				</p:column>
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

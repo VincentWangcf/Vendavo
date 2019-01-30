@@ -1,0 +1,50 @@
+package com.avnet.emasia.webquote.utilites.web.schedule;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.RequestScoped;
+import com.avnet.emasia.webquote.utilities.bean.TaskInfoBean;
+import com.avnet.emasia.webquote.utilities.schedule.TaskScheduleManager;
+
+/**
+ * get all exist schedule task.
+ * 
+ * @author 914975
+ */
+@ManagedBean(name = "TaskList")
+@RequestScoped
+public class TaskList implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private static final Logger LOG = Logger
+			.getLogger(TaskList.class.getName());
+	@EJB
+	private TaskScheduleManager taskScheduleManager;
+	private List<TaskInfoBean> taskList = null;
+
+	/**
+	 * Creates a new instance of JobList
+	 */
+	public TaskList() {
+	}
+
+	@PostConstruct
+	public void initialize() {
+		taskList = taskScheduleManager.getTaskList();
+		LOG.info("initialize all exist task successful!");
+	}
+
+	/*
+	 * Returns a list of active Jobs/Timers
+	 */
+	public List<TaskInfoBean> getTasks() {
+		return taskList;
+	}
+}

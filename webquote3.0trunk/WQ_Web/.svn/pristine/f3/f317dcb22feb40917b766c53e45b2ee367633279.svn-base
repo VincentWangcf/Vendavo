@@ -1,0 +1,9 @@
+.ui-menu-image-english
+{
+	background: url('./../../resources/images/ufi.gif') no-repeat !important;
+
+}
+.ui-menu-image-japanese
+{
+	background: url('./../../resources/images/jfi.gif') no-repeat !important; 
+}

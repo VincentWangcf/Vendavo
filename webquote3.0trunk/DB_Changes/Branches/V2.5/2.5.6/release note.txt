@@ -1,0 +1,4 @@
+1) updated for INC0520029,added logic that filtering out the material detail if its Cost Indicator is null by damon@20160810
+2) Tough: Add log to check why MaterialSB.findMinMaterialBymfrAndPN return empty while DB have record() (INC0517696)
+3) Fix ticket INC0519059  June Guo 2016/08/10
+4) updated function ResponseInternalTransferMB.DownloadXLS by damon@20160811

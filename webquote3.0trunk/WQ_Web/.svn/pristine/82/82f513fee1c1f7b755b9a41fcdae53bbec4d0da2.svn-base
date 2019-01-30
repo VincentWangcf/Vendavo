@@ -1,0 +1,302 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+
+import com.avnet.emasia.webquote.constants.ActionEnum;
+import com.avnet.emasia.webquote.entity.ExchangeRate;
+import com.avnet.emasia.webquote.entity.Money;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.SalesCostType;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.exception.AppException;
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.quote.ejb.QuoteSB;
+import com.avnet.emasia.webquote.quote.ejb.SAPWebServiceSB;
+import com.avnet.emasia.webquote.quote.vo.QuoteItemVo;
+import com.avnet.emasia.webquote.strategy.StrategyFactory;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.common.Constants;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.web.quote.strategy.SendQuotationEmailStrategy;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+import com.sap.document.sap.soap.functions.mc_style.TableOfZquoteMsg;
+import com.sap.document.sap.soap.functions.mc_style.ZquoteMsg;
+
+@ManagedBean
+@SessionScoped
+public class ReviseFinalQuotedPriceMB implements Serializable {
+	
+	private static final long serialVersionUID = -2115128979336099333L;
+
+	private static final Logger LOG =Logger.getLogger(ReviseFinalQuotedPriceMB.class.getName());
+	
+	@EJB
+	QuoteSB quoteSB;
+	
+	@EJB
+	SAPWebServiceSB webServiceSB;
+	
+	
+	private List<QuoteItemVo> quoteItemVos;
+	
+	private List<QuoteItemVo> selectedQuoteItemVos;
+	
+	private List<QuoteItemVo> filteredQuoteItemVos;
+	
+	private boolean finished;
+	
+	@ManagedProperty(value="#{resourceMB}")
+	/** To Inject ResourceMB instance  */
+    private ResourceMB resourceMB;
+	
+	public void checkCopyQuoteItem(List<QuoteItemVo> quoteItemVos){
+		this.quoteItemVos = quoteItemVos;
+		int i = 1;
+		for(QuoteItemVo vo : quoteItemVos){
+			vo.setSeq2(i++);
+		}
+		selectedQuoteItemVos = quoteItemVos;
+	}
+
+	public void revise(){
+		
+		if(selectedQuoteItemVos.size() == 0){  
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.noRecordSelected")+" !", "")); 
+			return;
+		}
+		
+		User user  = UserInfo.getUser();
+		
+		LOG.info("Revise final quoted price. User:" + user.getEmployeeId() + " , QuoteNumber:" + selectedQuoteItemVos);		
+		
+		List<Integer> errorRows = new ArrayList<Integer>();
+		
+		List<String> errorMsgs = new ArrayList<String>();
+		
+		//DecimalFormat df = (DecimalFormat)DecimalFormat.getNumberInstance(resourceMB.getResourceLocale());
+		//df.setMaximumFractionDigits(5);
+		DecimalFormat df = new DecimalFormat("#,###,###,##0.00000"); 
+
+		for(QuoteItemVo vo : selectedQuoteItemVos){
+			QuoteItem item = vo.getQuoteItem();
+			
+			Double finalQuotationPrice = item.getFinalQuotationPrice(); 
+			Double quotedPrice = item.getQuotedPrice();
+			
+			if(finalQuotationPrice == null || finalQuotationPrice <= 0){
+				Object[] objArraay = {String.valueOf(vo.getSeq2()), finalQuotationPrice!=null ?  finalQuotationPrice.toString(): null};
+				errorMsgs.add(ResourceMB.getParameterizedString("wq.message.invalidFinalQuote", objArraay));
+				errorRows.add(vo.getSeq2());
+			} else {
+
+				if (item.isSalesCostFlag() == true && item.getSalesCostType() != null && (item.getSalesCost() != null)
+						&& (!item.getSalesCostType().name().equals(SalesCostType.NonSC))) {
+
+					if (new BigDecimal(finalQuotationPrice).compareTo(item.getSalesCost()) < 0) {
+						errorMsgs.add(ResourceMB.getText("wq.message.finalPriceGreaterEqualSC"));
+						errorRows.add(vo.getSeq2());
+					}
+				} else {
+					String resaleIndicator = item.getResaleIndicator();
+
+					if (resaleIndicator == null) {
+						resaleIndicator = "00AA";
+					}
+
+					if (resaleIndicator.trim().length() != 4) {
+						final Object[] objArraay = { String.valueOf(vo.getSeq2()), item.getResaleIndicator() };
+						errorMsgs.add(ResourceMB.getParameterizedString("wq.message.invalidResaleIndicator", objArraay));
+						errorRows.add(vo.getSeq2());
+					} else {
+
+						String lowPart = resaleIndicator.substring(0, 2);
+						String highPart = resaleIndicator.substring(2, 4);
+
+						double highPrice = 0.0;
+						double lowPrice = 0.0;
+
+						try {
+							lowPrice = quotedPrice * (1 - Double.parseDouble(lowPart) / 100);
+
+							if (highPart.equalsIgnoreCase("AA")) {
+								highPrice = 9999999999.0;
+							} else {
+								highPrice = quotedPrice * (1 + Double.parseDouble(highPart) / 100);
+							}
+
+							if (finalQuotationPrice < lowPrice || finalQuotationPrice > highPrice) {
+								final Object[] objArraay = { String.valueOf(vo.getSeq2()), String.valueOf(quotedPrice), df.format(lowPrice),
+										df.format(highPrice), resaleIndicator };
+								errorMsgs.add(ResourceMB.getParameterizedString("wq.message.finalQuotedPrice", objArraay));
+								errorRows.add(vo.getSeq2());
+							}
+
+						} catch (Exception e) {
+							final Object[] objArraay = { String.valueOf(vo.getSeq2()), item.getResaleIndicator() };
+							errorMsgs.add(ResourceMB.getParameterizedString("wq.message.invalidResaleIndicator", objArraay));
+							errorRows.add(vo.getSeq2());
+							LOG.log(Level.WARNING, "Exception in revising the price for quoted price: " + item.getQuotedQtyStr()
+									+ ", Exception message: " + MessageFormatorUtil.getParameterizedStringFromException(e));
+						}
+					}
+				}
+			}
+		}
+				
+		if(errorMsgs.size() != 0){
+			
+			StringBuffer sb = new StringBuffer();
+			for(String errorMsg : errorMsgs){
+				sb.append(errorMsg);
+				sb.append("<br/>");
+			}
+			
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText(CommonConstants.WQ_JPA_ENTITY_MSG_CHECK_MSG)+"<br/>" + sb.toString(), ""));
+			return ;
+		}				
+	
+		try{
+			for(QuoteItemVo vo : selectedQuoteItemVos){
+				QuoteItem item = vo.getQuoteItem();
+				item.setAction(ActionEnum.MYQUOTE_REVISE_FINAL_QUOTE_PRICE.name()); // add audit action 
+				//Multi Currency 201810 (whwong)
+				if (item.getFinalCurr() == null) item.setFinalCurr(item.getRfqCurr());
+				if (item.getExRateFnl() == null) {
+					ExchangeRate exRates[];
+					exRates = Money.getExchangeRate(item.getBuyCurr(), item.getFinalCurr(), item.getQuote().getBizUnit(), item.getSoldToCustomer(), new Date());						
+					
+					if (exRates[0]!=null && exRates[1]!=null) item.setExRateFnl(exRates[1].getExRateTo());
+				}
+				//andy modify 2.2
+				item.setLastUpdatedBy(user.getEmployeeId());
+				item.setLastUpdatedName(user.getName());
+				item.setLastUpdatedOn(QuoteUtil.getCurrentTime());
+				
+				String strategyKey=user.getDefaultBizUnit().getName();
+				if(item.getQuote().isdLinkFlag()){
+					strategyKey=Constants.DEFAULT;
+				}
+
+				SendQuotationEmailStrategy strategy =(SendQuotationEmailStrategy) StrategyFactory.getSingletonFactory()
+						.getStrategy(SendQuotationEmailStrategy.class, strategyKey,
+								this.getClass().getClassLoader());
+				strategy.sendQuotationEmail(strategy.genQuotationEmailVO(item.getQuote(), user));
+			}
+			
+			quoteSB.saveQuoteItems(selectedQuoteItemVos);
+		}catch (Exception e){
+			LOG.log(Level.WARNING, "Error occured when saving quote item, Exception message: "+MessageFormatorUtil.getParameterizedStringFromException(e));
+			String s = e.getMessage() + "  " +e.getCause().getMessage();
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,s,""));
+			return ;
+		}
+		
+		List<QuoteItem> items = new ArrayList<QuoteItem>();
+		for(QuoteItemVo vo : selectedQuoteItemVos){
+			items.add(vo.getQuoteItem());
+		}
+		
+		try{
+			TableOfZquoteMsg tableMsg = webServiceSB.createSAPQuote(items);
+	        List<ZquoteMsg> msgs = tableMsg.getItem();
+	        errorMsgs = new ArrayList<String>();
+	        for(ZquoteMsg msg : msgs){
+	        	if(! msg.getType().equalsIgnoreCase("S")){
+	        		errorMsgs.add(msg.getMessage());
+	        	}
+	        }			
+	        
+			if(errorMsgs.size() != 0){
+				StringBuffer sb = new StringBuffer("");
+				for(String s : errorMsgs){
+					if(sb.toString().equals("")){
+						sb.append(s);
+					}else{
+						sb.append("</br>");
+						sb.append(s);
+					}
+				}
+				ResourceMB resourceMB=(ResourceMB)FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get("resourceMB");
+				String errMessage = MessageFormatorUtil.getParameterizedString(resourceMB.getResourceLocale(), CommonConstants.WQ_WEB_FINAL_QUOTATION_PRICE_HAS_BEEN_UPDATED, sb.toString());
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, errMessage, ""));
+				LOG.info(errMessage);
+			}
+			
+		}catch(AppException e){
+			e.printStackTrace();
+			LOG.log(Level.WARNING, "Error occured when creating sap quote"+MessageFormatorUtil.getParameterizedStringFromException(e));
+			ResourceMB resourceMB=(ResourceMB)FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get("resourceMB");
+			String errMessage = MessageFormatorUtil.getParameterizedStringFromException(e, resourceMB.getResourceLocale());
+			String s = MessageFormatorUtil.getParameterizedString(resourceMB.getResourceLocale(),CommonConstants.WQ_WEB_FINAL_QUOTATION_PRICE_HAS_BEEN_UPDATED,null)+ e.getCausedBy().getMessage();
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,s,""));
+		}
+		
+		Collections.sort(selectedQuoteItemVos, new Comparator<QuoteItemVo>(){
+			public int compare(QuoteItemVo arg0, QuoteItemVo arg1) {
+				return arg0.getSeq() - arg1.getSeq();
+			}
+		});
+		
+		finished = true;					
+		quoteItemVos = selectedQuoteItemVos;		
+	}
+		
+	//Getters, Setters	
+	public List<QuoteItemVo> getQuoteItemVos() {
+		return quoteItemVos;
+	}
+
+	public void setQuoteItemVos(List<QuoteItemVo> quoteItemVos) {
+		this.quoteItemVos = quoteItemVos;
+	}
+
+	public List<QuoteItemVo> getSelectedQuoteItemVos() {
+		return selectedQuoteItemVos;
+	}
+
+	public void setSelectedQuoteItemVos(List<QuoteItemVo> selectedQuoteItemVos) {
+		this.selectedQuoteItemVos = selectedQuoteItemVos;
+	}
+	
+	public boolean isFinished() {
+		return finished;
+	}
+
+	public void setFinished(boolean finished) {
+		this.finished = finished;
+	}
+
+	public List<QuoteItemVo> getFilteredQuoteItemVos() {
+		return filteredQuoteItemVos;
+	}
+
+	public void setFilteredQuoteItemVos(List<QuoteItemVo> filteredQuoteItemVos) {
+		this.filteredQuoteItemVos = filteredQuoteItemVos;
+	}
+
+	/**
+	 * Setter for resourceMB
+	 * @param resourceMB ResourceMB
+	 * */
+	public void setResourceMB(final ResourceMB resourceMB) {
+		this.resourceMB = resourceMB;
+	}
+}
+                    

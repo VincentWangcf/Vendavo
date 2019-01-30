@@ -1,0 +1,39 @@
+
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+
+	<ui:composition>
+	<p:accordionPanel  >
+		<p:tab title="Form Header" rendered="#{myQuoteSearchMB.showFormForSales}">
+		
+
+			
+			<h:panelGrid columns="8" cellpadding="0" style="padding:0px 3px 0px 3px; width:100%">
+								
+				<h:outputText value="Form No:" style="padding:0px 3px 0px 3px"/>
+				<p:inputText value="#{myFormSearchMB.quoteVoInMyQuote.quote.formNumber}" readonly="true"/>
+				 
+				<h:outputText value="Your Refernece:" style="padding:0px 3px 0px 3px"/>
+				<p:inputText value="#{myFormSearchMB.quoteVoInMyQuote.quote.yourReference}"/>
+
+				<h:outputText value="Employee Name:" style="padding:0px 3px 0px 3px"/>
+				<p:inputText value="#{myFormSearchMB.quoteVoInMyQuote.quote.sales.name}" readonly="true"/>
+
+				<h:outputText value="Completeness:" style="padding:0px 3px 0px 3px"/>
+				<p:inputText value="#{myFormSearchMB.quoteVoInMyQuote.completed}/#{myFormSearchMB.quoteVoInMyQuote.total}" readonly="true"/>
+	
+
+			</h:panelGrid>				
+			
+			
+		</p:tab>
+	</p:accordionPanel>
+	
+	</ui:composition>
+
+</ui:composition>

@@ -1,0 +1,4022 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+
+<f:view contentType="text/html">
+	<h:head>
+		<f:facet name="first">
+			<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+			<meta content='text/html; charset=UTF-8' http-equiv="Content-Type" />
+			<meta http-equiv="Cache-Control" Content="no-cache" />
+			<meta http-equiv="Pragma" Content="no-cache" />
+			<meta http-equiv="Expires" Content="0" />
+			<title><h:outputText
+					value="#{dbResource['wq.title.webQuoteVersion']}" /></title>
+		</f:facet>
+		<f:view locale="#{userMB.user.userLocale}"></f:view>
+	</h:head>
+	<h:body>
+
+		<h:form id="form_rfqSubmission" enctype="multipart/form-data"
+			acceptcharset="UTF-8"
+			onkeypress="if (event.keyCode == 13) {document.getElementById('form_rfqSubmission:basicDetails_soldToCustomerNumber').blur(); return false; }">
+			<p:wizard widgetVar="wiz" id ="widgetPanelGridID"
+				flowListener="#{rfqSubmissionMB.onFlowProcess}" showNavBar='false'
+				onback="backButtonChange(PF('wiz').getStepIndex(PF('wiz').currentStep));"
+				onnext="nextButtonChange(PF('wiz').getStepIndex(PF('wiz').currentStep));">
+				<p:tab id="basicDetails"
+					title="1. #{dbResource['wq.header.rfqHeader']}">
+					<p:growl id="RfqSubmissionGrowl" for="RfqSubmissionGrowl_1"
+						sticky="{growlPropertyMB.getSticky()}"
+						showSummary="#{growlPropertyMB.getShowSummary()}"
+						showDetail="true" escape="#{growlPropertyMB.getEscape()}" />
+					<p:panel header="#{dbResource['wq.header.rfqHeader']}"
+						id="basicDetails_rfqDetails" style="font-size:12pt">
+						<h:panelGrid columns="22" cellpadding="0"
+							style="padding:4px 3px 4px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.region']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<p:spacer width="30" height="10" />
+							<h:selectOneMenu id="basicDetails_bizUnit"
+								value="#{rfqSubmissionMB.rfqHeader.bizUnit}"
+								disabled="#{rfqSubmissionMB.rfqHeader.disableRegion()}">
+								<f:selectItems value="#{rfqSubmissionMB.bizUnitSelectList}" />
+								<p:ajax event="change" update="@form"
+									listener="#{rfqSubmissionMB.updateBizUnit}"
+									oncomplete="stop();" global="false" onstart="start();"
+									onerror="stopWithError();" />
+							</h:selectOneMenu>
+							<p:spacer width="3" height="10" />
+							<h:outputText value="#{dbResource['wq.label.salesmanEmpCode']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<p:autoComplete id="basicDetails_salesEmployeeNumber"
+								queryDelay="300" cache="false" cacheTimeout="30000"
+								minQueryLength="3" maxResults="10"
+								value="#{rfqSubmissionMB.rfqHeader.salesEmployeeNumber}"
+								completeMethod="#{rfqSubmissionMB.autoCompleteSalesNumber}"
+								rendered="#{!rfqSubmissionMB.sales}">
+								<p:ajax event="itemSelect"
+									update=":form_rfqSubmission:cs_panel,:form_rfqSubmission:basicDetails_salesEmployeeName,:form_rfqSubmission:basicDetails_salesEmployeeNumber,:form_rfqSubmission:basicDetails_salesTeam,:form_rfqSubmission:basicDetails_copyToCs,:form_rfqSubmission:basicDetails_bizUnit,@form,uploadPanel,datatable_basicDetails_rfqSubmission"
+									listener="#{rfqSubmissionMB.updateSalesName}" />
+							</p:autoComplete>
+							<p:inputText
+								value="#{rfqSubmissionMB.rfqHeader.salesEmployeeNumber}"
+								readonly="true" rendered="#{rfqSubmissionMB.sales}"
+								style="color: black;background-color: #dddddd;" />
+
+							<h:outputText value="#{dbResource['wq.label.salesman']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<p:autoComplete id="basicDetails_salesEmployeeName"
+								queryDelay="300" cache="true" cacheTimeout="30000"
+								minQueryLength="5" maxResults="10"
+								value="#{rfqSubmissionMB.rfqHeader.salesEmployeeName}"
+								completeMethod="#{rfqSubmissionMB.autoCompleteSalesName}"
+								rendered="#{!rfqSubmissionMB.sales}">
+								<p:ajax event="itemSelect"
+									update=":form_rfqSubmission:cs_panel,:form_rfqSubmission:basicDetails_salesEmployeeNumber,:form_rfqSubmission:basicDetails_salesEmployeeName,:form_rfqSubmission:basicDetails_salesTeam,:form_rfqSubmission:basicDetails_copyToCs,:form_rfqSubmission:basicDetails_bizUnit,@form"
+									listener="#{rfqSubmissionMB.updateSalesNumber}" />
+							</p:autoComplete>
+							<p:inputText
+								value="#{rfqSubmissionMB.rfqHeader.salesEmployeeName}"
+								rendered="#{rfqSubmissionMB.sales}" readonly="true"
+								style="color: black;background-color: #dddddd;" />
+
+							<h:outputText value="#{dbResource['wq.label.team']}: "
+								style="padding:0px 3px 0px 3px" />
+							<p:inputText id="basicDetails_salesTeam"
+								value="#{rfqSubmissionMB.rfqHeader.team}"
+								styleClass="input_text_half" readonly="true"
+								rendered="#{!rfqSubmissionMB.sales}"
+								style="width:250px !important;color: black;background-color: #dddddd;" />
+							<p:inputText value="#{rfqSubmissionMB.rfqHeader.team}"
+								readonly="true" rendered="#{rfqSubmissionMB.sales}"
+								style="width:250px !important;color: black;background-color: #dddddd;" />
+
+
+
+
+
+						</h:panelGrid>
+						<h:panelGrid columns="22" cellpadding="0"
+							style="padding:4px 3px 4px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.SoldToCode']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<p:inputText id="basicDetails_soldToCustomerNumber"
+								disabled="#{rfqSubmissionMB.emptySalesMan()}"
+								title="#{rfqSubmissionMB.emptySalesManMessage()}"
+								value="#{rfqSubmissionMB.rfqHeader.soldToCustomerNumber}">
+								<p:ajax event="blur"
+									update=":form_rfqSubmission:basicDetails_customerType,:form_rfqSubmission:basicDetails_soldToCustomerNumber,:form_rfqSubmission:basicDetails_soldToCustomerName,:form_rfqSubmission:basicDetails_chinese_soldToCustomerName,:form_rfqSubmission"
+									listener="#{rfqSubmissionMB.updateSoldToCustomerName}" />
+							</p:inputText>
+
+							<h:outputText value="#{dbResource['wq.label.SoldToParty']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<p:inputText id="basicDetails_soldToCustomerName"
+								disabled="#{rfqSubmissionMB.emptySalesMan()}"
+								title="#{rfqSubmissionMB.emptySalesManMessage()}"
+								value="#{rfqSubmissionMB.rfqHeader.soldToCustomerName}"
+								readonly="true" style="color: black;background-color: #dddddd;">
+								<p:tooltip id="toolForBasicDetails_soldToCustomerName"
+									for="basicDetails_soldToCustomerName"
+									value="#{rfqSubmissionMB.rfqHeader.soldToCustomerName}" />
+							</p:inputText>
+							<p:commandLink id="soldToCodeSearchIcon"
+								disabled="#{rfqSubmissionMB.emptySalesMan()}"
+								action="#{rfqSubmissionMB.changeToSoldToCodeSearch}"
+								update=":form_rfqSubmission_customer:customerSearch_panel"
+								oncomplete="PF('customer_dialog').show(); handleResizeDialog(PF('customer_dialog'));">
+								<h:graphicImage url="./../resources/images/icon_magnifier.png"
+									styleClass="iconLink"
+									title="#{rfqSubmissionMB.emptySalesManMessage()}" />
+							</p:commandLink>
+
+							<h:outputText value="" style="padding:0px 3px 0px 3px" />
+							<p:commandButton value="#{dbResource['wq.label.crtNewCustmr']}"
+								disabled="#{!rfqSubmissionMB.createProspectiveCustomerButtonDisplay or rfqSubmissionMB.emptySalesMan()}"
+								title="#{rfqSubmissionMB.emptySalesManMessage()}"
+								actionListener="#{rfqSubmissionMB.updateNewProspectiveCustomer}"
+								oncomplete="PF('newProspectiveCustomer_dialog').show()"
+								update=":form_rfqSubmission:confirmation_dialog,:form_rfqSubmission:newProspectiveCustomer_dialog,:form_rfqSubmission:newProspectiveCustomer_customerName,:form_rfqSubmission:newProspectiveCustomer_country,:form_rfqSubmission:newProspectiveCustomer_city,:form_rfqSubmission:newProspectiveCustomer_salesOrg,:form_rfqSubmission:newProspectiveCustomer_address"
+								rendered="#{!rfqSubmissionMB.qcp}" />
+							<p:spacer width="20" height="10" />
+							<h:outputText value="#{dbResource['wq.label.chineseCustName']}:"
+								style="padding:0px 3px 0px 3px" />
+							<p:inputText id="basicDetails_chinese_soldToCustomerName"
+								disabled="#{rfqSubmissionMB.emptySalesMan()}"
+								title="#{rfqSubmissionMB.emptySalesManMessage()}"
+								value="#{rfqSubmissionMB.rfqHeader.chineseSoldToCustomerName}" />
+
+							<h:outputText value="#{dbResource['wq.label.custmrType']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<h:selectOneMenu id="basicDetails_customerType"
+								disabled="#{rfqSubmissionMB.emptySalesMan()}"
+								title="#{rfqSubmissionMB.emptySalesManMessage()}"
+								value="#{rfqSubmissionMB.rfqHeader.customerType}">
+								<f:selectItems value="#{rfqSubmissionMB.customerTypeSelectList}" />
+							</h:selectOneMenu>
+
+						</h:panelGrid>
+						<h:panelGrid id="customerPanelGrid" columns="18" cellpadding="0"
+							style="padding:4px 3px 4px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.ShipToCode']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<p:spacer width="7" height="10" />
+							<p:autoComplete id="basicDetails_shipToCustomerNumber"
+								disabled="#{rfqSubmissionMB.emptySalesMan()}"
+								title="#{rfqSubmissionMB.emptySalesManMessage()}"
+								queryDelay="300" cache="true" cacheTimeout="30000"
+								minQueryLength="3" maxResults="10"
+								value="#{rfqSubmissionMB.rfqHeader.shipToCustomerNumber}"
+								completeMethod="#{rfqSubmissionMB.autoCompleteShipToCustomerNumberLabelList}">
+								<p:ajax event="itemSelect"
+									update=":form_rfqSubmission:basicDetails_shipToCustomerName,:form_rfqSubmission:basicDetails_shipToCustomerNumber,:form_rfqSubmission:customerPanelGrid"
+									listener="#{rfqSubmissionMB.updateShipToCustomerName}" />
+							</p:autoComplete>
+
+
+							<h:outputText value="#{dbResource['wq.label.ShipToParty']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<p:autoComplete id="basicDetails_shipToCustomerName"
+								disabled="#{rfqSubmissionMB.emptySalesMan()}"
+								title="#{rfqSubmissionMB.emptySalesManMessage()}"
+								queryDelay="300" cache="true" cacheTimeout="30000"
+								minQueryLength="5" maxResults="10"
+								value="#{rfqSubmissionMB.rfqHeader.shipToCustomerName}"
+								completeMethod="#{rfqSubmissionMB.autoCompleteShipToCustomerNameLabelList}"
+								focus="formAttachmentName">
+								<p:ajax event="itemSelect"
+									update=":form_rfqSubmission:basicDetails_shipToCustomerName,:form_rfqSubmission:basicDetails_shipToCustomerNumber,:form_rfqSubmission:customerPanelGrid"
+									listener="#{rfqSubmissionMB.updateShipToCustomerNumber}" />
+							</p:autoComplete>
+							<p:tooltip id="toolForBasicDetails_shipToCustomerName"
+								for="basicDetails_shipToCustomerName"
+								value="#{rfqSubmissionMB.rfqHeader.shipToCustomerName}" />
+							<p:commandLink
+								action="#{rfqSubmissionMB.changeToShipToCodeSearch}"
+								disabled="#{rfqSubmissionMB.emptySalesMan()}"
+								update=":form_rfqSubmission_customer:customerSearch_panel"
+								oncomplete="PF('customer_dialog').show()">
+								<h:graphicImage url="./../resources/images/icon_magnifier.png"
+									styleClass="iconLink"
+									title="#{rfqSubmissionMB.emptySalesManMessage()}" />
+							</p:commandLink>
+
+							<h:outputText value="#{dbResource['wq.label.EndCustomerCode']}:"
+								style="padding:0px 3px 0px 3px" />
+							<p:autoComplete id="basicDetails_endCustomerNumber"
+								disabled="#{rfqSubmissionMB.emptySalesMan()}"
+								title="#{rfqSubmissionMB.emptySalesManMessage()}"
+								queryDelay="300" cache="true" cacheTimeout="30000"
+								minQueryLength="3" maxResults="10"
+								value="#{rfqSubmissionMB.rfqHeader.endCustomerNumber}" size="10"
+								completeMethod="#{rfqSubmissionMB.autoCompleteEndCustomerNumberLabelList}">
+								<p:ajax event="itemSelect"
+									update=":form_rfqSubmission:basicDetails_endCustomerName,:form_rfqSubmission:basicDetails_endCustomerNumber,:form_rfqSubmission:customerPanelGrid"
+									listener="#{rfqSubmissionMB.updateEndCustomerName}" />
+							</p:autoComplete>
+
+							<h:outputText value="#{dbResource['wq.label.endCust']}:"
+								style="padding:0px 3px 0px 3px" />
+							<p:autoComplete id="basicDetails_endCustomerName"
+								disabled="#{rfqSubmissionMB.emptySalesMan()}"
+								title="#{rfqSubmissionMB.emptySalesManMessage()}"
+								queryDelay="300" cache="true" cacheTimeout="30000"
+								minQueryLength="5" maxResults="10"
+								value="#{rfqSubmissionMB.rfqHeader.endCustomerName}"
+								completeMethod="#{rfqSubmissionMB.autoCompleteEndCustomerNameLabelList}">
+								<p:ajax event="itemSelect"
+									update=":form_rfqSubmission:basicDetails_endCustomerName,:form_rfqSubmission:toolForBasicDetails_endCustomerName,:form_rfqSubmission:customerPanelGrid"
+									listener="#{rfqSubmissionMB.updateEndCustomerNumber}" />
+								<p:ajax event="change"
+									update=":form_rfqSubmission:basicDetails_endCustomerName,:form_rfqSubmission:basicDetails_endCustomerNumber,:form_rfqSubmission:customerPanelGrid"
+									listener="#{rfqSubmissionMB.updateEndCustomerNumber}" />
+							</p:autoComplete>
+							<p:tooltip id="toolForBasicDetails_endCustomerName"
+								for="basicDetails_endCustomerName"
+								value="#{rfqSubmissionMB.rfqHeader.endCustomerName}" />
+							<p:commandLink
+								action="#{rfqSubmissionMB.changeToEndCustomerCodeSearch}"
+								disabled="#{rfqSubmissionMB.emptySalesMan()}"
+								title="#{rfqSubmissionMB.emptySalesManMessage()}"
+								update=":form_rfqSubmission_customer:customerSearch_panel"
+								oncomplete="PF('customer_dialog').show();stop();" global="false"
+								onstart="start();" onerror="stopWithError();">
+								<h:graphicImage url="./../resources/images/icon_magnifier.png"
+									styleClass="iconLink" />
+							</p:commandLink>
+
+							<h:outputText value="" style="padding:0px 3px 0px 3px" />
+							<p:commandButton value="#{dbResource['wq.label.crtEndCust']}"
+								disabled="#{!rfqSubmissionMB.createProspectiveCustomerButtonDisplay or rfqSubmissionMB.emptySalesMan() }"
+								title="#{rfqSubmissionMB.emptySalesManMessage()}"
+								actionListener="#{rfqSubmissionMB.updateNewProspectiveEndCustomer}"
+								oncomplete="PF('newProspectiveCustomer_dialog').show()"
+								update=":form_rfqSubmission:confirmation_dialog,:form_rfqSubmission:newProspectiveCustomer_dialog,:form_rfqSubmission:newProspectiveCustomer_customerName,:form_rfqSubmission:newProspectiveCustomer_country,:form_rfqSubmission:newProspectiveCustomer_city,:form_rfqSubmission:newProspectiveCustomer_salesOrg,:form_rfqSubmission:newProspectiveCustomer_address"
+								rendered="#{!rfqSubmissionMB.qcp}" />
+							<p:spacer width="20" height="10" />
+
+
+
+						</h:panelGrid>
+						<h:panelGrid columns="18" cellpadding="0"
+							style="padding:4px 3px 4px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.segment']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<p:spacer width="22" height="10" />
+							<h:selectOneMenu id="basicDetails_enquirySegment"
+								value="#{rfqSubmissionMB.rfqHeader.enquirySegment}"
+								style="width:100px">
+								<f:selectItems
+									value="#{rfqSubmissionMB.enquirySegmentSelectList}" />
+							</h:selectOneMenu>
+							<p:spacer width="10" height="10" />
+							<h:outputText value="#{dbResource['wq.label.projectName']}:"
+								style="padding:0px 3px 0px 3px" />
+							<p:autoComplete id="basicDetails_projectName" queryDelay="300"
+								cache="true" cacheTimeout="30000" minQueryLength="5"
+								maxResults="10" value="#{rfqSubmissionMB.rfqHeader.projectName}"
+								dropdown="true"
+								completeMethod="#{rfqSubmissionMB.autoCompleteProjectNameList}">
+							</p:autoComplete>
+							<p:spacer width="15" height="10" />
+							<h:outputText value="#{dbResource['wq.label.app']}:"
+								style="padding:0px 3px 0px 3px;" />
+							<p:autoComplete id="basicDetails_application" queryDelay="300"
+								cache="true" cacheTimeout="30000" minQueryLength="5"
+								value="#{rfqSubmissionMB.rfqHeader.application}" dropdown="true"
+								completeMethod="#{rfqSubmissionMB.autoCompleteApplicationList}"
+								size="38" scrollHeight="200" style="width:220px">
+							</p:autoComplete>
+							<p:spacer width="15" height="10" />
+							<h:outputText value="#{dbResource['wq.label.designRegion']}:"
+								style="padding:0px 3px 0px 3px" />
+							<p:selectOneMenu id="basicDetails_designRegion"
+								value="#{rfqSubmissionMB.rfqHeader.designRegion}"
+								editable="false" style="width:100px">
+								<f:selectItems value="#{rfqSubmissionMB.designRegionSelectList}" />
+								<f:ajax event="change"
+									listener="#{rfqSubmissionMB.rfqHeader.setDesignLocation('')}"
+									render="basicDetails_designLocation" />
+							</p:selectOneMenu>
+							<p:spacer width="15" height="10" />
+							<h:outputText value="#{dbResource['wq.label.designLoc']}:"
+								style="padding:0px 3px 0px 3px" />
+							<!-- <p:selectOneMenu id="basicDetails_designLocation" value="#{rfqSubmissionMB.rfqHeader.designLocation}" editable="true" style="width:200px">
+								<f:selectItems value="#{rfqSubmissionMB.designLocationSelectList}" />
+							</p:selectOneMenu> -->
+
+							<p:autoComplete id="basicDetails_designLocation"
+								value="#{rfqSubmissionMB.rfqHeader.designLocation}"
+								editable="true" queryDelay="300" cache="true" minQueryLength="1"
+								size="38" scrollHeight="200" autocomplete="true" dropdown="true"
+								completeMethod="#{rfqSubmissionMB.designRegionOnchange}">
+								<f:attribute name="region"
+									value="#{rfqSubmissionMB.rfqHeader.designRegion}" />
+							</p:autoComplete>
+							<!--  
+							<p:selectOneMenu id="basicDetails_application" value="#{rfqSubmissionMB.rfqHeader.application}" editable="true">
+								<f:selectItems value="#{rfqSubmissionMB.applicationSelectList}" />
+							</p:selectOneMenu>
+                            -->
+						</h:panelGrid>
+
+						<h:panelGrid columns="25" cellpadding="0"
+							style="margin-top:8px; padding:4px 3px 4px 3px;">
+
+
+							<h:outputText value="#{dbResource['wq.label.ppSchedule']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<p:spacer width="12" height="10" />
+							<h:selectOneMenu id="basicDetails_ppSchedule"
+								value="#{rfqSubmissionMB.rfqHeader.ppSchedule}">
+								<f:selectItems value="#{rfqSubmissionMB.ppScheduleSelectList}" />
+							</h:selectOneMenu>
+
+							<p:spacer width="15" height="10" />
+							<h:outputText value="#{dbResource['wq.label.MpSchedule']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<h:selectOneMenu id="basicDetails_mpSchedule"
+								value="#{rfqSubmissionMB.rfqHeader.mpSchedule}">
+								<f:selectItems value="#{rfqSubmissionMB.mpScheduleSelectList}" />
+							</h:selectOneMenu>
+							<p:spacer width="15" height="10" />
+							<h:outputText value="#{dbResource['wq.label.QuoteType']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<h:selectOneMenu id="basicDetails_quoteType"
+								value="#{rfqSubmissionMB.rfqHeader.quoteType}">
+								<f:selectItems value="#{rfqSubmissionMB.quoteTypeList}" />
+							</h:selectOneMenu>
+							<p:spacer width="15" height="10" />
+							<h:outputText value="#{dbResource['wq.label.loa']}:"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<p:selectBooleanCheckbox value="#{rfqSubmissionMB.rfqHeader.loa}">
+							</p:selectBooleanCheckbox>
+							<p:spacer width="15" height="10" />
+							<h:outputText value="#{dbResource['wq.label.DesignInCat']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<h:selectOneMenu id="basicDetails_designInCat"
+								value="#{rfqSubmissionMB.rfqHeader.designInCat}">
+								<f:selectItems value="#{rfqSubmissionMB.designInCatList}" />
+							</h:selectOneMenu>
+							<p:spacer width="30" height="10" />
+							<h:outputText value="#{dbResource['wq.label.refExchCurr']}: "
+								escape="false" />
+							<h:selectOneMenu id="header_Rfq_Currency"
+								value="#{rfqSubmissionMB.rfqHeader.rfqCurr}">
+								<f:selectItems value="#{rfqSubmissionMB.exCurrencyList}" />
+								<p:ajax event="change"
+											update=":form_rfqSubmission:header_DollarLink"
+											listener="#{rfqSubmissionMB.updateRfqCurr}" />
+							</h:selectOneMenu>
+						</h:panelGrid>
+
+						<h:panelGrid columns="15" cellpadding="0"
+							style="padding:4px 3px 4px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.reqRef']}:"
+								style="padding:0px 3px 0px 3px" />
+							<p:inputText value="#{rfqSubmissionMB.rfqHeader.yourReference}" />
+							<p:spacer width="10" height="10" />
+							<h:outputText value="#{dbResource['wq.label.CopyToCS']}:"
+								style="padding:0px 3px 0px 3px" />
+							<p:inputText id="basicDetails_copyToCs"
+								value="#{rfqSubmissionMB.rfqHeader.copyToCs}" readonly="true"
+								style="color: black;background-color: #dddddd;" />
+							<p:commandLink update=":form_rfqSubmission:basicDetails_copyToCs"
+								oncomplete="PF('copyToCs_dialog').show()">
+								<h:graphicImage url="./../resources/images/icon_magnifier.png"
+									styleClass="iconLink" />
+							</p:commandLink>
+							<p:spacer width="10" height="10" />
+							<h:outputText value="#{dbResource['wq.label.rfqAttachment']}:"
+								style="padding:0px 3px 0px 3px" />
+							<p:fileUpload label="#{dbResource['wq.button.chooseFile']}"
+								value="#{rfqSubmissionMB.formAttachment}" mode="simple"
+								skinSimple="true" />
+							<p:commandButton value="#{dbResource['wq.button.upload']}"
+								icon="ui-icon-circle-check"
+								actionListener="#{rfqSubmissionMB.uploadFormAttachment}"
+								oncomplete="PrimeFaces.monitorDownload(start, stop)"
+								ajax="false" />
+ 
+							<p:spacer width="5" height="10" />
+							<p:commandLink id="headerAttIcon"
+								update=":form_rfqSubmission:attachment_form_panel"
+								actionListener="#{rfqSubmissionMB.updateFormAttachment()}"
+								oncomplete="PF('attachment_list_form_dialog').show()"
+								rendered="#{rfqSubmissionMB.rfqHeader.hasAttach}"
+								style="padding:0px 3px 0px 3px">
+								<h:graphicImage url="./../resources/images/ic_document.png"
+									styleClass="iconLink" />
+							</p:commandLink>
+
+							<h:outputText id="formAttachmentName" value="" />
+							
+							<p:spacer width="86" height="10"  />
+							<h:outputText rendered="#{rfqSubmissionMB.isShowDLink()}" value="#{dbResource['wq.label.dollarLink']}:"
+								style="padding:0px 3px 0px 3px" />
+								<p:selectBooleanCheckbox
+									id="header_DollarLink"
+									rendered="#{rfqSubmissionMB.isShowDLink()}"
+									value="#{rfqSubmissionMB.rfqHeader.dLinkFlag}">
+									<p:ajax event="change"
+											update=":form_rfqSubmission:header_Rfq_Currency"
+											listener="#{rfqSubmissionMB.updateDollarLinkFlag}" />
+								</p:selectBooleanCheckbox>
+						</h:panelGrid>
+
+						<h:panelGrid columns="4" cellpadding="0"
+							style="padding:4px 3px 4px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.remark']}:"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<p:spacer width="33" height="10" />
+							<p:inputTextarea value="#{rfqSubmissionMB.rfqHeader.remarks}"
+								rows="3" cols="195" />
+
+						</h:panelGrid>
+						<f:facet name="actions">
+							<div style="float: right;">
+								<p:commandLink id="basicDetails_save"
+									actionListener="#{rfqSubmissionMB.saveDraft}"
+									rendered="#{!rfqSubmissionMB.qcp}"
+									update=":form_rfqSubmission:datatable_basicDetails_rfqSubmission,:form_rfqSubmission:basicDetails_rfqDetails"
+									global="false" onstart="start();" oncomplete="stop();"
+									onerror="stopWithError();">
+									<h:graphicImage url="./../resources/images/icon_save.gif"
+										styleClass="iconLink" />
+								</p:commandLink>
+							</div>
+						</f:facet>
+					</p:panel>
+
+					<p:panel id="uploadPanel"
+						header="#{dbResource['wq.header.upldBatchRFQ']}">
+
+						<h:panelGrid columns="5" cellpadding="0"
+							style="padding:4px 3px 4px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.rfqBatchFile']}:"
+								style="padding:0px 3px 0px 3px" />
+							<p:fileUpload label="#{dbResource['wq.button.chooseFile']}"
+								value="#{rfqSubmissionMB.rfqExcel}"
+								allowTypes="/(\.|\/)(xls|xlsx)$/" mode="simple"
+								skinSimple="true" />
+							<p:commandButton id="uploadButton"
+								disabled="#{rfqSubmissionMB.emptySalesMan()}"
+								title="#{rfqSubmissionMB.emptySalesManMessage()}"
+								value="#{dbResource['wq.button.upload']}"
+								icon="ui-icon-circle-check"
+								update=":form_rfqSubmission:datatable_basicDetails_rfqSubmission"
+								actionListener="#{rfqSubmissionMB.uploadRfqBatchFile}"
+								onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false" />
+							<p:commandLink
+								value="#{dbResource['wq.button.downloadWebQForm']}"
+								oncomplete="PrimeFaces.monitorDownload(start, stop)"
+								ajax="false">
+								<p:fileDownload value="#{rfqSubmissionMB.rfqTemplate}" />
+							</p:commandLink>
+						</h:panelGrid>
+					</p:panel>
+
+
+					<p:panel header="#{dbResource['wq.header.rfqItems']}">
+						<p:dataTable var="basicDetails_rfqItem"
+							value="#{rfqSubmissionMB.rfqItems}" rowIndexVar="rowIndex"
+							rowKey="#{basicDetails_rfqItem.itemNumber}"
+							id="datatable_basicDetails_rfqSubmission" paginator="true"
+							rows="5" rowsPerPageTemplate="5,10,15" paginatorPosition="top"
+							editable="true" editMode="cell" scrollable="true"
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+
+							<p:column headerText="#{dbResource['wq.label.no']}"
+								id="rowNumber" styleClass="column_icon">
+							        #{basicDetails_rfqItem.itemNumber}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.bmtAQ']}"
+								sortBy="#{basicDetails_rfqItem.bmtCheckedFlag}"
+								filterBy="#{basicDetails_rfqItem.bmtCheckedFlag}"
+								id="basicDetails_bmtCheckedFlag"
+								styleClass="column_specialPriceIndicator">
+								<p:selectBooleanCheckbox
+									id="select_id_basicDetails_bmtCheckedFlag"
+									value="#{basicDetails_rfqItem.bmtCheckedFlag}">
+									<p:ajax event="change"
+										update="select_id_basicDetails_bmtCheckedFlag"
+										listener="#{rfqSubmissionMB.bmtadFlagValidation(basicDetails_rfqItem.itemNumber,'RfqSubmissionGrowl','RfqSubmissionGrowl_1')}" />
+								</p:selectBooleanCheckbox>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.spr']}"
+								sortBy="#{basicDetails_rfqItem.specialPriceIndicator}"
+								filterBy="#{basicDetails_rfqItem.specialPriceIndicator}"
+								id="basicDetails_specialPriceIndicator"
+								styleClass="column_specialPriceIndicator" style="align:left">
+								<f:facet name="header">
+									<h:outputText value="#{dbResource['wq.label.spr']}" />
+									<br />
+									<p:selectBooleanCheckbox id="select_id_basicDetails_all_spr"
+										value="#{rfqSubmissionMB.selectedAllSprIt}">
+										<p:ajax event="change"
+											update=":form_rfqSubmission:datatable_basicDetails_rfqSubmission"
+											listener="#{rfqSubmissionMB.selectOrDeslectAllSpr}" />
+									</p:selectBooleanCheckbox>
+								</f:facet>
+								<p:selectBooleanCheckbox
+									id="select_id_basicDetails_specialPriceIndicator"
+									value="#{basicDetails_rfqItem.specialPriceIndicator}">
+								</p:selectBooleanCheckbox>
+
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.mfr']}&#042;"
+								sortBy="#{basicDetails_rfqItem.mfr}"
+								filterBy="#{basicDetails_rfqItem.mfr}" id="basicDetails_mfr"
+								styleClass="column_mfr editCell tdmandatoryvalue">
+								<h:selectOneMenu id="mfr_in" value="#{basicDetails_rfqItem.mfr}"
+									style="width:80px">
+									<f:selectItems value="#{rfqSubmissionMB.mfrSelectList}" />
+									<p:ajax event="change"
+										update="mfr_in,requiredPartNumber_o,requiredPartNumber_in,validLink,basicDetails_mpq,basicDetails_moq,basicDetails_leadTime,sapPartNumber_in"
+										listener="#{rfqSubmissionMB.updateSelectedRfqItem(basicDetails_rfqItem.itemNumber)}" />
+								</h:selectOneMenu>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.requested']}&lt;br/&gt;#{dbResource['wq.label.pn']}&#042;"
+								sortBy="#{basicDetails_rfqItem.requiredPartNumber}"
+								filterBy="#{basicDetails_rfqItem.requiredPartNumber}"
+								id="basicDetails_requiredPartNumber"
+								styleClass="column_fullMfrPart editCell tdmandatoryvalue">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="requiredPartNumber_o"
+											value="#{basicDetails_rfqItem.requiredPartNumber}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:autoComplete
+											valueChangeListener="#{rfqSubmissionMB.refreshSapPartNumber(basicDetails_rfqItem.itemNumber)}"
+											id="requiredPartNumber_in" queryDelay="10" cache="true"
+											cacheTimeout="30000" minQueryLength="5" maxResults="10"
+											label="requested P/N"
+											value="#{basicDetails_rfqItem.requiredPartNumber}"
+											completeMethod="#{rfqSubmissionMB.autoCompletePartList}"
+											size="35">
+											<p:ajax event="itemSelect"
+												process=":form_rfqSubmission:basicDetails_rfqDetails,@this"
+												update=":form_rfqSubmission:datatable_basicDetails_rfqSubmission"
+												listener="#{rfqSubmissionMB.validateSelectedRfq(basicDetails_rfqItem.itemNumber)}" />
+										</p:autoComplete>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column styleClass="column_icon">
+								<p:commandLink oncomplete="PF('validation_dialog').show();"
+									actionListener="#{rfqSubmissionMB.updateItemNumberForSearchPart(basicDetails_rfqItem.itemNumber)}"
+									update=":form_rfqSubmission_partNumber:validation_dialog">
+									<h:graphicImage url="./../resources/images/icon_magnifier.png"
+										styleClass="iconLink" />
+								</p:commandLink>
+								<p:cellEditor>
+									<f:facet name="output">
+										<p:outputLabel value="" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText value="" readonly="true"
+											style="width:0px; height:0px" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.sap']}&lt;br/&gt;#{dbResource['wq.label.pn']}"
+								sortBy="#{basicDetails_rfqItem.sapPartNumber}"
+								filterBy="#{basicDetails_rfqItem.sapPartNumber}"
+								id="basicDetails_sapPartNumber"
+								style="width:170px;font-weight:bold;">
+								<h:selectOneMenu id="sapPartNumber_in"
+									value="#{basicDetails_rfqItem.sapPartNumber}"
+									style="width:160px">
+									<f:selectItems
+										value="#{rfqSubmissionMB.getSapPartNumberSelectList(basicDetails_rfqItem.key4SapPartNumberSelectedMap)}" />
+								</h:selectOneMenu>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.valid']}?"
+								sortBy="#{basicDetails_rfqItem.validPartNumber}"
+								styleClass="column_icon">
+								<p:panelGrid style="border-style: hidden !important;"
+									id="validLink">
+									<p:row style="border-style: hidden !important;">
+										<p:column style="border-style: hidden !important;">
+											<h:graphicImage
+												url="./../resources/images/icon_red_exclamation.png"
+												rendered="#{basicDetails_rfqItem.statusColor == 3}" />
+											<h:graphicImage url="./../resources/images/icon_warn.jpg"
+												rendered="#{basicDetails_rfqItem.statusColor == 2}" />
+											<h:graphicImage url="./../resources/images/icon_tick.png"
+												rendered="#{basicDetails_rfqItem.statusColor == 1  and basicDetails_rfqItem.requiredPartNumber != null and basicDetails_rfqItem.requiredPartNumber != ''}" />
+										</p:column>
+									</p:row>
+								</p:panelGrid>
+								<p:cellEditor>
+									<f:facet name="output">
+										<p:outputLabel value="" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText value="" readonly="true"
+											style="width:0px; height:0px" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.MPQ']}"
+								sortBy="#{basicDetails_rfqItem.mpq}"
+								filterBy="#{basicDetails_rfqItem.mpq}"
+								styleClass="column_mpq readOnlyCell">
+
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="basicDetails_mpq"
+											value="#{rfqSubmissionMB.convertNumber(basicDetails_rfqItem.mpq)}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText value="" readonly="true"
+											style="width:0px; height:0px" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.moq']}"
+								sortBy="#{basicDetails_rfqItem.moq}"
+								filterBy="#{basicDetails_rfqItem.moq}"
+								styleClass="column_moq readOnlyCell">
+
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="basicDetails_moq"
+											value="#{rfqSubmissionMB.convertNumber(basicDetails_rfqItem.moq)}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText value="" readonly="true"
+											style="width:0px; height:0px" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.lead']}&lt;br/&gt;#{dbResource['wq.label.time']}"
+								sortBy="#{basicDetails_rfqItem.leadTime}"
+								filterBy="#{basicDetails_rfqItem.leadTime}"
+								styleClass="column_leadTime readOnlyCell">
+
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="basicDetails_leadTime"
+											value="#{basicDetails_rfqItem.leadTime}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText value="" readonly="true"
+											style="width:0px; height:0px" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}&#042;"
+								sortBy="#{basicDetails_rfqItem.requiredQty}"
+								filterBy="#{basicDetails_rfqItem.requiredQty}"
+								id="basicDetails_requiredQty"
+								styleClass="column_requiredQty editCell tdmandatoryvalue">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="basicDetails_input_requiredQty_out"
+											value="#{rfqSubmissionMB.convertNumber(basicDetails_rfqItem.requiredQty)}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="basicDetails_input_requiredQty_in"
+											value="#{basicDetails_rfqItem.requiredQty}"
+											styleClass="input_text"
+											onkeyup="updateRequiredQty(#{rowIndex})" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.EAU']}"
+								sortBy="#{basicDetails_rfqItem.eau}"
+								filterBy="#{basicDetails_rfqItem.eau}" id="basicDetails_eau"
+								styleClass="column_eau editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="basicDetails_input_eau_out"
+											value="#{rfqSubmissionMB.convertNumber(basicDetails_rfqItem.eau)}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="basicDetails_input_eau_in"
+											value="#{basicDetails_rfqItem.eau}" styleClass="input_text"
+											onkeyup="updateEau(#{rowIndex})" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+<!-- 			              <p:column
+								headerText="#{dbResource['wq.label.rfqCurr']}&#042;"
+								sortBy="#{basicDetails_rfqItem.rfqCurr}"
+								filterBy="#{basicDetails_rfqItem.rfqCurr}"
+								id="basicDetails_rfqCurr"
+								styleClass="column_mfr editCells tdmandatoryvalue">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{basicDetails_rfqItem.rfqCurr}" />
+									</f:facet>
+									<f:facet name="input">
+										<h:selectOneMenu id="basicDetails_input_rfqCurr"
+											value="#{basicDetails_rfqItem.rfqCurr}">
+											<f:selectItems value="#{rfqSubmissionMB.exCurrencyList}" />
+										</h:selectOneMenu>
+									</f:facet>
+								</p:cellEditor>
+							</p:column> -->
+							<p:column
+								headerText="#{dbResource['wq.label.trgResale']}&lt;br/&gt;(#{dbResource['wq.label.unitPrice']})"
+								sortBy="#{basicDetails_rfqItem.targetResale}"
+								filterBy="#{basicDetails_rfqItem.targetResale}"
+								id="basicDetails_targetResale"
+								styleClass="column_targetResale editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="basicDetails_input_targetResale_out"
+											value="#{basicDetails_rfqItem.targetResale}">
+											<f:convertNumber minFractionDigits="5" pattern="#,##0.00000" />
+										</h:outputText>
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="basicDetails_input_targetResale_in"
+											value="#{basicDetails_rfqItem.targetResale}"
+											styleClass="input_text"
+											onkeyup="updateTargetResale(#{rowIndex})"
+											onblur="validateTargetResale(#{rowIndex})">
+										</p:inputText>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.DesignInCat']}&#042;"
+								sortBy="#{basicDetails_rfqItem.designInCat}"
+								filterBy="#{basicDetails_rfqItem.designInCat}"
+								id="basicDetails_designInCat"
+								styleClass="column_designInCat editCells tdmandatoryvalue">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{basicDetails_rfqItem.designInCat}" />
+									</f:facet>
+									<f:facet name="input">
+										<h:selectOneMenu id="basicDetails_input_designInCat"
+											value="#{basicDetails_rfqItem.designInCat}">
+											<f:selectItems value="#{rfqSubmissionMB.designInCatList}" />
+										</h:selectOneMenu>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.drmsID']}"
+								sortBy="#{basicDetails_rfqItem.drmsNumber}"
+								filterBy="#{basicDetails_rfqItem.drmsNumber}"
+								id="basicDetails_drmsNumber"
+								styleClass="column_drmsNumber editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{basicDetails_rfqItem.drmsNumber}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="basicDetails_input_drmsNumber"
+											value="#{basicDetails_rfqItem.drmsNumber}"
+											styleClass="input_text" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.mfrDR']}#"
+								sortBy="#{basicDetails_rfqItem.supplierDrNumber}"
+								filterBy="#{basicDetails_rfqItem.supplierDrNumber}"
+								id="basicDetails_supplierDrNumber"
+								styleClass="column_supplierDrNumber editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{basicDetails_rfqItem.supplierDrNumber}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="basicDetails_input_supplierDrNumber"
+											value="#{basicDetails_rfqItem.supplierDrNumber}"
+											styleClass="input_text" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.competitor']}&lt;br/&gt;#{dbResource['wq.label.information']}"
+								sortBy="#{basicDetails_rfqItem.competitorInformation}"
+								filterBy="#{basicDetails_rfqItem.competitorInformation}"
+								id="basicDetails_competitorInformation"
+								styleClass="column_competitorInformation editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText
+											value="#{basicDetails_rfqItem.competitorInformation}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="basicDetails_input_competitorInformation"
+											value="#{basicDetails_rfqItem.competitorInformation}" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+
+							<p:column
+								headerText="#{dbResource['wq.label.item']}&lt;br/&gt;#{dbResource['wq.label.remarks']}"
+								sortBy="#{basicDetails_rfqItem.itemRemarks}"
+								filterBy="#{basicDetails_rfqItem.itemRemarks}"
+								id="basicDetails_itemRemarks"
+								styleClass="column_itemRemarks editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{basicDetails_rfqItem.itemRemarks}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="basicDetails_input_itemRemarks"
+											value="#{basicDetails_rfqItem.itemRemarks}" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.attachment']}"
+								id="basicDetails_attachmentId"
+								styleClass="column_attachmentId editCell">
+								<p:commandLink
+									actionListener="#{rfqSubmissionMB.updateItemNumberForAttachment(basicDetails_rfqItem.itemNumber)}"
+									oncomplete="PF('attachment_upload_dialog').show()">
+									<h:graphicImage url="./../resources/images/icon_upload.png"
+										styleClass="iconLink" />
+								</p:commandLink>
+								<p:commandLink update=":form_rfqSubmission:attachment_panel"
+									actionListener="#{rfqSubmissionMB.updateItemNumberForAttachment(basicDetails_rfqItem.itemNumber)}"
+									oncomplete="PF('attachment_list_dialog').show()"
+									rendered="#{basicDetails_rfqItem.hasAttach}"
+									style="padding:0px 3px 0px 3px">
+									<h:graphicImage url="./../resources/images/ic_document.png"
+										styleClass="iconLink" />
+								</p:commandLink>
+								<p:cellEditor>
+									<f:facet name="output">
+										<p:outputLabel value="" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText value="" readonly="true"
+											style="width:0px; height:0px" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+
+							<p:column
+								headerText="#{dbResource['wq.label.SoldToParty']}&#042;"
+								sortBy="#{basicDetails_rfqItem.soldToCustomerName}"
+								filterBy="#{basicDetails_rfqItem.soldToCustomerName}"
+								id="basicDetails_soldToCustomerName"
+								styleClass="column_soldToCustomerName editCell tdmandatoryvalue">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="soldToPartyItemOut"
+											value="#{basicDetails_rfqItem.soldToCustomerName}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:autoComplete id="basicDetails_input_soldToCustomerName"
+											disabled="#{rfqSubmissionMB.emptySalesMan()}"
+											title="#{rfqSubmissionMB.emptySalesManMessage()}"
+											queryDelay="300" cache="true" cacheTimeout="30000"
+											minQueryLength="5" maxResults="10"
+											value="#{basicDetails_rfqItem.soldToCustomerName}"
+											completeMethod="#{rfqSubmissionMB.autoCompleteSoldToCustomerNameLabelList}">
+											<p:ajax event="itemSelect"
+												update="datatable_basicDetails_rfqSubmission"
+												listener="#{rfqSubmissionMB.updateSoldToCustomerNumberInRfqItemList(basicDetails_rfqItem.itemNumber)}" />
+										</p:autoComplete>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column styleClass="column_icon">
+								<p:commandLink
+									action="#{rfqSubmissionMB.changeToSoldToCodeItemSearch(basicDetails_rfqItem.itemNumber)}"
+									disabled="#{rfqSubmissionMB.emptySalesMan()}"
+									update=":form_rfqSubmission_customer:customerSearch_panel"
+									oncomplete="PF('customer_dialog').show()">
+									<h:graphicImage url="./../resources/images/icon_magnifier.png"
+										styleClass="iconLink"
+										title="#{rfqSubmissionMB.emptySalesManMessage()}" />
+								</p:commandLink>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.soldTo']}&lt;br/&gt;#{dbResource['wq.label.code']}&#042;"
+								sortBy="#{basicDetails_rfqItem.soldToCustomerNumber}"
+								filterBy="#{basicDetails_rfqItem.soldToCustomerNumber}"
+								id="basicDetails_soldToCustomerNumber"
+								styleClass="column_soldToCustomerNumber editCell tdmandatoryvalue">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="soldToCodeItemOut"
+											value="#{basicDetails_rfqItem.soldToCustomerNumber}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="basicDetails_input_soldToCustomerNumber"
+											disabled="#{rfqSubmissionMB.emptySalesMan()}"
+											title="#{rfqSubmissionMB.emptySalesManMessage()}"
+											style="width:80px"
+											value="#{basicDetails_rfqItem.soldToCustomerNumber}">
+											<p:ajax event="blur" update=":form_rfqSubmission"
+												listener="#{rfqSubmissionMB.updateSoldToCustomerNameInRfqItemList(basicDetails_rfqItem.itemNumber)}" />
+										</p:inputText>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.cust']}&lt;br/&gt;#{dbResource['wq.label.type']}&#042;"
+								sortBy="#{basicDetails_rfqItem.customerType}"
+								filterBy="#{basicDetails_rfqItem.customerType}"
+								id="basicDetails_customerType"
+								style="width:100px;font-weight:bold;background-color:rgb(251, 236, 136) !important;">
+								<h:selectOneMenu id="customerType_in"
+									disabled="#{rfqSubmissionMB.emptySalesMan()}"
+									title="#{rfqSubmissionMB.emptySalesManMessage()}"
+									value="#{basicDetails_rfqItem.customerType}" style="width:80px">
+									<f:selectItems
+										value="#{rfqSubmissionMB.customerTypeSelectList}" />
+									<p:ajax event="change"
+										update="datatable_basicDetails_rfqSubmission"
+										listener="#{rfqSubmissionMB.updateSelectedCustomerTypeInRfqItem(basicDetails_rfqItem.itemNumber)}" />
+								</h:selectOneMenu>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.ShipToParty']}"
+								sortBy="#{basicDetails_rfqItem.shipToCustomerName}"
+								filterBy="#{basicDetails_rfqItem.shipToCustomerName}"
+								id="basicDetails_shipToCustomerName"
+								styleClass="column_shipToCustomerName editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="shipToPartyItemOut"
+											value="#{basicDetails_rfqItem.shipToCustomerName}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:autoComplete id="basicDetails_input_shipToCustomerName"
+											disabled="#{rfqSubmissionMB.emptySalesMan()}"
+											title="#{rfqSubmissionMB.emptySalesManMessage()}"
+											queryDelay="300" cache="true" cacheTimeout="30000"
+											minQueryLength="5" maxResults="10"
+											value="#{basicDetails_rfqItem.shipToCustomerName}"
+											completeMethod="#{rfqSubmissionMB.autoCompleteShipToCustomerNameLabelList}">
+											<p:ajax event="itemSelect"
+												update="datatable_basicDetails_rfqSubmission"
+												listener="#{rfqSubmissionMB.updateShipToCustomerNumberInRfqItemList(basicDetails_rfqItem.itemNumber)}" />
+										</p:autoComplete>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column styleClass="column_icon">
+								<p:commandLink
+									action="#{rfqSubmissionMB.changeToShipToCodeItemSearch(basicDetails_rfqItem.itemNumber)}"
+									disabled="#{rfqSubmissionMB.emptySalesMan()}"
+									update=":form_rfqSubmission_customer:customerSearch_panel"
+									oncomplete="PF('customer_dialog').show()">
+									<h:graphicImage url="./../resources/images/icon_magnifier.png"
+										styleClass="iconLink"
+										title="#{rfqSubmissionMB.emptySalesManMessage()}" />
+								</p:commandLink>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.shipTo']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+								sortBy="#{basicDetails_rfqItem.shipToCustomerNumber}"
+								filterBy="#{basicDetails_rfqItem.shipToCustomerNumber}"
+								id="basicDetails_shipToCustomerNumber"
+								styleClass="column_shipToCustomerNumber editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="shipToCodeItemOut"
+											value="#{basicDetails_rfqItem.shipToCustomerNumber}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:autoComplete id="basicDetails_input_shipToCustomerNumber"
+											disabled="#{rfqSubmissionMB.emptySalesMan()}"
+											title="#{rfqSubmissionMB.emptySalesManMessage()}"
+											queryDelay="300" cache="true" cacheTimeout="30000"
+											minQueryLength="3" maxResults="10"
+											value="#{basicDetails_rfqItem.shipToCustomerNumber}"
+											completeMethod="#{rfqSubmissionMB.autoCompleteShipToCustomerNumberLabelList}">
+											<p:ajax event="itemSelect"
+												update="datatable_basicDetails_rfqSubmission"
+												listener="#{rfqSubmissionMB.updateShipToCustomerNameInRfqItemList(basicDetails_rfqItem.itemNumber)}" />
+										</p:autoComplete>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.endCust']}"
+								sortBy="#{basicDetails_rfqItem.endCustomerName}"
+								filterBy="#{basicDetails_rfqItem.endCustomerName}"
+								id="basicDetails_endCustomerName"
+								styleClass="column_endCustomerName editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="endCustomerItemOut"
+											value="#{basicDetails_rfqItem.endCustomerName}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:autoComplete id="basicDetails_input_endCustomerName"
+											disabled="#{rfqSubmissionMB.emptySalesMan()}"
+											title="#{rfqSubmissionMB.emptySalesManMessage()}"
+											queryDelay="300" cache="true" cacheTimeout="30000"
+											minQueryLength="5" maxResults="10"
+											value="#{basicDetails_rfqItem.endCustomerName}"
+											completeMethod="#{rfqSubmissionMB.autoCompleteEndCustomerNameLabelList}">
+											<p:ajax event="itemSelect"
+												update="datatable_basicDetails_rfqSubmission"
+												listener="#{rfqSubmissionMB.updateEndCustomerNumberInRfqItemList(basicDetails_rfqItem.itemNumber)}" />
+										</p:autoComplete>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column styleClass="column_icon">
+								<p:commandLink
+									action="#{rfqSubmissionMB.changeToEndCustomerCodeItemSearch(basicDetails_rfqItem.itemNumber)}"
+									disabled="#{rfqSubmissionMB.emptySalesMan()}"
+									update=":form_rfqSubmission_customer:customerSearch_panel"
+									oncomplete="PF('customer_dialog').show()">
+									<h:graphicImage url="./../resources/images/icon_magnifier.png"
+										styleClass="iconLink"
+										title="#{rfqSubmissionMB.emptySalesManMessage()}" />
+								</p:commandLink>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.endCust']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+								sortBy="#{basicDetails_rfqItem.endCustomerNumber}"
+								filterBy="#{basicDetails_rfqItem.endCustomerNumber}"
+								id="basicDetails_endCustomerNumber"
+								styleClass="column_endCustomerNumber editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="endCustomerCodeItemOut"
+											value="#{basicDetails_rfqItem.endCustomerNumber}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:autoComplete id="basicDetails_input_endCustomerNumber"
+											disabled="#{rfqSubmissionMB.emptySalesMan()}"
+											title="#{rfqSubmissionMB.emptySalesManMessage()}"
+											queryDelay="300" cache="true" cacheTimeout="30000"
+											minQueryLength="3" maxResults="10"
+											value="#{basicDetails_rfqItem.endCustomerNumber}"
+											completeMethod="#{rfqSubmissionMB.autoCompleteEndCustomerNumberLabelList}">
+											<p:ajax event="itemSelect"
+												update="datatable_basicDetails_rfqSubmission"
+												listener="#{rfqSubmissionMB.updateEndCustomerNameInRfqItemList(basicDetails_rfqItem.itemNumber)}" />
+										</p:autoComplete>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.segment']}&#042;"
+								sortBy="#{basicDetails_rfqItem.enquirySegment}"
+								filterBy="#{basicDetails_rfqItem.enquirySegment}"
+								id="basicDetails_enquirySegment"
+								styleClass="column_enquirySegment editCell tdmandatoryvalue">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{basicDetails_rfqItem.enquirySegment}" />
+									</f:facet>
+									<f:facet name="input">
+										<h:selectOneMenu id="basicDetails_input_enquirySegment"
+											value="#{basicDetails_rfqItem.enquirySegment}">
+											<f:selectItems
+												value="#{rfqSubmissionMB.enquirySegmentSelectList}" />
+										</h:selectOneMenu>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.project']}&lt;br/&gt;#{dbResource['wq.label.name']}"
+								sortBy="#{basicDetails_rfqItem.projectName}"
+								filterBy="#{basicDetails_rfqItem.projectName}"
+								id="basicDetails_projectName"
+								styleClass="column_projectName editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{basicDetails_rfqItem.projectName}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:autoComplete id="basicDetails_input_projectName"
+											queryDelay="300" cache="true" cacheTimeout="30000"
+											minQueryLength="5" maxResults="10"
+											value="#{basicDetails_rfqItem.projectName}"
+											completeMethod="#{rfqSubmissionMB.autoCompleteProjectNameList}">
+										</p:autoComplete>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.app']}"
+								sortBy="#{basicDetails_rfqItem.application}"
+								filterBy="#{basicDetails_rfqItem.application}"
+								id="basicDetails_application"
+								styleClass="column_application editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{basicDetails_rfqItem.application}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:autoComplete id="basicDetails_input_application"
+											queryDelay="300" cache="true" cacheTimeout="30000"
+											minQueryLength="5" maxResults="10"
+											value="#{basicDetails_rfqItem.application}"
+											completeMethod="#{rfqSubmissionMB.autoCompleteApplicationList}">
+										</p:autoComplete>
+										<!-- 
+											<h:selectOneMenu id="basicDetails_input_application" value="#{basicDetails_rfqItem.application}" editable="true">
+												<f:selectItems value="#{rfqSubmissionMB.applicationSelectList}" />
+											</h:selectOneMenu>	
+										 -->
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.design']}&lt;br/&gt;#{dbResource['wq.label.region']}"
+								sortBy="#{basicDetails_rfqItem.designRegion}"
+								filterBy="#{basicDetails_rfqItem.designRegion}"
+								id="basicDetails_designRegion"
+								styleClass="column_designRegion editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{basicDetails_rfqItem.designRegion}" />
+									</f:facet>
+									<f:facet name="input">
+										<h:selectOneMenu id="basicDetails_input_designRegion"
+											value="#{basicDetails_rfqItem.designRegion}" editable="false">
+											<f:selectItems
+												value="#{rfqSubmissionMB.designRegionSelectList}" />
+											<!-- <p:ajax event="change" update="basicDetails_input_designLocation" listener="#{rfqSubmissionMB.designRegionOnchange(basicDetails_rfqItem.designRegion)}" />	 -->
+											<p:ajax event="change"
+												update="basicDetails_cell_designLocation"
+												listener="#{basicDetails_rfqItem.setDesignLocation('')}" />
+										</h:selectOneMenu>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.design']}&lt;br/&gt;#{dbResource['wq.label.location']}"
+								sortBy="#{basicDetails_rfqItem.designLocation}"
+								filterBy="#{basicDetails_rfqItem.designLocation}"
+								id="basicDetails_designLocation"
+								styleClass="column_designLocation editCell">
+								<p:cellEditor id="basicDetails_cell_designLocation">
+									<f:facet name="output">
+										<h:outputText value="#{basicDetails_rfqItem.designLocation}" />
+									</f:facet>
+									<f:facet name="input">
+										<!--  <p:selectOneMenu id="basicDetails_input_designLocation" value="#{basicDetails_rfqItem.designLocation}" editable="true">
+												<f:selectItems value="#{rfqSubmissionMB.designLocationSelectList}" />
+											</p:selectOneMenu> -->
+										<p:autoComplete id="basicDetails_input_designLocation"
+											value="#{basicDetails_rfqItem.designLocation}"
+											editable="true" cache="true" dropdown="true"
+											scrollHeight="200" autocomplete="true" minQueryLength="1"
+											size="38"
+											completeMethod="#{rfqSubmissionMB.designRegionOnchange}">
+											<f:attribute name="region"
+												value="#{basicDetails_rfqItem.designRegion}" />
+										</p:autoComplete>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.mp']}&lt;br/&gt;#{dbResource['wq.label.schedule']}"
+								sortBy="#{basicDetails_rfqItem.mpSchedule}"
+								filterBy="#{basicDetails_rfqItem.mpSchedule}"
+								id="basicDetails_mpSchedule"
+								styleClass="column_mpSchedule editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{basicDetails_rfqItem.mpSchedule}" />
+									</f:facet>
+									<f:facet name="input">
+										<h:selectOneMenu id="basicDetails_input_mpSchedule"
+											value="#{basicDetails_rfqItem.mpSchedule}">
+											<f:selectItems
+												value="#{rfqSubmissionMB.mpScheduleSelectList}" />
+										</h:selectOneMenu>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.pp']}&lt;br/&gt;#{dbResource['wq.label.schedule']}"
+								sortBy="#{basicDetails_rfqItem.ppSchedule}"
+								filterBy="#{basicDetails_rfqItem.ppSchedule}"
+								id="basicDetails_ppSchedule"
+								styleClass="column_ppSchedule editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{basicDetails_rfqItem.ppSchedule}" />
+									</f:facet>
+									<f:facet name="input">
+										<h:selectOneMenu id="basicDetails_input_ppSchedule"
+											value="#{basicDetails_rfqItem.ppSchedule}">
+											<f:selectItems
+												value="#{rfqSubmissionMB.ppScheduleSelectList}" />
+										</h:selectOneMenu>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.QuoteType']}&#042;"
+								sortBy="#{basicDetails_rfqItem.quoteType}"
+								filterBy="#{basicDetails_rfqItem.quoteType}"
+								id="basicDetails_quoteType"
+								styleClass="column_quoteType editCells tdmandatoryvalue">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{basicDetails_rfqItem.quoteType}" />
+									</f:facet>
+									<f:facet name="input">
+										<h:selectOneMenu id="basicDetails_input_quoteType"
+											value="#{basicDetails_rfqItem.quoteType}">
+											<f:selectItems value="#{rfqSubmissionMB.quoteTypeList}" />
+										</h:selectOneMenu>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.loa']}"
+								sortBy="#{basicDetails_rfqItem.loa}"
+								filterBy="#{basicDetails_rfqItem.loa}" id="basicDetails_loa"
+								styleClass="column_icon">
+								<p:selectBooleanCheckbox value="#{basicDetails_rfqItem.loa}" />
+								<p:cellEditor>
+									<f:facet name="output">
+										<p:outputLabel value="" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText value="" readonly="true"
+											style="width:0px; height:0px" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+
+							<p:column headerText="#{dbResource['wq.label.delete']}"
+								width="50" styleClass="column_icon">
+								<p:commandLink
+									update=":form_rfqSubmission:datatable_basicDetails_rfqSubmission"
+									actionListener="#{rfqSubmissionMB.removeRfqItem(basicDetails_rfqItem.itemNumber)}">
+									<h:graphicImage url="./../resources/images/iconCross.gif"
+										styleClass="iconLink" />
+								</p:commandLink>
+							</p:column>
+
+							<f:facet name="footer">
+								<p:commandButton value="#{dbResource['wq.button.addMore']}"
+									update=":form_rfqSubmission:datatable_basicDetails_rfqSubmission"
+									icon="ui-icon-plusthick"
+									actionListener="#{rfqSubmissionMB.createTenRfqDetail}" />
+								<p:spacer width="20" height="10" />
+								<p:commandButton value="#{dbResource['wq.button.delAll']}"
+									icon="ui-icon-trash"
+									onclick="PF('delete_all_confirmation_dialog').show();" />
+								<p:spacer width="20" height="10" />
+								<p:commandButton value="#{dbResource['wq.label.reset']}"
+									onclick="PF('reset_confirmation_dialog').show();" />
+							</f:facet>
+
+						</p:dataTable>
+					</p:panel>
+
+				</p:tab>
+
+
+				<p:tab id="drms_match"
+					title="2. #{dbResource['wq.label.drmsMatch']}">
+					<p:growl id="RfqSubmissionGrowl2" for="RfqSubmissionGrowl2_1"
+						sticky="{growlPropertyMB.getSticky()}"
+						showSummary="#{growlPropertyMB.getShowSummary()}"
+						escape="#{growlPropertyMB.getEscape()}" showDetail="true" />
+					<p:panel header="DRMS #{dbResource['wq.label.match']}">
+						<p:dataTable var="drmsChecking_rfqItem"
+							value="#{rfqSubmissionMB.rfqItems}" rowIndexVar="rowIndex"
+							rowKey="#{drmsChecking_rfqItem.itemNumber}"
+							id="datatable_drmsChecking_rfqSubmission"
+							selection="#{rfqSubmissionMB.selectedRfqItem}"
+							styleClass="rfqSubmission" editable="true" editMode="cell"
+							cellEditEvent="click" scrollable="true" paginator="true" rows="5"
+							rowsPerPageTemplate="5,10" paginatorPosition="top"
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+							<p:column headerText="#{dbResource['wq.label.no']}"
+								id="rowNumber" styleClass="column_icon">
+						        #{drmsChecking_rfqItem.itemNumber}
+					        </p:column>
+							<p:column headerText="#{dbResource['wq.label.bmtAQ']}"
+								sortBy="#{drmsChecking_rfqItem.bmtCheckedFlag}"
+								filterBy="#{drmsChecking_rfqItem.bmtCheckedFlag}"
+								id="drmsChecking_bmtCheckedFlag"
+								styleClass="column_specialPriceIndicator readOnlyCell">
+								<p:selectBooleanCheckbox
+									id="select_id_drmsChecking_bmtCheckedFlag"
+									value="#{drmsChecking_rfqItem.bmtCheckedFlag}">
+									<p:ajax event="change"
+										update="select_id_drmsChecking_bmtCheckedFlag"
+										listener="#{rfqSubmissionMB.bmtadFlagValidation(drmsChecking_rfqItem.itemNumber,'RfqSubmissionGrowl2','RfqSubmissionGrowl2_1')}" />
+
+								</p:selectBooleanCheckbox>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.spr']}"
+								sortBy="#{drmsChecking_rfqItem.specialPriceIndicator}"
+								filterBy="#{drmsChecking_rfqItem.specialPriceIndicator}"
+								id="drmsChecking_specialPriceIndicator"
+								styleClass="column_specialPriceIndicator readOnlyCell">
+								<!-- 								<p:selectBooleanCheckbox value="#{drmsChecking_rfqItem.specialPriceIndicator}" disabled="#{drmsChecking_rfqItem.supplierDrNumber != null}"/>						        
+ -->
+								<p:selectBooleanCheckbox
+									id="select_id_drmsChecking_specialPriceIndicator"
+									value="#{drmsChecking_rfqItem.specialPriceIndicator}"
+									disabled="#{(drmsChecking_rfqItem.supplierDrNumber != null) and (drmsChecking_rfqItem.designRegion == null or drmsChecking_rfqItem.designRegion.trim()=='' or drmsChecking_rfqItem.designRegion =='-select-' or drmsChecking_rfqItem.designRegion =='ASIA' )}">
+								</p:selectBooleanCheckbox>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.mfr']}"
+								sortBy="#{drmsChecking_rfqItem.mfr}"
+								filterBy="#{drmsChecking_rfqItem.mfr}" id="drmsChecking_mfr"
+								styleClass="column_mfr readOnlyCell">
+								#{drmsChecking_rfqItem.mfr}
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.requested']}&lt;br/&gt;#{dbResource['wq.label.pn']}"
+								sortBy="#{drmsChecking_rfqItem.requiredPartNumber}"
+								filterBy="#{drmsChecking_rfqItem.requiredPartNumber}"
+								id="drmsChecking_requiredPartNumber"
+								styleClass="column_fullMfrPart">
+								<h:outputText value="#{drmsChecking_rfqItem.requiredPartNumber}" />
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.pn']}&lt;br/&gt;#{dbResource['wq.label.popUp']}"
+								styleClass="column_icon">
+								<p:commandLink id="drmsChecking_requiredPartNumber_link"
+									actionListener="#{rfqSubmissionMB.popupRequiredPartNumberList(drmsChecking_rfqItem.itemNumber)}"
+									update=":form_rfqSubmission:datatable_requiredPartNumber_popup"
+									oncomplete="PF('requiredPartNumber_dialog').show();stop();"
+									rendered="#{drmsChecking_rfqItem.drmsLinkage and drmsChecking_rfqItem.drmsNumber > 0}"
+									global="false" onstart="start();" onerror="stopWithError();">
+									<h:graphicImage
+										url="./../resources/images/icon_exclamation.png"
+										styleClass="iconLink" />
+								</p:commandLink>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.drms']}&lt;br/&gt;#{dbResource['wq.label.project']}&lt;br/&gt;ID"
+								sortBy="#{drmsChecking_rfqItem.drmsNumber}"
+								filterBy="#{drmsChecking_rfqItem.drmsNumber}"
+								id="drmsChecking_projectId"
+								styleClass="column_projectId readOnlyCell">
+								<p:commandLink id="drmsChecking_projectId_link"
+									rendered="#{drmsChecking_rfqItem.drmsNumber > 0}">
+									#{drmsChecking_rfqItem.drmsNumber}
+								</p:commandLink>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.DR']}&lt;br/&gt;#{dbResource['wq.label.indicator']}"
+								styleClass="column_icon">
+								<p:commandLink id="drmsChecking_drmsLinkage"
+									actionListener="#{rfqSubmissionMB.popupDrms(drmsChecking_rfqItem.itemNumber)}"
+									update=":form_rfqSubmission:datatable_drms_popup"
+									oncomplete="PF('drms_dialog').show()"
+									rendered="#{drmsChecking_rfqItem.drmsLinkage}">
+									<h:graphicImage
+										url="./../resources/images/icon_exclamation.png"
+										styleClass="iconLink" />
+								</p:commandLink>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.valid']}?"
+								sortBy="#{drmsChecking_rfqItem.validPartNumber}"
+								styleClass="column_icon">
+								<p:panelGrid style="border-style: hidden !important;"
+									id="drmsChecking_validLink">
+									<p:row style="border-style: hidden !important;">
+										<p:column style="border-style: hidden !important;">
+											<h:graphicImage
+												url="./../resources/images/icon_red_exclamation.png"
+												rendered="#{drmsChecking_rfqItem.statusColor == 3}" />
+											<h:graphicImage url="./../resources/images/icon_warn.jpg"
+												rendered="#{drmsChecking_rfqItem.statusColor == 2}" />
+											<h:graphicImage url="./../resources/images/icon_tick.png"
+												rendered="#{drmsChecking_rfqItem.statusColor == 1  and drmsChecking_rfqItem.requiredPartNumber != null and drmsChecking_rfqItem.requiredPartNumber != ''}" />
+										</p:column>
+									</p:row>
+								</p:panelGrid>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.MPQ']}"
+								sortBy="#{drmsChecking_rfqItem.mpq}"
+								filterBy="#{drmsChecking_rfqItem.mpq}" id="drmsChecking_mpq"
+								styleClass="column_mpq readOnlyCell">
+					        	#{rfqSubmissionMB.convertNumber(drmsChecking_rfqItem.mpq)}
+					        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.moq']}"
+								sortBy="#{drmsChecking_rfqItem.moq}"
+								filterBy="#{drmsChecking_rfqItem.moq}" id="drmsChecking_moq"
+								styleClass="column_moq readOnlyCell">
+					        	#{rfqSubmissionMB.convertNumber(drmsChecking_rfqItem.moq)}
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.lead']}&lt;br/&gt;#{dbResource['wq.label.time']}"
+								sortBy="#{drmsChecking_rfqItem.leadTime}"
+								filterBy="#{drmsChecking_rfqItem.leadTime}"
+								id="drmsChecking_leadTime"
+								styleClass="column_leadTime readOnlyCell">
+					        	#{drmsChecking_rfqItem.leadTime}
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}"
+								sortBy="#{drmsChecking_rfqItem.requiredQty}"
+								filterBy="#{drmsChecking_rfqItem.requiredQty}"
+								id="drmsChecking_requiredQty" styleClass="column_requiredQty">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="drmsChecking_input_requiredQty_out"
+											value="#{rfqSubmissionMB.convertNumber(drmsChecking_rfqItem.requiredQty)}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="drmsChecking_input_requiredQty_in"
+											value="#{drmsChecking_rfqItem.requiredQty}"
+											styleClass="input_text"
+											onkeyup="updateDrmsRequiredQty(#{rowIndex})" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.EAU']}"
+								sortBy="#{drmsChecking_rfqItem.eau}"
+								filterBy="#{drmsChecking_rfqItem.eau}" id="drmsChecking_eau"
+								styleClass="column_eau">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="drmsChecking_input_eau_out"
+											value="#{rfqSubmissionMB.convertNumber(drmsChecking_rfqItem.eau)}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="drmsChecking_input_eau_in"
+											value="#{drmsChecking_rfqItem.eau}" styleClass="input_text"
+											onkeyup="updateDrmsEau(#{rowIndex})" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+							
+<!-- 							
+							<p:column headerText="#{dbResource['wq.label.rfqCurr']}"
+								sortBy="#{drmsChecking_rfqItem.rfqCurr}"
+								filterBy="#{drmsChecking_rfqItem.rfqCurr}"
+								id="drmsChecking_rfqCurr"
+								styleClass="column_mfr readOnlyCell">
+					            #{drmsChecking_rfqItem.rfqCurr} 
+					        </p:column> -->
+
+							<p:column
+								headerText="#{dbResource['wq.label.trgResale']}&lt;br/&gt;(#{dbResource['wq.label.unitPrice']})"
+								sortBy="#{drmsChecking_rfqItem.targetResale}"
+								filterBy="#{drmsChecking_rfqItem.targetResale}"
+								id="drmsChecking_targetResale" styleClass="column_targetResale">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="drmsChecking_input_targetResale_out"
+											value="#{drmsChecking_rfqItem.targetResale}">
+											<f:convertNumber minFractionDigits="5" pattern="#,##0.00000" />
+										</h:outputText>
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="drmsChecking_input_targetResale_in"
+											value="#{drmsChecking_rfqItem.targetResale}"
+											styleClass="input_text"
+											onkeyup="updateDrmsTargetResale(#{rowIndex})">
+										</p:inputText>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.SoldToParty']}"
+								sortBy="#{drmsChecking_rfqItem.soldToCustomerName}"
+								filterBy="#{drmsChecking_rfqItem.soldToCustomerName}"
+								id="drmsChecking_soldToCustomerName"
+								styleClass="column_soldToCustomerName readOnlyCell">
+					            #{drmsChecking_rfqItem.soldToCustomerName} 
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.soldTo']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+								sortBy="#{drmsChecking_rfqItem.soldToCustomerNumber}"
+								filterBy="#{drmsChecking_rfqItem.soldToCustomerNumber}"
+								id="drmsChecking_soldToCustomerNumber"
+								styleClass="column_soldToCustomerNumber readOnlyCell">
+					            #{drmsChecking_rfqItem.soldToCustomerNumber}  
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.cust']}&lt;br/&gt;#{dbResource['wq.label.type']}"
+								sortBy="#{drmsChecking_rfqItem.customerType}"
+								filterBy="#{drmsChecking_rfqItem.customerType}"
+								id="drmsChecking_customerType"
+								styleClass="column_customerType readOnlyCell">
+					            #{drmsChecking_rfqItem.customerType}  
+					        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.ShipToParty']}"
+								sortBy="#{drmsChecking_rfqItem.shipToCustomerName}"
+								filterBy="#{drmsChecking_rfqItem.shipToCustomerName}"
+								id="drmsChecking_shipToCustomerName"
+								styleClass="column_shipToCustomerName readOnlyCell">
+					            #{drmsChecking_rfqItem.shipToCustomerName}  
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.shipTo']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+								sortBy="#{drmsChecking_rfqItem.shipToCustomerNumber}"
+								filterBy="#{drmsChecking_rfqItem.shipToCustomerNumber}"
+								id="drmsChecking_shipToCustomerNumber"
+								styleClass="column_shipToCustomerNumber readOnlyCell">
+					            #{drmsChecking_rfqItem.shipToCustomerNumber}  
+					        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.endCust']}"
+								sortBy="#{drmsChecking_rfqItem.endCustomerName}"
+								filterBy="#{drmsChecking_rfqItem.endCustomerName}"
+								id="drmsChecking_endCustomerName"
+								styleClass="column_endCustomerName readOnlyCell">
+					            #{drmsChecking_rfqItem.endCustomerName}  
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.end']}&lt;br/&gt;#{dbResource['wq.label.cust']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+								sortBy="#{drmsChecking_rfqItem.endCustomerNumber}"
+								filterBy="#{drmsChecking_rfqItem.endCustomerNumber}"
+								id="drmsChecking_endCustomerNumber"
+								styleClass="column_endCustomerNumber readOnlyCell">
+					            #{drmsChecking_rfqItem.endCustomerNumber}  
+					        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.segment']}"
+								sortBy="#{drmsChecking_rfqItem.enquirySegment}"
+								filterBy="#{drmsChecking_rfqItem.enquirySegment}"
+								id="drmsChecking_enquirySegment"
+								styleClass="column_enquirySegment readOnlyCell">
+					            #{drmsChecking_rfqItem.enquirySegment}  
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.project']}&lt;br/&gt;#{dbResource['wq.label.name']}"
+								sortBy="#{drmsChecking_rfqItem.projectName}"
+								filterBy="#{drmsChecking_rfqItem.projectName}"
+								id="drmsChecking_projectName"
+								styleClass="column_projectName readOnlyCell">
+					            #{drmsChecking_rfqItem.projectName}  
+					        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.app']}"
+								sortBy="#{drmsChecking_rfqItem.application}"
+								filterBy="#{drmsChecking_rfqItem.application}"
+								id="drmsChecking_application"
+								styleClass="column_application readOnlyCell">
+					            #{drmsChecking_rfqItem.application} 
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.design']}&lt;br/&gt;#{dbResource['wq.label.region']}"
+								sortBy="#{drmsChecking_rfqItem.designRegion}"
+								filterBy="#{drmsChecking_rfqItem.designRegion}"
+								id="drmsChecking_designRegion"
+								styleClass="column_designRegion readOnlyCell">
+					            #{drmsChecking_rfqItem.designRegion}  
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.design']}&lt;br/&gt;#{dbResource['wq.label.location']}"
+								sortBy="#{drmsChecking_rfqItem.designLocation}"
+								filterBy="#{drmsChecking_rfqItem.designLocation}"
+								id="drmsChecking_designLocation"
+								styleClass="column_designLocation readOnlyCell">
+					            #{drmsChecking_rfqItem.designLocation}  
+					        </p:column>
+							<p:column headerText="#{dbResource['wq.label.DesignInCat']}"
+								sortBy="#{drmsChecking_rfqItem.designInCat}"
+								filterBy="#{drmsChecking_rfqItem.designInCat}"
+								id="drmsChecking_designInCat" styleClass="column_designInCat">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{drmsChecking_rfqItem.designInCat}" />
+									</f:facet>
+									<f:facet name="input">
+										<h:selectOneMenu id="drmsChecking_rfqItem_input_designInCate"
+											value="#{drmsChecking_rfqItem.designInCat}">
+											<f:selectItems value="#{rfqSubmissionMB.designInCatList}" />
+										</h:selectOneMenu>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+							<p:column headerText="#{dbResource['wq.label.drmsID']}#"
+								sortBy="#{drmsChecking_rfqItem.drmsNumber}"
+								filterBy="#{drmsChecking_rfqItem.drmsNumber}"
+								id="drmsChecking_drmsNumber"
+								styleClass="column_drmsNumber readOnlyCell">
+					        	#{drmsChecking_rfqItem.drmsNumber}
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.competitor']}&lt;br/&gt;#{dbResource['wq.label.information']}"
+								sortBy="#{drmsChecking_rfqItem.competitorInformation}"
+								filterBy="#{drmsChecking_rfqItem.competitorInformation}"
+								id="drmsChecking_competitorInformation"
+								styleClass="column_competitorInformation readOnlyCell">
+					            #{drmsChecking_rfqItem.competitorInformation}  
+					        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.mfrDR']}#"
+								sortBy="#{drmsChecking_rfqItem.supplierDrNumber}"
+								filterBy="#{drmsChecking_rfqItem.supplierDrNumber}"
+								id="drmsChecking_supplierDrNumber"
+								styleClass="column_supplierDrNumber readOnlyCell">
+								#{drmsChecking_rfqItem.supplierDrNumber}
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.mp']}&lt;br/&gt;#{dbResource['wq.label.schedule']}"
+								sortBy="#{drmsChecking_rfqItem.mpSchedule}"
+								filterBy="#{drmsChecking_rfqItem.mpSchedule}"
+								id="drmsChecking_mpSchedule"
+								styleClass="column_mpSchedule readOnlyCell">
+					            #{drmsChecking_rfqItem.mpSchedule}
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.pp']}&lt;br/&gt;#{dbResource['wq.label.schedule']}"
+								sortBy="#{drmsChecking_rfqItem.ppSchedule}"
+								filterBy="#{drmsChecking_rfqItem.ppSchedule}"
+								id="drmsChecking_ppSchedule"
+								styleClass="column_ppSchedule readOnlyCell">
+					            #{drmsChecking_rfqItem.ppSchedule} 
+					        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.QuoteType']}"
+								sortBy="#{drmsChecking_rfqItem.quoteType}"
+								filterBy="#{drmsChecking_rfqItem.quoteType}"
+								id="drmsChecking_quoteType" styleClass="column_quoteType">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{drmsChecking_rfqItem.quoteType}" />
+									</f:facet>
+									<f:facet name="input">
+										<h:selectOneMenu id="drmsChecking_rfqItem_input_quoteType"
+											value="#{drmsChecking_rfqItem.quoteType}">
+											<f:selectItems value="#{rfqSubmissionMB.quoteTypeList}" />
+										</h:selectOneMenu>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.loa']}"
+								sortBy="#{drmsChecking_rfqItem.loa}"
+								filterBy="#{drmsChecking_rfqItem.loa}" id="drmsChecking_loa"
+								styleClass="column_loa readOnlyCell">
+								<p:selectBooleanCheckbox value="#{drmsChecking_rfqItem.loa}"
+									disabled="true" />
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.item']}&lt;br/&gt;#{dbResource['wq.label.remarks']}"
+								sortBy="#{drmsChecking_rfqItem.itemRemarks}"
+								filterBy="#{drmsChecking_rfqItem.itemRemarks}"
+								id="drmsChecking_itemRemarks" styleClass="column_itemRemarks">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{drmsChecking_rfqItem.itemRemarks}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="drmsChecking_input_itemRemarks"
+											value="#{drmsChecking_rfqItem.itemRemarks}" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.attachment']}"
+								id="drmsChecking_attachmentId" styleClass="column_attachmentId">
+								<p:commandLink update=":form_rfqSubmission:attachment_panel"
+									actionListener="#{rfqSubmissionMB.updateItemNumberForAttachment(drmsChecking_rfqItem.itemNumber)}"
+									oncomplete="PF('attachment_list_dialog').show()"
+									rendered="#{drmsChecking_rfqItem.hasAttach}"
+									style="padding:0px 3px 0px 3px">
+									<h:graphicImage url="./../resources/images/ic_document.png"
+										styleClass="iconLink" />
+								</p:commandLink>
+							</p:column>
+						</p:dataTable>
+
+						<f:facet name="actions">
+							<div style="float: right;">
+								<p:commandLink id="drmsPendingEntering_popup"
+									onclick="pending_drms_entrying_window').show();"
+									update=":form_rfqSubmission:datatable_pendingRfq,:form_rfqSubmission:drmsChecking_pending_drms_count">
+									<h:outputText id="drmsChecking_pending_drms_count"
+										value="#{dbResource['wq.label.pendingDRMSCount']} : #{rfqSubmissionMB.pendingDRMSCount}" />
+								</p:commandLink>
+								<p:spacer width="20" height="10" />
+								<p:commandLink id="drmsChecking_save"
+									actionListener="#{rfqSubmissionMB.saveDraft}"
+									rendered="#{!rfqSubmissionMB.qcp}" global="false"
+									onstart="start();" oncomplete="stop();"
+									onerror="stopWithError();">
+									<h:graphicImage url="./../resources/images/icon_save.gif"
+										styleClass="iconLink" />
+								</p:commandLink>
+							</div>
+						</f:facet>
+
+					</p:panel>
+				
+					<p:dialog styleClass="popup"
+						header="#{dbResource['wq.label.drProjectParts']}"
+						widgetVar="drms_dialog" resizable="true" modal="true">
+						<p:dataTable var="drms_popup_drProject"
+							value="#{rfqSubmissionMB.drProjects}"
+							rowIndexVar="drms_popup_rowIndex"
+							selection="#{rfqSubmissionMB.selectedDrProject}"
+							rowKey="#{drms_popup_drProject.itemNumber}"
+							id="datatable_drms_popup" paginator="true" rows="5"
+							rowsPerPageTemplate="5,10" paginatorPosition="top"
+							scrollable="true" scrollHeight="300" scrollWidth="895"
+							style="margin:0px 0px 0px 0px;"
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+							<p:column headerText="#{dbResource['wq.label.no']}"
+								id="drms_popup_rowNumber" styleClass="column_icon">
+							        #{drms_popup_drProject.itemNumber}
+						        </p:column>
+
+							<p:column selectionMode="single" styleClass="column_icon" />
+
+							<p:column headerText="#{dbResource['wq.label.salsOrg']}"
+								id="drms_popup_salesOrg" width="100">
+									#{drms_popup_drProject.drNedaItem.drNedaHeader.drProjectHeader.salesOrgBean.name}
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.supplier']}&lt;br/&gt;Dr#"
+								id="drms_popup_supplierDrNumber" width="130">
+									#{drms_popup_drProject.drNedaItem.drNumber}
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.project']}&lt;br/&gt;#{dbResource['wq.label.name']}"
+								id="drms_popup_projectName" width="150">
+									#{drms_popup_drProject.drNedaItem.drNedaHeader.drProjectHeader.projectName}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.description']}"
+								id="drms_popup_projectDescription" width="200">
+									#{drms_popup_drProject.drNedaItem.drNedaHeader.drProjectHeader.projectDescription}
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.part']}&lt;br/&gt;#{dbResource['wq.label.mask']}"
+								id="drms_popup_partMask" width="100">
+							        #{drms_popup_drProject.drNedaItem.partMask}
+						        </p:column>
+
+							<p:column
+								headerText="DRMS&lt;br/&gt;#{dbResource['wq.label.projectID']}"
+								id="drms_popup_projectId" width="100">
+							        #{drms_popup_drProject.drNedaItem.drNedaHeader.drProjectHeader.projectId}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.DRExpiryDate']}"
+								id="drms_popup_dr_expiry_date" width="100">
+							        #{rfqSubmissionMB.convertDateToString(drms_popup_drProject.displayDrExpiryDate)}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.nedaID']}"
+								id="drms_popup_nedaId" width="100">
+							        #{drms_popup_drProject.drNedaItem.id.nedaId}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.designStage']}"
+								id="drms_popup_nedaDesignStage" width="100">
+							        #{drms_popup_drProject.drNedaItem.drNedaHeader.nedaDesignStage}
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.creation']}&lt;br/&gt;#{dbResource['wq.label.date']}"
+								id="drms_popup_creationDate" width="100">
+									#{rfqSubmissionMB.convertDateToString(drms_popup_drProject.drNedaItem.createdOn)}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.FAE']}"
+								id="drms_popup_faeName" width="100">
+									#{drms_popup_drProject.drNedaItem.faeName}
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.group']}&lt;br/&gt;#{dbResource['wq.label.projectID']}"
+								id="drms_popup_groupProjectId" width="100">
+							        #{drms_popup_drProject.drNedaItem.drNedaHeader.drProjectHeader.groupProjectId}
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.supplier']}&lt;br/&gt;#{dbResource['wq.label.name']}"
+								id="drms_popup_supplierName" width="100">
+							        #{drms_popup_drProject.drNedaItem.supplierName}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.coreID']}"
+								id="drms_popup_coreId" width="100">
+							        #{drms_popup_drProject.drNedaItem.coreId}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.drPrice']}"
+								id="drms_popup_drPrice" width="100">
+								<h:outputText
+									value="#{drms_popup_drProject.drNedaItem.suggestedPrice}">
+									<f:convertNumber minFractionDigits="2" maxFractionDigits="5" />
+								</h:outputText>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.Qty']}&lt;br/&gt;#{dbResource['wq.label.perBoard']}"
+								id="drms_popup_qtyPerBoard" width="100">
+									#{rfqSubmissionMB.convertNumber(drms_popup_drProject.drNedaItem.qtyPerBoard)}
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.production']}&lt;br/&gt;#{dbResource['wq.label.date']}"
+								id="drms_popup_productionDate" width="100">
+									#{rfqSubmissionMB.convertDateToString(drms_popup_drProject.drNedaItem.drNedaHeader.productionDate)}
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.assembly']}&lt;br/&gt;#{dbResource['wq.label.Qty']}"
+								id="drms_popup_assemblyQty" width="100">
+							        #{rfqSubmissionMB.convertNumber(drms_popup_drProject.drNedaItem.drNedaHeader.assemblyQty)}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.header.din']}$"
+								id="drms_popup_dinCost" width="100">
+							</p:column>
+
+							<!--   <p:column headerText="Additional&lt;br/&gt;Info 3" id="drms_popup_additionalInfo3" width="200">
+									#{drms_popup_drProject.drNedaItem.additionalInfo3}
+						        </p:column>							      
+			        					by damon -->
+						</p:dataTable>
+
+						<p:commandButton id="drms_popup_submitButton"
+							value="#{dbResource['wq.button.select']}"
+							update=":form_rfqSubmission:datatable_drmsChecking_rfqSubmission,:form_rfqSubmission:datatable_pendingRfq,:form_rfqSubmission:drmsPendingEntering_popup,:form_rfqSubmission:drmsChecking_pending_drms_count"
+							actionListener="#{rfqSubmissionMB.addDrmsToRfqs}"
+							style="margin:0px 0px 10px 0px"
+							oncomplete="PF('drms_dialog').hide();stop();" global="false"
+							onstart="start();" onerror="stopWithError();" />
+						<p:spacer width="20" height="10" />
+						<p:commandButton id="drms_popup_cancelButton"
+							value="#{dbResource['wq.button.cancel']}"
+							update=":form_rfqSubmission:datatable_drmsChecking_rfqSubmission"
+							style="margin:0px 0px 10px 0px"
+							oncomplete="PF('drms_dialog').hide();" />
+
+					</p:dialog>
+
+					<p:dialog styleClass="popup"
+						header="#{dbResource['wq.header.fullPartNoList']}"
+						widgetVar="requiredPartNumber_dialog" resizable="true"
+						modal="true">
+						<p:dataTable var="requiredPartNumber_popup"
+							value="#{rfqSubmissionMB.partPopupModel}"
+							rowIndexVar="requiredPartNumber_popup_rowIndex"
+							selection="#{rfqSubmissionMB.selectedRequiredPartNumberList}"
+							id="datatable_requiredPartNumber_popup" paginator="true" rows="5"
+							rowsPerPageTemplate="5,10" paginatorPosition="top"
+							style="margin:10px 0px 0px 0px;"
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+
+							<p:column headerText="#{dbResource['wq.label.no']}"
+								id="requiredPartNumber_id">
+							        #{requiredPartNumber_popup.pricerId}
+						        </p:column>
+
+							<p:column selectionMode="multiple" styleClass="column_icon" />
+
+							<p:column headerText="#{dbResource['wq.label.mfr']}"
+								id="requiredPartNumber_mfr">
+							        #{requiredPartNumber_popup.mfr}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.sapPNumber']}"
+								id="requiredPartNumber_sapPart">
+							        #{requiredPartNumber_popup.sapPartNumber}
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.mfr']} #{dbResource['wq.label.full']} #{dbResource['wq.label.pn']}"
+								id="requiredPartNumber_fullMfrPart">
+							        #{requiredPartNumber_popup.fullMfrPartNumber}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.moq']}"
+								id="requiredPartNumber_moq">
+									#{rfqSubmissionMB.convertNumber(requiredPartNumber_popup.moq)}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.MPQ']}"
+								id="requiredPartNumber_mpq">
+									#{rfqSubmissionMB.convertNumber(requiredPartNumber_popup.mpq)}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.leadTime']}"
+								id="requiredPartNumber_leadTime">
+									#{requiredPartNumber_popup.leadTime}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.description']}"
+								id="requiredPartNumber_description">
+									#{requiredPartNumber_popup.description}
+						        </p:column>
+						</p:dataTable>
+
+						<p:commandButton id="requiredPartNumber_popup_submitButton"
+							value="#{dbResource['wq.button.select']}"
+							actionListener="#{rfqSubmissionMB.addRequiredPartNumberToRfqs}"
+							update=":form_rfqSubmission:datatable_drmsChecking_rfqSubmission"
+							style="margin:0px 0px 10px 0px"
+							oncomplete="PF('requiredPartNumber_dialog').hide();" />
+
+					</p:dialog>
+				</p:tab>
+
+				<p:tab id="confirmation"
+					title="3. #{dbResource['wq.diglog.header.confirm']}">
+					<p:growl id="RfqSubmissionGrowl_confirm"
+						for="RfqSubmissionGrowl_confirm_1"
+						sticky="{growlPropertyMB.getSticky()}"
+						showSummary="#{growlPropertyMB.getShowSummary()}"
+						escape="#{growlPropertyMB.getEscape()}" showDetail="true" />
+					<p:panel header="#{dbResource['wq.label.rfqDetails']}"
+						style="font-size:12pt">
+						<h:panelGrid columns="18" cellpadding="0"
+							style="padding:0px 3px 0px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.salesmanEmpCode']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.salesEmployeeNumber)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.salesman']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.salesEmployeeName)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.team']}: "
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.team)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.segment']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.enquirySegment)}</h3>
+
+						</h:panelGrid>
+						<h:panelGrid columns="12" cellpadding="0"
+							style="padding:0px 3px 0px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.SoldToCode']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.soldToCustomerNumber)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.SoldToParty']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.soldToCustomerName)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.chineseCustName']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.chineseSoldToCustomerName)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.custmrType']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.customerType)}</h3>
+
+						</h:panelGrid>
+						<h:panelGrid columns="8" cellpadding="0"
+							style="padding:0px 3px 0px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.ShipToCode']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.shipToCustomerNumber)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.ShipToParty']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.shipToCustomerName)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.EndCustomerCode']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.endCustomerNumber)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.endCust']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.endCustomerName)}</h3>
+
+						</h:panelGrid>
+						<h:panelGrid columns="4" cellpadding="0"
+							style="padding:0px 3px 0px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.projectName']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.projectName)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.app']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.application)}</h3>
+
+						</h:panelGrid>
+
+						<h:panelGrid columns="8" cellpadding="0"
+							style="padding:0px 3px 0px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.designRegion']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.designRegion)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.designLoc']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.designLocation)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.MpSchedule']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.mpSchedule)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.ppSchedule']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.ppSchedule)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.reqRef']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.yourReference)}</h3>
+
+
+							<h:outputText value="#{dbResource['wq.label.CopyToCS']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.copyToCs)}</h3>
+							
+						<!-- 	<h:outputText value="#{dbResource['wq.label.rfqCurr']}:"
+								style="padding:0px 3px 0px 3px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.rfqCurr)}</h3>
+							 -->
+							<h:outputText rendered="#{rfqSubmissionMB.isShowDLink()}"  value="#{dbResource['wq.label.dollarLink']}:"
+								style="padding:0px 0px 0px 25px" />
+
+							<c:if test="#{rfqSubmissionMB.isShowDLink()==true}">
+								<h3  class="confirmData">#{rfqSubmissionMB.rfqHeader.dLinkFlag == true?"Yes":"No"}</h3>
+							</c:if>
+							
+							 
+							<!-- <h:outputText class="confirmData" rendered="#{rfqSubmissionMB.isShowDLink()}"  value="#{rfqSubmissionMB.rfqHeader.dLinkFlag == true?'Yes':'No'}"
+								 /> -->
+
+						</h:panelGrid>
+						<h:panelGrid columns="2" cellpadding="0"
+							style="padding:0px 3px 0px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.remark']}:"
+								style="padding:0px 3px 0px 3px" />
+							<p:inputTextarea value="#{rfqSubmissionMB.rfqHeader.remarks}"
+								readonly="true" rows="3" cols="200" />
+
+						</h:panelGrid>
+						<h:panelGrid columns="10" cellpadding="0"
+							style="padding:0px 3px 0px 3px;">
+
+							<h:outputText value="#{dbResource['wq.label.DesignInCat']}"
+								style="padding:0px 3px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.designInCat)}</h3>
+
+							<h:outputText value="#{dbResource['wq.label.QuoteType']}"
+								style="padding:0px 3px 0px 3px" />
+							<h:outputText value="&#042;"
+								style="color:#ff0000; padding:0px 0px 0px 0px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<h3 class="confirmData">#{rfqSubmissionMB.checkNA(rfqSubmissionMB.rfqHeader.quoteType)}</h3>
+
+						</h:panelGrid>
+
+						<f:facet name="actions">
+							<div style="float: right;">
+								<p:commandLink actionListener="#{rfqSubmissionMB.saveDraft}"
+									rendered="#{!rfqSubmissionMB.qcp}" global="false"
+									onstart="start();" oncomplete="stop();"
+									onerror="stopWithError();">
+									<h:graphicImage url="./../resources/images/icon_save.gif"
+										styleClass="iconLink" />
+								</p:commandLink>
+							</div>
+						</f:facet>
+					</p:panel>
+
+					<p:panel header="#{dbResource['wq.header.rfqItems']}">
+						<p:dataTable var="confirmation_rfqItem"
+							value="#{rfqSubmissionMB.rfqItems}" rowIndexVar="rowIndex"
+							rowKey="#{confirmation_rfqItem.itemNumber}"
+							id="datatable_confirmation_rfqSubmission" selectionMode="single"
+							selection="#{rfqSubmissionMB.selectedRfqItem}" paginator="true"
+							rows="5" rowsPerPageTemplate="5,10" paginatorPosition="top"
+							editable="true" editMode="cell" cellEditEvent="click"
+							scrollable="true"
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+							<p:column headerText="#{dbResource['wq.label.no']}"
+								id="rowNumber" styleClass="column_icon">
+							        #{confirmation_rfqItem.itemNumber}
+						        </p:column>
+
+							<p:column styleClass="column_icon">
+								<p:commandLink
+									update=":form_rfqSubmission:datatable_confirmation_rfqSubmission"
+									actionListener="#{rfqSubmissionMB.removeRfqItem(confirmation_rfqItem.itemNumber)}">
+									<h:graphicImage url="./../resources/images/iconCross.gif"
+										styleClass="iconLink" />
+								</p:commandLink>
+							</p:column>
+
+
+							<p:column headerText="#{dbResource['wq.label.bmtAQ']}"
+								sortBy="#{confirmation_rfqItem.bmtCheckedFlag}"
+								filterBy="#{confirmation_rfqItem.bmtCheckedFlag}"
+								id="confirmation_bmtCheckedFlag"
+								styleClass="column_specialPriceIndicator">
+								<p:selectBooleanCheckbox
+									id="select_id_confirmation_bmtCheckedFlag"
+									value="#{confirmation_rfqItem.bmtCheckedFlag}">
+									<p:ajax event="change"
+										update="select_id_confirmation_bmtCheckedFlag"
+										listener="#{rfqSubmissionMB.bmtadFlagValidation(confirmation_rfqItem.itemNumber,'RfqSubmissionGrowl_confirm','RfqSubmissionGrowl_confirm_1')}" />
+								</p:selectBooleanCheckbox>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.spr']}"
+								sortBy="#{confirmation_rfqItem.specialPriceIndicator}"
+								filterBy="#{confirmation_rfqItem.specialPriceIndicator}"
+								id="confirmation_specialPriceIndicator"
+								styleClass="column_specialPriceIndicator">
+								<p:selectBooleanCheckbox
+									id="select_id_confirmation_specialPriceIndicator"
+									value="#{confirmation_rfqItem.specialPriceIndicator}">
+								</p:selectBooleanCheckbox>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.mfr']}&#042;"
+								sortBy="#{confirmation_rfqItem.mfr}"
+								filterBy="#{confirmation_rfqItem.mfr}" id="confirmation_mfr"
+								styleClass="column_mfr readOnlyCell">
+									#{confirmation_rfqItem.mfr}
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.requested']}&lt;br/&gt;#{dbResource['wq.label.pn']}&#042;"
+								sortBy="#{confirmation_rfqItem.requiredPartNumber}"
+								filterBy="#{confirmation_rfqItem.requiredPartNumber}"
+								id="confirmation_requiredPartNumber"
+								styleClass="column_fullMfrPart readOnlyCell">
+									#{confirmation_rfqItem.requiredPartNumber} 					                
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.sap']}&lt;br/&gt;#{dbResource['wq.label.pn']}"
+								sortBy="#{confirmation_rfqItem.sapPartNumber}"
+								filterBy="#{confirmation_rfqItem.sapPartNumber}"
+								id="confirmation_sapPartNumber"
+								style="width:170px;font-weight:bold;">
+								<h:selectOneMenu value="#{confirmation_rfqItem.sapPartNumber}"
+									style="width:160px">
+									<f:selectItems
+										value="#{rfqSubmissionMB.getSapPartNumberSelectList(confirmation_rfqItem.key4SapPartNumberSelectedMap)}" />
+								</h:selectOneMenu>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.valid']}?"
+								sortBy="#{confirmation_rfqItem.validPartNumber}"
+								styleClass="column_icon">
+								<p:panelGrid style="border-style: hidden !important;"
+									id="drmsChecking_validLink">
+									<p:row style="border-style: hidden !important;">
+										<p:column style="border-style: hidden !important;">
+											<h:graphicImage
+												url="./../resources/images/icon_red_exclamation.png"
+												rendered="#{confirmation_rfqItem.statusColor == 3}" />
+											<h:graphicImage url="./../resources/images/icon_warn.jpg"
+												rendered="#{confirmation_rfqItem.statusColor == 2}" />
+											<h:graphicImage url="./../resources/images/icon_tick.png"
+												rendered="#{confirmation_rfqItem.statusColor == 1  and confirmation_rfqItem.requiredPartNumber != null and confirmation_rfqItem.requiredPartNumber != ''}" />
+										</p:column>
+									</p:row>
+								</p:panelGrid>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.MPQ']}"
+								sortBy="#{confirmation_rfqItem.mpq}"
+								filterBy="#{confirmation_rfqItem.mpq}" id="confirmation_mpq"
+								styleClass="column_mpq readOnlyCell">
+						        	#{rfqSubmissionMB.convertNumber(confirmation_rfqItem.mpq)}
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.moq']}"
+								sortBy="#{confirmation_rfqItem.moq}"
+								filterBy="#{confirmation_rfqItem.moq}" id="confirmation_moq"
+								styleClass="column_moq readOnlyCell">
+						        	#{rfqSubmissionMB.convertNumber(confirmation_rfqItem.moq)}
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.lead']}&lt;br/&gt;#{dbResource['wq.label.time']}"
+								sortBy="#{confirmation_rfqItem.leadTime}"
+								filterBy="#{confirmation_rfqItem.leadTime}"
+								id="confirmation_leadTime"
+								styleClass="column_leadTime readOnlyCell">
+						        	#{confirmation_rfqItem.leadTime}
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}&#042;"
+								sortBy="#{confirmation_rfqItem.requiredQty}"
+								filterBy="#{confirmation_rfqItem.requiredQty}"
+								id="confirmation_requiredQty"
+								styleClass="column_requiredQty readOnlyCell">
+									#{rfqSubmissionMB.convertNumber(confirmation_rfqItem.requiredQty)} 
+						        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.EAU']}"
+								sortBy="#{confirmation_rfqItem.eau}"
+								filterBy="#{confirmation_rfqItem.eau}" id="confirmation_eau"
+								styleClass="column_eau">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="confirmation_input_eau_out"
+											value="#{rfqSubmissionMB.convertNumber(confirmation_rfqItem.eau)}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="confirmation_input_eau_in"
+											value="#{confirmation_rfqItem.eau}" styleClass="input_text"
+											onkeyup="updateConfirmationEau(#{rowIndex})" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+					<h:outputText value="#{rfq.salesCostPart}"/>   
+								<p:column headerText="#{dbResource['wq.label.salesCostPart']}"
+								sortBy="#{confirmation_rfqItem.salesCostFlag}"
+								filterBy="#{confirmation_rfqItem.salesCostFlag}"
+								id="confirmation_salesCostPart"
+								styleClass="column_salesOrg readOnlyCell">
+						            #{confirmation_rfqItem.salesCostFlag == true?"Yes":"No"}
+						        </p:column>
+							<p:column
+								headerText="#{dbResource['wq.label.cost']}&lt;br/&gt;#{dbResource['wq.label.indicator']}"
+								sortBy="#{confirmation_rfqItem.costIndicator}"
+								filterBy="#{confirmation_rfqItem.costIndicator}"
+								id="confirmation_costIndicator"
+								styleClass="column_costIndicator readOnlyCell">
+									#{confirmation_rfqItem.costIndicator}
+						        </p:column>
+								
+							<p:column headerText="#{dbResource['wq.label.rfqCurr']}"
+								sortBy="#{confirmation_rfqItem.rfqCurr}"
+								filterBy="#{confirmation_rfqItem.rfqCurr}"
+								id="confirmation_rfqCurr"
+								styleClass="column_mfr readOnlyCell">
+					            #{confirmation_rfqItem.rfqCurr} 
+					        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.trgResale']}&lt;br/&gt;(#{dbResource['wq.label.unitPrice']})"
+								sortBy="#{confirmation_rfqItem.targetResale}"
+								filterBy="#{confirmation_rfqItem.targetResale}"
+								id="confirmation_targetResale" styleClass="column_targetResale">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText id="confirmation_input_targetResale_out"
+											value="#{confirmation_rfqItem.targetResale}">
+											<f:convertNumber minFractionDigits="5" pattern="#,##0.00000" />
+										</h:outputText>
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="confirmation_input_targetResale_in"
+											value="#{confirmation_rfqItem.targetResale}"
+											actionListener="#{rfqSubmissionMB.checkSpecialPriceIndicator(rowIndex)}"
+											styleClass="input_text"
+											onkeyup="updateConfirmationTargetResale(#{rowIndex})">
+										</p:inputText>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+							
+							<p:column headerText="#{dbResource['wq.message.orderQty']}"  width="140">
+				        <h:outputText id="orderQtys"  value="#{confirmation_rfqItem.orderQties}"  escape="false">
+							<f:converter converterId="webquote.commodity.Oqmsp" binding="#{oqmspConverterManager.getCoverter('CVT_BREAKINT')}"/>
+						</h:outputText>
+			        </p:column>
+			        
+							       
+						<p:column headerText="#{dbResource['wq.label.salesCost']}" styleClass="align_right" width="120">
+			            <h:outputText value="#{confirmation_rfqItem.displayOrderQties}"  rendered="#{!(confirmation_rfqItem.orderQties == null or confirmation_rfqItem.orderQties.isEmpty())}" escape="false">
+							<f:converter converterId="webquote.commodity.Oqmsp" binding="#{oqmspConverterManager.getCoverter('CVT_SALESCOST')}"/>
+						</h:outputText>
+			        </p:column>
+			        
+			        <p:column headerText="#{dbResource['wq.label.suggestedResale']}"  styleClass="align_right" width="120">
+			           <h:outputText value="#{confirmation_rfqItem.displayOrderQties}"  rendered="#{!(confirmation_rfqItem.orderQties == null or confirmation_rfqItem.orderQties.isEmpty())}" escape="false">
+							<f:converter converterId="webquote.commodity.Oqmsp" binding="#{oqmspConverterManager.getCoverter('CVT_SUGGESTSALE')}"/>
+						</h:outputText>
+			        </p:column>
+			        
+			         <p:column headerText="#{dbResource['wq.label.avnetOfferPrice']}"  styleClass="align_right" width="120">
+			           <h:outputText value="#{confirmation_rfqItem.displayOrderQties}"  rendered="#{!(confirmation_rfqItem.orderQties == null or confirmation_rfqItem.orderQties.isEmpty())}" escape="false">
+							<f:converter converterId="webquote.commodity.Oqmsp" binding="#{oqmspConverterManager.getCoverter('CVT_NORMSELL')}"/>
+						</h:outputText>
+						<h:outputText value="#{confirmation_rfqItem.getRfqCurrMinSellPrice()}"  rendered="#{(confirmation_rfqItem.getRfqCurrMinSellPrice()!=null) and (confirmation_rfqItem.orderQties == null or confirmation_rfqItem.orderQties.isEmpty())}" escape="false">
+						<f:convertNumber minFractionDigits="5" pattern="#,##0.00000" />
+						</h:outputText>
+			        </p:column>
+			        
+		<!-- 					<p:column headerText="#{dbResource['wq.label.salesCost']}"
+								sortBy="#{confirmation_rfqItem.salesCost}"
+								filterBy="#{confirmation_rfqItem.salesCost}"
+								id="confirmation_salesCost"
+								styleClass="column_soldToCustomerName readOnlyCell">
+						            #{confirmation_rfqItem.salesCost}
+						        </p:column>
+						        
+						        	<p:column id="suggestedResale" width="110">
+										<f:facet name="header">
+											<h:outputLabel
+												value="#{dbResource['wq.label.suggestedResale']}" />
+										</f:facet>
+										<h:outputText value="#{confirmation_rfqItem.suggestedResale}" escape="false"/>
+									</p:column>
+						        
+		         <p:column headerText="#{dbResource['wq.label.avnetOfferPrice']}"
+								sortBy="#{confirmation_rfqItem.minSellPrice}"
+								filterBy="#{confirmation_rfqItem.minSellPrice}"
+								id="confirmation_avnetOfferPric"
+								styleClass="column_soldToCustomerName readOnlyCell">
+						            #{confirmation_rfqItem.minSellPrice}
+						        </p:column> -->
+							<p:column headerText="#{dbResource['wq.label.soldToParty']}"
+								sortBy="#{confirmation_rfqItem.soldToCustomerName}"
+								filterBy="#{confirmation_rfqItem.soldToCustomerName}"
+								id="confirmation_soldToCustomerName"
+								styleClass="column_soldToCustomerName readOnlyCell">
+						            #{confirmation_rfqItem.soldToCustomerName}
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.soldTo']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+								sortBy="#{confirmation_rfqItem.soldToCustomerNumber}"
+								filterBy="#{confirmation_rfqItem.soldToCustomerNumber}"
+								id="confirmation_soldToCustomerNumber"
+								styleClass="column_soldToCustomerNumber readOnlyCell">
+									#{confirmation_rfqItem.soldToCustomerNumber} 
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.cust']}&lt;br/&gt;#{dbResource['wq.label.type']}"
+								sortBy="#{confirmation_rfqItem.customerType}"
+								filterBy="#{confirmation_rfqItem.customerType}"
+								id="confirmation_customerType"
+								styleClass="column_customerType readOnlyCell">
+						            #{confirmation_rfqItem.customerType} 
+						        </p:column>
+
+
+							<ui:remove>
+								<p:column headerText="#{dbResource['wq.label.ShipToParty']}"
+									sortBy="#{confirmation_rfqItem.shipToCustomerName}"
+									filterBy="#{confirmation_rfqItem.shipToCustomerName}"
+									id="confirmation_shipToCustomerName"
+									styleClass="column_shipToCustomerName readOnlyCell">
+						            #{confirmation_rfqItem.shipToCustomerName}  
+						        </p:column>
+
+								<p:column
+									headerText="#{dbResource['wq.label.shipTo']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+									sortBy="#{confirmation_rfqItem.shipToCustomerNumber}"
+									filterBy="#{confirmation_rfqItem.shipToCustomerNumber}"
+									id="confirmation_shipToCustomerNumber"
+									styleClass="column_shipToCustomerNumber readOnlyCell">
+						            #{confirmation_rfqItem.shipToCustomerNumber}  
+						        </p:column>
+							</ui:remove>
+
+							<p:column headerText="#{dbResource['wq.label.ShipToParty']}"
+								sortBy="#{confirmation_rfqItem.shipToCustomerName}"
+								filterBy="#{confirmation_rfqItem.shipToCustomerName}"
+								id="confirmation_shipToCustomerName"
+								styleClass="column_shipToCustomerName">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText
+											value="#{confirmation_rfqItem.shipToCustomerName}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="confirmation_input_shipToCustomerName"
+											value="#{confirmation_rfqItem.shipToCustomerName}"
+											styleClass="input_text" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+							<p:column
+								headerText="#{dbResource['wq.label.shipTo']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+								sortBy="#{confirmation_rfqItem.shipToCustomerNumber}"
+								filterBy="#{confirmation_rfqItem.shipToCustomerNumber}"
+								id="confirmation_shipToCustomerNumber"
+								styleClass="column_shipToCustomerNumber">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText
+											value="#{confirmation_rfqItem.shipToCustomerNumber}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="confirmation_input_shipToCustomerNumber"
+											value="#{confirmation_rfqItem.shipToCustomerNumber}"
+											styleClass="input_text" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.EndCustomerCode']}"
+								sortBy="#{confirmation_rfqItem.endCustomerNumber}"
+								filterBy="#{confirmation_rfqItem.endCustomerNumber}"
+								id="confirmation_endCustomerNumber"
+								styleClass="column_endCustomerNumber">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText
+											value="#{confirmation_rfqItem.endCustomerNumber}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="confirmation_input_endCustomerNumber"
+											value="#{confirmation_rfqItem.endCustomerNumber}"
+											styleClass="input_text">
+											<!-- 						                      
+											  <p:ajax event="blur"   listener="# {rfqSubmissionMB.updateEndCustomerNameInRfqItemListOnBlurConfirm(confirmation_rfqItem.itemNumber)}"/>	
+						                     -->
+										</p:inputText>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+							<p:column headerText="#{dbResource['wq.label.endCust']}"
+								sortBy="#{confirmation_rfqItem.endCustomerName}"
+								filterBy="#{confirmation_rfqItem.endCustomerName}"
+								id="confirmation_endCustomerName"
+								styleClass="column_endCustomerName">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{confirmation_rfqItem.endCustomerName}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="confirmation_input_endCustomerName"
+											value="#{confirmation_rfqItem.endCustomerName}"
+											styleClass="input_text" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.segment']}"
+								sortBy="#{confirmation_rfqItem.enquirySegment}"
+								filterBy="#{confirmation_rfqItem.enquirySegment}"
+								id="confirmation_enquirySegment"
+								styleClass="column_enquirySegment readOnlyCell">
+						            #{confirmation_rfqItem.enquirySegment} 
+						        </p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.project']}&lt;br/&gt;#{dbResource['wq.label.name']}"
+								sortBy="#{confirmation_rfqItem.projectName}"
+								filterBy="#{confirmation_rfqItem.projectName}"
+								id="confirmation_projectName" styleClass="column_projectName">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{confirmation_rfqItem.projectName}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="confirmation_input_projectName"
+											value="#{confirmation_rfqItem.projectName}"
+											styleClass="input_text" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.app']}"
+								sortBy="#{confirmation_rfqItem.application}"
+								filterBy="#{confirmation_rfqItem.application}"
+								id="confirmation_application" styleClass="column_application">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{confirmation_rfqItem.application}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="confirmation_input_application"
+											value="#{confirmation_rfqItem.application}"
+											styleClass="input_text" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+
+							<p:column
+								headerText="#{dbResource['wq.label.design']}&lt;br/&gt;#{dbResource['wq.label.location']}"
+								sortBy="#{confirmation_rfqItem.designLocation}"
+								filterBy="#{confirmation_rfqItem.designLocation}"
+								id="confirmation_designLocation"
+								styleClass="column_designLocation">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{confirmation_rfqItem.designLocation}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="confirmation_input_designLocation"
+											value="#{confirmation_rfqItem.designLocation}"
+											styleClass="input_text" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.design']}&lt;br/&gt;#{dbResource['wq.label.region']}"
+								sortBy="#{confirmation_rfqItem.designRegion}"
+								filterBy="#{confirmation_rfqItem.designRegion}"
+								id="confirmation_designRegion" styleClass="column_designRegion">
+								<h:outputText value="#{confirmation_rfqItem.designRegion}" />
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.DesignInCat']}"
+								sortBy="#{confirmation_rfqItem.designInCat}"
+								filterBy="#{confirmation_rfqItem.designInCat}"
+								id="confirmation_designInCat"
+								styleClass="column_designInCat editCells">
+								<h:outputText value="#{confirmation_rfqItem.designInCat}" />
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.drmsID']}"
+								sortBy="#{confirmation_rfqItem.drmsNumber}"
+								filterBy="#{confirmation_rfqItem.drmsNumber}"
+								id="confirmation_drmsNumber" styleClass="column_drmsNumber">
+								<h:outputText value="#{confirmation_rfqItem.drmsNumber}" />
+							</p:column>
+							<ui:remove>
+								<p:column
+									headerText="#{dbResource['wq.label.competitor']}&lt;br/&gt;#{dbResource['wq.label.information']}"
+									sortBy="#{confirmation_rfqItem.competitorInformation}"
+									filterBy="#{confirmation_rfqItem.competitorInformation}"
+									id="confirmation_competitorInformation"
+									styleClass="column_competitorInformation readOnlyCell">
+						            #{confirmation_rfqItem.competitorInformation}
+						        </p:column>
+							</ui:remove>
+							<p:column
+								headerText="#{dbResource['wq.label.competitor']}&lt;br/&gt;#{dbResource['wq.label.information']}"
+								sortBy="#{confirmation_rfqItem.competitorInformation}"
+								filterBy="#{confirmation_rfqItem.competitorInformation}"
+								id="confirmation_competitorInformation"
+								styleClass="column_competitorInformation editCell">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText
+											value="#{confirmation_rfqItem.competitorInformation}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="confirmation_input_competitorInformation"
+											value="#{confirmation_rfqItem.competitorInformation}" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.mfrDR']}#"
+								sortBy="#{confirmation_rfqItem.supplierDrNumber}"
+								filterBy="#{confirmation_rfqItem.supplierDrNumber}"
+								id="confirmation_supplierDrNumber"
+								styleClass="column_supplierDrNumber">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{confirmation_rfqItem.supplierDrNumber}" />
+									</f:facet>
+									<f:facet name="input">
+										<p:inputText id="confirmation_input_supplierDrNumber"
+											value="#{confirmation_rfqItem.supplierDrNumber}"
+											styleClass="input_text" />
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.mp']}&lt;br/&gt;#{dbResource['wq.label.schedule']}"
+								sortBy="#{confirmation_rfqItem.mpSchedule}"
+								filterBy="#{confirmation_rfqItem.mpSchedule}"
+								id="confirmation_mpSchedule" styleClass="column_mpSchedule">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{confirmation_rfqItem.mpSchedule}" />
+									</f:facet>
+									<f:facet name="input">
+										<h:selectOneMenu id="confirmation_input_mpSchedule"
+											value="#{confirmation_rfqItem.mpSchedule}">
+											<f:selectItems
+												value="#{rfqSubmissionMB.mpScheduleSelectList}" />
+										</h:selectOneMenu>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.pp']}&lt;br/&gt;#{dbResource['wq.label.schedule']}"
+								sortBy="#{confirmation_rfqItem.ppSchedule}"
+								filterBy="#{confirmation_rfqItem.ppSchedule}"
+								id="confirmation_ppSchedule" styleClass="column_ppSchedule">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{confirmation_rfqItem.ppSchedule}" />
+									</f:facet>
+									<f:facet name="input">
+										<h:selectOneMenu id="confirmation_input_ppSchedule"
+											value="#{confirmation_rfqItem.ppSchedule}">
+											<f:selectItems
+												value="#{rfqSubmissionMB.ppScheduleSelectList}" />
+										</h:selectOneMenu>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.QuoteType']}"
+								sortBy="#{confirmation_rfqItem.quoteType}"
+								filterBy="#{confirmation_rfqItem.quoteType}"
+								id="confirmation_quoteType"
+								styleClass="column_quoteType editCells">
+								<p:cellEditor>
+									<f:facet name="output">
+										<h:outputText value="#{confirmation_rfqItem.quoteType}" />
+									</f:facet>
+									<f:facet name="input">
+										<h:selectOneMenu id="confirmation_input_quoteType"
+											value="#{confirmation_rfqItem.quoteType}">
+											<f:selectItems value="#{rfqSubmissionMB.quoteTypeList}" />
+										</h:selectOneMenu>
+									</f:facet>
+								</p:cellEditor>
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.loa']}"
+								sortBy="#{confirmation_rfqItem.loa}"
+								filterBy="#{confirmation_rfqItem.loa}" id="confirmation_loa"
+								styleClass="column_icon">
+								<p:selectBooleanCheckbox value="#{confirmation_rfqItem.loa}"
+									disabled="true" />
+							</p:column>
+
+							<p:column
+								headerText="#{dbResource['wq.label.item']}&lt;br/&gt;#{dbResource['wq.label.remarks']}"
+								sortBy="#{confirmation_rfqItem.itemRemarks}"
+								filterBy="#{confirmation_rfqItem.itemRemarks}"
+								id="confirmation_itemRemarks"
+								styleClass="column_itemRemarks readOnlyCell">
+						            #{confirmation_rfqItem.itemRemarks}
+						        </p:column>
+						        
+						        
+
+							<p:column headerText="#{dbResource['wq.label.attachment']}"
+								id="confirmation_attachmentId" styleClass="column_attachmentId">
+								<p:commandLink update=":form_rfqSubmission:attachment_panel"
+									actionListener="#{rfqSubmissionMB.updateItemNumberForAttachment(confirmation_rfqItem.itemNumber)}"
+									oncomplete="PF('attachment_list_dialog').show()"
+									rendered="#{confirmation_rfqItem.hasAttach}"
+									style="padding:0px 3px 0px 3px">
+									<h:graphicImage url="./../resources/images/ic_document.png"
+										styleClass="iconLink" />
+								</p:commandLink>
+							</p:column>
+
+							<f:facet name="footer">
+								<p:commandButton
+									value="#{dbResource['wq.label.confrmToSubmtRFQ']}"
+									icon="ui-icon-circle-arrow-n"
+									oncomplete="checkConfirmation(xhr, status, args);"
+									update=":form_rfqSubmission:confirm_select_bmt_dialog_panel"
+									actionListener="#{rfqSubmissionMB.getRfqs4SelectBmt}"
+									rendered="#{!rfqSubmissionMB.qcp}"
+									process="datatable_confirmation_rfqSubmission,@this"
+									onclick="start();" />
+							</f:facet>
+
+						</p:dataTable>
+					</p:panel>
+				</p:tab>
+
+			</p:wizard>
+			<div style="float: left;">
+				<p:commandButton id="backButton"
+					styleClass="ui-wizard ui-wizard-navbar ui-wizard-nav-back"
+					icon="ui-icon-arrowthick-1-w"
+					value="#{dbResource['wq.button.back']}"
+					update=":form_rfqSubmission:prospectiveCustomerConfirmation_yy"
+					onclick="start();PF('wiz').back();" oncomplete="stop();"
+					global="false" onerror="stopWithError();" style="display:none;" />
+			</div>
+			<div style="float: right;">
+				<p:commandButton id="nextButton"
+					styleClass="ui-wizard ui-wizard-navbar ui-wizard-nav-next"
+					icon="ui-icon-arrowthick-1-e"
+					value="#{dbResource['wq.button.next']}"
+					update=":form_rfqSubmission:prospectiveCustomerConfirmation_yy"
+					onclick="start();PF('wiz').next();" oncomplete="stop();"
+					global="false" onerror="stopWithError();" />
+			</div>
+
+			<div style="height: 25px"></div>
+
+			<!-- added by DamonChen begin- -->
+				<p:tab id="duplicated_rfqItem_panel" width="100%">
+				<h:panelGrid id="prospectiveCustomerConfirmation_yy" >
+			<p:panel header="#{dbResource['wq.header.duplicatedRFQItems']}" >
+				<p:dataTable var="duplicated_rfqItem"
+					value="#{rfqSubmissionMB.duplicatedrfqItems}"
+					rowIndexVar="rowIndex" rowKey="#{duplicated_rfqItem.itemNumber}"
+					id="datatable_duplicated_rfqSubmission" paginator="true" rows="5"
+					rowsPerPageTemplate="5,10" paginatorPosition="top" editable="true"
+					editMode="cell" cellEditEvent="click" scrollable="true"
+					emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+					<p:column headerText="#{dbResource['wq.label.no']}" id="rowNumber"
+						styleClass="column_icon">
+							        #{duplicated_rfqItem.itemNumber}
+						        </p:column>
+
+
+
+					<p:column headerText="#{dbResource['wq.label.messages']}"
+						id="duplicated_messages" sortBy="#{duplicated_rfqItem.messages}"
+						filterBy="#{duplicated_rfqItem.messages}"
+						styleClass="column_fullMfrPart readOnlyCell">
+						<h:outputText value="#{duplicated_rfqItem.messages}" />
+					</p:column>
+
+
+					<p:column headerText="#{dbResource['wq.label.mfr']}"
+						id="duplicated_mfr" sortBy="#{duplicated_rfqItem.mfr}"
+						filterBy="#{duplicated_rfqItem.mfr}"
+						styleClass="column_fullMfrPart readOnlyCell">
+						<h:outputText value="#{duplicated_rfqItem.mfr}" />
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.requested']}&lt;br/&gt;#{dbResource['wq.label.pn']}"
+						sortBy="#{duplicated_rfqItem.requiredPartNumber}"
+						filterBy="#{duplicated_rfqItem.requiredPartNumber}"
+						id="duplicated_requiredPartNumber"
+						styleClass="column_fullMfrPart readOnlyCell">
+						<!-- <h:outputText value="duplicated_rfqItem.messages" /> -->
+                      	#{duplicated_rfqItem.requiredPartNumber} 	
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.soldTo']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+						sortBy="#{duplicated_rfqItem.soldToCustomerNumber}"
+						filterBy="#{duplicated_rfqItem.soldToCustomerNumber}"
+						id="duplicated_soldToCustomerNumber"
+						styleClass="column_soldToCustomerNumber readOnlyCell">
+									#{duplicated_rfqItem.soldToCustomerNumber} 
+						        </p:column>
+					<p:column headerText="#{dbResource['wq.label.soldToParty']}"
+						sortBy="#{duplicated_rfqItem.soldToCustomerName}"
+						filterBy="#{duplicated_rfqItem.soldToCustomerName}"
+						id="duplicated_rfqItem_soldToCustomerName"
+						styleClass="column_soldToCustomerName readOnlyCell">
+						            #{duplicated_rfqItem.soldToCustomerName}
+						        </p:column>
+
+
+					<p:column headerText="#{dbResource['wq.label.EndCustomerCode']}"
+						filterBy="#{duplicated_rfqItem.endCustomerNumber}"
+						sortBy="#{duplicated_rfqItem.endCustomerNumber}"
+						styleClass="column_endCustomerNumber readOnlyCell">
+                      #{duplicated_rfqItem.endCustomerNumber}
+					</p:column>
+
+
+
+
+					<p:column headerText="#{dbResource['wq.label.endCust']}"
+						sortBy="#{duplicated_rfqItem.endCustomerName}"
+						filterBy="#{duplicated_rfqItem.endCustomerName}"
+						id="duplicated_endCustomerName"
+						styleClass="column_endCustomerName readOnlyCell">
+						          #{duplicated_rfqItem.endCustomerName}
+						        </p:column>
+
+
+					<p:column
+						headerText="#{dbResource['wq.label.trgResale']}&lt;br/&gt;(#{dbResource['wq.label.unitPrice']})"
+						sortBy="#{duplicated_rfqItem.targetResale}"
+						filterBy="#{duplicated_rfqItem.targetResale}"
+						id="duplicated_targetResale"
+						styleClass="column_targetResale readOnlyCell">
+						<h:outputText id="duplicated_input_targetResale_out"
+							value="#{duplicated_rfqItem.targetResale}">
+							<f:convertNumber minFractionDigits="5" pattern="#,##0.00000" />
+						</h:outputText>
+					</p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}&#042;"
+						sortBy="#{duplicated_rfqItem.requiredQty}"
+						filterBy="#{duplicated_rfqItem.requiredQty}"
+						id="duplicated_requiredQty"
+						styleClass="column_requiredQty readOnlyCell">
+									#{rfqSubmissionMB.convertNumber(duplicated_rfqItem.requiredQty)} 
+						        </p:column>
+
+					<p:column headerText="#{dbResource['wq.label.EAU']}"
+						filterBy="#{duplicated_rfqItem.eau}"
+						sortBy="#{duplicated_rfqItem.eau}" id="duplicated_eau"
+						styleClass="column_eau readOnlyCell">
+						<f:facet name="output">
+							<h:outputText id="duplicated_input_eau_out"
+								value="#{rfqSubmissionMB.convertNumber(duplicated_rfqItem.eau)}" />
+						</f:facet>
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.matchedQuoteNumber']}"
+						sortBy="#{duplicated_rfqItem.matchedQuoteNumber}"
+						filterBy="#{duplicated_rfqItem.matchedQuoteNumber}"
+						id="duplicated_matchedQuoteNumber"
+						styleClass="column_fullMfrPart readOnlyCell">
+						<h:outputText value="#{duplicated_rfqItem.matchedQuoteNumber}"  escape="false"  />
+					</p:column>
+
+
+
+					<p:column
+						headerText="#{dbResource['wq.label.po']} #{dbResource['wq.label.expDate']}"
+						sortBy="#{duplicated_rfqItem.dupQuoteItemPoExpiryDateStr}"
+						filterBy="#{duplicated_rfqItem.dupQuoteItemPoExpiryDateStr}"
+						styleClass="column_fullMfrPart readOnlyCell"
+						>
+						
+						<h:outputText value="#{duplicated_rfqItem.dupQuoteItemPoExpiryDateStr}"  escape="false"  />
+						
+					</p:column>
+					
+
+
+					<f:facet name="footer" style="align:right">
+						<p:commandButton
+							value="#{dbResource['wq.label.deleteDuplicatedItems']}"
+							update=":form_rfqSubmission:prospectiveCustomerConfirmation_yy,:form_rfqSubmission:widgetPanelGridID"
+							actionListener="#{rfqSubmissionMB.deleteDuplicatedItems}"
+							disabled="#{rfqSubmissionMB.duplicatedrfqItems.size()==0}"
+							onclick="start();" oncomplete="stop();"/>
+					</f:facet>
+
+				</p:dataTable>
+			</p:panel>
+	</h:panelGrid>
+	</p:tab>
+
+			<!-- Damonchen.... -->
+
+
+
+
+
+			<p:dialog id="uploadBatchRfqsValidation_dialog"
+				header="#{dbResource['wq.header.alertMesg']}"
+				widgetVar="uploadBatchRfqsValidation_dialog" resizable="false"
+				modal="true">
+
+				<h:panelGrid columns="1" cellpadding="0"
+					style="padding:0px 3px 0px 3px;">
+					<h:outputText value="#{dbResource['wq.error.uplodRFQBatch']}"
+						style="padding:0px 3px 3px 3px" />
+					<h:outputText value="#{dbResource['wq.error.linkDownloadRFQ']}"
+						style="padding:0px 3px 0px 3px" />
+					<h:outputText value="#{dbResource['wq.error.rfqErrors']}"
+						style="padding:0px 3px 0px 3px" />
+				</h:panelGrid>
+				<h:panelGrid columns="1" cellpadding="0"
+					style="padding:0px 3px 0px 3px;">
+					<p:commandLink value="#{dbResource['wq.button.downloadVWebQForm']}"
+						oncomplete="PrimeFaces.monitorDownload(start, stop);PF('uploadBatchRfqsValidation_dialog').hide()"
+						ajax="false">
+						<p:fileDownload value="#{rfqSubmissionMB.verifiedTemplate}" />
+					</p:commandLink>
+				</h:panelGrid>
+			</p:dialog>
+
+
+			<p:dialog id="newProspectiveCustomer_dialog"
+				header="#{dbResource['wq.header.new']} #{rfqSubmissionMB.newCustomerTitle} #{dbResource['wq.header.ifNeed']}"
+				widgetVar="newProspectiveCustomer_dialog" resizable="false"
+				modal="true" dynamic="true">
+				<p:growl id="newProspectiveCustomerGrowl"
+					for="newProspectiveCustomerGrowl_1" showDetail="true"
+					sticky="{growlPropertyMB.getSticky()}"
+					showSummary="#{growlPropertyMB.getShowSummary()}"
+					escape="#{growlPropertyMB.getEscape()}" />
+				<h:panelGrid columns="4" cellpadding="0"
+					style="padding:4px 3px 4px 3px;">
+
+					<h:outputText value="#{dbResource['wq.label.custmrName']}"
+						style="padding:0px 3px 0px 3px" />
+					<h:outputText value="&#042;"
+						style="color:#ff0000; padding:0px 0px 0px 0px" />
+					<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+					<p:inputText id="newProspectiveCustomer_customerName"
+						value="#{rfqSubmissionMB.newProspectiveCustomerName1}"
+						maxlength="40" />
+
+				</h:panelGrid>
+				<h:panelGrid id="countryCityPanelGrid" columns="12" cellpadding="0"
+					style="padding:4px 3px 4px 3px;">
+
+					<h:outputText value="#{dbResource['wq.label.country']}"
+						style="padding:0px 3px 0px 3px" />
+					<h:outputText value="&#042;"
+						style="color:#ff0000; padding:0px 0px 0px 0px" />
+					<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+					<h:selectOneMenu
+						value="#{rfqSubmissionMB.newProspectiveCustomerCountry}"
+						id="newProspectiveCustomer_country">
+						<f:selectItems value="#{rfqSubmissionMB.countrySelectList}" />
+					</h:selectOneMenu>
+
+					<h:outputText value="#{dbResource['wq.label.city']}"
+						style="padding:0px 3px 0px 3px" />
+					<h:outputText value="&#042;"
+						style="color:#ff0000; padding:0px 0px 0px 0px" />
+					<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+					<p:inputText value="#{rfqSubmissionMB.newProspectiveCustomerCity}"
+						maxlength="35" style="width:160px"
+						id="newProspectiveCustomer_city" />
+
+					<h:outputText value="#{dbResource['wq.label.salsOrg']}"
+						style="padding:0px 3px 0px 3px" />
+					<h:outputText value="&#042;"
+						style="color:#ff0000; padding:0px 0px 0px 0px" />
+					<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+					<h:selectOneMenu
+						value="#{rfqSubmissionMB.newProspectiveCustomerSalesOrg}"
+						id="newProspectiveCustomer_salesOrg">
+						<f:selectItems value="#{rfqSubmissionMB.salesOrgSelectList}" />
+					</h:selectOneMenu>
+
+				</h:panelGrid>
+				<h:panelGrid columns="4" cellpadding="0"
+					style="padding:4px 3px 4px 3px;">
+
+					<h:outputText value="#{dbResource['wq.label.address']}"
+						style="padding:0px 3px 0px 3px" />
+					<h:outputText value=""
+						style="color:#ff0000; padding:0px 0px 0px 0px" />
+					<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+					<p:inputText
+						value="#{rfqSubmissionMB.newProspectiveCustomerAddress3}"
+						maxlength="35" style="width:300px"
+						id="newProspectiveCustomer_address" />
+
+				</h:panelGrid>
+				<p:commandButton id="newProspectiveCustomer_okButton"
+					value="#{dbResource['wq.button.ok']}"
+					update=":form_rfqSubmission:prospectiveCustomerConfirmation,:form_rfqSubmission:newProspectiveCustomerGrowl"
+					actionListener="#{rfqSubmissionMB.createProspectiveCustomerWithoutForcing}"
+					style="margin:0px 0px 10px 0px;height:27px;width:90px;"
+					oncomplete="stop();" global="false" onstart="start();"
+					onerror="stopWithError();" />
+				<p:commandButton id="newProspectiveCustomer_cancelButton"
+					value="#{dbResource['wq.button.cancel']}"
+					style="margin:0px 0px 10px 0px;height:27px;width:90px;"
+					oncomplete="PF('newProspectiveCustomer_dialog').hide();" />
+			</p:dialog>
+
+			<p:dialog id="confirmation_dialog"
+				header="#{dbResource['wq.header.new']} #{rfqSubmissionMB.newCustomerTitle} #{dbResource['wq.header.ifNeed']}"
+				widgetVar="confirmation_dialog" resizable="true" modal="true"
+				dynamic="true">
+
+				<h:panelGrid id="prospectiveCustomerConfirmation" columns="1">
+					<h:panelGrid columns="1" cellpadding="0"
+						style="padding:4px 10px 4px 10px;"
+						rendered="#{!rfqSubmissionMB.newProspectiveCustomerDuplicated}">
+						<h2>The #{rfqSubmissionMB.newCustomerTitle}
+							#{rfqSubmissionMB.duplicatedCustomerCode}
+							#{dbResource['wq.label.sapCreation']}</h2>
+					</h:panelGrid>
+					<h:panelGrid columns="1" cellpadding="0"
+						style="padding:4px 10px 4px 10px;"
+						rendered="#{rfqSubmissionMB.newProspectiveCustomerDuplicated}">
+						<h2>#{dbResource['wq.label.duplicateCustSAP']}</h2>
+					</h:panelGrid>
+					<h:panelGrid columns="1" cellpadding="0"
+						style="padding:4px 10px 4px 10px;"
+						rendered="#{rfqSubmissionMB.newProspectiveCustomerDuplicated}">
+						<h:outputText
+							value="#{dbResource['wq.label.custmrCode']}  : #{rfqSubmissionMB.duplicatedCustomerCode}" />
+						<h:outputText
+							value="#{dbResource['wq.label.custmrName']} : #{rfqSubmissionMB.duplicatedCustomerName}" />
+						<h:outputText
+							value="#{dbResource['wq.label.custmrType']} : #{rfqSubmissionMB.duplicatedCustomerType}" />
+						<h:outputText
+							value="#{dbResource['wq.label.country']} : #{rfqSubmissionMB.duplicatedCountry}" />
+						<h:outputText
+							value="#{dbResource['wq.label.city']} : #{rfqSubmissionMB.duplicatedCity}" />
+						<h:outputText
+							value="#{dbResource['wq.label.salsOrg']} : #{rfqSubmissionMB.duplicatedSalesOrg}" />
+					</h:panelGrid>
+
+					<h:panelGrid columns="1" cellpadding="0"
+						style="padding:4px 10px 4px 10px;"
+						rendered="#{rfqSubmissionMB.newProspectiveCustomerDuplicated}">
+						<h2>#{dbResource['wq.header.contCreatNewCust']}
+							#{rfqSubmission.newCustomerTitle} ?</h2>
+					</h:panelGrid>
+					<h:panelGrid columns="2" cellpadding="0"
+						style="padding:4px 10px 4px 10px;"
+						rendered="#{rfqSubmissionMB.newProspectiveCustomerDuplicated}">
+						<p:commandButton id="duplicateCustomer_yesButton"
+							value="#{dbResource['wq.button.yes']}"
+							update=":form_rfqSubmission:prospectiveCustomerConfirmation"
+							actionListener="#{rfqSubmissionMB.createProspectiveCustomerWithForcing}"
+							style="margin:0px 0px 10px 0px" />
+						<p:commandButton id="duplicateCustomer_noButton"
+							value="#{dbResource['wq.button.no']}"
+							style="margin:0px 0px 10px 0px"
+							oncomplete="PF('confirmation_dialog').hide(); PF('newProspectiveCustomer_dialog').hide();" />
+					</h:panelGrid>
+					<h:panelGrid columns="1" cellpadding="0"
+						style="padding:4px 10px 4px 10px;"
+						rendered="#{!rfqSubmissionMB.newProspectiveCustomerDuplicated}">
+						<p:commandButton id="duplicateCustomer_okButton"
+							update=":form_rfqSubmission:basicDetails_soldToCustomerNumber,:form_rfqSubmission:basicDetails_soldToCustomerName,:form_rfqSubmission:basicDetails_customerType,:form_rfqSubmission:basicDetails_endCustomerNumber,:form_rfqSubmission:basicDetails_endCustomerName"
+							value="#{dbResource['wq.button.ok']}"
+							actionListener="#{rfqSubmissionMB.updateNewSoldToCode}"
+							style="margin:0px 0px 10px 0px"
+							oncomplete="PF('confirmation_dialog').hide(); newProspectiveCustomer_dialog').hide();" />
+					</h:panelGrid>
+				</h:panelGrid>
+			</p:dialog>
+
+			<p:confirmDialog id="delete_all_confirmation_dialog"
+				message="#{dbResource['wq.error.removeAllRFQItem']}"
+				header="#{dbResource['wq.diglog.header.confirm']}" severity="alert"
+				widgetVar="delete_all_confirmation_dialog" resizable="true"
+				modal="true">
+				<p:commandButton id="confirm_delete"
+					value="#{dbResource['wq.button.yes']}"
+					oncomplete="PF('delete_all_confirmation_dialog').hide();stop();"
+					onstart="start();" onerror="stopWithError();"
+					update=":form_rfqSubmission:datatable_basicDetails_rfqSubmission"
+					actionListener="#{rfqSubmissionMB.deleteAllRfqDetail}">
+				</p:commandButton>
+				<p:commandButton id="decline_delete"
+					value="#{dbResource['wq.button.no']}"
+					onclick="delete_all_confirmation_dialog').hide()" type="button" />
+			</p:confirmDialog>
+
+			<p:confirmDialog id="delete_form_att_confirmDialog"
+				message="#{dbResource['wq.dialog.confirmDelAttchmnt']}"
+				header="Alert" severity="alert"
+				widgetVar="delete_form_att_confirmDialog">
+				<p:commandButton value="#{dbResource['wq.button.yes']}"
+					actionListener="#{rfqSubmissionMB.removeAttachmentForm()}"
+					update=":form_rfqSubmission:attachment_form_panel,:form_rfqSubmission:basicDetails_rfqDetails"
+					oncomplete="PF('delete_form_att_confirmDialog').hide();stop();"
+					onstart="start();" onerror="stopWithError();" />
+				<p:commandButton value="#{dbResource['wq.button.no']}"
+					onclick="PF('delete_form_att_confirmDialog').hide()" type="button" />
+			</p:confirmDialog>
+
+			<p:confirmDialog id="delete_att_confirmDialog"
+				message="#{dbResource['wq.dialog.confirmDelAttchmnt']}"
+				header="Alert" severity="alert" widgetVar="delete_att_confirmDialog">
+				<p:commandButton value="#{dbResource['wq.button.yes']}"
+					actionListener="#{rfqSubmissionMB.removeAttachment()}"
+					update=":form_rfqSubmission:attachment_panel,:form_rfqSubmission:datatable_basicDetails_rfqSubmission"
+					oncomplete="PF('delete_att_confirmDialog').hide();stop();"
+					onstart="start();" onerror="stopWithError();" />
+				<p:commandButton value="#{dbResource['wq.button.no']}"
+					onclick="PF('delete_att_confirmDialog').hide()" type="button" />
+			</p:confirmDialog>
+
+			<p:confirmDialog id="reset_confirmation_dialog"
+				message="#{dbResource['wq.error.removeAllFormProceed']}?"
+				header="#{dbResource['wq.diglog.header.confirm']}" severity="alert"
+				widgetVar="reset_confirmation_dialog" resizable="true" modal="true">
+				<p:commandButton id="reset_confirm_delete"
+					value="#{dbResource['wq.button.yes']}" update="@form"
+					actionListener="#{rfqSubmissionMB.resetForm}"
+					oncomplete="PF('reset_confirmation_dialog').hide();stop();"
+					global="false" onstart="start();" onerror="stopWithError();">
+				</p:commandButton>
+				<p:commandButton id="reset_decline_delete"
+					value="#{dbResource['wq.button.no']}"
+					onclick="reset_confirmation_dialog').hide()" type="button" />
+			</p:confirmDialog>
+
+
+			<p:dialog id="newPartNotAllow_dialog"
+				header="#{dbResource['wq.header.newPartDef']}"
+				widgetVar="newPartNotAllow_dialog" resizable="true" modal="true"
+				focus="newPartNotAllow_expansion_OkButton">
+
+				<h:panelGrid id="newPartNotAllow" columns="1" cellpadding="0"
+					style="padding:0px 3px 0px 3px;">
+					<h:outputText
+						value="#{rfqSubmissionMB.toBeNewPartNumber} #{dbResource['wq.label.cantDefineAsNew']}"
+						style="padding:0px 3px 3px 3px" />
+					<h:outputText
+						value="#{dbResource['wq.label.reason']} : #{rfqSubmissionMB.toBeNewMfr} #{dbResource['wq.label.notAllowdNew']}"
+						style="padding:0px 3px 0px 3px" />
+				</h:panelGrid>
+				<h:panelGrid columns="1" cellpadding="0"
+					style="padding:0px 3px 0px 3px;">
+					<p:commandButton id="newPartNotAllow_expansion_OkButton"
+						value="#{dbResource['wq.button.ok']}"
+						style="margin:0px 0px 10px 0px"
+						oncomplete="PF('newPartNotAllow_dialog').hide();" />
+				</h:panelGrid>
+			</p:dialog>
+			<p:dialog id="newPartAllow_dialog"
+				header="#{dbResource['wq.header.newPartDef']}"
+				widgetVar="newPartAllow_dialog" resizable="true" modal="true"
+				focus="newPartNotAllow_expansion_YesButton">
+
+				<h:panelGrid id="newPartAllow" columns="1" cellpadding="0"
+					style="padding:0px 3px 0px 3px;">
+					<h:outputText
+						value="#{dbResource['wq.label.define']} #{rfqSubmissionMB.toBeNewPartNumber} #{dbResource['wq.label.asNew']}"
+						style="padding:0px 3px 3px 3px" />
+					<h:outputText
+						value="#{dbResource['wq.label.remark']} : #{rfqSubmissionMB.toBeNewMfr} #{dbResource['wq.label.isAlowNew']}"
+						style="padding:0px 3px 3px 3px" />
+				</h:panelGrid>
+				<h:panelGrid columns="2" cellpadding="0"
+					style="padding:0px 3px 0px 3px;">
+					<p:commandButton id="newPartNotAllow_expansion_YesButton"
+						value="#{dbResource['wq.button.yes']}"
+						actionListener="#{rfqSubmissionMB.submitAsNewPart}"
+						update=":form_rfqSubmission:datatable_basicDetails_rfqSubmission"
+						style="margin:0px 0px 10px 0px"
+						oncomplete="PF('newPartAllow_dialog').hide();" />
+					<p:commandButton id="newPartNotAllow_expansion_NoButton"
+						value="#{dbResource['wq.button.no']}"
+						style="margin:0px 0px 10px 0px"
+						oncomplete="PF('newPartAllow_dialog').hide();" />
+				</h:panelGrid>
+			</p:dialog>
+
+
+			<p:dialog id="pending_drms_entrying_window_id"
+				header="#{dbResource['wq.label.pendDRMS']}"
+				widgetVar="pending_drms_entrying_window" resizable="true"
+				modal="true" focus="pending_drms_entrying_window_NoButton">
+
+				<p:dataTable var="pendingRfq"
+					value="#{rfqSubmissionMB.pendingDRMSRfqs}"
+					rowKey="#{pendingRfq.itemNumber}" rowIndexVar="pendingRfq_rowIndex"
+					id="datatable_pendingRfq" paginator="true" rows="5"
+					rowsPerPageTemplate="5,10" paginatorPosition="top"
+					scrollable="true" scrollHeight="200" scrollWidth="500"
+					style="margin:5px 0px 0px 0px;"
+					emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+					<p:column headerText="#{dbResource['wq.label.no']}" width="30">
+					        #{pendingRfq_rowIndex + 1}
+				        </p:column>
+
+					<p:column headerText="#{dbResource['wq.label.mfr']}"
+						styleClass="column_pending_mfr" width="50">
+					        #{pendingRfq.mfr}
+				        </p:column>
+
+					<p:column
+						headerText="#{dbResource['wq.label.requested']}&lt;br/&gt;P/N&#042;"
+						styleClass="column_pending_requiredPartNumber" width="150">
+					        #{pendingRfq.requiredPartNumber}
+				        </p:column>
+
+					<p:column headerText="#{dbResource['wq.label.SoldToParty']}"
+						styleClass="column_pending_soldToParty" width="200">
+					        #{pendingRfq.soldToCustomerName}
+				        </p:column>
+
+					<p:column headerText="#{dbResource['wq.label.endCust']}"
+						styleClass="column_pending_endCustomer" width="200">
+					        #{pendingRfq.endCustomerName}
+				        </p:column>
+
+				</p:dataTable>
+				<h:panelGrid columns="2" cellpadding="0"
+					style="padding:0px 3px 0px 3px;">
+					<p:commandButton id="pending_drms_entrying_window_NoButton"
+						value="#{dbResource['wq.button.close']}"
+						style="margin:0px 0px 10px 0px"
+						oncomplete="PF('pending_drms_entrying_window').hide();" />
+				</h:panelGrid>
+			</p:dialog>
+
+
+			<p:dialog id="copyToCs_dialog"
+				header="#{dbResource['wq.label.CopyToCS']}"
+				widgetVar="copyToCs_dialog" resizable="true" modal="true"
+				focus="cs_YesButton" style="width:380px;height:400px;">
+
+				<p:panel header="#{dbResource['wq.header.csList']}" id="cs_panel"
+					style="font-size:12pt;width:320px;height:400px;">
+					<p:dataTable var="cs" value="#{rfqSubmissionMB.csList}"
+						selection="#{rfqSubmissionMB.selectedCsList}"
+						rowKey="#{cs.employeeId}" rowIndexVar="cs_rowIndex"
+						id="datatable_cs" style="width:320px;margin:5px 0px 0px 0px;"
+						scrollable="true" scrollHeight="300"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+						<p:column headerText="#{dbResource['wq.label.no']}" width='30'>
+					        #{cs_rowIndex + 1}
+				        </p:column>
+
+						<p:column selectionMode="multiple" styleClass="column_icon"
+							width='30' />
+
+						<p:column headerText="#{dbResource['wq.label.EmpID']}"
+							styleClass="column_salesEmployeeNumber" width='80'>
+					        #{cs.employeeId}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.empName']}"
+							styleClass="column_employeeName" width='140'>
+					        #{cs.name}
+				        </p:column>
+
+					</p:dataTable>
+					<h:panelGrid columns="2" cellpadding="0"
+						style="padding:0px 3px 0px 3px;">
+						<p:commandButton id="cs_YesButton"
+							value="#{dbResource['wq.button.select']}"
+							actionListener="#{rfqSubmissionMB.updateCopyToCs}"
+							update=":form_rfqSubmission:basicDetails_copyToCs"
+							style="margin:0px 0px 10px 0px"
+							oncomplete="PF('copyToCs_dialog').hide();" />
+						<p:commandButton id="cs_NoButton"
+							value="#{dbResource['wq.button.cancel']}"
+							style="margin:0px 0px 10px 0px"
+							oncomplete="PF('copyToCs_dialog').hide();" />
+					</h:panelGrid>
+
+				</p:panel>
+			</p:dialog>
+			<p:dialog id="attachment_list_dialog"
+				header="#{dbResource['wq.header.attchmntList']}"
+				widgetVar="attachment_list_dialog" resizable="true" modal="true">
+
+				<p:panel header="#{dbResource['wq.header.attachments']}"
+					id="attachment_panel" style="font-size:12pt">
+					<p:dataTable var="attachment"
+						value="#{rfqSubmissionMB.attachments}" rowKey="#{attachment.id}"
+						rowIndexVar="attachment_rowIndex" id="datatable_attachment"
+						style="margin:5px 0px 0px 0px;"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+						<p:column headerText="#{dbResource['wq.label.no']}">
+					        #{attachment_rowIndex + 1}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.fileName']}"
+							styleClass="column_remarks">
+					        #{attachment.fileName}
+				        </p:column>
+
+						<p:column styleClass="column_icon">
+							<p:commandLink onclick="PF('delete_att_confirmDialog').show();"
+								actionListener="#{rfqSubmissionMB.updateRemoveAttachmentIndex(attachment_rowIndex)}">
+								<h:graphicImage url="./../resources/images/iconCross.gif"
+									styleClass="iconLink" />
+							</p:commandLink>
+						</p:column>
+
+						<p:column styleClass="column_icon">
+							<p:commandLink
+								actionListener="#{rfqSubmissionMB.updateDownloadAttachment(attachment_rowIndex)}"
+								oncomplete="PrimeFaces.monitorDownload(start, stop)"
+								ajax="false">
+								<h:graphicImage url="./../resources/images/icon_download.png"
+									styleClass="iconLink" />
+								<p:fileDownload value="#{rfqSubmissionMB.downloadAttachment}" />
+							</p:commandLink>
+						</p:column>
+
+					</p:dataTable>
+				</p:panel>
+			</p:dialog>
+			<p:dialog id="attachment_list_form_dialog"
+				header="#{dbResource['wq.header.attchmntList']}"
+				widgetVar="attachment_list_form_dialog" resizable="true"
+				modal="true">
+
+				<p:panel header="#{dbResource['wq.header.attachments']}"
+					id="attachment_form_panel" style="font-size:12pt">
+					<p:dataTable var="attachment"
+						value="#{rfqSubmissionMB.attachments}" rowKey="#{attachment.id}"
+						rowIndexVar="attachment_rowIndex" id="datatable_attachment_form"
+						style="margin:5px 0px 0px 0px;"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+						<p:column headerText="#{dbResource['wq.label.no']}">
+					        #{attachment_rowIndex + 1}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.fileName']}"
+							styleClass="column_remarks">
+					        #{attachment.fileName}
+				        </p:column>
+
+						<p:column styleClass="column_icon">
+							<p:commandLink onclick="PF('delete_form_att_confirmDialog').show();">
+								<h:graphicImage url="./../resources/images/iconCross.gif"
+									styleClass="iconLink" />
+							</p:commandLink>
+						</p:column>
+
+						<p:column styleClass="column_icon">
+							<p:commandLink
+								actionListener="#{rfqSubmissionMB.updateDownloadAttachment(attachment_rowIndex)}"
+								oncomplete="PrimeFaces.monitorDownload(start, stop)"
+								ajax="false">
+								<h:graphicImage url="./../resources/images/icon_download.png"
+									styleClass="iconLink" />
+								<p:fileDownload value="#{rfqSubmissionMB.downloadAttachment}" />
+							</p:commandLink>
+						</p:column>
+
+					</p:dataTable>
+				</p:panel>
+			</p:dialog>
+			<p:dialog id="attachment_upload_dialog"
+				header="#{dbResource['wq.header.attchmntUpload']}"
+				widgetVar="attachment_upload_dialog" resizable="true" modal="true">
+				<p:fileUpload
+					fileUploadListener="#{rfqSubmissionMB.uploadAttachment}"
+					mode="advanced" update="messages" sizeLimit="5242880"
+					allowTypes="/(\.|\/)(xls|xlsx|zip|doc|docx|msg|pdf|txt|jpg|png|ppt|pptx|7z|XLS|XLSX|ZIP|DOC|DOCX|MSG|PDF|TXT|JPG|PNG|PPT|PPTX|7Z)$/"
+					style="width:500px" cancelLabel="#{dbResource['wq.button.cancel']}"
+					label="#{dbResource['wq.button.choose']}"
+					uploadLabel="#{dbResource['wq.button.upload']}"
+					invalidFileMessage="#{dbResource['wq.error.invalidFileType']}"
+					invalidSizeMessage="#{dbResource['wq.message.invalidFileSize']}" />
+
+				<p:growl id="messages" for="messages_1" showDetail="true"
+					sticky="{growlPropertyMB.getSticky()}"
+					showSummary="#{growlPropertyMB.getShowSummary()}"
+					escape="#{growlPropertyMB.getEscape()}" life="3000" />
+
+			</p:dialog>
+			<p:dialog id="confirm_select_bmt_dialog"
+				header="#{dbResource['wq.header.aqDialog']}"
+				widgetVar="confirm_select_bmt_dialog" resizable="true" modal="true">
+
+				<p:panel header="#{dbResource['wq.header.bmtAQDialog']}"
+					id="confirm_select_bmt_dialog_panel" style="font-size:12pt">
+
+					<p:dataTable var="pendingBmtRfq"
+						value="#{rfqSubmissionMB.pendingBmtRfqs}" rowIndexVar="rowIndex"
+						rowKey="#{pendingBmtRfq.itemNumber}"
+						id="datatable_confirmation_rfqSubmission_pendingBmt"
+						selection="#{rfqSubmissionMB.selectedRfqItem}" paginator="true"
+						rows="5" rowsPerPageTemplate="5,10" paginatorPosition="top"
+						editable="true" editMode="cell" cellEditEvent="click"
+						scrollable="true"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+						<p:column headerText="#{dbResource['wq.label.no']}" id="rowNumber"
+							styleClass="column_icon">
+							        #{pendingBmtRfq.itemNumber}
+						        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.bmtAQ']}"
+							sortBy="#{pendingBmtRfq.bmtCheckedFlag}"
+							id="confirmation_bmtCheckedFlag"
+							styleClass="column_specialPriceIndicator">
+							<p:selectBooleanCheckbox
+								id="select_id_confirmation_bmtCheckedFlag_p"
+								value="#{pendingBmtRfq.bmtCheckedFlag}">
+								<p:ajax event="change"
+									update="select_id_confirmation_bmtCheckedFlag_p" />
+							</p:selectBooleanCheckbox>
+						</p:column>
+
+						<p:column
+							headerText="#{dbResource['wq.label.design']}&lt;br/&gt;#{dbResource['wq.label.location']}"
+							sortBy="#{confirmation_rfqItem.designLocation}"
+							filterBy="#{confirmation_rfqItem.designLocation}"
+							id="confirmation_designLocation_p"
+							styleClass="column_designLocation">
+							<h:outputText value="#{pendingBmtRfq.designLocation}" />
+						</p:column>
+
+						<p:column
+							headerText="#{dbResource['wq.label.design']}&lt;br/&gt;#{dbResource['wq.label.region']}"
+							sortBy="#{confirmation_rfqItem.designRegion}"
+							filterBy="#{confirmation_rfqItem.designRegion}"
+							id="confirmation_designRegion_P" styleClass="column_designRegion">
+							<h:outputText value="#{pendingBmtRfq.designRegion}" />
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.mfr']}&#042;"
+							sortBy="#{pendingBmtRfq.mfr}" filterBy="#{pendingBmtRfq.mfr}"
+							id="confirmation_mfr" styleClass="column_mfr readOnlyCell">
+									#{pendingBmtRfq.mfr}
+						        </p:column>
+
+						<p:column
+							headerText="#{dbResource['wq.label.requested']}&lt;br/&gt;P/N&#042;"
+							sortBy="#{pendingBmtRfq.requiredPartNumber}"
+							filterBy="#{pendingBmtRfq.requiredPartNumber}"
+							id="confirmation_requiredPartNumber_p"
+							styleClass="column_fullMfrPart readOnlyCell">
+									#{pendingBmtRfq.requiredPartNumber} 					                
+						        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.EndCustomerCode']}"
+							sortBy="#{pendingBmtRfq.endCustomerNumber}"
+							filterBy="#{pendingBmtRfq.endCustomerNumber}"
+							id="confirmation_endCustomerNumber_p"
+							styleClass="column_endCustomerNumber">
+							<h:outputText value="#{pendingBmtRfq.endCustomerNumber}" />
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.endCust']}"
+							sortBy="#{pendingBmtRfq.endCustomerName}"
+							filterBy="#{pendingBmtRfq.endCustomerName}"
+							id="confirmation_endCustomerName_p"
+							styleClass="column_endCustomerName">
+							<h:outputText value="#{pendingBmtRfq.endCustomerName}" />
+						</p:column>
+
+						<p:column
+							headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}&#042;"
+							sortBy="#{pendingBmtRfq.requiredQty}"
+							filterBy="#{pendingBmtRfq.requiredQty}"
+							id="confirmation_requiredQty_p"
+							styleClass="column_requiredQty readOnlyCell">
+									#{rfqSubmissionMB.convertNumber(pendingBmtRfq.requiredQty)} 
+						        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.EAU']}"
+							sortBy="#{pendingBmtRfq.eau}" filterBy="#{pendingBmtRfq.eau}"
+							id="confirmation_eau" styleClass="column_eau">
+							<h:outputText value="#{pendingBmtRfq.eau}" />
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.header.trgtResale']}"
+							sortBy="#{pendingBmtRfq.targetResale}"
+							filterBy="#{pendingBmtRfq.targetResale}"
+							id="confirmation_targetResale" styleClass="column_targetResale">
+							<h:outputText value="#{pendingBmtRfq.targetResale}" />
+						</p:column>
+
+						<!--    <f:facet name="footer">
+						        	<p:commandButton value="Confirm To Submit RFQ" icon="ui-icon-circle-arrow-n" oncomplete="attachment_list_form_dialog').show()" actionListener="#{rfqSubmissionMB.getRfqs4SelectBmt}" ajax="false" rendered="#{!rfqSubmissionMB.qcp}" onclick="start();"/>						    
+							    </f:facet>
+			        						   -->
+					</p:dataTable>
+					<h:panelGrid columns="2" cellpadding="0"
+						style="padding:0px 3px 0px 3px;">
+						<p:commandButton id="cs_YesButton_d"
+							value="#{dbResource['wq.button.ok']}"
+							actionListener="#{rfqSubmissionMB.updateRfqItemBmtCheckedFlag}"
+							process="datatable_confirmation_rfqSubmission_pendingBmt,@this"
+							update=":form_rfqSubmission:datatable_confirmation_rfqSubmission_pendingBmt,:form_rfqSubmission:datatable_confirmation_rfqSubmission,:form_rfqSubmission:RfqSubmissionGrowl_confirm"
+							style="margin:0px 0px 10px 0px"
+							oncomplete="PF('confirm_select_bmt_dialog').hide();stop();"
+							onclick="start();" />
+						<p:commandButton id="cs_NoButton_d"
+							value="#{dbResource['wq.button.cancel']}"
+							style="margin:0px 0px 10px 0px"
+							process="datatable_confirmation_rfqSubmission_pendingBmt,@this"
+							update=":form_rfqSubmission:datatable_confirmation_rfqSubmission_pendingBmt,:form_rfqSubmission:datatable_confirmation_rfqSubmission,:form_rfqSubmission:RfqSubmissionGrowl_confirm"
+							oncomplete="PF('confirm_select_bmt_dialog').hide();stop();" />
+					</h:panelGrid>
+
+				</p:panel>
+			</p:dialog>
+
+			<p:dialog id="confirm_submit_dialog"
+				header="#{dbResource['wq.header.alertMesg']}"
+				widgetVar="confirm_submit_dialog" resizable="true" modal="true"
+				heigh="138">
+				<h:outputText value="#{dbResource['wq.label.submitRFQMsg']}" />
+				<h:panelGrid columns="2" cellpadding="0"
+					style="padding:0px 0px 0px 0px;align:center">
+
+					<p:commandButton id="confirm_submit_dialog_yes"
+						value="#{dbResource['wq.button.yes']}"
+						actionListener="#{rfqSubmissionMB.submitRfqs}" ajax="false"
+						style="margin:15px 0px 10px 27px"
+						oncomplete="PF('confirm_submit_dialog').hide();stop();"
+						onclick="start();" />
+					<p:commandButton id="confirm_submit_dialog_cancel"
+						value="#{dbResource['wq.button.cancel']}"
+						style="margin:15px 0px 10px 10px"
+						oncomplete="PF('confirm_submit_dialog').hide();" />
+
+				</h:panelGrid>
+
+			</p:dialog>
+			
+			
+						
+			<p:dialog id="confirm_duplicatedrfq_submit_dialog"
+				header="#{dbResource['wq.header.foundDupitems']}"
+				widgetVar="confirm_duplicatedrfq_submit_dialog" resizable="true" modal="true"
+				heigh="138">
+				<h:outputText value="#{dbResource['wq.label.someItemsFound']}" />
+				<br/>
+				<h:outputText value="#{dbResource['wq.label.confirmGoNext']}" />
+				<h:inputHidden value="1" id="param_hiddenId" />
+				
+				<h:panelGrid columns="2" cellpadding="0"
+					style="padding:0px 0px 0px 0px;align:center">
+
+					<p:commandButton id="confirm_duplicatedrfq_submit_dialog_yes"
+						value="#{dbResource['wq.button.yes']}"
+						style="margin:15px 0px 10px 27px"
+						oncomplete="PF('confirm_duplicatedrfq_submit_dialog').hide();stop();"
+						onclick="start();PF('wiz').next();">
+						
+						</p:commandButton>
+					<p:commandButton id="confirm_duplicatedrfq_submit_dialog_cancel"
+						value="#{dbResource['wq.button.cancel']}"
+						style="margin:15px 0px 10px 10px"
+						actionListener="#{rfqSubmissionMB.updateConfirmGoNextFlag}"
+						oncomplete="PF('confirm_duplicatedrfq_submit_dialog').hide();" />
+
+				</h:panelGrid>
+
+			</p:dialog>
+
+			<p:defaultCommand target=":form_rfqSubmission:formAttachmentName" />
+		</h:form>
+		<h:form id="form_rfqSubmission_customer" enctype="multipart/form-data"
+			acceptcharset="UTF-8">
+			<p:dialog id="customer_dialog"
+				header="#{dbResource['wq.header.cutsmrSearch']}"
+				widgetVar="customer_dialog" height="350" modal="true"
+				resizable="true" focus="customer_expansion_SearchButton">
+
+				<p:panel
+					header="#{resourceMB.getParameterizedText('wq.header.srchCustmrCount',rfqSubmissionMB.searchCustomersCount)}"
+					id="customerSearch_panel" style="font-size:12pt">
+					<p:growl id="CustomerDialogGrowl" for="CustomerDialogGrowl_1"
+						sticky="{growlPropertyMB.getSticky()}"
+						showSummary="#{growlPropertyMB.getShowSummary()}"
+						escape="#{growlPropertyMB.getEscape()}" showDetail="true" />
+					<h:panelGrid columns="8" cellpadding="0"
+						style="padding:4px 10px 4px 10px;">
+
+						<h:outputText value="#{dbResource['wq.label.custmrName']}"
+							style="padding:0px 0px 0px 3px" />
+						<h:outputText value="&#042;"
+							style="color:#ff0000; padding:0px 0px 0px 0px" />
+						<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+						<p:inputText value="#{rfqSubmissionMB.customerNameSearch}" />
+						<p:spacer width="30" height="10" />
+						<ui:remove>
+							<h:outputText value="#{dbResource['wq.label.custmrType']}"
+								style="padding:0px 0px 0px 3px" />
+							<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+							<h:selectOneMenu value="#{rfqSubmissionMB.customerTypeSearch}">
+								<f:selectItems
+									value="#{rfqSubmissionMB.customerTypeSearchSelectList}" />
+							</h:selectOneMenu>
+						</ui:remove>
+
+						<p:commandButton id="customer_expansion_SearchButton"
+							value="#{dbResource['wq.button.search']}"
+							update="customerSearch_panel"
+							actionListener="#{rfqSubmissionMB.searchCustomers}"
+							style="margin:0px 0px 0px 0px" global="false" onstart="start();"
+							oncomplete="stop();" onerror="stopWithError();" />
+						<p:defaultCommand target="customer_expansion_SearchButton" />
+					</h:panelGrid>
+
+					<p:dataTable var="search_customer"
+						value="#{rfqSubmissionMB.searchCustomers}"
+						selection="#{rfqSubmissionMB.selectedSearchCustomer}"
+						rowKey="#{search_customer.customerNumber}"
+						rowIndexVar="search_customer_rowIndex"
+						id="datatable_search_customer" paginator="true" rows="5"
+						rowsPerPageTemplate="5,10,20" paginatorPosition="top"
+						style="margin:5px 0px 0px 0px;"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+						<p:column headerText="#{dbResource['wq.label.no']}">
+					        #{search_customer_rowIndex + 1}
+				        </p:column>
+
+						<p:column selectionMode="single" styleClass="column_icon" />
+
+						<p:column headerText="#{dbResource['wq.label.custmrName']}">
+					        #{search_customer.customerName1} #{search_customer.customerName2} #{search_customer.customerName3} #{search_customer.customerName4}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.custmrType']}">
+					        #{search_customer.customerType}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.custmrCode']}">
+					        #{search_customer.customerNumber}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.salsOrg']}">
+					        #{rfqSubmissionMB.convertCustomerSalesToSalesOrg(search_customer.customerSales)}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.accGroup']}">
+					        #{rfqSubmissionMB.convertAccountGroupToName(search_customer.accountGroup)}
+				        </p:column>
+
+					</p:dataTable>
+
+					<p:commandButton id="customer_submitButton"
+						value="#{dbResource['wq.button.select']}"
+						actionListener="#{rfqSubmissionMB.updateCustomer}"
+						style="margin:0px 0px 10px 0px"
+						oncomplete="PF('customer_dialog').hide();" />
+					<p:commandButton value="#{dbResource['wq.label.crtNewCustmr']}"
+						oncomplete="PF('newProspectiveCustomer_dialog').show()"
+						rendered="#{!rfqSubmissionMB.qcp and (rfqSubmissionMB.soldToCodeSearch or rfqSubmissionMB.soldToCodeItemSearch gt 0)}" />
+
+				</p:panel>
+			</p:dialog>
+		</h:form>
+		<h:form id="form_rfqSubmission_end_customer"
+			enctype="multipart/form-data" acceptcharset="UTF-8">
+			<p:dialog id="end_customer_dialog"
+				header="#{dbResource['wq.header.endCustSearch']}"
+				widgetVar="end_customer_dialog" height="350" modal="true"
+				resizable="true" focus="end_customer_expansion_SearchButton">
+				<p:panel
+					header="#{resourceMB.getParameterizedText('wq.header.srchCustmrCount',rfqSubmissionMB.searchCustomersCount)}"
+					id="end_customerSearch_panel" style="font-size:12pt">
+					<p:growl id="endCustomerDialogGrowl" for="endCustomerDialogGrowl_1"
+						sticky="{growlPropertyMB.getSticky()}"
+						showSummary="#{growlPropertyMB.getShowSummary()}"
+						escape="#{growlPropertyMB.getEscape()}" showDetail="true" />
+					<h:panelGrid columns="8" cellpadding="0"
+						style="padding:4px 10px 4px 10px;">
+						<h:outputText value="#{dbResource['wq.label.custmrName']}"
+							style="padding:0px 0px 0px 3px" />
+						<h:outputText value="&#042;"
+							style="color:#ff0000; padding:0px 0px 0px 0px" />
+						<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+						<p:inputText value="#{rfqSubmissionMB.customerNameSearch}" />
+						<p:spacer width="60" height="10" />
+						<p:commandButton id="end_customer_expansion_SearchButton"
+							value="#{dbResource['wq.button.search']}"
+							update="end_customerSearch_panel"
+							actionListener="#{rfqSubmissionMB.searchCustomers}"
+							style="margin:0px 0px 0px 0px" global="false" onstart="start();"
+							oncomplete="stop();" onerror="stopWithError();" />
+						<p:defaultCommand target="end_customer_expansion_SearchButton" />
+					</h:panelGrid>
+					<h:panelGrid columns="9" cellpadding="0"
+						style="padding:4px 10px 4px 10px;">
+						<p:selectOneRadio id="endCustomerSearchType"
+							value="#{rfqSubmissionMB.endCustomerSearchType}">
+							<f:selectItem itemLabel="#{dbResource['wq.label.soldTo']}"
+								itemValue="1" />
+							<f:selectItem itemLabel="#{dbResource['wq.label.region']}"
+								itemValue="2" />
+							<p:ajax event="change"
+								listener="#{rfqSubmissionMB.endCustomerSearchTypeChange}"
+								update="form_rfqSubmission_end_customer:end_customerSearch_panel"></p:ajax>
+						</p:selectOneRadio>
+						<p:spacer width="20" height="10" />
+						<h:selectOneMenu id="endCustomerSearchRgion"
+							value="#{rfqSubmissionMB.endCustomerSearchRegion}"
+							disabled="#{rfqSubmissionMB.endCustomerSearchType==1}">
+							<f:selectItems
+								value="#{rfqSubmissionMB.endCustomerSearchRegionList}" />
+							<p:ajax event="change"
+								listener="#{rfqSubmissionMB.endCustomerSearchRegionChange}"
+								update="form_rfqSubmission_end_customer:end_customerSearch_panel"></p:ajax>
+						</h:selectOneMenu>
+					</h:panelGrid>
+					<p:dataTable var="search_customer"
+						value="#{rfqSubmissionMB.searchCustomers}"
+						selection="#{rfqSubmissionMB.selectedSearchCustomer}"
+						rowKey="#{search_customer.customerNumber}"
+						rowIndexVar="search_customer_rowIndex"
+						id="datatable_search_customer" paginator="true" rows="5"
+						rowsPerPageTemplate="5,10,20" paginatorPosition="top"
+						style="margin:5px 0px 0px 0px;"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+						<p:column headerText="#{dbResource['wq.label.no']}">
+					        #{search_customer_rowIndex + 1}
+				        </p:column>
+
+						<p:column selectionMode="single" styleClass="column_icon" />
+
+						<p:column headerText="#{dbResource['wq.label.custmrName']}">
+					        #{search_customer.customerFullName}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.custmrType']}">
+					        #{search_customer.customerType}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.custmrCode']}">
+					        #{search_customer.customerNumber}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.salsOrg']}">
+					        #{rfqSubmissionMB.convertCustomerSalesToSalesOrg(search_customer.customerSales)}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.accGroup']}">
+					        #{rfqSubmissionMB.convertAccountGroupToName(search_customer.accountGroup)}
+				        </p:column>
+
+					</p:dataTable>
+
+					<p:commandButton id="end_customer_submitButton"
+						value="#{dbResource['wq.button.select']}"
+						actionListener="#{rfqSubmissionMB.updateCustomer}"
+						style="margin:0px 0px 10px 0px"
+						oncomplete="PF('end_customer_dialog').hide();" />
+					<p:commandButton value="#{dbResource['wq.label.crtNewCustmr']}"
+						oncomplete="PF('newProspectiveCustomer_dialog').show()"
+						rendered="#{!rfqSubmissionMB.qcp and (rfqSubmissionMB.soldToCodeSearch or rfqSubmissionMB.soldToCodeItemSearch gt 0)}" />
+
+				</p:panel>
+			</p:dialog>
+		</h:form>
+		<h:form id="form_rfqSubmission_partNumber"
+			enctype="multipart/form-data" acceptcharset="UTF-8">
+
+			<p:dialog id="validation_dialog"
+				header="#{dbResource['wq.header.searchParts']}"
+				widgetVar="validation_dialog" height="490" resizable="true"
+				modal="true" focus="validation_expansion_SearchButton">
+				<p:panel
+					header="#{dbResource['wq.header.searchParts']} (#{rfqSubmissionMB.searchPartsCount} #{dbResource['wq.label.recordFound']})"
+					id="alternatePartSearch_panel" style="font-size:12pt">
+					<h:panelGrid columns="9" cellpadding="0"
+						style="padding:4px 10px 4px 10px;">
+						<p:growl id="PartNumberDialogGrowl" for="PartNumberDialogGrowl_1"
+							sticky="{growlPropertyMB.getSticky()}"
+							showSummary="#{growlPropertyMB.getShowSummary()}"
+							escape="#{growlPropertyMB.getEscape()}" showDetail="true" />
+						<h:outputText value="#{dbResource['wq.label.mfr']}"
+							style="padding:0px 3px 0px 3px" />
+						<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+						<h:selectOneMenu value="#{rfqSubmissionMB.validationSearchMfr}">
+							<f:selectItems value="#{rfqSubmissionMB.mfrSearchSelectList}" />
+						</h:selectOneMenu>
+
+						<h:outputText value="#{dbResource['wq.label.mfrP']}"
+							style="padding:0px 3px 0px 3px" />
+						<h:outputText value="&#042;"
+							style="color:#ff0000; padding:0px 0px 0px 0px" />
+						<h:outputText value=":" style="padding:0px 3px 0px 0px" />
+						<p:inputText
+							value="#{rfqSubmissionMB.validationSearchFullMfrPartNumber}" />
+
+						<p:commandButton id="validation_expansion_SearchButton"
+							value="#{dbResource['wq.button.search']}"
+							update="alternatePartSearch_panel"
+							actionListener="#{rfqSubmissionMB.searchInMaterialPopup()}"
+							style="margin:0px 0px 0px 0px" global="false" onstart="start();"
+							oncomplete="stop();" onerror="stopWithError();" />
+						<p:defaultCommand target="validation_expansion_SearchButton" />
+					</h:panelGrid>
+
+					<p:dataTable var="search_alternate_rfq"
+						value="#{rfqSubmissionMB.partModel}"
+						selection="#{rfqSubmissionMB.selectedSearchParts}"
+						rowIndexVar="rowIndex" id="datatable_search_alternate"
+						paginator="true" rows="10" rowsPerPageTemplate="5,10,20"
+						paginatorPosition="top" style="margin:5px 0px 0px 0px;"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+						<p:column headerText="#{dbResource['wq.label.no']}"
+							id="search_alternate_rowNumber">
+					        #{search_alternate_rfq.itemNumber}
+				        </p:column>
+
+						<p:column selectionMode="multiple" />
+
+						<p:column headerText="#{dbResource['wq.label.mfr']}"
+							id="search_alternate_mfr">
+					        #{search_alternate_rfq.mfr}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.mfrP']}"
+							id="search_alternate_fullMfrPart">
+					        #{search_alternate_rfq.fullMfrPartNumber}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.MPQ']}"
+							id="search_alternate_mpq">
+							#{rfqSubmissionMB.convertNumber(search_alternate_rfq.mpq)}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.moq']}"
+							id="search_alternate_moq">
+							#{rfqSubmissionMB.convertNumber(search_alternate_rfq.moq)}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.leadTime']}"
+							id="search_alternate_leadTime">
+							#{search_alternate_rfq.leadTime}
+				        </p:column>
+
+						<p:column headerText="#{dbResource['wq.label.description']}"
+							id="search_alternate_description">
+							#{search_alternate_rfq.description}
+				        </p:column>
+					</p:dataTable>
+
+					<p:commandButton id="validation_expansion_SelectButton"
+						value="#{dbResource['wq.button.select']}"
+						actionListener="#{rfqSubmissionMB.addParts}"
+						update=":form_rfqSubmission:datatable_basicDetails_rfqSubmission"
+						style="margin:0px 0px 10px 0px"
+						oncomplete="PF('validation_dialog').hide();stop();" global="false"
+						onstart="start();" onerror="stopWithError();" />
+
+				</p:panel>
+
+			</p:dialog>
+			<p:remoteCommand name="callToBean"
+				actionListener="#{rfqSubmissionMB.checkVerifiedPopupWindow}" />
+
+		</h:form>
+		<script type="text/javascript"> 	
+function nextButtonChange(tabId)
+{
+	
+	var nextBut = document.getElementById("form_rfqSubmission:nextButton");
+	var backBut = document.getElementById("form_rfqSubmission:backButton");
+	if(tabId==0)
+	{
+	   backBut.style.display='';	
+	   nextBut.style.display='';	
+	}
+	
+	if(tabId==1)
+	{
+		backBut.style.display='';	
+		nextBut.style.display='none';	
+	}
+
+}
+
+function backButtonChange(tabId)
+{
+
+	var nextBut = document.getElementById("form_rfqSubmission:nextButton");
+	var backBut = document.getElementById("form_rfqSubmission:backButton");
+	
+	if(tabId==1)
+	{
+		backBut.style.display='none';	
+		nextBut.style.display='';	
+	}
+    if(tabId==2)
+	{
+		backBut.style.display='';	
+		nextBut.style.display='';	
+	}
+}
+
+function checkConfirmation(xhr, status, args){
+	if(args.comfirmFlag == '1'){
+		PF('confirm_select_bmt_dialog').show();
+		stop();
+		}else if(args.comfirmFlag == '0'){
+			PF('confirm_submit_dialog').show();
+			stop();
+			}
+}
+
+
+ 	
+window.onload =function dosomeThing()
+{
+	var nextBut = document.getElementById("form_rfqSubmission:nextButton");
+	var backBut = document.getElementById("form_rfqSubmission:backButton");
+	var tabId = PF('wiz').getStepIndex(PF('wiz').currentStep);
+	if(tabId==2)
+	{
+		backBut.style.display='';	
+		nextBut.style.display='none';	
+	}
+	callToBean();
+	
+}
+</script>
+
+	</h:body>
+</f:view>
+
+</html>

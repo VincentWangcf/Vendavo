@@ -1,0 +1,742 @@
+package com.avnet.emasia.webquote.web.quote.job;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.jboss.as.server.CurrentServiceContainer;
+import org.jboss.ejb3.annotation.TransactionTimeout;
+import org.jboss.logmanager.Level;
+import org.jboss.msc.service.ServiceController;
+
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.DataAccess;
+import com.avnet.emasia.webquote.entity.DrNedaHeader;
+import com.avnet.emasia.webquote.entity.DrNedaItem;
+import com.avnet.emasia.webquote.entity.DrProjectHeader;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.exception.WebQuoteRuntimeException;
+import com.avnet.emasia.webquote.masterData.util.StringUtils;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.reports.ejb.SalesQuotationPerformanceReportSB;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.utilities.schedule.IScheduleTask;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.reports.vo.SalesQuotationPerformanceReportBean;
+
+/**
+ * @author 914975
+ * @createdOn 20131204
+ */
+@Stateless
+//@ManagedBean
+//@SessionScoped
+public class SalesQuotationPerformanceTask implements IScheduleTask
+{
+	private static final Logger LOG = Logger
+			.getLogger(SalesQuotationPerformanceTask.class.getName());
+	private final static String[] COLUMN_NAME_ARR = { "Sales GM", "Supplier",
+			"Total No. of RFQ", "No. of DR Items", "DRMS Authorized GP%",
+			"Quoted GP%", "Estimate Annual Project Value", "Resale Amount"};
+	private final static DecimalFormat DF = new DecimalFormat("#.00");
+
+	@EJB
+	private SystemCodeMaintenanceSB sysCodeMaintSB;
+	@EJB
+	private SalesQuotationPerformanceReportSB salesQuotationPerformanceReportSB;
+	@EJB
+	private BizUnitSB bizutSB;
+	@EJB
+	private UserSB userSb;
+	@EJB
+	SysConfigSB sysConfigSB;
+	@EJB
+	private MailUtilsSB mailUtilsSB;
+	
+	@EJB
+	private EJBCommonSB ejbCommonSB;
+
+	@Override
+	@Asynchronous
+	@TransactionTimeout(value = 20000, unit = TimeUnit.SECONDS)
+	public void executeTask(Timer timer)
+	{
+		LOG.info("Sales Quotation Performance Task DRMS report job beginning...");
+		try
+		{
+					testTask();
+
+		}
+		catch (Exception e)
+		{
+			LOG.log(Level.SEVERE, "Exception in executing executer timer:"+timer.getInfo().toString()+" for Sales Quotation Performance Task DRMS report , exception message : "+e.getMessage(), e);
+		}
+
+		LOG.info("Sales Quotation Performance Task DRMS report job ended");
+	}
+
+	/**
+	 * Converts quoteItem to bean object.
+	 * 
+	 * @param qLst
+	 * @return
+	 */
+	public List<SalesQuotationPerformanceReportBean> convertBean(
+			Map<String, List<QuoteItem>> qMap, List<Long> drmsLst)
+	{
+		List<SalesQuotationPerformanceReportBean> rLst = new ArrayList<SalesQuotationPerformanceReportBean>();
+		Iterator iter = qMap.entrySet().iterator();
+
+		Map<Long, DrProjectHeader> rmap = salesQuotationPerformanceReportSB
+				.findDrpjHeader(drmsLst);
+
+		while (iter.hasNext())
+		{
+			Map.Entry entry = (Map.Entry) iter.next();
+			String key = (String) entry.getKey();
+			List<QuoteItem> valLst = (List<QuoteItem>) entry.getValue();
+			SalesQuotationPerformanceReportBean s = new SalesQuotationPerformanceReportBean();
+
+			if (valLst != null && valLst.size() > 0)
+			{
+//				if (valLst.get(0).getQuote() != null
+//						&& valLst.get(0).getQuote().getSales() != null)
+//				{
+//					s.setSalesGMStr(valLst.get(0).getQuote().getSales()
+//							.getName());
+//				}
+                if(key!=null)
+                {
+                	String[] sRet = StringUtils.splitStringToArray(key, "|");
+                	s.setSalesGMStr(sRet[0]);
+                }
+				if (valLst.get(0).getQuotedMfr() != null)
+				{
+					s.setSupplierStr(valLst.get(0).getQuotedMfr().getName());
+				}
+
+				s.setTotalNoRFQStr(String.valueOf(valLst.size()));
+
+				int drmsCount = 0;
+				double drmsAuthGpSum = 0;
+				double drmsAuthSum = 0;
+				double resaleAmount = 0;
+				double qmResale = 0;
+				double estimateAnnualProjectValue = 0;
+				double quotedResaleAmout = 0;
+				
+				for (QuoteItem qi : valLst)
+				{
+					if (qi.getDrmsNumber() != null && qi.getDrNedaId() != null)
+					{
+						drmsCount++;
+						// e.DRMS Authorized GP% - Sum of (Authorized GP% *
+						// Estimate Annual Project$ Value) / Sum of (Estimate of
+						// Annual Project $ Value)
+						DrProjectHeader drp = rmap.get(qi.getDrmsNumber());
+						List<DrNedaHeader> drhList = drp.getDrNedaHeaders();
+						if (drhList != null)
+						{
+							for (DrNedaHeader dr : drhList)
+							{
+								List<DrNedaItem> itmLst = dr.getDrNedaItems();
+								if (itmLst != null)
+								{
+									for (DrNedaItem itm : itmLst)
+									{
+										if (qi.getDrNedaLineNumber() == itm.getId()
+												.getNedaLineNumber()
+												&& qi.getDrNedaId() == itm
+														.getId().getNedaId())
+										{
+											if (qi.getOrginalAuthGp() != null
+													&& itm.getAnnualQty() != null
+													&& itm.getSuggestedPrice() != null)
+											{
+
+												drmsAuthGpSum += qi.getOrginalAuthGp()
+														* (itm.getAnnualQty() * itm
+																.getSuggestedPrice());
+												drmsAuthSum += itm
+														.getAnnualQty()
+														* itm.getSuggestedPrice();
+												estimateAnnualProjectValue = drmsAuthSum;
+												LOG.info("Dr_NEDA_ITEM project_id|"
+														+ itm.getId()
+																.getProjectId()
+														+ " neda_id|"
+														+ itm.getId()
+																.getNedaId()
+														+ " Annual Qty|"
+														+ itm.getAnnualQty()
+														+ " Suggested Price|"
+														+ itm.getSuggestedPrice()
+														+ " Authorized GP% * Estimate Annual Project$ Value|"
+														+ drmsAuthGpSum
+														+ "Estimate Annual Project$ Value|"
+														+ drmsAuthSum);
+											}
+										}
+									}
+								}
+							}
+						}
+						// f. Quoted GP% - The Average Quoted GP% = (Sum of GP$
+						// / Sum of resale amount ) * 100% f-i: for each item
+						// counted in field d, calculate [Quoted Price] *
+						// [Quoted Qty] as Resale amount
+
+						if ((qi.getQuotedPrice() != null) && (qi.getQuotedQty() != null) && (qi.getResaleMargin() != null))
+						{
+							resaleAmount += qi.getQuotedPrice() * qi.getQuotedQty();
+							quotedResaleAmout = resaleAmount;
+							qmResale += qi.getResaleMargin()
+									* (qi.getQuotedPrice() * qi.getQuotedQty());
+						}
+					}
+
+					LOG.info("Authorized GP%|"
+							+ qi.getOrginalAuthGp()
+							+ " Authorized GP% * Estimate Annual Project$ Value|"
+							+ drmsAuthGpSum
+							+ " Estimate of Annual Project $ Value|"
+							+ drmsAuthSum);
+				}
+
+				if (drmsLst != null && drmsLst.size() > 0)
+				{
+					s.setNoDRItems(String.valueOf(drmsCount));
+					if (drmsAuthSum == 0)
+					{
+						s.setAuthGPStr("0");
+					}
+					else
+					{
+
+						s.setAuthGPStr(DF.format((drmsAuthGpSum / drmsAuthSum))
+								+ "%");
+					}
+
+					if (resaleAmount == 0)
+					{
+						s.setQuoteGpStr("0");
+					}
+
+					else
+					{
+						s.setQuoteGpStr(DF.format((qmResale / resaleAmount))
+								+ "%");
+					}
+
+				}
+				else
+				{
+					s.setNoDRItems("0");
+					s.setAuthGPStr("0");
+					s.setQuoteGpStr("0");
+				}				
+				s.setEstimateAnnualProjectValueStr(DF.format(estimateAnnualProjectValue));
+				s.setQuotedResaleAmout(DF.format(quotedResaleAmout));
+				
+				rLst.add(s);
+			}
+		}
+		return rLst;
+	}
+
+	private String generateFileName(String bz)
+	{
+		DateFormat df = new SimpleDateFormat("yyyyMMdd");
+		Date startDate = com.avnet.emasia.webquote.utilities.util.QuoteUtil.getPreviousSunday();
+		Date endDate = com.avnet.emasia.webquote.utilities.util.QuoteUtil.getPreviousSatDay();
+		String str = "";
+		if (bz != null && !bz.equalsIgnoreCase(""))
+		{
+			str = "(" + bz + ")" + "Sales Quotation with DRMS Performance Summary " + df.format(startDate) + "-" + df.format(endDate);
+		}
+		else 
+		{
+			str = "Sales Quotation with DRMS Performance Summary " + df.format(startDate) + "-" + df.format(endDate); 
+		}
+		return str;
+	}
+
+	public Object reverse(byte[] rawData)
+	{
+		try
+		{
+			ByteArrayInputStream bi = new ByteArrayInputStream(rawData);
+			ObjectInputStream oi = new ObjectInputStream(bi);
+			return (oi.readObject());
+		}
+		catch (ClassNotFoundException e1)
+		{
+			LOG.log(Level.SEVERE, "Exception in converting to object from raw data"+e1.getMessage(), e1);
+		}
+		catch (IOException e)
+		{
+			LOG.log(Level.SEVERE, "Exception in converting to object from raw data"+e.getMessage(), e);
+		}
+
+		return null;
+
+	}
+
+	public void writeToDisc(HSSFWorkbook workbook, String fileName)
+	{
+		File file = new File(fileName);
+		try
+		{
+			FileOutputStream stream = new FileOutputStream(file);
+			workbook.write(stream);
+		}
+		catch (FileNotFoundException e)
+		{
+			LOG.log(Level.SEVERE, "Exception in writing file to disc , file name  : "+fileName+" , exception message : "+e.getMessage(), e);
+		}
+		catch (IOException e)
+		{
+			LOG.log(Level.SEVERE, "Exception in writing file to disc , file name  : "+fileName+" , exception message : "+e.getMessage(), e);
+		}
+	}
+
+	public void deleteFilesInDir(String directory)
+	{
+		File dir = new File(directory);
+		File[] files = dir.listFiles();
+		for (int i = 0; i < files.length; i++)
+		{
+			files[i].delete();
+		}
+	}
+
+	public void sendEmail(HSSFWorkbook workbook, String toEmailAddressStr, String bzStr)
+			throws FileNotFoundException, IOException
+	{
+		LOG.info("call Sales Quotation Performance Task DRMS report sendEmail");
+		File xlsFile = null;
+		File zipFile = null;
+		FileOutputStream fileOut = null;
+		String tempPath = sysConfigSB.getProperyValue(QuoteConstant.TEMP_DIR);
+		try
+		{
+			
+			MailInfoBean mib = new MailInfoBean();
+			List<String> recipientsLst = new ArrayList<String>();
+			recipientsLst.add(toEmailAddressStr);
+			String subject = generateFileName(bzStr);
+			mib.setMailSubject(subject);
+			mib.setMailTo(recipientsLst);
+			mib.setMailContent("");
+			mib.setMailFrom(sysCodeMaintSB.getBuzinessProperty("OFFLINE_REPORT_FROM",bzStr));
+
+			String fileName = generateFileName(bzStr);
+			String zipFileName = tempPath+fileName + ".zip";
+			String xlsFileName = tempPath+fileName + ".xls";
+			xlsFile = new File(xlsFileName);
+			fileOut = new FileOutputStream(xlsFile);
+			workbook.write(fileOut);
+			fileOut.close();
+			zipFile = (File)QuoteUtil.doZipFile(zipFileName, xlsFileName);
+
+			mib.setZipFile(zipFile);
+
+			try
+			{
+				mailUtilsSB.sendAttachedMail(mib);
+			}
+			catch (Exception e)
+			{
+				LOG.log(Level.SEVERE, "Send email failed! for Recepient email:"+toEmailAddressStr+", Bz: "+bzStr+" , exception message : "+e.getMessage(), e);
+			}
+
+			LOG.info("call sendEmail end");
+		}
+		catch (FileNotFoundException e)
+		{
+			throw e;
+		}
+		catch (IOException e1)
+		{
+			throw e1;
+		}
+		finally
+		{
+
+			if (fileOut != null)
+				fileOut = null;
+			if (xlsFile != null)
+			{
+				if (xlsFile.exists())
+					xlsFile.delete();
+			}
+			if (zipFile != null)
+			{
+				if (zipFile.exists())
+					zipFile.delete();
+			}
+		}
+
+	}
+
+	/**
+	 * Generate a report file.
+	 * 
+	 * @param resultList
+	 * @param bzStr
+	 * @return
+	 */
+	public HSSFWorkbook generateExcelFile(List resultList, String bzStr)
+	{
+		LOG.fine("Generate excel file!");
+		HSSFWorkbook wb = new HSSFWorkbook();
+		String sheetName = generateFileName(bzStr);
+		HSSFSheet sheet = wb.createSheet(sheetName);
+
+		int rowIndex = 0;
+		sheet = DownloadUtil.addSheetHeader(wb, sheet, rowIndex, COLUMN_NAME_ARR);
+		sheet.setColumnWidth(0, 6000);
+		sheet.setColumnWidth(1, 7000);
+		sheet.setColumnWidth(2, 7000);
+		sheet.setColumnWidth(3, 7000);
+		sheet.setColumnWidth(4, 7000);
+		sheet.setColumnWidth(5, 7000);
+		sheet.setColumnWidth(6, 7000);
+		sheet.setColumnWidth(7, 7000);
+
+		int rowCount = resultList.size();
+		rowIndex = rowIndex + 1;
+		if (rowCount > 0)
+		{
+			for (int index = 0; index < rowCount; index++)
+			{
+				SalesQuotationPerformanceReportBean bean = (SalesQuotationPerformanceReportBean) resultList
+						.get(index);
+				HSSFRow row = null;
+				row = sheet.createRow(index + rowIndex);
+				row = addRow(wb, row, bean);
+			}
+		}
+		return wb;
+	}
+
+	/**
+	 * Adds row values.
+	 * 
+	 * @param workbook
+	 * @param row
+	 * @param b
+	 * @return
+	 */
+	private HSSFRow addRow(HSSFWorkbook workbook, HSSFRow row,
+			SalesQuotationPerformanceReportBean b)
+	{
+		int i = 0;
+		try
+		{
+			HSSFCell cell = null;
+			cell = row.createCell(i++);
+			cell.setCellValue(b.getSalesGMStr());
+			cell = row.createCell(i++);
+			cell.setCellValue(b.getSupplierStr());
+			cell = row.createCell(i++);
+			cell.setCellValue(b.getTotalNoRFQStr());
+			cell = row.createCell(i++);
+			cell.setCellValue(b.getNoDRItems());
+			cell = row.createCell(i++);
+			cell.setCellValue(b.getAuthGPStr());
+			cell = row.createCell(i++);
+			cell.setCellValue(b.getQuoteGpStr());
+			cell = row.createCell(i++);
+			cell.setCellValue(b.getEstimateAnnualProjectValueStr());
+			cell = row.createCell(i++);
+			cell.setCellValue(b.getQuotedResaleAmout());
+		}
+		catch (Exception e)
+		{
+			
+			LOG.log(Level.SEVERE, "Column number is | " + i+", Exception message: "+e.getMessage(), e);
+		}
+
+		return row;
+	}
+
+	// todo
+	public void testTask()
+	{
+		LOG.info("Sales Quotation Performance Task report job beginning...");
+			List<BizUnit> bizutLst = bizutSB.findAll();
+			if (bizutLst != null)
+			{
+				for (BizUnit bz : bizutLst)
+				{
+					List<QuoteItem> qiLst = (List<QuoteItem>) salesQuotationPerformanceReportSB
+							.findQuotItems(bz.getName());
+					List<User> salesGMList = userSb.wFindAllSalesByBizUnit(null, null, new String[]{QuoteSBConstant.ROLE_SALES_GM}, bz);
+					//LOG.info("@@@@@@@@@@@:salesGMList.size() :" + salesGMList.size());
+					Set<User> usrSet = new HashSet<User>();
+					for(User user :salesGMList)
+					{
+						if(bz.getName().equalsIgnoreCase(user.getDefaultBizUnit().getName()))
+						{
+							usrSet.add(user);
+						}
+						
+					}
+					//LOG.info("@@@@@@@@@@@:usrSet.size() :" + usrSet.size());
+					String saleNameMfrStr = "";
+					List<Long> drmsLst = new ArrayList<Long>();
+					Map<String, List<QuoteItem>> qMap = new HashMap<String, List<QuoteItem>>();
+					
+					if (qiLst != null && qiLst.size() > 0)
+					{
+						//LOG.info("@@@@@@@@@@@:qiLst.szie :"+qiLst.size() );
+						for (QuoteItem qi : qiLst)
+						{
+							usrSet.add(qi.getQuote().getSales());
+							if (qi.getDrmsNumber() != null)
+							{
+								drmsLst.add(qi.getDrmsNumber());
+							}
+
+							saleNameMfrStr = qi.getQuote().getSales().getName()
+									+ "|" + qi.getQuotedMfr().getId();
+							if (qMap.containsKey(saleNameMfrStr))
+							{
+								List<QuoteItem> qLst = qMap.get(saleNameMfrStr);
+								qLst.add(qi);
+							}
+							else
+							{
+								List<QuoteItem> qLst = new ArrayList<QuoteItem>();
+								qLst.add(qi);
+								qMap.put(saleNameMfrStr, qLst);
+							}
+						}
+					}
+//					else
+//					{
+//						LOG.info("@@@@@@@@@@@:qiLst is null or zero :");
+//					}
+					for (User u : usrSet)
+					{
+						List<User> uLst = userSb.findAllSubordinates(u, 10);							
+						if (uLst != null && uLst.size() > 0)
+						{
+							List<User> subLst = new ArrayList<User>(); 
+							for (User subUr : uLst)
+							{
+								if (subUr.getActive())
+								{
+									subLst.add(subUr);
+								}				
+							}
+							List<QuoteItem> subQuoteLst = salesQuotationPerformanceReportSB.getSuborinateQuotes(subLst, u.getDefaultBizUnit().getName());
+							if (subQuoteLst != null)
+							{
+								for (QuoteItem qi : subQuoteLst)
+								{
+									if (qi != null && qi.getQuotedMfr() != null)
+									{
+										saleNameMfrStr = u.getName()
+												+ "|" + qi.getQuotedMfr().getId();
+										if (qMap.containsKey(saleNameMfrStr))
+										{
+											List<QuoteItem> qLst = qMap
+													.get(saleNameMfrStr);
+											qLst.add(qi);
+											
+											if (qi.getDrmsNumber() != null)
+											{
+												drmsLst.add(qi.getDrmsNumber());
+											}
+										}
+										else
+										{
+											List<QuoteItem> qLst = new ArrayList<QuoteItem>();
+											qLst.add(qi);
+											qMap.put(saleNameMfrStr, qLst);
+											
+											if (qi.getDrmsNumber() != null)
+											{
+												drmsLst.add(qi.getDrmsNumber());
+											}
+										}
+									}										
+								}
+							}
+						}
+					}
+
+					if(usrSet.size() >0 && drmsLst.size()>0 )
+					{							
+							List<SalesQuotationPerformanceReportBean> beanLst = convertBean(
+									qMap, drmsLst);
+							List<SalesQuotationPerformanceReportBean> userBLst = null;
+							try
+							{
+								List<User> userLst = salesQuotationPerformanceReportSB
+										.findRecipients(QuoteConstant.SALES_QUOTATION_PERFORMANCE,bz.getName());
+								if (userLst != null)
+								{
+									boolean isCynthiaWong = false;
+									String uerEmailStr = "";
+									for (User usr : userLst)
+									{										
+										if (usr.getEmployeeId()
+												.equalsIgnoreCase(
+														QuoteConstant.RECEIVE_ALL_SALE_AUTHORISE))
+										{
+											userBLst = beanLst;
+											isCynthiaWong = true;
+										}
+										else
+										{
+											userBLst = new ArrayList<SalesQuotationPerformanceReportBean>();
+											List<User> uLst = userSb
+													.findAllSubordinates(usr, 10);
+											if (uLst != null && uLst.size() > 0)
+											{
+												boolean f = false;
+												for (User u : uLst)
+												{
+													List<DataAccess> daLst = u
+															.getDataAccesses();
+													if (daLst != null)
+													{
+														f = checkDataAccess(beanLst, userBLst, daLst, f);
+													}
+													if (f)
+													{
+														userBLst = beanLst;
+														break;
+													}
+												}
+											}
+											List<DataAccess> daLst = usr
+													.getDataAccesses();
+											boolean f = false;
+											if (daLst != null)
+											{
+												f = checkDataAccess(beanLst, userBLst, daLst, f);
+											}
+											if (f)
+											{
+												userBLst = beanLst;
+											}
+										}
+										uerEmailStr = usr.getEmailAddress();
+										HSSFWorkbook workbook = generateExcelFile(
+												userBLst, bz.getName());
+										sendEmail(workbook, uerEmailStr, bz.getName());
+									}
+									if (!isCynthiaWong)
+									{
+										User user = userSb.findByEmployeeIdWithAllRelation(QuoteConstant.RECEIVE_ALL_SALE_AUTHORISE);
+										if (user != null && user.getEmailAddress() != null && !user.getEmailAddress().equals(""))
+										{
+											uerEmailStr = user.getEmailAddress();
+											HSSFWorkbook workbook = generateExcelFile(
+													beanLst, bz.getName());
+											sendEmail(workbook, uerEmailStr, user.getDefaultBizUnit().getName());
+										}										
+									}
+								}
+							}
+							catch (Exception e)
+							{
+								
+								LOG.severe("get user email address failed !"
+										+ e.getMessage());
+							}
+					}
+					else
+					{
+						LOG.info("Sales Quotation Performance | no result |"+bz.getName());
+					}
+				}
+			}
+		LOG.info("Sales Quotation Performance Task report job ended.");
+	}
+
+	private boolean checkDataAccess(List<SalesQuotationPerformanceReportBean> beanLst,
+			List<SalesQuotationPerformanceReportBean> userBLst, List<DataAccess> daLst, boolean f) {
+		for (DataAccess d : daLst)
+		{
+			if (d != null)
+			{
+				if (d.getManufacturer() != null)
+				{
+					for (SalesQuotationPerformanceReportBean b : beanLst)
+					{
+						if (d.getManufacturer()
+								.getName()
+								.equalsIgnoreCase(
+										b.getSupplierStr()))
+						{
+							if (userBLst
+									.contains(b))
+							{
+								continue;
+							}
+							else
+							{
+								userBLst.add(b);
+							}
+						}
+					}
+				}
+				else
+				{
+					f = true;
+					break;
+				}
+			}
+			else
+			{
+				f = true;
+				break;
+			}
+		}
+		return f;
+	}
+	
+	
+	public static void main(String[] args)
+	{	
+	}
+}

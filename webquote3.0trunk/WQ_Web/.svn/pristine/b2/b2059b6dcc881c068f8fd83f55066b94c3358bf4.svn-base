@@ -1,0 +1,827 @@
+package com.avnet.emasia.webquote.web.quote;
+ 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.event.ValueChangeEvent;
+import javax.faces.model.SelectItem;
+
+import org.apache.commons.lang.StringUtils;
+import org.primefaces.context.RequestContext;
+
+import com.avnet.emasia.webquote.entity.Attachment;
+import com.avnet.emasia.webquote.entity.DrNedaItem;
+import com.avnet.emasia.webquote.entity.ExcCurrencyDefault;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.Role;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.exception.AppException;
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.exception.WebQuoteRuntimeException;
+import com.avnet.emasia.webquote.quote.ejb.CopyRefreshQuoteSB;
+import com.avnet.emasia.webquote.quote.ejb.CustomerSB;
+import com.avnet.emasia.webquote.quote.ejb.DrmsSB;
+import com.avnet.emasia.webquote.quote.ejb.ExchangeRateSB;
+import com.avnet.emasia.webquote.quote.ejb.SAPWebServiceSB;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.quote.vo.QuoteItemVo;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.vo.DrProjectVO;
+import com.avnet.emasia.webquote.web.quote.cache.QuoteTypeCacheManager;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+import com.avnet.emasia.webquote.webservice.drmsagprea.vo.DrmsAgp;
+
+@ManagedBean
+@SessionScoped
+public class RefreshQuoteMB extends AttachmentEditMB implements Serializable {
+		
+	private static final long serialVersionUID = -8487527698906095895L;
+	
+	@EJB
+	CopyRefreshQuoteSB copyRefreshQuoteSB;
+	@EJB
+	ExchangeRateSB exchangeRateSB;	
+	
+	private SelectItem[] exCurrencyList;
+	
+	@EJB
+	DrmsSB drmsSB;
+	@EJB
+	SAPWebServiceSB sapWebServiceSB;
+	@EJB
+	CustomerSB customerSB;
+	
+	private static final Logger LOG =Logger.getLogger(RefreshQuoteMB.class.getName());
+	
+	private boolean finished;
+	
+	private boolean showQuoteItemNo;
+	private boolean disFlag = false;
+	
+	private String fromCurr;
+	private String toCurr;
+	
+	//WQ 2.2 enhancements
+	private List<DrProjectVO> drProjects;
+	private DrProjectVO selectedDrProject;
+	private List<DrProjectVO> filteredDrProjects;
+	private List<DrProjectVO> restOfDrProjects;
+	
+	private SelectItem[] quoteTypeList;
+	@PostConstruct
+	public void init()
+	{
+		getQuoteTypes();
+	}
+	public RefreshQuoteMB(){
+		super.attachmentType = QuoteSBConstant.ATTACHMENT_TYPE_REFRESH;
+		super.showExistingAttachment = false;
+	}
+	
+	public SelectItem[] getQuoteTypes(){
+		
+		List<String> quoteTypes = QuoteTypeCacheManager.getQuoteTypeList();
+		quoteTypeList = QuoteUtil.createFilterOptions(quoteTypes.toArray(new String[quoteTypes.size()]), true, false, true);
+		return quoteTypeList;
+		
+	}
+		
+	public SelectItem[] convertCurrencyToSelectItem(QuoteItem quoteItem){
+		List<String> currencyLst = new ArrayList<String>();
+		if(quoteItem != null && quoteItem.getQuote() != null && quoteItem.getQuote().getBizUnit() != null)
+		{
+			currencyLst = exchangeRateSB.findAllExCurrencyByBu(quoteItem.getQuote().getBizUnit().getName());
+			exCurrencyList =  QuoteUtil.createFilterOptions(currencyLst.toArray(new String[currencyLst.size()]),currencyLst.toArray(new String[currencyLst.size()]), false, false);
+			ExcCurrencyDefault defaultCurrency = exchangeRateSB.findDefaultCurrencyByBu(quoteItem.getQuote().getBizUnit().getName());
+			if(defaultCurrency != null && quoteItem.getCurrTo() == null)
+				quoteItem.setCurrTo(defaultCurrency.getCurrency());
+			
+			return exCurrencyList;
+		}
+		return QuoteUtil.createFilterOptions(currencyLst.toArray(new String[currencyLst.size()]),currencyLst.toArray(new String[currencyLst.size()]), false, false);    			
+	}		
+	
+	public void changeCurrTo(){
+		RequestContext requestContext = RequestContext.getCurrentInstance();
+        requestContext.execute("PF('confirmation_dialog').show()");		
+	}
+	
+	public void currValueChange(ValueChangeEvent e){
+		if(null!=e) {
+			if(null!=e.getNewValue()) {
+				this.toCurr = e.getNewValue().toString();
+			}
+			if(null!=e.getOldValue()) {
+				this.fromCurr = e.getOldValue().toString();
+			}
+		}
+	}
+	
+	public void checkRrefreshQuoteItem(List<QuoteItemVo> quoteItemVos){		
+		finished = false;	
+		disFlag = false;
+		this.quoteItemVos = quoteItemVos; 
+		super.showExistingAttachment = false;
+		
+		if(null==quoteTypeList || 0==quoteTypeList.length) {
+			this.getQuoteTypes();
+		}
+
+		int i = 1;
+		//String bidtobuy =QuoteTypeCacheManager.getQuoteType(QuoteConstant.BID_TO_BUY); for fix defect 
+		for(QuoteItemVo vo : quoteItemVos){
+			QuoteItem item = vo.getQuoteItem();
+			vo.setSeq2(i++);
+			List<Attachment> atts = getBMTQCAtts(item);
+			vo.getQuoteItem().setAttachments(atts); // need to copy the QC attachment and bmt attachment
+			
+			item.getQuote().setYourReference(null);
+			//item.setQuoteType(bidtobuy);
+			item.setTargetResale(item.getQuotedPrice());
+			item.setReasonForRefresh(null);			
+			
+			vo.setEau(item.getEau());
+			
+			if(StringUtils.isEmpty(item.getCurrTo())){
+				ExcCurrencyDefault ecd = exchangeRateSB.findDefaultCurrencyByBu(item.getQuote().getBizUnit().getName());
+				if(ecd != null){
+					vo.getQuoteItem().setCurrFrom("USD");
+					vo.getQuoteItem().setCurrTo(ecd.getCurrency());
+				}
+			}			
+		}
+		checkDrmsLinkage();
+		selectedQuoteItemVos = quoteItemVos;
+	}
+
+	
+
+	public String refreshQuote(){
+		User user = UserInfo.getUser();
+		try{
+			
+			if(quoteItemVos.size() == 0){  
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN,ResourceMB.getText("wq.error.selectRecord")+".", ""));
+				return null;
+			}
+			
+			List<Integer> errorRows = mandatoryFieldChecking(quoteItemVos);
+			if(errorRows.size() != 0){   
+				String errMessage = ResourceMB.getText("wq.message.rules")+".<br/>"   + convertErrorRows(errorRows);
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, errMessage, ""));
+				return null;
+			}
+			
+			List<String> errorMsgs = validation2();
+			if(errorMsgs.size() != 0){
+				
+				StringBuffer sb = new StringBuffer();
+				for(String errorMsg : errorMsgs){
+					sb.append(errorMsg);
+					sb.append("<br/>");
+				}
+				
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, ResourceMB.getText(CommonConstants.WQ_JPA_ENTITY_MSG_CHECK_MSG)+"<br/>" + sb.toString(), ""));
+				return null;
+			}		
+			
+			for(QuoteItemVo vo : quoteItemVos){
+				vo.getQuoteItem().setEau(vo.getEau());
+				vo.getQuoteItem().setReferenceMargin(null);
+			}
+					
+			for(QuoteItemVo vo : quoteItemVos){
+				long count = copyRefreshQuoteSB.getRevertVersionByFirstRFQCode(vo.getQuoteItem().getFirstRfqCode());
+				if(count >= 99){       
+					Object[] dynamicParameters={vo.getQuoteItem().getFirstRfqCode(), vo.getQuoteItem().getQuoteNumber()};
+					String s = ResourceMB.getParameterizedString("wq.message.rfQCodeUsedCount", dynamicParameters)+".";
+					s = s + "<br/>" + ResourceMB.getParameterizedString("wq.error.inputNewRFQ")+".";  
+					FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, ResourceMB.getText(CommonConstants.WQ_JPA_ENTITY_MSG_CHECK_MSG)+"<br/>" + s, ""));
+					return null;
+				}
+			}
+				
+			for(QuoteItemVo vo : quoteItemVos){
+				if(vo.getQuoteItem()!=null && vo.getQuoteItem().getSoldToCustomer()!=null && vo.getQuoteItem().getSoldToCustomer().getCustomerNumber()!=null)
+				{
+					boolean isInvalidCustomer = customerSB.isInvalidCustomer(vo.getQuoteItem().getSoldToCustomer().getCustomerNumber());
+		            if(isInvalidCustomer)
+		            { 
+						FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.label.invalidCust")+" :",ResourceMB.getText("wq.label.soldToCodeCustomer")+" : "
+						+ vo.getQuoteItem().getSoldToCustomer().getCustomerNumber());
+						FacesContext.getCurrentInstance().addMessage(null,msg);
+						return null;
+		            }
+		            
+		            if( vo.getQuoteItem().getEndCustomer()!=null && vo.getQuoteItem().getEndCustomer().getCustomerNumber()!=null)
+		            {
+			            boolean isInvalidEndCustomer = customerSB.isInvalidCustomer(vo.getQuoteItem().getEndCustomer().getCustomerNumber());
+			            if(isInvalidEndCustomer)
+			            {    
+							FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_WARN,ResourceMB.getText("wq.label.invalidCust")+" :", ResourceMB.getText("wq.label.endCust")+" :"
+							+ vo.getQuoteItem().getEndCustomer().getCustomerNumber());
+							FacesContext.getCurrentInstance().addMessage(null,msg);
+							return null;
+			            }
+		            }
+				}
+			}
+			
+			List<String> quoteNumbers = new ArrayList<String>();
+			for(QuoteItemVo vo : quoteItemVos ){
+				quoteNumbers.add(vo.getQuoteItem().getQuoteNumber());
+			}
+			
+			LOG.info("Refresh Quote begin: " + quoteNumbers.toString());
+			
+			this.setAttachmentContent(quoteItemVos);
+			
+			quoteItemVos = copyRefreshQuoteSB.refreshQuote(quoteItemVos, user,"refresh");
+			
+			quoteNumbers.clear();
+			for(QuoteItemVo vo : quoteItemVos ){
+				quoteNumbers.add(vo.getQuoteItem().getQuoteNumber());
+			}
+			
+			LOG.info("Refresh Quote finish: " + quoteNumbers.toString());
+			
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, ResourceMB.getText("wq.message.selQuote")+". " , ""));
+			
+		}catch(Exception e)
+		{
+			LOG.log(Level.WARNING, "Exception occured for user name: "+user.getName()+", employee id:"+user.getEmployeeId()+", Exception message: "+MessageFormatorUtil.getParameterizedStringFromException(e));
+			ResourceMB resourceMB=(ResourceMB)FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get("resourceMB");
+			String s = MessageFormatorUtil.getParameterizedStringFromException(e,resourceMB.getResourceLocale());
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN,s,""));
+			return null;			
+		}
+
+		Collections.sort(quoteItemVos, new Comparator<QuoteItemVo>(){
+			public int compare(QuoteItemVo arg0, QuoteItemVo arg1) {
+				return arg0.getSeq2() - arg1.getSeq2();
+			}
+		});
+	
+		finished = true;
+		
+		showQuoteItemNo = true; 
+				
+		for(Role role : user.getRoles()){
+			if(role.getName().contains("ROLE_SALES") || role.getName().contains("ROLE_CS")){
+				showQuoteItemNo = false; 
+				break;
+			}
+		}		
+		return "/RFQ/RefreshQuoteResult.xhtml?faces-redirect=true";		
+	}
+
+	//checked already, match requirements
+	private List<Integer> mandatoryFieldChecking(List<QuoteItemVo> vos){
+		
+		List<Integer> errorRows = new ArrayList<Integer>();
+		
+		for(QuoteItemVo vo : vos){
+			
+			boolean validRow = true;
+			
+			QuoteItem item = vo.getQuoteItem();
+			
+			if(item.getReasonForRefresh() == null || item.getReasonForRefresh().equals("")){
+				validRow = false;
+			}
+			
+			if(item.getTargetResale() == null ){
+				validRow = false;
+			}
+			
+			if(item.getRequestedQty() == null || item.getRequestedQty().intValue() <= 0){
+				validRow = false;
+			}
+			
+			if(validRow == false){
+				vo.setErrRow(true);
+				errorRows.add(vo.getSeq2());
+			}
+		}		
+		return errorRows;
+	}
+	
+	private List<String> validation2(){	
+		List<String> errorMsgs = new ArrayList<String>();
+		
+		for(QuoteItemVo vo : quoteItemVos){
+			try{
+				QuoteItem item = vo.getQuoteItem();
+				
+				if(quoteExpiryChecking(item) == true){
+					break;					
+				}else{
+					if(targetPriceChecking(item) == true){
+						break;
+					}else{
+						if(eauUpdated(vo) == true){
+							break;							
+						}else{							
+							if(pmoqChecking(item) == true){								
+								if(moqChecking(item)== true){
+									break;							
+								}else{
+									if(attachmentChecking(item) == true){
+										break;								
+									}else{   
+										errorMsgs.add(ResourceMB.getParameterizedText("wq.error.attachAprroval", String.valueOf(vo.getSeq2()))+".");
+										break;
+									}
+								}								
+							}else{    
+								errorMsgs.add(ResourceMB.getParameterizedText("wq.error.dontRefreshQuote", String.valueOf(vo.getSeq2()))+".");
+								break;							
+							}													
+						}
+					}
+				}
+				
+			}catch(Exception e){
+				errorMsgs.add(ResourceMB.getText("wq.message.row")+" " + vo.getSeq2() + ": " + e.getMessage());
+				LOG.log(Level.WARNING, "Exception in validation , exception message : "+e.getMessage());
+			}
+		}
+		
+		return errorMsgs;
+	}
+	
+	private boolean quoteExpiryChecking(QuoteItem item){
+		
+		Date quoteExpiryDate = item.getQuoteExpiryDate();
+		Calendar cal  = Calendar.getInstance();
+		cal.setTime(quoteExpiryDate);
+		cal.add(Calendar.DAY_OF_MONTH, -7);
+		cal.set(Calendar.HOUR, 23);
+		cal.set(Calendar.MINUTE, 59);
+		cal.set(Calendar.SECOND, 59);
+		
+		Date now = new Date();
+		
+		if(cal.getTime().after(now)){
+			return false;
+		}
+		
+		return true;
+	}
+	
+	private boolean targetPriceChecking(QuoteItem item){
+		
+		Double targetPrice = item.getTargetResale();
+		
+		String resaleIndicator = item.getResaleIndicator();
+		
+		if(resaleIndicator == null){
+			resaleIndicator = "00AA";
+		}
+
+		Double quotedPrice = item.getQuotedPrice();
+		
+		String lowPart = resaleIndicator.substring(0, 2);
+		String highPart = resaleIndicator.substring(2, 4);
+		
+		double highPrice = 0.0;
+		double lowPrice = 0.0;
+		
+		lowPrice = quotedPrice * ( 1 + Double.parseDouble(lowPart)/100);
+		
+		if(highPart.equalsIgnoreCase("AA")){
+			highPrice = 9999999.0;
+		}else{
+			highPrice = quotedPrice * ( 1 + Double.parseDouble(highPart)/100);
+		}
+		
+		if((targetPrice < item.getQuotedPrice()) && (targetPrice > highPrice || targetPrice < lowPrice) ){
+			return true;
+		}
+		
+		return false;
+	}	
+	
+	private boolean pmoqChecking(QuoteItem item){
+		String qtyIndicator = item.getQtyIndicator();
+		String pmoq = item.getPmoq();
+		
+		
+		int qty = item.getRequestedQty();
+		
+		if(qtyIndicator.equalsIgnoreCase("Exact")){
+			
+			int ipmoq = 0 ;
+			try{
+				ipmoq = Integer.parseInt(pmoq);
+			}catch(Exception e){
+				throw new WebQuoteRuntimeException(CommonConstants.COMMON_RFQS_QTY_INDICATOR_DOES_NOT_MATCH_PMOQ,new RuntimeException());
+			}
+						
+			if (qty == ipmoq){
+				return false;
+			}else{
+				return true;
+			}
+		}
+		
+		if(qtyIndicator.equalsIgnoreCase("Limit")){
+			
+			try{
+				int index = pmoq.indexOf("-");
+				
+				Integer low = Integer.parseInt(pmoq.substring(0, index));
+				Integer high = Integer.parseInt(pmoq.substring(index+ 1));
+			
+				if (qty <= high && qty >= low){
+					return true;
+				}else{
+					return false;
+				}				
+			}catch(Exception e){
+				throw new WebQuoteRuntimeException(CommonConstants.COMMON_RFQS_QTY_INDICATOR_DOES_NOT_MATCH_PMOQ,new RuntimeException());
+			}
+
+		}
+		
+		if(! pmoq.contains("+")){
+			throw new WebQuoteRuntimeException(CommonConstants.COMMON_RFQS_QTY_INDICATOR_DOES_NOT_MATCH_PMOQ,new RuntimeException());
+		}else{
+			try{
+				pmoq = pmoq.substring(0, pmoq.length()-1);
+				int ipmoq = Integer.parseInt(pmoq);
+				if (qty < ipmoq){
+					return true;
+				}else{
+					return false;
+				}
+				
+			}catch(Exception e){
+				throw new WebQuoteRuntimeException(CommonConstants.COMMON_RFQS_QTY_INDICATOR_DOES_NOT_MATCH_PMOQ,new RuntimeException());
+			}
+		}
+		
+	}
+	
+	private boolean moqChecking(QuoteItem item){
+		
+		int qty = item.getRequestedQty();
+		int mpq = item.getMpq();
+		int moq = item.getMoq();
+		
+		if(qty < moq){
+			int i = qty % mpq;
+			if (i==0){
+				return true;
+			}else{
+				return false;
+			}
+			
+		}else{
+			return true;
+		}
+		
+	}
+	
+	private boolean eauUpdated(QuoteItemVo vo){
+		if(vo.getQuoteItem().getEau() == null){
+			if(vo.getEau() == null){
+				return false;
+			}else{
+				return true;
+			}
+		}
+		
+		if(vo.getEau().equals(vo.getQuoteItem().getEau())){
+			return false;
+		}else{
+			return true;
+		}
+	}
+	
+	private boolean attachmentChecking(QuoteItem item){
+		if(item.getAttachments() == null || item.getAttachments().size() == 0){
+			return false;
+		}else{
+			boolean found = false;
+			for(Attachment attachment : item.getAttachments()){
+				if(attachment.isNewAttachment()){
+					found = true;
+				}
+			}
+				
+			return found;
+		}
+	}
+	
+	private String convertErrorRows(List<Integer> items){
+		Collections.sort(items);
+		
+		StringBuffer sb = new StringBuffer("");
+		int i = 1;
+		for(Integer item : items){
+			sb.append("[");
+			sb.append(item);
+			sb.append("]");
+			if(i != items.size()){
+				sb.append(",");
+			}
+			i++;
+		}
+		
+		return sb.toString();
+	}
+	
+	public List<QuoteItemVo> getQuoteItemVos() {
+		return quoteItemVos;
+	}
+
+	public void setQuoteItemVos(List<QuoteItemVo> quoteItemVos) {
+		this.quoteItemVos = quoteItemVos;
+	}
+
+	public boolean isFinished() {
+		return finished;
+	}
+
+	public void setFinished(boolean finished) {
+		this.finished = finished;
+	}
+
+	public boolean isShowQuoteItemNo() {
+		return showQuoteItemNo;
+	}
+
+	public void setShowQuoteItemNo(boolean showQuoteItemNo) {
+		this.showQuoteItemNo = showQuoteItemNo;
+	}
+	
+	public String getFromCurr() {
+		return fromCurr;
+	}
+
+	public void setFromCurr(String fromCurr) {
+		this.fromCurr = fromCurr;
+	}
+
+	public String getToCurr() {
+		return toCurr;
+	}
+
+	public void setToCurr(String toCurr) {
+		this.toCurr = toCurr;
+	}
+	
+	public void popupDrms(int itemNumber)
+	{
+
+		// logger.log(Level.INFO, "PERFORMANCE START - popupDrms()");
+
+		int drmsItemNumber = 0;
+		QuoteItemVo rfqItemVo = getRfqItemByItemNumber(itemNumber);
+		drProjects = rfqItemVo.getDrProjects();
+		for (DrProjectVO drProject : drProjects)
+		{
+			drProject.setItemNumber(++drmsItemNumber);
+			drProject.setRefItemNumber(itemNumber);
+			drProjects.set(drProject.getItemNumber() - 1, drProject);
+		}
+
+		// logger.log(Level.INFO, "PERFORMANCE END - popupDrms()");
+	}
+	public QuoteItemVo getRfqItemByItemNumber(int itemNumber)
+	{
+		return quoteItemVos.get(itemNumber - 1);
+	}
+	public List<DrProjectVO> getDrProjects()
+	{
+		return drProjects;
+	}
+
+	public void setDrProjects(List<DrProjectVO> drProjects)
+	{
+		this.drProjects = drProjects;
+	}
+
+	public DrProjectVO getSelectedDrProject()
+	{
+		return selectedDrProject;
+	}
+
+	public void setSelectedDrProject(DrProjectVO selectedDrProject)
+	{
+		this.selectedDrProject = selectedDrProject;
+	}
+
+	public List<DrProjectVO> getFilteredDrProjects()
+	{
+		return filteredDrProjects;
+	}
+
+	public void setFilteredDrProjects(List<DrProjectVO> filteredDrProjects)
+	{
+		this.filteredDrProjects = filteredDrProjects;
+	}
+
+	public List<DrProjectVO> getRestOfDrProjects()
+	{
+		return restOfDrProjects;
+	}
+
+	public void setRestOfDrProjects(List<DrProjectVO> restOfDrProjects)
+	{
+		this.restOfDrProjects = restOfDrProjects;
+	}
+
+	public void checkDrmsLinkage()
+	{
+		if(quoteItemVos!=null && quoteItemVos.size()>0)
+		{
+			for (QuoteItemVo quoteItemVo : quoteItemVos)
+			{
+					List<DrProjectVO> drProjects = new ArrayList<DrProjectVO>();
+					String soldToCustomerNumber = null;
+					String endCustomerNumber = null;
+					if(quoteItemVo.getQuoteItem().getSoldToCustomer()!=null)
+					soldToCustomerNumber = quoteItemVo.getQuoteItem().getSoldToCustomer().getCustomerNumber();
+                    if(quoteItemVo.getQuoteItem().getEndCustomer()!=null)
+                    endCustomerNumber = quoteItemVo.getQuoteItem().getEndCustomer().getCustomerNumber();
+                    String mfr = quoteItemVo.getQuoteItem().getRequestedMfr().getName();
+                    String requiredPartNumber = quoteItemVo.getQuoteItem().getRequestedPartNumber();
+					List<DrNedaItem> drNedaItems = drmsSB.findMatchedDrProject(soldToCustomerNumber,endCustomerNumber, mfr,requiredPartNumber);
+					boolean isDrmsLinkage = false;
+					if (!QuoteUtil.isEmptyNedaItemList(drNedaItems))
+					{
+						isDrmsLinkage = true;
+						List<String> dupDrProjects = new ArrayList<String>();
+						for (DrNedaItem drNedaItem : drNedaItems)
+						{
+							String dupCheck = drNedaItem.getId().getNedaLineNumber()+ "_"+ drNedaItem.getId().getProjectId()+ "_"+ drNedaItem.getId().getNedaId();
+							if (!dupDrProjects.contains(dupCheck))
+							{
+								dupDrProjects.add(dupCheck);
+								DrProjectVO drProjectVO = new DrProjectVO();
+								drProjectVO.setDrNedaItem(drNedaItem);
+								drProjects.add(drProjectVO);
+							}
+						}
+						quoteItemVo.setDrProjects(drProjects);
+					}
+					quoteItemVo.setDrmsLinkage(isDrmsLinkage);
+					quoteItemVos.set(quoteItemVo.getSeq2() - 1, quoteItemVo);
+			}
+			
+			/*for fixed enhancement 342 on quote match logic project June guo 20150225
+			to get DR Expiry from SAP by Project ID,Neda ID,Neda Line Number */
+			List<DrProjectVO> projects = new ArrayList<DrProjectVO>();
+			for(QuoteItemVo itemVo:quoteItemVos) {
+				if(null!= itemVo.getDrProjects() && itemVo.isDrmsLinkage()) {
+					for(DrProjectVO vo : itemVo.getDrProjects()) {
+						if(null!=itemVo.getQuoteItem() 
+								&& null!=itemVo.getQuoteItem().getQuote() 
+								&& null!=itemVo.getQuoteItem().getQuote().getSales()){
+							vo.setSalesEmployeeId(itemVo.getQuoteItem().getQuote().getSales().getEmployeeId());
+						}
+						projects.add(vo);
+					}
+				}
+			}
+			try {
+				sapWebServiceSB.enquirySAPAGPToGetDrExpiryDate(projects);
+				//for defect 220 further enhancement which  filter out the expired DR project in the DRMS dialog.
+				List<DrProjectVO> noExpiryProjectsPerRFQ = null; 
+				for(QuoteItemVo itemVo:quoteItemVos) {
+					noExpiryProjectsPerRFQ = new ArrayList<DrProjectVO>(); 
+					if(null!= itemVo.getDrProjects() && itemVo.isDrmsLinkage()) {
+						List<DrProjectVO> projectsInRfq =  itemVo.getDrProjects();
+						for(DrProjectVO vo : projectsInRfq) {
+							if(null!=vo.getDisplayDrExpiryDate()) {
+								noExpiryProjectsPerRFQ.add(vo);
+							}
+						}
+					}
+					itemVo.setDrProjects(noExpiryProjectsPerRFQ); // set back all not expiry project 
+					if(null==noExpiryProjectsPerRFQ || 0==noExpiryProjectsPerRFQ.size()) {
+						itemVo.setDrmsLinkage(false); // if there are no matched projects, don't need to display icon of link
+					}
+				}
+			}catch (Exception ex)
+			{ 
+				FacesMessage msg = new FacesMessage(ResourceMB.getParameterizedString("wq.error.sapError", ex.getMessage()));
+				LOG.warning("EXception in checking Drms Linkage : "+MessageFormatorUtil.getParameterizedStringFromException(ex));
+	
+			}
+			
+		}
+
+	}
+	
+	
+	public void addDrmsToRfqs()
+	{
+		if (selectedDrProject != null)
+		{
+			int refItemNumber = selectedDrProject.getRefItemNumber();
+			QuoteItemVo rfqItemVo = getRfqItemByItemNumber(refItemNumber);
+			QuoteItem quoteItem = rfqItemVo.getQuoteItem();
+			quoteItem.setDrmsNumber(selectedDrProject.getDrNedaItem().getDrNedaHeader().getDrProjectHeader().getProjectId());
+			quoteItem.setSupplierDrNumber(selectedDrProject.getDrNedaItem().getDrNumber());
+			quoteItem.setProjectName(selectedDrProject.getDrNedaItem().getDrNedaHeader().getDrProjectHeader().getProjectName());
+			quoteItem.setDrNedaId(Long.valueOf(selectedDrProject.getDrNedaItem().getId().getNedaId()).intValue());
+			quoteItem.setDrNedaLineNumber(Long.valueOf(selectedDrProject.getDrNedaItem().getId().getNedaLineNumber()).intValue());
+			rfqItemVo.setQuoteItem(quoteItem);
+			quoteItemVos.set(rfqItemVo.getSeq2() - 1, rfqItemVo);
+		
+		}
+
+		// logger.log(Level.INFO, "PERFORMANCE END - addDrmsToRfqs()");
+	}
+	
+	public void drProjectExpireChecking()
+	{
+        List<DrmsAgp> drmsAgpList = new ArrayList<DrmsAgp>();
+        List<DrmsAgp> returnAgpList  = new ArrayList<DrmsAgp>();
+        Map<String, QuoteItem> tempMap = new HashMap<String,QuoteItem>();
+        StringBuffer tempSB = new StringBuffer();
+        for(QuoteItemVo quoteItemVo : quoteItemVos)
+        {
+        	if(quoteItemVo.getQuoteItem()==null)
+        	{
+        		continue;
+        	}
+        	
+        	String key = com.avnet.emasia.webquote.utilities.util.QuoteUtil.getDrmsKey(quoteItemVo.getQuoteItem());
+        	if(key==null)
+        	{
+        		continue;
+        	}
+        	tempMap.put(key, quoteItemVo.getQuoteItem());
+        	DrmsAgp tempAgp = new DrmsAgp();
+        	tempAgp.setExpiryDate(quoteItemVo.getQuoteItem().getDrExpiryDate());
+        	tempAgp.setZzProject(key);
+        	tempAgp.setUpnam(quoteItemVo.getQuoteItem().getQuote().getSales().getEmployeeId());
+        	drmsAgpList.add(tempAgp);
+        	
+        }
+        if(drmsAgpList!=null  && drmsAgpList.size()>0)
+        {
+        	try
+			{
+				returnAgpList = sapWebServiceSB.COMMON_FAILED_TO_ENQUIRY_AGP_IN_SAP(drmsAgpList);
+			}
+			catch (AppException e)
+			{
+				LOG.log(Level.SEVERE,MessageFormatorUtil.getParameterizedStringFromException(e), e);
+			}
+        }
+        
+        if(returnAgpList!=null && returnAgpList.size()>0)
+        {
+        	for(DrmsAgp drmsAgp: returnAgpList)
+        	{
+        		 QuoteItem qi = tempMap.get(drmsAgp.getZzProject());
+        		 if(qi!=null && drmsAgp!=null && drmsAgp.getExpiryDate().before(QuoteUtil.getCurrentTime()))
+        		 {
+        			 tempSB.append(qi.getQuoteNumber()).append(",");
+        		 }
+        		
+        	}
+        }
+		if (!QuoteUtil.isEmpty(tempSB.toString()) && !disFlag)
+		{
+			disFlag = true; 
+			FacesMessage msg = new FacesMessage(ResourceMB.getParameterizedString("wq.message.drmnProjIDExpired", tempSB.toString()));
+			FacesContext.getCurrentInstance().addMessage("refreshQuoteGrowl", msg);
+		}
+		;
+	}
+	
+	public SelectItem[] getQuoteTypeList()
+	{
+		return quoteTypeList;
+	}
+
+	public void setQuoteTypeList(SelectItem[] quoteTypeList)
+	{
+		this.quoteTypeList = quoteTypeList;
+	}
+	
+}
+                    

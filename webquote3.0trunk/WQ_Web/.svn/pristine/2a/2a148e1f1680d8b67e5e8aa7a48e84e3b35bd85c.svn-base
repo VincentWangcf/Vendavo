@@ -1,0 +1,211 @@
+package com.avnet.emasia.webquote.web.maintenance;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TreeSet;
+
+import javax.ejb.EJB;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.vo.RestrictedCustomerMappingVo;
+import com.avnet.emasia.webquote.stm.constant.StmConstant;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.common.CacheUtil;
+import com.avnet.emasia.webquote.utilites.web.util.POIUtils;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.bean.ExcelAliasBean;
+import com.avnet.emasia.webquote.web.quote.cache.CostIndicatorCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.MfrCacheManager;
+
+public class RestrictedCustomerMappingUploadStrategy extends UploadStrategy{
+
+	private static final long serialVersionUID = 497721316431802896L;
+	
+	//Bryan Start
+	CacheUtil cacheUtil;
+	//Bryan End
+	
+
+	@Override
+	public String verifyFields(List<?> beans) {	
+		boolean mFlg = false;		
+		boolean dFlg = false;
+	
+		RestrictedCustomerMappingVo bean = null;
+
+		StringBuffer sb = new StringBuffer();
+		 int indexRow =2;
+		for (int i=0;i<beans.size();i++) {
+			bean = (RestrictedCustomerMappingVo) beans.get(i);
+			String mfr = bean.getMfr();
+			String partNumber = bean.getPartNumber();
+			String productGroup1 = bean.getProductGroup1();
+			String productGroup2 = bean.getProductGroup2();
+			String productGroup3 = bean.getProductGroup3();
+			String productGroup4 = bean.getProductGroup4();
+			//String costIndicator = bean.getCostIndicator();
+			String soldToCode = bean.getSoldToCode();
+			String bizUnit = bean.getBizUnit();
+			
+		
+		
+			if (QuoteUtil.isEmpty(mfr)) {
+			
+			sb.append(ResourceMB.getParameterizedText("wq.message.mandatoryFieldMFR", String.valueOf(indexRow))+", <br/>");
+				mFlg = true;
+				bean.setErr(true);
+			}
+			
+//			if ( QuoteUtil.isEmpty(costIndicator)) {
+//				
+//				sb.append(ResourceMB.getParameterizedText("wq.message.mandatoryFieldCostIndicator", String.valueOf(bean.getLineSeq()))+", <br/>");
+//				mFlg = true;
+//				bean.setErr(true);
+//			}
+			//moved to top by DamonChen@20180309
+			//Bryan Start
+			try{
+	    		Context ctx = new InitialContext();
+	    		cacheUtil = (CacheUtil) ctx.lookup("java:app/WQ_Web/CacheUtil");
+	    	
+	    	}catch(Exception e){
+	    		e.printStackTrace();
+	    	}
+			
+			//Bryan Start
+			//if(mfr!=null&&MfrCacheManager.getMfrByBizUnit(mfr, bizUnit)==null){
+			if(mfr!=null&&cacheUtil.getMfrByBizUnit(mfr, bizUnit)==null){
+			//Bryan End
+				if (!mFlg) {
+					
+					sb.append(ResourceMB.getParameterizedText("wq.message.dataErrorMFR", String.valueOf(indexRow))+", <br/>");
+					bean.setErr(true);
+					dFlg = true;
+				}
+			}
+	
+	
+			//if(!QuoteUtil.isEmpty(costIndicator)&&CostIndicatorCacheManager.getCostIndicator(costIndicator)==null){
+//			if(!QuoteUtil.isEmpty(costIndicator)&&cacheUtil.getCostIndicator(costIndicator)==null){
+//			//Bryan End
+//				if (!mFlg) {
+//					
+//					sb.append(ResourceMB.getParameterizedText("wq.message.dataErrorCostIndicator", String.valueOf(bean.getLineSeq()))+", <br/>");
+//					bean.setErr(true);
+//					dFlg = true;
+//				}
+//			}
+					
+			if (mfr!=null&&mfr.length() > 10) {
+				if (!mFlg&&!dFlg) {
+
+					sb.append(ResourceMB.getParameterizedText("wq.message.lengthErrorMFR", String.valueOf(indexRow))+", <br/>");								
+					bean.setErr(true);
+				}
+			}
+			if (partNumber!=null&&partNumber.length() >80) {
+				if (!mFlg&&!dFlg) {
+					
+					sb.append(ResourceMB.getParameterizedText("wq.message.lengthErrorPartNumber", String.valueOf(indexRow))+", <br/>");	
+					bean.setErr(true);
+				}
+				
+			}
+			if (productGroup1!=null&&productGroup1.length() > 20) {
+				if (!mFlg&&!dFlg) {
+					
+					sb.append(ResourceMB.getParameterizedText("wq.message.lengthErrorProductGroup1", String.valueOf(indexRow))+", <br/>");		
+					bean.setErr(true);
+				} 
+			}
+			if (productGroup2!=null&&productGroup2.length() > 20) {
+				if (!mFlg&&!dFlg) {
+					
+					sb.append(ResourceMB.getParameterizedText("wq.message.lengthErrorProductGroup2", String.valueOf(indexRow))+", <br/>");		
+					bean.setErr(true);
+				}
+			}
+			
+			if (productGroup3!=null&&productGroup3.length() > 20) {
+				if (!mFlg&&!dFlg) {
+				
+					sb.append(ResourceMB.getParameterizedText("wq.message.lengthErrorProductGroup3", String.valueOf(indexRow))+", <br/>");	
+					bean.setErr(true);
+				}
+			}			
+			
+			if (productGroup4!=null&&productGroup4.length() > 20) {
+				if (!mFlg&&!dFlg) {
+					
+					sb.append(ResourceMB.getParameterizedText("wq.message.lengthErrorProductGroup4", String.valueOf(indexRow))+", <br/>");	
+
+					bean.setErr(true);
+				}
+			}
+			
+//			if (costIndicator!=null&&costIndicator.length() > 50) {
+//				if (!mFlg&&!dFlg) {
+//					
+//					sb.append(ResourceMB.getParameterizedText("wq.message.lengthErrorCostIndicator", String.valueOf(bean.getLineSeq()))+", <br/>");	
+//					bean.setErr(true);
+//				}
+//			}
+			
+			if (soldToCode!=null&&soldToCode.length() > 10) {
+				if (!mFlg&&!dFlg) {
+					
+					sb.append(ResourceMB.getParameterizedText("wq.message.lengthErrorSoldToCode", String.valueOf(indexRow))+", <br/>");	
+					bean.setErr(true);
+				}
+			}
+			indexRow++;
+		}
+		
+		return sb.toString();
+	}
+	
+	@Override
+	public List excel2Beans(Sheet sheet) {
+		List<RestrictedCustomerMappingVo> beans = new ArrayList<RestrictedCustomerMappingVo>();
+		FormulaEvaluator evaluator = sheet.getWorkbook().getCreationHelper().createFormulaEvaluator();
+		User user = getUser();
+		String bizUnitName = null;
+		if(user!=null){
+			bizUnitName = user.getDefaultBizUnit().getName();
+		}
+		TreeSet<ExcelAliasBean> excelAliasTreeSet = POIUtils.getExcelAliasAnnotation(RestrictedCustomerMappingVo.class);
+		ExcelAliasBean excelAliasBean = null;
+		Iterator<ExcelAliasBean> iterator = null;
+		Cell cell;
+		int lineSeq = 0;
+		for (Row row : sheet) {// Don't deal withheader
+			// skip first row
+			if (lineSeq == 0) {
+				lineSeq++;
+				continue;
+			}
+			RestrictedCustomerMappingVo bean = new RestrictedCustomerMappingVo();
+			bean.setLineSeq(++lineSeq);
+			iterator = excelAliasTreeSet.iterator();
+			while(iterator.hasNext()){
+				excelAliasBean = iterator.next();
+				cell = row.getCell(excelAliasBean.getCellNum()-1); 
+				POIUtils.setter(bean,excelAliasBean.getFieldName(),POIUtils.getCellValueWithFormatter(cell,evaluator),String.class);
+			}
+		
+			bean.setBizUnit(bizUnitName);
+			beans.add(bean);
+		}
+		sheet = null;
+		return beans;
+	}
+
+}

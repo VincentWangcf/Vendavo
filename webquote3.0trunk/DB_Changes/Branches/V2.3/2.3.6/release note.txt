@@ -1,0 +1,5 @@
+1) fix empty SUBREGION_TEAM_MAPPING issue on SMTAutoRemindTask  June Guo 2015/09/17
+2) Fix INC0232036  June Guo 2015/09/21 duplicate issue. 
+3) Fix INC0236827  June guo 2015/09/24 System error, fail to upload pricer
+4) Fix INC0236134  June guo 2015/09/24
+5) Fix INC0146391, Tough 

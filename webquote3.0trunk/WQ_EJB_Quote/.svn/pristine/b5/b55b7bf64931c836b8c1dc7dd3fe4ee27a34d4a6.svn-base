@@ -1,0 +1,473 @@
+package com.avnet.emasia.webquote.quote.vo;
+
+import java.io.Serializable;
+import java.util.List;
+
+import com.avnet.emasia.webquote.constants.StageEnum;
+import com.avnet.emasia.webquote.entity.Attachment;
+import com.avnet.emasia.webquote.entity.ExchangeRate;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+import com.avnet.emasia.webquote.vo.DrProjectVO;
+
+
+/**
+ * @author Lin, Tough(901518)
+ * Created on 2013-3-2
+ */
+
+public class QuoteItemVo implements Serializable {
+	
+	private static final long serialVersionUID = -3429002203846061326L;
+
+	private QuoteItem quoteItem;
+	
+	private Boolean readyForOrder;
+	
+	private String reasonForNotReadyForOrder;
+	private Integer balanceUnconsumedQty;
+	//Used in MyQuote page
+	private int seq;
+	
+	//Use in other page related to MyQuote page, like Copy Quote, Convert Quote, Refresh Quote etc
+	private int seq2;
+	
+	private boolean errRow;
+	
+	private String message;
+	
+	private String quotedPartNumber; // used in response internal transfer;
+	
+	private Integer eau; // used in refresh quote
+	
+	
+	private String copyToCSName = "";
+	
+//	private String shipmentValidity; 
+	
+//	private String quotationEffectiveDate;
+	
+	private String soldToChineseName;
+	
+	private List<String> termsAndConditionsStrs;
+	
+//	private String termsAndConditionsStr;
+	
+	private List<String> aqccStrs;
+	
+//	private String aqccStr;
+	
+	private String authGpReasonCode;
+	
+	private String authGpReasonDesc;
+	
+	private String quoteType;
+	
+	private List<DrProjectVO> drProjects;
+	private boolean drmsLinkage;
+	private boolean hasFuturePricer;
+	
+	private String endCustomerName;
+	
+	// add this by June 20140701 for RMB_CURR_CONTROL
+	private ExchangeRate exChangeRate ; 
+	
+	private String disBmtFlag;
+	private String disPendingAt;
+	
+	private String lastUpdateBmtName;
+	
+	private String formAttachmentCode;
+	
+	//first element is for salses cost pricer showing icons, the second is for program pricer
+    private int[] iconsArray;
+	
+	public QuoteItemVo(){
+		
+	}
+	
+	public QuoteItemVo(QuoteItem quoteItem){
+		this.quoteItem = quoteItem;
+	}
+
+	public QuoteItem getQuoteItem() {
+		return quoteItem;
+	}
+
+	public void setQuoteItem(QuoteItem quoteItem) {
+		this.quoteItem = quoteItem;
+	}
+
+	public Boolean getReadyForOrder() {
+		return readyForOrder;
+	}
+
+	public void setReadyForOrder(Boolean readyForOrder) {
+		this.readyForOrder = readyForOrder;
+	}
+
+	public String getReasonForNotReadyForOrder() {
+		return reasonForNotReadyForOrder;
+	}
+
+	public void setReasonForNotReadyForOrder(String reasonForNotReadyForOrder) {
+		this.reasonForNotReadyForOrder = reasonForNotReadyForOrder;
+	}
+
+	public int getSeq() {
+		return seq;
+	}
+
+	public void setSeq(int seq) {
+		this.seq = seq;
+	}
+
+	public boolean isErrRow() {
+		return errRow;
+	}
+
+	public void setErrRow(boolean errRow) {
+		this.errRow = errRow;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+
+	public int getSeq2() {
+		return seq2;
+	}
+
+	public void setSeq2(int seq2) {
+		this.seq2 = seq2;
+	}
+
+	public String getQuotedPartNumber() {
+		return quotedPartNumber;
+	}
+
+	public void setQuotedPartNumber(String quotedPartNumber) {
+		this.quotedPartNumber = quotedPartNumber;
+	}
+
+	public Integer getEau() {
+		return eau;
+	}
+
+	public void setEau(Integer eau) {
+		this.eau = eau;
+	}
+
+	public String getCopyToCSName() {
+		return copyToCSName;
+	}
+
+	public void setCopyToCSName(String copyToCSName) {
+		this.copyToCSName = copyToCSName;
+	}
+/*
+	public String getShipmentValidity() {
+		return shipmentValidity;
+	}
+
+	public void setShipmentValidity(String shipmentValidity) {
+		this.shipmentValidity = shipmentValidity;
+	}
+*/
+	public String getSoldToChineseName() {
+		return soldToChineseName;
+	}
+
+	public void setSoldToChineseName(String soldToChineseName) {
+		this.soldToChineseName = soldToChineseName;
+	}
+
+	public List<String> getTermsAndConditionsStrs(){
+		return this.termsAndConditionsStrs;
+	}
+	public void setTermsAndConditionsStrs(List<String> termsAndConditionsStrs){
+		this.termsAndConditionsStrs = termsAndConditionsStrs;
+		/*if(termsAndConditionsStrs != null && termsAndConditionsStrs.size() > 0){
+			this.termsAndConditionsStr = "";
+			for(String value : termsAndConditionsStrs){
+				if(!QuoteUtil.isEmpty(this.termsAndConditionsStr))
+					this.termsAndConditionsStr += "; ";					
+				this.termsAndConditionsStr += value.trim();
+			}
+		}*/
+		//quoteItem.setTermsAndConditions("");
+		if(termsAndConditionsStrs != null && termsAndConditionsStrs.size() > 0){
+			quoteItem.setTermsAndConditions("");
+			for(String value : termsAndConditionsStrs){
+				if(!QuoteUtil.isEmpty(quoteItem.getTermsAndConditions()))
+						quoteItem.setTermsAndConditions(quoteItem.getTermsAndConditions() + "; ");					
+				quoteItem.setTermsAndConditions(quoteItem.getTermsAndConditions() + value.trim());
+			}
+		} 
+	}
+
+/*	public String getTermsAndConditionsStr() {
+		return termsAndConditionsStr;
+	}
+
+	public void setTermsAndConditionsStr(String termsAndConditionsStr) {
+		this.termsAndConditionsStr = termsAndConditionsStr;
+	}	
+*/
+	
+	public List<String> getAqccStrs(){
+		return this.aqccStrs;
+	}
+	public void setAqccStrs(List<String> aqccStrs){
+		this.aqccStrs = aqccStrs;
+		/*if(aqccStrs != null && aqccStrs.size() > 0){
+			this.aqccStr = "";
+			for(String value : aqccStrs){
+				if(!QuoteUtil.isEmpty(this.aqccStr))
+					this.aqccStr += "; ";
+				this.aqccStr += value.trim();
+			}
+		}*/
+		//quoteItem.setInternalTransferComment("");
+		if(aqccStrs != null && aqccStrs.size() > 0){
+			quoteItem.setInternalTransferComment("");
+			for(String value : aqccStrs){
+				if(!QuoteUtil.isEmpty(quoteItem.getInternalTransferComment()))
+					quoteItem.setInternalTransferComment(quoteItem.getInternalTransferComment() + "; ");
+				quoteItem.setInternalTransferComment(quoteItem.getInternalTransferComment() +  value.trim());
+			}
+		}
+	}
+
+	/*
+	public String getAqccStr() {
+		return aqccStr;
+	}
+
+	public void setAqccStr(String aqccStr) {
+		this.aqccStr = aqccStr;
+	}
+	*/
+
+	public String getAuthGpReasonCode() {
+		return authGpReasonCode;
+	}
+
+	public void setAuthGpReasonCode(String authGpReasonCode) {
+		this.authGpReasonCode = authGpReasonCode;
+	}
+
+	public String getAuthGpReasonDesc() {
+		return authGpReasonDesc;
+	}
+
+	public void setAuthGpReasonDesc(String authGpReasonDesc) {
+		this.authGpReasonDesc = authGpReasonDesc;
+	}
+
+	public String getQuoteType() {
+		return quoteType;
+	}
+
+	public void setQuoteType(String quoteType) {
+		this.quoteType = quoteType;
+	}
+
+	public Integer getBalanceUnconsumedQty() {
+		return balanceUnconsumedQty;
+	}
+
+	public void setBalanceUnconsumedQty(Integer balanceUnconsumedQty) {
+		this.balanceUnconsumedQty = balanceUnconsumedQty;
+	}
+
+	public List<DrProjectVO> getDrProjects()
+	{
+		return drProjects;
+	}
+
+	public void setDrProjects(List<DrProjectVO> drProjects)
+	{
+		this.drProjects = drProjects;
+	}
+
+	public boolean isDrmsLinkage()
+	{
+		return drmsLinkage;
+	}
+
+	public void setDrmsLinkage(boolean drmsLinkage)
+	{
+		this.drmsLinkage = drmsLinkage;
+	}	
+	
+	public boolean isHasFuturePricer()
+	{
+		return hasFuturePricer;
+	}
+
+	public void setHasFuturePricer(boolean hasFuturePricer)
+	{
+		this.hasFuturePricer = hasFuturePricer;
+	}
+
+	public ExchangeRate getExChangeRate() {
+		return exChangeRate;
+	}
+
+	public void setExChangeRate(ExchangeRate exChangeRate) {
+		this.exChangeRate = exChangeRate;
+	}
+/*
+	public String getQuotationEffectiveDate() {
+		return quotationEffectiveDate;
+	}
+
+	public void setQuotationEffectiveDate(String quotationEffectiveDate) {
+		this.quotationEffectiveDate = quotationEffectiveDate;
+	}
+*/
+	public String getDisBmtFlag() {
+		if(null!=this.quoteItem 
+				&& null!=this.quoteItem.getQuoteItemDesign() 
+				&& null!=this.quoteItem.getQuoteItemDesign().getBmtFlag() ) {
+			String disBmt =  this.quoteItem.getQuoteItemDesign().getBmtFlag().getDescription();
+			if(disBmt.equalsIgnoreCase("")) {
+				disBmt = " ";
+			}
+			disBmtFlag = disBmt;
+		}
+		
+		return disBmtFlag;
+	}
+
+	public void setDisBmtFlag(String disBmtFlag) {
+		this.disBmtFlag = disBmtFlag;
+	}
+
+	public String getDisPendingAt() {
+		String disPending = null;
+		if(this.quoteItem.getStage().equalsIgnoreCase(StageEnum.PENDING.toString())){
+			 disPending = QuoteUtil.rfqStatusPendingLaw(this.quoteItem.getStatus());
+		}
+		return disPending;
+	}
+
+	public void setDisPendingAt(String disPendingAt) {
+		this.disPendingAt = disPendingAt;
+	}
+
+	
+	
+	
+	//fix ticket INC0378628 
+	public String getEndCustomerName() {
+		//{vo.quoteItem.id ==0 ? (empty(vo.quoteItem.quote.endCustomer) ? vo.quoteItem.quote.endCustomerName : vo.quoteItem.quote.endCustomer.name ) : (empty(vo.quoteItem.endCustomer) ? vo.quoteItem.endCustomerName : vo.quoteItem.endCustomer.name ) }
+		if(this.quoteItem.getId()==0) {
+			if(null==this.quoteItem.getQuote().getEndCustomer()) {
+				endCustomerName = this.quoteItem.getQuote().getEndCustomerName();
+			}else {
+				endCustomerName = this.quoteItem.getQuote().getEndCustomer().getCustomerFullName();
+			}
+		}else {
+//			when the customer name of quote item is not empty, then show it, otherwise we need to extract the customer name from its master table then show master table��s name
+			if(!QuoteUtil.isEmpty(this.quoteItem.getEndCustomerName())) {
+				endCustomerName =this.quoteItem.getEndCustomerName();
+			} else {
+				if(null!=this.quoteItem.getEndCustomer()) {
+					endCustomerName=this.quoteItem.getEndCustomer().getCustomerFullName();
+				}
+			}
+		}
+		
+		return endCustomerName;
+	}
+
+	public void setEndCustomerName(String endCustomerName) {
+		this.endCustomerName = endCustomerName;
+	}
+
+	public String getLastUpdateBmtName() {
+		return lastUpdateBmtName;
+	}
+
+	public void setLastUpdateBmtName(String lastUpdateBmtName) {
+		this.lastUpdateBmtName = lastUpdateBmtName;
+	}
+	
+	
+	
+	public String getFormAttachmentCode() {
+		return formAttachmentCode;
+	}
+
+	public void setFormAttachmentCode(String formAttachmentCode) {
+		this.formAttachmentCode = formAttachmentCode;
+		
+	}
+
+	@Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if(obj == null){
+            return false;
+        }
+        if(obj instanceof QuoteItemVo){
+           final QuoteItemVo o = (QuoteItemVo)obj;
+           return (o.getQuoteItem()!=null&&getQuoteItem()!=null) && 
+        		   (o.getQuoteItem().getId()==(getQuoteItem().getId()));
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+    	 
+		if(getQuoteItem() !=null) {
+			 long id = getQuoteItem().getId();
+			 return (int)(id^(id>>>32));
+		}
+        return 0;
+    }
+
+	/**   
+	* @Description: TODO
+	* @author 042659      
+	* @return void    
+	* @throws  
+	*/  
+	public void assignFormAttachmentCode() {
+		for (Attachment att : this.getQuoteItem().getQuote().getAttachments()) {
+			if (!QuoteUtil.isEmpty(att.getType())) {
+
+				if (QuoteSBConstant.ATTACHMENT_TYPE_QBUILDER.equals(att.getType())) {
+					this.formAttachmentCode="1";
+					break;
+					
+				}
+
+			}
+		}
+		
+	}
+
+	public int[] getIconsArray() {
+		return iconsArray;
+	}
+
+	public void setIconsArray(int[] iconsArray) {
+		this.iconsArray = iconsArray;
+	}
+	
+	
+	
+
+}

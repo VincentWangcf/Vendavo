@@ -1,0 +1,7 @@
+package com.avnet.emasia.webquote.masterData.dao;
+
+public interface SapInterfaceBatchesDAO {
+	public Long createBatch(String createdBy, String processID);
+
+	public void updateBatchEnd(Long Id, Integer processStatus);
+}

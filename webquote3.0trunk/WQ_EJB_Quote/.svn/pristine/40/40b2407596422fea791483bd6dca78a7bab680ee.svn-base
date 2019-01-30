@@ -1,0 +1,30 @@
+package com.avnet.emasia.webquote.rowdata.converter;
+
+import java.lang.reflect.Field;
+
+import com.avnet.emasia.webquote.rowdata.AStringConverter;
+import com.avnet.emasia.webquote.rowdata.Bean;
+import com.avnet.emasia.webquote.rowdata.Converter;
+
+public class StringConverter implements Converter<AStringConverter>{
+	
+	public StringConverter() {
+		
+	}
+	
+	@Override
+	public void initialize(AStringConverter a) {
+		
+	}
+
+	@Override
+	public void convert(String value, Bean bean, Field field) {
+		try {
+			field.set(bean, value);
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			bean.putConvertError(field.getName(), e.getMessage());
+		}
+	}
+
+
+}

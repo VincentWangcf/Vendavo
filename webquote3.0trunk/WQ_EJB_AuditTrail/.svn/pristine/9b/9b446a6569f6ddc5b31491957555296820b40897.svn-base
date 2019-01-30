@@ -1,0 +1,45 @@
+insertRFQForm.action=RFQ Submission
+insertRFQForm.class=RFQ Submission
+
+insertRFQFormForRefreshQuote.action=Refresh Quote
+insertRFQFormForRefreshQuote.class=Refresh Quote
+
+batchsaveResponseInternalTransfer.action=Respond Internal Transfer-Save
+batchsaveResponseInternalTransfer.class=Respond Internal Transfer-Save
+
+batchupdateResponseInternalTransfer.action=Respond Internal Transfer - Update
+batchupdateResponseInternalTransfer.class=Respond Internal Transfer - Update
+
+batchupdateInvalidITResponseInternalTransfer.action=Invalid Internal Transfer
+batchupdateInvalidITResponseInternalTransfer.class=Invalid Internal Transfer
+
+updateSAPReferenceNo.action=Create SAP Quote
+updateSAPReferenceNo.class=Create SAP Quote
+
+batchupdateForProgramRfqConversion.action=Convert To Normal RFQ
+batchupdateForProgramRfqConversion.class=Convert To Normal RFQ
+
+batchupdateForNormalRfqConversion.action=Convert To Program RFQ
+batchupdateForNormalRfqConversion.class=Convert To Program RFQ
+
+
+createRfq.action=Submit RFQ
+createRfq.class=com.avnet.emasia.webquote.entity.Rfq
+updateRfq.action=Update RFQ
+updateRfq.class=com.avnet.emasia.webquote.entity.Rfq
+deleteRfq.action=Delete RFQ
+deleteRfq.class=com.avnet.emasia.webquote.entity.Rfq
+
+updateAnnoun.action=Update Announcement
+updateAnnoun.class=com.avnet.emasia.webquote.entity.Announcement
+createAnnoun.action=Create Announcement
+createAnnoun.class=com.avnet.emasia.webquote.entity.Announcement
+deleteAnnoun.action=Delete Announcement
+deleteAnnoun.class=com.avnet.emasia.webquote.entity.Announcement
+
+updatePromoItem.action=Update PromotionItem
+updatePromoItem.class=com.avnet.emasia.webquote.entity.PromotionItem
+createPromoItem.action=Create PromotionItem
+createPromoItem.class=com.avnet.emasia.webquote.entity.PromotionItem
+deletePromoItem.action=Delete PromotionItem
+deletePromoItem.class=com.avnet.emasia.webquote.entity.PromotionItem

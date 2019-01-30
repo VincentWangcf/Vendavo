@@ -1,0 +1,538 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.model.SelectItem;
+
+import org.primefaces.event.SelectEvent;
+import org.primefaces.event.ToggleSelectEvent;
+import org.primefaces.event.UnselectEvent;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.avnet.emasia.webquote.commodity.constant.PRICER_TYPE;
+import com.avnet.emasia.webquote.commodity.util.PricerUtils;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.CostExtractSB;
+import com.avnet.emasia.webquote.quote.ejb.FiscalMappingSB;
+import com.avnet.emasia.webquote.quote.vo.CostComparisonBean;
+import com.avnet.emasia.webquote.quote.vo.CostExtractSearchCriterial;
+import com.avnet.emasia.webquote.reports.ejb.ExcelReportSB;
+import com.avnet.emasia.webquote.reports.ejb.OfflineReportSB;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.common.CacheUtil;
+import com.avnet.emasia.webquote.utilities.common.OSTimeZone;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.vo.CostCompareVO;
+import com.avnet.emasia.webquote.vo.CostInfoVO;
+import com.avnet.emasia.webquote.vo.OfflineReportParam;
+import com.avnet.emasia.webquote.web.datatable.SelectableLazyDataModel;
+import com.avnet.emasia.webquote.web.pricerupload.PricerEnquiryMB;
+import com.avnet.emasia.webquote.web.pricerupload.PricerEnquiryMB.LazyDataModelForPricerEnquiry;
+import com.avnet.emasia.webquote.web.quote.cache.CostIndicatorCacheManager;
+import com.avnet.emasia.webquote.web.quote.cache.MfrCacheManager;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.security.WQUserDetails;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+import com.itextpdf.text.log.SysoLogger;
+
+@ManagedBean
+@SessionScoped
+public class CostExtractMB implements Serializable{
+	
+	private static final Logger LOG = Logger.getLogger(CostExtractMB.class.getName());
+	private static final int MAX_MFR_SELECTION = 10;
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	//Bryan Start
+	@EJB
+	CacheUtil cacheUtil;
+	//Bryan End
+	
+	@EJB
+	CostExtractSB costExtractSB;
+	
+	@EJB
+	ExcelReportSB excelReportSB;
+	
+	@EJB
+	OfflineReportSB offlineReportSB;
+	
+	@EJB
+	BizUnitSB bizUnitSB;
+	
+	@EJB
+	FiscalMappingSB fiscalMappingSB;
+	
+	private List<CostInfoVO> costInfoVOs;
+	
+	private List<CostCompareVO> costCompareVOs;
+	
+	private CostExtractSearchCriterial costExtractSearchCriterial;
+	
+	private List<String> regionList;
+	
+	//private List<String> costSourceList;
+	private SelectItem[] costSourceList;
+	
+	private List<String> salesCostPartList;
+	
+	private List<String> mfrList;
+	
+	private List<String> costIndicatorList;
+	
+	private User user;
+	
+	//Bryan Start
+	@EJB
+	private SysConfigSB sysConfigSB;
+	LazyDataModelForCostExtract beans = new LazyDataModelForCostExtract();
+	LazyDataModelForCostComparison costComparisonbean = new LazyDataModelForCostComparison();
+	
+	@EJB
+	UserSB userSB;
+	//Bryan End
+	
+	@PostConstruct
+	public void postContruct(){
+		costExtractSearchCriterial = new CostExtractSearchCriterial();
+		user =((WQUserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUser();
+		initSearchCriterialItem();
+		
+		setupDataAccessInCriteria();
+		setupFiscalCalendarPeriod();
+	}
+	
+	private void initSearchCriterialItem() {
+		regionList = new ArrayList<String>();
+		mfrList = new ArrayList<String>();
+		salesCostPartList = new ArrayList<String>();
+		//costSourceList = new ArrayList<String>();
+		
+		this.costSourceList = new SelectItem[4];
+		this.costSourceList[0] = new SelectItem(PRICER_TYPE.NORMAL.getName(), "Normal Pricer");
+		this.costSourceList[1] = new SelectItem(PRICER_TYPE.SIMPLE.getName(), "Simple Pricer");
+		this.costSourceList[2] = new SelectItem(PRICER_TYPE.CONTRACT.getName(), "Contract Contract");
+		this.costSourceList[3] = new SelectItem("QuoteRecord", "Quote Record");
+		
+		
+//		for(String costSource : QuoteConstant.COST_SOURCE) {
+//			costSourceList.add(costSource);
+//		}
+		
+		for(String saleCostPart : QuoteConstant.SALES_COST_PART) {
+			salesCostPartList.add(saleCostPart);
+		}
+		
+		//Bryan Start
+		//costIndicatorList = removeDuplicateItem(CostIndicatorCacheManager.getCostIndicator());
+		costIndicatorList = removeDuplicateItem(cacheUtil.getCostIndicator());
+		//Bryan End
+		
+		List<BizUnit> userRegions = user.getBizUnits();
+		for(BizUnit bizUnit : userRegions) {
+			regionList.add(bizUnit.getName());
+			//Bryan Start
+			//List<Manufacturer> manufacturers = MfrCacheManager.getMfrListByBizUnit(bizUnit.getName());
+			List<Manufacturer> manufacturers = cacheUtil.getMfrListByBizUnit(bizUnit.getName());
+			//Bryan End
+			for(Manufacturer mfr : manufacturers) {
+				if(!mfrList.contains(mfr.getName())) {
+					mfrList.add(mfr.getName());
+				}
+			}
+		}
+		
+		Date quotationEffectiveDateFrom = PricerUtils.getTimesmorning(PricerUtils.getAfterMonth(-1));
+
+		costExtractSearchCriterial.setQuoteEffectiveDateFrom(quotationEffectiveDateFrom);
+	}
+	
+	
+	public void search() {
+		//costExtractSB.search(costExtractSearchCriterial);
+		LOG.info("cost extract Search begin...");
+		String errorMessage = "";
+		long start = System.currentTimeMillis();
+		
+		try{
+			//validation
+			if (costExtractSearchCriterial.getSelectedRegions() != null && costExtractSearchCriterial.getSelectedRegions().length == 0 ) {
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.costExtract.selectRegion"), ""));
+				return;
+			}
+			
+			if (costExtractSearchCriterial.getSelectedCostSoures() != null && costExtractSearchCriterial.getSelectedCostSoures().length == 0 ) {
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.costExtract.selectCostSource"), ""));
+				return;
+			}
+			
+			
+			if (costExtractSearchCriterial.getSelectedMfrs() != null && costExtractSearchCriterial.getSelectedMfrs().length == 0 ) {
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.costExtract.selectMfr"), ""));
+				return;
+			}
+			
+			if (costExtractSearchCriterial.getSelectedMfrs() != null && costExtractSearchCriterial.getSelectedMfrs().length > 10 ) {
+				errorMessage = ResourceMB.getParameterizedText("wq.message.costExtract.selectMfrMax", String.valueOf(MAX_MFR_SELECTION));
+				
+				FacesContext.getCurrentInstance().addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_ERROR, errorMessage, ""));
+				return;
+			}
+			
+			costComparisonbean.startPagination();
+			beans.startPagination();
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		long end = System.currentTimeMillis();
+		LOG.info("cost extract end,takes " + (end - start) + " ms");
+	}
+	
+	private List<String> removeDuplicateItem(List<String> stringItems) {
+		List<String> stringList = new ArrayList<String>();
+		if(stringItems != null && stringItems.size() > 0) {
+			for(String itemText : stringItems) {
+				if(!stringList.contains(itemText)) {
+					stringList.add(itemText);
+				}
+			}
+		}
+		return stringList;
+	}
+	
+	
+	public void sendCostInfoReport() {
+		OfflineReportParam param = new OfflineReportParam();
+		offlineReportSB.sendOffLineReportRemote(param);
+	}
+	
+	public void sendCostCompareReport() {
+		OfflineReportParam param = new OfflineReportParam();
+		offlineReportSB.sendOffLineReportRemote(param);
+	}
+	
+	public List<CostInfoVO> getCostInfoVOs() {
+		return costInfoVOs;
+	}
+
+	public void setCostInfoVOs(List<CostInfoVO> costInfoVOs) {
+		this.costInfoVOs = costInfoVOs;
+	}
+
+	public List<CostCompareVO> getCostCompareVOs() {
+		return costCompareVOs;
+	}
+
+	public void setCostCompareVOs(List<CostCompareVO> costCompareVOs) {
+		this.costCompareVOs = costCompareVOs;
+	}
+
+	public CostExtractSearchCriterial getCostExtractSearchCriterial() {
+		return costExtractSearchCriterial;
+	}
+
+	public void setCostExtractSearchCriterial(CostExtractSearchCriterial costExtractSearchCriterial) {
+		this.costExtractSearchCriterial = costExtractSearchCriterial;
+	}
+	
+
+	public List<String> getRegionList() {
+		return regionList;
+	}
+
+	public void setRegionList(List<String> regionList) {
+		this.regionList = regionList;
+	}
+
+//	public List<String> getCostSourceList() {
+//		return costSourceList;
+//	}
+//
+//	public void setCostSourceList(List<String> costSourceList) {
+//		this.costSourceList = costSourceList;
+//	}
+	public SelectItem[] getCostSourceList() {
+		return costSourceList;
+	}
+
+	public void setCostSourceList(SelectItem[] costSourceList) {
+		this.costSourceList = costSourceList;
+	}
+	
+
+	public List<String> getMfrList() {
+		return mfrList;
+	}
+
+	public void setMfrList(List<String> mfrList) {
+		this.mfrList = mfrList;
+	}
+	
+
+	public List<String> getSalesCostPartList() {
+		return salesCostPartList;
+	}
+
+	public void setSalesCostPartList(List<String> salesCostPartList) {
+		this.salesCostPartList = salesCostPartList;
+	}
+	
+
+	public List<String> getCostIndicatorList() {
+		return costIndicatorList;
+	}
+
+	public void setCostIndicatorList(List<String> costIndicatorList) {
+		this.costIndicatorList = costIndicatorList;
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+	
+	public class LazyDataModelForCostExtract extends SelectableLazyDataModel<CostExtractSearchCriterial> {
+
+		
+
+		// NEC Pagination Changes: sets maximum no. of pages that can be stored
+		// in cache at a time
+		@Override
+		public void startPagination() {
+			System.out.println("cost extract startPagination...");
+			super.startPagination();
+			String cachePageSizeVal = sysConfigSB.getProperyValue(SelectableLazyDataModel.CACHE_PAGE_SIZE);
+			try {
+				setCachePageSize(Integer.parseInt(cachePageSizeVal));
+			} catch (Exception e) {
+				LOG.log(Level.SEVERE, "Error occured while setting size of cache, Exception message: " + e.getMessage(),
+						e);
+			}
+
+		}
+
+		// NEC Pagination Changes: finds count of records to be fetched
+		@Override
+		public int findLazyDataCount(String sortField, String sortOrder, Map<String, Object> filters) {
+			System.out.println("findLazyDataCount...");
+			return costExtractSB.countCostInformation(costExtractSearchCriterial, true);
+			//return 100;
+		}
+
+		// NEC Pagination Changes: finds data for current page when not present
+		// in cache
+		@Override
+		public List<CostExtractSearchCriterial> findLazyData(int first, int pageSize, String sortField, String sortOrder,
+				Map<String, Object> filters) {
+			System.out.println("bryan cost info search...");
+			
+			List<CostExtractSearchCriterial> lazyItems = costExtractSB.searchCostInformation(costExtractSearchCriterial, true, first, pageSize);
+			
+			return lazyItems;
+		}
+/*
+		// NEC Pagination Changes: finds data for previous page through
+		// asynchronous call to database
+		@Override
+		public void findLazyPreviousPageData(int first, int pageSize, int pageNumber, String sortField, String sort,
+				Map<String, Object> filters, ConcurrentHashMap<Integer, List<PricerUploadTemplateBean>> map,
+				Queue<Integer> queue, int cachePageSize) {
+			pricerEnquirySB.asynchSearch(costExtractSearchCriterial, true, first, pageSize, pageNumber, map, queue, cachePageSize);
+		}
+*/
+		// NEC Pagination Changes: finds data for next page through asynchronous
+		// call to database
+		/*@Override
+		public void findLazyNextPageData(int first, int pageSize, int pageNumber, String sortField, String sort,
+				Map<String, Object> filters, ConcurrentHashMap<Integer, List<CostExtractSearchCriterial>> map,
+				Queue<Integer> queue, int cachePageSize) {
+			System.out.println("bryan cost next page...");
+			//costExtractSB.asynchSearch(costExtractSearchCriterial, true, first, pageSize, pageNumber, map, queue, cachePageSize);
+		}*/
+/*
+		@Override
+		// NEC Pagination changes: it is callback method
+		public void cellChangeListener(String id) {
+			beans.setCacheModifyData(id);
+			String tableId = "pcrEnquiryForm:pricr_datatable";
+			if (isNormalMaterial()) {
+				tableId = "pcrEnquiryForm:pricr_datatable";
+			} else if (isProgramMaterial()) {
+				tableId = "pcrEnquiryForm:datatable_prg";
+			} else if (isContractPricer()) {
+				tableId = "pcrEnquiryForm:ctrp_table";
+			} else if (isSalesCostPricer()) {
+				tableId = "pcrEnquiryForm:scost_table";
+			} else if (isSimplePricer()) {
+				tableId = "pcrEnquiryForm:simple_table";
+			}
+			FacesUtil.updateUI(tableId);
+
+		}
+*/
+		@Override
+		// NEC Pagination changes: return data for pagination
+		protected SelectableLazyDataModel<CostExtractSearchCriterial> getLazyData() {
+			return beans;
+		}
+
+		
+
+	}
+	
+	public class LazyDataModelForCostComparison extends SelectableLazyDataModel<CostComparisonBean> {
+
+		
+
+		// NEC Pagination Changes: sets maximum no. of pages that can be stored
+		// in cache at a time
+		@Override
+		public void startPagination() {
+			System.out.println("cost comparison startPagination...");
+			super.startPagination();
+			String cachePageSizeVal = sysConfigSB.getProperyValue(SelectableLazyDataModel.CACHE_PAGE_SIZE);
+			try {
+				setCachePageSize(Integer.parseInt(cachePageSizeVal));
+			} catch (Exception e) {
+				LOG.log(Level.SEVERE, "Error occured while setting size of cache, Exception message: " + e.getMessage(),
+						e);
+			}
+
+		}
+
+		// NEC Pagination Changes: finds count of records to be fetched
+		@Override
+		public int findLazyDataCount(String sortField, String sortOrder, Map<String, Object> filters) {
+			System.out.println("cost comparison findLazyDataCount...");
+			return costExtractSB.countCostComparison(costExtractSearchCriterial, true);
+		}
+
+		// NEC Pagination Changes: finds data for current page when not present
+		// in cache
+		@Override
+		public List<CostComparisonBean> findLazyData(int first, int pageSize, String sortField, String sortOrder,
+				Map<String, Object> filters) {
+			System.out.println("bryan cost comparison search...");
+			
+			List<CostComparisonBean> lazyItems = costExtractSB.searchCostComparison(costExtractSearchCriterial, true, first, pageSize);
+
+			return lazyItems;
+		}
+
+		@Override
+		// NEC Pagination changes: return data for pagination
+		protected SelectableLazyDataModel<CostComparisonBean> getLazyData() {
+			return costComparisonbean;
+		}
+
+	}
+	
+	public LazyDataModelForCostExtract getBeans() {
+		return beans;
+	}
+
+	public void setBeans(LazyDataModelForCostExtract beans) {
+		this.beans = beans;
+	}
+	
+	public void setupDataAccessInCriteria() {
+		//User user = UserInfo.getUser();
+		costExtractSearchCriterial.setDataAccesses(userSB.findAllDataAccesses(user));
+	}
+	
+	private void setupFiscalCalendarPeriod(){
+		DateFormat sdf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+		sdf.setTimeZone(OSTimeZone.getOsTimeZone());
+
+		Calendar now = Calendar.getInstance();
+		now.add(Calendar.MONTH, -3);
+		String[] last3MthPeriod = fiscalMappingSB.getPeriodByDate(sdf.format(now.getTime()));
+		System.out.println("-3: " + now.getTime());		
+		now = Calendar.getInstance();
+		now.add(Calendar.MONTH, -6);
+		String[] last6MthPeriod = fiscalMappingSB.getPeriodByDate(sdf.format(now.getTime()));
+		System.out.println("-6: " + now.getTime());		
+		now = Calendar.getInstance();
+		now.add(Calendar.MONTH, -12);
+		String[] last12MthPeriod = fiscalMappingSB.getPeriodByDate(sdf.format(now.getTime()));
+		System.out.println("-12: " + now.getTime());
+
+
+		try {
+			Calendar endDate = Calendar.getInstance();
+			endDate.set(Calendar.SECOND, 59);
+			endDate.set(Calendar.MINUTE, 59);
+			endDate.set(Calendar.HOUR_OF_DAY, 23);
+			endDate.add(Calendar.DATE, -1);
+			System.out.println("endDate: " + endDate.getTime());
+
+			costExtractSearchCriterial.setQuoteEffectiveDate3MthFrom(sdf.parse(last3MthPeriod[0] + " 00:00:00"));
+			costExtractSearchCriterial.setQuoteEffectiveDate3MthTo(endDate.getTime());
+
+			costExtractSearchCriterial.setQuoteEffectiveDate6MthFrom(sdf.parse(last6MthPeriod[0] + " 00:00:00"));
+			costExtractSearchCriterial.setQuoteEffectiveDate6MthTo(endDate.getTime());
+
+			costExtractSearchCriterial.setQuoteEffectiveDate12MthFrom(sdf.parse(last12MthPeriod[0] + " 00:00:00"));
+			costExtractSearchCriterial.setQuoteEffectiveDate12MthTo(endDate.getTime());
+
+			System.out.println("criteria.getQuoteEffectiveDate3MthFrom(): " + costExtractSearchCriterial.getQuoteEffectiveDate3MthFrom());
+			System.out.println("criteria.getQuoteEffectiveDate3MthTo(): " + costExtractSearchCriterial.getQuoteEffectiveDate3MthTo());
+
+			System.out.println("criteria.getQuoteEffectiveDate6MthFrom(): " + costExtractSearchCriterial.getQuoteEffectiveDate6MthFrom());
+			System.out.println("criteria.getQuoteEffectiveDate6MthTo(): " + costExtractSearchCriterial.getQuoteEffectiveDate6MthTo());
+
+			System.out.println("criteria.getQuoteEffectiveDate12MthFrom(): " + costExtractSearchCriterial.getQuoteEffectiveDate12MthFrom());
+			System.out.println("criteria.getQuoteEffectiveDate12MthTo(): " + costExtractSearchCriterial.getQuoteEffectiveDate12MthTo());
+
+
+		} catch (ParseException e) {
+			LOG.log(Level.WARNING, "Error occureed in parsing the date :: " + e.getMessage(), e);
+			e.printStackTrace();
+		}
+	}
+
+	public LazyDataModelForCostComparison getCostComparisonbean() {
+		return costComparisonbean;
+	}
+
+	public void setCostComparisonbean(LazyDataModelForCostComparison costComparisonbean) {
+		this.costComparisonbean = costComparisonbean;
+	}
+	
+}

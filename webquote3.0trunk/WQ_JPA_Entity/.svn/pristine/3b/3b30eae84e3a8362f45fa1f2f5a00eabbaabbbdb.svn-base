@@ -1,0 +1,271 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.vo.PricerInfo;
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+
+
+/**
+ * The persistent class for the MATERIAL_DETAIL database table.
+ * 
+ */
+@Entity
+//@DiscriminatorValue("NormalPricer")
+public class NormalPricer extends Pricer implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+
+	/*@Column(name="ALLOCATION_FLAG", length=1)
+	private Boolean allocationFlag;*/
+	/*
+	@Column(name="AVNET_QC_COMMENTS", length=255)
+	private String avnetQcComments;*/
+
+	@Column(name="FULL_MFR_PART_NUMBER", length=40)
+	private String fullMfrPartNumber;
+
+
+	@Column(name="BOTTOM_PRICE", precision=10, scale=5)
+	private Double bottomPrice;
+
+	@Column(name="MIN_SELL_PRICE", precision=10, scale=5)
+	private Double minSellPrice;
+
+	@Column(name="PRICE_LIST_REMARKS1", length=255)
+	private String priceListRemarks1;
+
+	@Column(name="PRICE_LIST_REMARKS2", length=255)
+	private String priceListRemarks2;
+
+	@Column(name="PRICE_LIST_REMARKS3", length=255)
+	private String priceListRemarks3;
+
+	@Column(name="PRICE_LIST_REMARKS4", length=255)
+	private String priceListRemarks4;
+
+	@Column(name = "PART_DESCRIPTION")
+	private String partDescription;
+
+
+	/*@OneToMany(mappedBy="materialDetail")
+	private List<QuantityBreakPrice> quantityBreakPrices;*/
+
+	
+	//Added by tonmy on 15 Oct 2013
+	/*@Column(name="AVAILABLE_TO_SELL_MORE_FLAG", length=1)
+	private Boolean availableToSellMoreFlag;*/
+	
+	public NormalPricer() {
+	}
+
+
+
+	/*public Boolean getAllocationFlag() {
+		return this.allocationFlag;
+	}
+
+	public void setAllocationFlag(Boolean allocationFlag) {
+		this.allocationFlag = allocationFlag;
+	}*/
+
+	/*public String getAvnetQcComments() {
+		return this.avnetQcComments;
+	}
+
+	public void setAvnetQcComments(String avnetQcComments) {
+		this.avnetQcComments = avnetQcComments;
+	}*/
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+
+	public String getFullMfrPartNumber() {
+		return this.fullMfrPartNumber;
+	}
+
+	public void setFullMfrPartNumber(String fullMfrPartNumber) {
+		this.fullMfrPartNumber = fullMfrPartNumber;
+	}
+
+	public Double getBottomPrice() {
+		return this.bottomPrice;
+	}
+
+	public void setBottomPrice(Double bottomPrice) {
+		this.bottomPrice = bottomPrice;
+	}
+
+	public Double getMinSellPrice() {
+		return this.minSellPrice;
+	}
+
+	public void setMinSellPrice(Double minSellPrice) {
+		this.minSellPrice = minSellPrice;
+	}
+
+	public String getPriceListRemarks1() {
+		return this.priceListRemarks1;
+	}
+
+	public void setPriceListRemarks1(String priceListRemarks1) {
+		this.priceListRemarks1 = priceListRemarks1;
+	}
+
+	public String getPriceListRemarks2() {
+		return this.priceListRemarks2;
+	}
+
+	public void setPriceListRemarks2(String priceListRemarks2) {
+		this.priceListRemarks2 = priceListRemarks2;
+	}
+
+	public String getPriceListRemarks3() {
+		return this.priceListRemarks3;
+	}
+
+	public void setPriceListRemarks3(String priceListRemarks3) {
+		this.priceListRemarks3 = priceListRemarks3;
+	}
+
+	public String getPriceListRemarks4() {
+		return this.priceListRemarks4;
+	}
+
+	public void setPriceListRemarks4(String priceListRemarks4) {
+		this.priceListRemarks4 = priceListRemarks4;
+	}
+
+	public String getPartDescription() {
+		return partDescription;
+	}
+
+
+	public void setPartDescription(String partDescription) {
+		this.partDescription = partDescription;
+	}
+
+
+	/*@SuppressWarnings({ "unchecked", "rawtypes" })
+	public List<QuantityBreakPrice> getQuantityBreakPrices() {
+		List<QuantityBreakPrice> sorted = new ArrayList<QuantityBreakPrice>(quantityBreakPrices);
+		Collections.sort(sorted,
+				new Comparator(){
+					 @Override
+					 public int compare(Object o1, Object o2) 
+					 {
+						 int sortByAgeFlag=((QuantityBreakPrice)o1).getQuantityBreak().compareTo(((QuantityBreakPrice)o2).getQuantityBreak());
+						 return sortByAgeFlag;
+					 }
+				}
+	    );
+		return sorted;
+	}*/
+
+	 
+	@Override
+	public String toString() {
+		return "MaterialDetail [costIndicator=" + getCostIndicator()
+				+ ", fullMfrPartNumber=" + fullMfrPartNumber + ", bizUnitBean=" + 
+			getBizUnitBean() + ", material=" + getMaterial() + "]";
+	}
+
+/*	public Boolean getAvailableToSellMoreFlag()
+	{
+		return availableToSellMoreFlag;
+	}
+
+	public void setAvailableToSellMoreFlag(Boolean availableToSellMoreFlag)
+	{
+		this.availableToSellMoreFlag = availableToSellMoreFlag;
+	}*/
+	
+
+
+/*	public Double getProgramNormalSell()
+	{
+	      List<QuantityBreakPrice> breakPriceList = getQuantityBreakPrices();
+	      if(breakPriceList!=null && breakPriceList.size()>0)
+	      {
+	    	  QuantityBreakPrice firstQBP = breakPriceList.get(0);
+	    	  if(firstQBP!=null && firstQBP.getQuantityBreakPrice()!=null)
+	    	  {
+	    		  return firstQBP.getQuantityBreakPrice();
+	    	  }
+	      }
+	      return null;
+			
+	}*/
+
+	@Override
+	int getPriority() {
+		return 3;
+	}
+
+	@Override
+	void fillInPricer(RfqItemVO rfqItem) {
+		super.fillInPricer(rfqItem);
+		rfqItem.setBottomPrice(bottomPrice);
+		rfqItem.setMinSellPrice(minSellPrice);
+		
+		rfqItem.calAfterFillin();
+		
+	}
+	
+	@Override
+	public void fillupPricerInfo(PricerInfo pricerInfo) {
+		super.fillupPricerInfo(pricerInfo);
+		pricerInfo.setBottomPrice(bottomPrice);
+		pricerInfo.setMinSell(minSellPrice);
+		pricerInfo.setPricerType("Normal Pricer");
+//		super.applyCostIndicator(pricerInfo);
+//		pricerInfo.calQty();
+	}
+	 
+ 
+
+	public String getCostIndicatorType() {
+		return RFQ_COST_INDICATOR_TYPE_N;
+	}
+
+
+
+	@Override
+	boolean allowOverride() {
+		return true;
+	}
+
+
+
+	@Override
+	boolean isCustomerMatched(Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers) {
+		return true;
+	}
+
+
+
+	/*@Override
+	boolean isSalesCostTypeMatched() {
+		MaterialRegional materialRegional = getMaterial().getMaterialRegaional(getBizUnitBean().getName());
+		if (materialRegional != null) {
+			return ! materialRegional.isSalesCostFlag(); 
+		}
+		return false;
+	}*/
+	
+	@Override
+	boolean isSalesCostTypeMatched(boolean salesCostType) {
+		return ! salesCostType;
+	}
+	
+
+}

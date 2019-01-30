@@ -1,0 +1,9 @@
+1)Fix ticket INC0648486 --Damon 2017/02/15
+
+2)Fix Vendor QuoteMaintenance Send SADA Quote issue -- change Delivery Stop Date form  6 months to 12 months   --Lenon 2017/02/15
+
+3)Fix ticket INC0650204   -- Lenon 2017/03/02
+
+#4)Fix ticket INC0671813   -- Lenon 2017/03/02(not fixed)
+
+5)Solve issue --java.lang.ArithmeticException: Rounding necessary  -- Lenon Lenon 2017/03/03

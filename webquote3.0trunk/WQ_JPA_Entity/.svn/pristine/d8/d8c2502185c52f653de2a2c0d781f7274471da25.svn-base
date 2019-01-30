@@ -1,0 +1,149 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.persistence.*;
+
+
+/**
+ * The persistent class for the BIZ_UNIT database table.
+ * 
+ */
+@Entity
+@Table(name="BIZ_UNIT")
+public class BizUnit implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	private String name;
+	
+	@ManyToOne
+	@JoinColumn(name="HIGHER_BIZ_UNIT")
+	private BizUnit higherBizUnit;
+
+	@OneToMany(mappedBy="higherBizUnit")
+	private List<BizUnit> subBizUnits;
+	
+	@Column(name="DEFAULT_CURRENCY",length=5)
+	@Enumerated(EnumType.STRING)
+	private Currency defaultCurrency;
+	
+	@Column(name="ALLOW_CURRENCIES",length=50)
+	private String allowCurrencies;
+	
+	//private final Set<String> sets = new HashSet<String>();
+	public Set<String> getAllowCurrencys() {
+		 Set<String> sets = new LinkedHashSet<String>();
+		 if(defaultCurrency != null) {
+			 sets.add(defaultCurrency.toString());
+		 }
+		 if(allowCurrencies != null) {
+			 sets.addAll(Arrays.asList(allowCurrencies.split(",")));
+		 }
+		return sets;
+		 
+		/*if(sets.size()==0) {
+			synchronized(sets) {
+				this.
+			}
+		}
+		return sets.stream().collect(Collectors.toSet());*/
+		
+	}
+	public BizUnit() {
+	}
+	
+	public BizUnit(String name) {
+		this.name = name;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	public BizUnit getHigherBizUnit() {
+		return higherBizUnit;
+	}
+
+	public void setHigherBizUnit(BizUnit higherBizUnit) {
+		this.higherBizUnit = higherBizUnit;
+	}	
+
+	public List<BizUnit> getSubBizUnits() {
+		return subBizUnits;
+	}
+
+	public void setSubBizUnits(List<BizUnit> subBizUnits) {
+		this.subBizUnits = subBizUnits;
+	}
+
+	@Override
+	public String toString() {
+		return "BizUnit [name=" + name + "]";
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		BizUnit other = (BizUnit) obj;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		return true;
+	}
+	/********pls keep the LinkedHashSet type for order(parent region on top)*****/
+	public Set<String> getSelfAndAllSubBizUnits() {
+		Set<String> results = new LinkedHashSet<>();
+		results.add(this.getName());
+		
+		for (BizUnit bizUnit : subBizUnits) {
+				results.addAll(bizUnit.getSelfAndAllSubBizUnits());
+		}
+		return results;
+	}
+	public Currency getDefaultCurrency() {
+		return defaultCurrency;
+	}
+	public void setDefaultCurrency(Currency defaultCurrency) {
+		this.defaultCurrency = defaultCurrency;
+	}
+	
+/*	//for order
+	public List<String> getSelfAndSubBizUnitList() {
+		List<String> results = new LinkedList<String>();
+		results.add(this.getName());
+		for (BizUnit bizUnit : getSubBizUnits()) {
+			results.addAll(bizUnit.getSelfAndSubBizUnitList());
+		}
+		return results;
+	}
+	*/
+}

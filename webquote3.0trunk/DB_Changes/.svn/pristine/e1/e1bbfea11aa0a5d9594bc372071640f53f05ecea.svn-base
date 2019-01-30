@@ -1,0 +1,14 @@
+1)Fix icidents INC0160300	Jason Chen 2015/06/04
+2)Fix the product group 2 is null issue when another region upload pricer  June Guo 2015/06/08
+3)Fix the product group 2 is be settle as null issue when multi prcier with one MFR uploading  June Guo 2015/06/10
+4)Fix issues:  June Guo 2015/06/26
+   a) Issue 1 每 wrong value assigned to CREATED_BY of Material when releasing the quote
+   b) Issue 2 每 if there is no quoted material Id in the quote item, system should send quoted part number to SAP, not requested part number.
+      and Incident- INC0176331
+   c) Issue 3 每 in async process, the number of emails for quotations is not align the number of quotations sent to SAP
+5) Fix INC0169853  June Guo 2015/06/10
+6) Fix INC0178779   June Guo 2015/06/26
+7)Fix DataAccess MFR All issue to use *ALL June Guo 2015/06/23
+8) Fix the MM role issue to add add Quote Type, Reference Exchange Rate and Reference Exchange Currency after Design In Cat June Guo 2015/06/29
+9) Fix Issue 5 每 if the length of Quoted MFR code is longer than 3 chars, system should capture the first 3 chars of Quoted MFR Code and send it to SAP. The checking should be applied to all quotes, but now it is only applied when the quoted material id exists. And system should send the Quoted MFR, not Requested MFR.
+  By June Guo 2015/06/29

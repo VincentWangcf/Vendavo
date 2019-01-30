@@ -1,0 +1,16 @@
+:normalEnd:
+file: \WQ_Web\WebContent\RFQ\QuoteBuilder.xhtml
+fromUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/trunk/WQ_Web/WebContent/RFQ/QuoteBuilder.xhtml
+fromRevision: 22265
+toUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/trunk/WQ_Web/WebContent/RFQ/QuoteBuilder.xhtml
+toRevision: HEAD
+force: false
+recurse: false
+ignore: false
+depth: 0
+
+workspaceUrl: http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/trunk/WQ_Web/WebContent/RFQ/QuoteBuilder.xhtml
+workspaceRevision: 24083
+lowerRevision: 0
+upperRevision: 0
+merge -r22265:HEAD http://subversion.avnet.com/svn/AsiaNet_Repo/WebQuote/trunk/WQ_Web/WebContent/RFQ/QuoteBuilder.xhtml C:/Damon/webquote3.0trunk/WQ_Web/WebContent/RFQ/QuoteBuilder.xhtml

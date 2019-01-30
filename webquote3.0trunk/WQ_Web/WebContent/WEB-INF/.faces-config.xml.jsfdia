@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PROCESS model-entity="JSFProcess">
+ <PROCESS-ITEM NAME="rules:#webquote#RFQ#RFQSubmission.xhtml"
+  PATH="/webquote/RFQ/RFQSubmission.xhtml" SHAPE="32,17,0,0" model-entity="JSFProcessGroup">
+  <PROCESS-ITEM ID="rules:#webquote#RFQ#RFQSubmission.xhtml:0"
+   NAME="item" PATH="/webquote/RFQ/RFQSubmission.xhtml" model-entity="JSFProcessItem">
+   <PROCESS-ITEM-OUTPUT
+    ID="success:#{RfqSubmissionMB.submitRfqs}:#webquote#RFQ#RFQSubmissionResultLayout.xhtml?formNumber=#{RfqSubmissionBean.requestFormNumber}"
+    NAME="output"
+    PATH="/webquote/RFQ/RFQSubmissionResultLayout.xhtml?formNumber=#{RfqSubmissionBean.requestFormNumber}"
+    TARGET="rules:#webquote#RFQ#RFQSubmissionResultLayout.xhtml?formNumber=#{RfqSubmissionBean.requestFormNumber}"
+    TITLE="#{RfqSubmissionMB.submitRfqs}:success" model-entity="JSFProcessItemOutput"/>
+  </PROCESS-ITEM>
+ </PROCESS-ITEM>
+ <PROCESS-ITEM
+  NAME="rules:#webquote#RFQ#RFQSubmissionResultLayout.xhtml?formNumber=#{RfqSubmissionBean.requestFormNumber}"
+  PATH="/webquote/RFQ/RFQSubmissionResultLayout.xhtml?formNumber=/{RfqSubmissionBean.requestFormNumber}"
+  SHAPE="240,33,0,0" model-entity="JSFProcessGroup"/>
+</PROCESS>

@@ -1,0 +1,1390 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	
+<f:view contentType="text/html">	
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge"  />
+            <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+			<meta http-equiv="Cache-Control" Content="no-cache"/>
+			<meta http-equiv="Pragma" Content="no-cache"/>
+			<meta http-equiv="Expires" Content="0"/>            
+            <title>Working Platform Page</title>
+        </f:facet>    
+    </h:head>
+	<h:body>
+
+	<h:form id="form_pendinglist" enctype="multipart/form-data">
+			<p:panel header="Working Platform" id="pendinglist">
+			<p:growl id="workingPlatformGrowl" sticky="true" showDetail="true"/> 
+			<p:defaultCommand target=":form_pendinglist:dummy" />  
+		    <p:dataTable	widgetVar="datatable_pendinglist_var"
+		    				var="rfq"
+		    				value="#{workingPlatformMB.workingPlatformItems}" 
+		    				rowKey="#{rfq.id}" 
+							selection="#{workingPlatformMB.selectedWorkingPlatformItems}"		    				
+		                 	filteredValue="#{workingPlatformMB.filteredWorkingPlatformItems}"
+		                 	id="datatable_pendinglist"
+		    				rowIndexVar="rowIndex"
+		    				paginator="true" 
+		    				rows="5"
+		    				rowsPerPageTemplate="5,10,15,20,25"
+		                 	paginatorPosition="top"						    				
+		                 	editable="true"
+		                 	editMode="cell"    	
+			                scrollable="true">		    				
+						
+				<p:ajax event="rowSelect" listener="#{workingPlatformMB.rowSelectupdate}"
+							update=":form_rfqdetailreference:panelgrid_rfqdetailreference,
+									:form_pos:datatable_posHistoryList,
+        							:form_quotationHistory:quoteHistorySearch,
+        							:form_systemQuotation:vendorQuoteHistorySearch"/>									
+																								 				
+				<p:column selectionMode="multiple" styleClass="column_validRfq"/>
+               
+		        <p:column headerText="Form#" sortBy="#{rfq.quote.formNumber}" filterMatchMode="contains" filterBy="#{rfq.quote.formNumber}" styleClass="column_formNumber readOnlyCell">
+		        	#{rfq.quote.formNumber}
+		        </p:column>     
+		
+		        <p:column headerText="Avnet Quote#" sortBy="#{rfq.alternativeQuoteNumber}" filterMatchMode="contains" filterBy="#{rfq.alternativeQuoteNumber}" styleClass="column_rfqCode readOnlyCell">
+					#{rfq.alternativeQuoteNumber}
+		        </p:column>
+
+		        <p:column headerText="Quote&lt;br/&gt;Stage" sortBy="#{rfq.stage}" filterMatchMode="contains" filterBy="#{rfq.stage}" styleClass="column_rfqCode readOnlyCell">
+					#{rfq.stage}   
+		        </p:column>
+
+		        <p:column headerText="Pending&lt;br/&gt;Day" sortBy="#{rfq.pendingDay}" filterMatchMode="contains" filterBy="#{rfq.pendingDay}" styleClass="column_icon readOnlyCell">
+					#{rfq.pendingDay} 
+		        </p:column>
+		             	        
+		        <p:column headerText="RFQ&lt;br/&gt;Status" sortBy="#{rfq.status}" filterMatchMode="contains" filterBy="#{rfq.status}" styleClass="column_rfqStatus readOnlyCell">
+					#{rfq.status}   
+		        </p:column>  
+
+		        <p:column headerText="Valid&lt;br/&gt;RFQ" sortBy="#{rfq.validFlagStr}" filterMatchMode="contains" filterBy="#{rfq.validFlagStr}" styleClass="column_icon readOnlyCell">
+					<h:outputText value="#{rfq.validFlag?'Yes':'No'}" />  
+		        </p:column> 
+		        		                
+		        <p:column headerText="MFR" sortBy="#{rfq.requestedMaterial.manufacturer.name}" filterMatchMode="contains" filterBy="#{rfq.requestedMaterial.manufacturer.name}" styleClass="column_mfr_wp readOnlyCell">
+					#{rfq.requestedMaterial.manufacturer.name}       
+		        </p:column>
+		              
+				<p:column headerText="Quote type" sortBy="#{rfq.quoteItem.quoteType}" filterMatchMode="contains" filterBy="#{rfq.quoteItem.quoteType}" styleClass="column_quoteType readOnlyCell">
+					#{rfq.quoteItem.quoteType}   
+		        </p:column>    
+		        <p:column headerText="Sold&lt;br/&gt;To Party" sortBy="#{rfq.soldToCustomerFullName}" filterMatchMode="contains" filterBy="#{rfq.soldToCustomerFullName}" styleClass="column_soldToCustomerName readOnlyCell">
+					#{rfq.soldToCustomerFullName}
+		        </p:column>
+		
+		        <p:column headerText="End&lt;br/&gt;Customer" sortBy="#{rfq.endCustomerFullName}" filterMatchMode="contains" filterBy="#{rfq.endCustomerFullName}" styleClass="column_endCustomerName readOnlyCell">
+					#{rfq.endCustomerFullName}
+		        </p:column>
+		        
+		        <p:column headerText="Requested&lt;br/&gt;P/N" sortBy="#{rfq.requestedMaterial.fullMfrPartNumber}" filterMatchMode="contains" filterBy="#{rfq.requestedMaterial.fullMfrPartNumber}" styleClass="column_fullMfrPart readOnlyCell">
+					<h:outputText id="requiredPartNumber" value="#{rfq.requestedMaterial.fullMfrPartNumber}" />
+		        </p:column>
+		
+		        <p:column headerText="Required&lt;br/&gt;Qty" sortBy="#{rfq.requestedQty}" filterMatchMode="contains" filterBy="#{rfq.requestedQty}" styleClass="column_requiredQty readOnlyCell">
+					#{workingPlatformMB.convertNumber(rfq.requestedQty)}
+		        </p:column>
+		
+		        <p:column headerText="EAU" sortBy="#{rfq.eau}" filterMatchMode="contains" filterBy="#{rfq.eau}" styleClass="column_requiredQty readOnlyCell">
+					#{workingPlatformMB.convertNumber(rfq.eau)}
+		        </p:column>
+		
+		        <p:column headerText="Target&lt;br/&gt;Resale" sortBy="#{rfq.targetResale}" filterMatchMode="contains" filterBy="#{rfq.targetResale}" styleClass="column_targetResale readOnlyCell">
+			        <h:outputText value="#{rfq.targetResale}" rendered="#{rfq.targetResale != 0.0}">
+			    		<f:convertNumber minFractionDigits="2" maxFractionDigits="5" />	
+			        </h:outputText>
+		        </p:column>
+		                                                        
+		        <p:column headerText="T/P&lt;br/&gt;Margin %" styleClass="column_targetPriceMargin readOnlyCell">
+			        <h:outputText id="p_targetMargin" value="#{rfq.targetMarginStr}">
+			        	<f:convertNumber minFractionDigits="2" maxFractionDigits="2"/>			        
+			        </h:outputText>
+		        </p:column>  
+		                             
+		        <p:column headerText="Quoted P/N" sortBy="#{rfq.quotedMaterial.fullMfrPartNumber}" filterMatchMode="contains" filterBy="#{rfq.quotedMaterial.fullMfrPartNumber}" styleClass="column_quotedPartNumber_wp tdmandatoryvalue">
+                	<p:autoComplete id="p_quotedPartNumber" queryDelay="500" cache="true" cacheTimeout="30000" minQueryLength="5" maxResults="10" forceSelection="true" value="#{rfq.quotedMaterial.fullMfrPartNumber}" completeMethod="#{workingPlatformMB.autoCompletePartList}" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});">
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />															    
+						<p:ajax event="itemSelect" listener="#{workingPlatformMB.changeQuotedPartNumber}"
+										update="p_mpq,
+											    p_moq,
+											    p_mov,
+											    p_leadTime,
+											    p_cost,
+											    p_quotedMargin,
+											    p_quotedPrice,
+											    p_quotedQty,
+											    p_validity,
+											    p_shipmentValidity,
+											    p_targetMargin,
+											    p_costIndicator,
+											    p_pmoq"/>							
+					</p:autoComplete>					                    
+		        </p:column> 
+		        
+		        <p:column headerText="Other P/N&lt;br/&gt;Search" styleClass="column_icon readOnlyCell">
+		        	<p:commandLink id="partNumberSearch_magnifier" actionListener="#{workingPlatformMB.searchForMaterialPopup}" update=":form_pendinglist:alternatePartSearch_panel" oncomplete="validation_dialog.show()" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});">
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />		        	
+						<f:attribute name="targetRowIndex" value="#{rowIndex}" />		        	
+		        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>				        	
+		        	</p:commandLink> 				        
+				</p:column>	
+		                		        
+		        <p:column headerText="Quoted&lt;br/&gt;Margin %" sortBy="#{rfq.resaleMarginStr}" filterMatchMode="contains" filterBy="#{rfq.resaleMarginStr}" styleClass="column_quotedMargin tdmandatoryvalue">
+					<p:inputText id="p_quotedMargin" value="#{rfq.resaleMarginStr}" styleClass="mandatory_input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">		        														
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />															    
+						<p:ajax event="change" listener="#{workingPlatformMB.updateQuotedMargin}"
+										update="p_mpq,
+											    p_moq,
+											    p_mov,
+											    p_leadTime,
+											    p_cost,
+											    p_quotedMargin,
+											    p_quotedPrice,
+											    p_quotedQty,
+											    p_validity,
+											    p_shipmentValidity,
+											    p_targetMargin,
+											    p_costIndicator,
+											    p_pmoq"/>						
+					</p:inputText>		        
+		        </p:column> 
+		                                                
+		        <p:column headerText="Quoted&lt;br/&gt;Resale" sortBy="#{rfq.quotedPriceStr}" filterMatchMode="contains" filterBy="#{rfq.quotedPriceStr}" styleClass="column_quotedPrice tdmandatoryvalue">
+					<p:inputText id="p_quotedPrice" value="#{rfq.quotedPriceStr}" styleClass="mandatory_input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">														
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />															    
+						<p:ajax event="change" listener="#{workingPlatformMB.updateQuotedPrice}"
+										update="p_mpq,
+											    p_moq,
+											    p_mov,
+											    p_leadTime,
+											    p_cost,
+											    p_quotedMargin,
+											    p_quotedPrice,
+											    p_quotedQty,
+											    p_validity,
+											    p_shipmentValidity,
+											    p_targetMargin,
+											    p_costIndicator,
+											    p_pmoq"/>									
+					</p:inputText>       
+		        </p:column>        
+		       
+		        <p:column headerText="Cost" sortBy="#{rfq.costStr}" filterMatchMode="contains" filterBy="#{rfq.costStr}" styleClass="column_cost tdmandatoryvalue">
+					<p:inputText id="p_cost" value="#{rfq.costStr}" styleClass="mandatory_input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />															    
+						<p:ajax event="change" listener="#{workingPlatformMB.updateCost}"
+										update="p_mpq,
+											    p_moq,
+											    p_mov,
+											    p_leadTime,
+											    p_cost,
+											    p_quotedMargin,
+											    p_quotedPrice,
+											    p_quotedQty,
+											    p_validity,
+											    p_shipmentValidity,
+											    p_targetMargin,
+											    p_costIndicator,
+											    p_pmoq"/>							
+					</p:inputText>
+		        </p:column>
+		       
+		        <p:column headerText="Cost&lt;br/&gt;Indicator" sortBy="#{rfq.costIndicator}" filterMatchMode="contains" filterBy="#{rfq.costIndicator}" styleClass="column_costIndicator tdmandatoryvalue">
+	    			<h:selectOneMenu id="p_costIndicator" value="#{rfq.costIndicator}" effect="size" onselect="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});">
+						<f:selectItems value="#{workingPlatformMB.convertCostIndicatorToSelectItem()}" />
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />															    
+						<p:ajax event="change" listener="#{workingPlatformMB.switchCostIndicator}"
+										update="p_mpq,
+											    p_moq,
+											    p_mov,
+											    p_leadTime,
+											    p_cost,
+											    p_quotedMargin,
+											    p_quotedPrice,
+											    p_quotedQty,
+											    p_validity,
+											    p_shipmentValidity,
+											    p_targetMargin,
+											    p_costIndicator,
+											    p_pmoq"/>							    
+					</h:selectOneMenu>					
+		        </p:column> 
+		        
+		        <p:column headerText="Cost Indicator Search" styleClass="column_icon readOnlyCell">
+		        	<p:commandLink actionListener="#{workingPlatformMB.searchForPopupPricer}" update=":form_pendinglist:costIndicator_panel" oncomplete="costIndicator_dialog.show()" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});">
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />			        	
+		        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>				        	
+		        	</p:commandLink> 				        
+				</p:column>			         
+		               	        
+		        <p:column headerText="Qty&lt;br/&gt;Indicator" sortBy="#{rfq.qtyIndicator}" filterMatchMode="contains" filterBy="#{rfq.qtyIndicator}" styleClass="column_qtyIndicator tdmandatoryvalue">
+	    			<h:selectOneMenu id="p_qtyIndicator" value="#{rfq.qtyIndicator}" effect="size" onselect="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});">
+						<f:selectItems value="#{workingPlatformMB.qtyIndicatorOptions}" />
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />	                            
+						<p:ajax event="change" listener="#{workingPlatformMB.updateQtyIndicator}"
+										update="p_mpq,
+											    p_moq,
+											    p_mov,
+											    p_leadTime,
+											    p_cost,
+											    p_quotedMargin,
+											    p_quotedPrice,
+											    p_quotedQty,
+											    p_validity,
+											    p_shipmentValidity,
+											    p_targetMargin,
+											    p_costIndicator,
+											    p_pmoq"/>	
+					</h:selectOneMenu>					        
+		        </p:column>  
+		        
+		        <p:column headerText="Quoted&lt;br/&gt;Qty" sortBy="#{rfq.quotedQtyStr}" filterMatchMode="contains" filterBy="#{rfq.quotedQtyStr}" styleClass="column_quotedQty tdmandatoryvalue">
+					<p:inputText id="p_quotedQty" value="#{rfq.quotedQtyStr}" styleClass="mandatory_input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />						
+						<p:ajax event="change" listener="#{workingPlatformMB.updateQuotedQty}"
+										update="p_mpq,
+											    p_moq,
+											    p_mov,
+											    p_leadTime,
+											    p_cost,
+											    p_quotedMargin,
+											    p_quotedPrice,
+											    p_quotedQty,
+											    p_validity,
+											    p_shipmentValidity,
+											    p_targetMargin,
+											    p_costIndicator,
+											    p_pmoq"/>							
+					</p:inputText>        
+		        </p:column>  
+		                
+		        <p:column headerText="Multi&lt;br/&gt;Usage" sortBy="#{rfq.multiUsageFlagStr}" filterMatchMode="contains" filterBy="#{rfq.multiUsageFlagStr}" styleClass="column_multiUsage editCell">
+	    			<h:selectOneMenu value="#{rfq.multiUsageFlagStr}" effect="size" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});">											
+			            <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            <f:selectItem itemLabel="No" itemValue="No" />  			            
+					</h:selectOneMenu>					
+		        </p:column>    
+	        
+		        <p:column headerText="Quantity Break"  styleClass="column_quantityBreak readOnlyCell">
+					<h:outputText value="#{rfq.requestedMaterial.programMaterial}" converter="webquote.commodity.Oqmsp" escape="false" />
+				</p:column>					        	
+					        	
+					        		        
+		        <p:column headerText="QC External&lt;br/&gt;Comment" styleClass="column_attachmentId editCell">
+		        	<p:commandLink oncomplete="qc_external_comment_dialog.show()" update=":form_pendinglist:qc_external_comment_panel" actionListener="#{workingPlatformMB.updateSelectedQuoteItem}" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});">
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />	
+						<f:attribute name="targetRowIndex" value="#{rowIndex}" />																				    		        	
+		        		<h:graphicImage url="./../resources/images/icon_info.png" styleClass="iconLink" rendered="#{!workingPlatformMB.isEmpty(rfq.aqcc)}"/>
+		        		<h:graphicImage url="./../resources/images/icon_info_empty.png" styleClass="iconLink" rendered="#{workingPlatformMB.isEmpty(rfq.aqcc)}"/>
+		        	</p:commandLink> 					        		        	
+		        </p:column>            
+	
+		        <p:column headerText="QC Internal&lt;br/&gt;Comment" styleClass="column_attachmentId editCell">
+		        	<p:commandLink oncomplete="qc_internal_comment_dialog.show()" update=":form_pendinglist:qc_internal_comment_panel" actionListener="#{workingPlatformMB.updateSelectedQuoteItem}" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});">
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />	
+						<f:attribute name="targetRowIndex" value="#{rowIndex}" />																				    		        	
+		        		<h:graphicImage url="./../resources/images/icon_info.png" styleClass="iconLink" rendered="#{!workingPlatformMB.isEmpty(rfq.internalComment)}"/>
+		        		<h:graphicImage url="./../resources/images/icon_info_empty.png" styleClass="iconLink" rendered="#{workingPlatformMB.isEmpty(rfq.internalComment)}"/>
+		        	</p:commandLink> 					        		        	
+		        </p:column>            
+						        
+		        <p:column headerText="Lead&lt;br/&gt;Time" sortBy="#{rfq.leadTime}" filterMatchMode="contains" filterBy="#{rfq.leadTime}" styleClass="column_leadTime tdmandatoryvalue">
+					<p:inputText id="p_leadTime" value="#{rfq.leadTime}" styleClass="mandatory_input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">				
+					</p:inputText>    
+		        </p:column>
+		                                        
+		        <p:column headerText="MPQ" sortBy="#{rfq.mpqStr}" filterMatchMode="contains" filterBy="#{rfq.mpqStr}" styleClass="column_mpq tdmandatoryvalue">
+					<p:inputText id="p_mpq" value="#{rfq.mpqStr}" styleClass="mandatory_input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />																			    
+						<p:ajax event="change" listener="#{workingPlatformMB.updatePmoq}"
+										update="p_mpq,
+											    p_moq,
+											    p_mov,
+											    p_leadTime,
+											    p_cost,
+											    p_quotedMargin,
+											    p_quotedPrice,
+											    p_quotedQty,
+											    p_validity,
+											    p_shipmentValidity,
+											    p_targetMargin,
+											    p_costIndicator,
+											    p_pmoq"/>					
+					</p:inputText>      
+		        </p:column>
+		        
+		        <p:column headerText="MOQ" sortBy="#{rfq.moqStr}" filterMatchMode="contains" filterBy="#{rfq.moqStr}" styleClass="column_moq tdmandatoryvalue">
+					<p:inputText id="p_moq" value="#{rfq.moqStr}" styleClass="mandatory_input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />																			    
+						<p:ajax event="change" listener="#{workingPlatformMB.updatePmoq}"
+										update="p_mpq,
+											    p_moq,
+											    p_mov,
+											    p_leadTime,
+											    p_cost,
+											    p_quotedMargin,
+											    p_quotedPrice,
+											    p_quotedQty,
+											    p_validity,
+											    p_shipmentValidity,
+											    p_targetMargin,
+											    p_costIndicator,
+											    p_pmoq"/>						
+					</p:inputText>    
+		        </p:column>   
+		        
+		        <p:column headerText="MOV" sortBy="#{rfq.movStr}" filterMatchMode="contains" filterBy="#{rfq.movStr}" styleClass="column_mov tdmandatoryvalue">
+					<p:inputText id="p_mov" value="#{rfq.movStr}" styleClass="mandatory_input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />																			    
+						<p:ajax event="change" listener="#{workingPlatformMB.updatePmoq}"
+										update="p_mpq,
+											    p_moq,
+											    p_mov,
+											    p_leadTime,
+											    p_cost,
+											    p_quotedMargin,
+											    p_quotedPrice,
+											    p_quotedQty,
+											    p_validity,
+											    p_shipmentValidity,
+											    p_targetMargin,
+											    p_costIndicator,
+											    p_pmoq"/>																				    								
+					</p:inputText>    
+		        </p:column>                      
+		                           
+		        <p:column headerText="Price&lt;br/&gt;Validity" sortBy="#{rfq.priceValidity}" filterMatchMode="contains" filterBy="#{rfq.priceValidity}" styleClass="column_validity tdmandatoryvalue">
+					<p:inputText id="p_validity" value="#{rfq.priceValidity}" styleClass="mandatory_input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">											
+					</p:inputText>         
+		        </p:column>   
+		        
+		        <p:column headerText="Shipment&lt;br/&gt;Validity" sortBy="#{rfq.shipmentValidity}" filterMatchMode="contains" filterBy="#{rfq.shipmentValidity}" styleClass="column_shipmentValidity editCell">
+            		<p:inputText id="p_shipmentValidity" value="#{rfq.shipmentValidityStr}" styleClass="input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">											
+					</p:inputText>						     
+		        </p:column>                                                                              
+		        
+		        <p:column headerText="MFR Quote#" sortBy="#{rfq.vendorQuoteNumber}" filterMatchMode="contains" filterBy="#{rfq.vendorQuoteNumber}" styleClass="column_vendorQuoteNumber editCell">
+					<p:inputText value="#{rfq.vendorQuoteNumber}" styleClass="input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">											
+					</p:inputText>						
+		        </p:column> 
+		        
+		        <p:column headerText="MFR Debit#" sortBy="#{rfq.vendorDebitNumber}" filterMatchMode="contains" filterBy="#{rfq.vendorDebitNumber}" styleClass="column_vendorDebitNumber editCell">
+					<p:inputText value="#{rfq.vendorDebitNumber}" styleClass="input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">											
+					</p:inputText>
+		        </p:column>
+		        
+		        <p:column headerText="MFR Quote Qty" sortBy="#{rfq.vendorQuoteQtyStr}" filterMatchMode="contains" filterBy="#{rfq.vendorQuoteQtyStr}" styleClass="column_vendorQuoteQty editCell">
+					<p:inputText value="#{rfq.vendorQuoteQtyStr}" styleClass="input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">											
+					</p:inputText>    
+		        </p:column> 
+		        	        
+		        <p:column headerText="Rescheduling&lt;br/&gt;Window" sortBy="#{rfq.rescheduleWindowStr}" filterMatchMode="contains" filterBy="#{rfq.rescheduleWindowStr}" styleClass="column_reschedulingWindow editCell">
+					<p:inputText value="#{rfq.rescheduleWindowStr}" styleClass="input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">											
+					</p:inputText>						    
+		        </p:column>        
+		        
+		        <p:column headerText="Cancellation&lt;br/&gt;Window" sortBy="#{rfq.cancellationWindowStr}" filterMatchMode="contains" filterBy="#{rfq.cancellationWindowStr}" styleClass="column_cancellationWindow editCell">
+					<p:inputText value="#{rfq.cancellationWindowStr}" styleClass="input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">											
+					</p:inputText>						  
+		        </p:column>          		          
+		        		
+		        <p:column headerText="Quotation&lt;br/&gt;T&amp;C" styleClass="column_attachmentId editCell">
+		        	<p:commandLink oncomplete="terms_and_conditions_dialog.show()" update=":form_pendinglist:terms_and_conditions_panel" actionListener="#{workingPlatformMB.updateSelectedQuoteItem}" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});">
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />	
+						<f:attribute name="targetRowIndex" value="#{rowIndex}" />																				    		        	
+		        		<h:graphicImage url="./../resources/images/icon_info.png" styleClass="iconLink" rendered="#{!workingPlatformMB.isEmpty(rfq.termsAndConditions)}"/>
+		        		<h:graphicImage url="./../resources/images/icon_info_empty.png" styleClass="iconLink" rendered="#{workingPlatformMB.isEmpty(rfq.termsAndConditions)}"/>
+		        	</p:commandLink> 					        		        	
+		        </p:column>            
+		        			           		        
+		        <p:column headerText="Resale&lt;br/&gt;Indicator" sortBy="#{rfq.resaleIndicator}" filterMatchMode="contains" filterBy="#{rfq.resaleIndicator}" styleClass="column_resalesIndicator editCell">
+					<p:inputText value="#{rfq.resaleIndicator}" styleClass="input_text" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" onkeyup="checkEnterKey(event, this)">																		
+					</p:inputText>						          
+		        </p:column>
+		        
+		        <p:column headerText="Quoted&lt;br/&gt;Reference&lt;br/&gt;Margin %" sortBy="#{rfq.resaleMargin}" filterMatchMode="contains" filterBy="#{rfq.resaleMargin}" styleClass="column_referenceMargin readOnlyCell">
+					<h:outputText value="#{rfq.resaleMargin}">
+			        	<f:convertNumber minFractionDigits="2" maxFractionDigits="2"/>			        												
+					</h:outputText>
+		        </p:column>	        	             
+	       		    
+		        <p:column headerText="Salesman" sortBy="#{rfq.quote.sales.name}" filterMatchMode="contains" filterBy="#{rfq.quote.sales.name}" styleClass="column_employeeName readOnlyCell">
+					#{rfq.quote.sales.name}
+		        </p:column>	        		                               
+	
+		        <p:column headerText="Team" sortBy="#{rfq.quote.sales.team.name}" filterMatchMode="contains" filterBy="#{rfq.quote.sales.team.name}" styleClass="column_team readOnlyCell">
+					#{rfq.quote.team.name}
+		        </p:column>	        		                               
+	
+		        <p:column headerText="RFQ Submission Date" sortBy="#{rfq.quote.uploadTime}" filterMatchMode="contains" filterBy="#{rfq.quote.uploadTime}" styleClass="column_uploadTime readOnlyCell">
+					#{workingPlatformMB.convertDateToString(rfq.quote.uploadTime)}
+		        </p:column>	
+	
+		        <p:column headerText="RFQ Form&lt;br/&gt;Attachment" styleClass="column_attachmentId readOnlyCell">
+		        	<p:commandLink actionListener="#{workingPlatformMB.updateTableFormAttachments(rfq)}" update=":form_pendinglist:attachment_no_delete_panel" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" oncomplete="attachment_list_no_delete_dialog.show()" rendered="#{workingPlatformMB.isHasFormAttachment(rfq)}">
+		        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>					        	
+		        	</p:commandLink> 		
+		        </p:column>	
+	
+		        <p:column headerText="RFQ Item&lt;br/&gt;Attachment" styleClass="column_attachmentId readOnlyCell">
+		        	<p:commandLink actionListener="#{workingPlatformMB.updateTableAttachments(rfq)}" update=":form_pendinglist:attachment_no_delete_panel" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" oncomplete="attachment_list_no_delete_dialog.show()" rendered="#{workingPlatformMB.isHasAttachment(rfq)}">
+		        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>					        	
+		        	</p:commandLink> 		
+		        </p:column>	
+		        
+		        <p:column headerText="Refresh&lt;br/&gt;Attachment" styleClass="column_attachmentId readOnlyCell">
+		        	<p:commandLink actionListener="#{workingPlatformMB.updateTableRefreshAttachments(rfq)}" update=":form_pendinglist:attachment_no_delete_panel" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" oncomplete="attachment_list_no_delete_dialog.show()" rendered="#{workingPlatformMB.isHasRefreshAttachment(rfq)}">
+		        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>				        	
+		        	</p:commandLink> 		
+		        </p:column>		        
+	
+		        <p:column headerText="PM&lt;br/&gt;Attachment" styleClass="column_attachmentId readOnlyCell">
+		        	<p:commandLink actionListener="#{workingPlatformMB.updateTableInternalTransferAttachments(rfq)}" update=":form_pendinglist:attachment_no_delete_panel" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});" oncomplete="attachment_list_no_delete_dialog.show()" rendered="#{workingPlatformMB.isHasInternalTransferAttachment(rfq)}">
+		        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>				        	
+		        	</p:commandLink> 		
+		        </p:column>		
+		        
+		        <p:column headerText="PM&lt;br/&gt;Comment" styleClass="column_attachmentId editCell">
+		        	<p:commandLink oncomplete="pm_comment_dialog.show()" update=":form_pendinglist:pm_comment_panel" actionListener="#{workingPlatformMB.updateSelectedQuoteItem}" onclick="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});">
+						<f:attribute name="targetQuoteItem" value="#{rfq}" />	
+						<f:attribute name="targetRowIndex" value="#{rowIndex}" />																				    		        	
+		        		<h:graphicImage url="./../resources/images/icon_info.png" styleClass="iconLink" rendered="#{!workingPlatformMB.isEmpty(rfq.internalTransferComment)}"/>
+		        	</p:commandLink> 					        		        	
+		        </p:column>  
+		        		        	
+		        <p:column headerText="Revert&lt;br/&gt;Version" sortBy="#{rfq.revertVersion}" filterMatchMode="contains" filterBy="#{rfq.revertVersion}" styleClass="column_version readOnlyCell">
+					#{rfq.revertVersion}
+		        </p:column>
+	
+		        <p:column headerText="First RFQ Code" sortBy="#{rfq.firstRfqCode}" filterMatchMode="contains" filterBy="#{rfq.firstRfqCode}" styleClass="column_rfqCode readOnlyCell">
+					#{rfq.firstRfqCode}
+		        </p:column>	        
+	
+		        <p:column headerText="PMOQ" sortBy="#{rfq.pmoq}" filterMatchMode="contains" filterBy="#{rfq.pmoq}" styleClass="column_pmoq readOnlyCell">
+					<h:outputText id="p_pmoq" value="#{rfq.pmoq}" />
+		        </p:column>  	        
+	
+		        <p:column headerText="Allocation&lt;br/&gt;Part" sortBy="#{rfq.allocationFlagStr}" filterMatchMode="contains" filterBy="#{rfq.allocationFlagStr}" styleClass="column_allocationFlag editCell">
+	    			<h:selectOneMenu value="#{rfq.allocationFlagStr}" effect="size" onselect="checkUpdateDetailPanel(#{rfq.id}, #{rowIndex});">											
+			            <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            <f:selectItem itemLabel="No" itemValue="No" />            
+					</h:selectOneMenu>					     
+		        </p:column>  	        
+	
+		        <p:column headerText="Pricer List Remarks 1" sortBy="#{rfq.priceListRemarks1}" filterMatchMode="contains" filterBy="#{rfq.priceListRemarks1}" styleClass="column_priceListRemark readOnlyCell">
+					#{rfq.priceListRemarks1}
+		        </p:column>	        	  	        		        			        
+	
+		        <p:column headerText="Pricer List Remarks 2" sortBy="#{rfq.priceListRemarks2}" filterMatchMode="contains" filterBy="#{rfq.priceListRemarks2}" styleClass="column_priceListRemark readOnlyCell">
+					#{rfq.priceListRemarks2}
+		        </p:column>	        	  	        		        			        
+	
+		        <p:column headerText="Pricer List Remarks 3" sortBy="#{rfq.priceListRemarks3}" filterMatchMode="contains" filterBy="#{rfq.priceListRemarks3}" styleClass="column_priceListRemark readOnlyCell">
+					#{rfq.priceListRemarks3}
+		        </p:column>	    
+				
+		        <p:column headerText="Pricer List Remarks 4" sortBy="#{rfq.priceListRemarks4}" filterMatchMode="contains" filterBy="#{rfq.priceListRemarks4}" styleClass="column_priceListRemark readOnlyCell">
+					#{rfq.priceListRemarks4}
+		        </p:column>	        	  	        		        			        
+
+				<p:column headerText="Product Group 1" sortBy="#{rfq.requestedMaterial.productGroup1.name}" filterMatchMode="contains" filterBy="#{rfq.requestedMaterial.productGroup1.name}" styleClass="column_productGroup readOnlyCell">
+					#{rfq.requestedMaterial.productGroup1.name}
+				</p:column>
+
+				<p:column headerText="Product Group 2" sortBy="#{rfq.requestedMaterial.productGroup2.name}" filterMatchMode="contains" filterBy="#{rfq.requestedMaterial.productGroup2.name}" styleClass="column_productGroup readOnlyCell">
+					#{rfq.requestedMaterial.productGroup2.name}
+				</p:column>
+
+				<p:column headerText="Product Group 3" sortBy="#{rfq.requestedMaterial.productGroup3}" filterMatchMode="contains" filterBy="#{rfq.requestedMaterial.productGroup3}" styleClass="column_productGroup readOnlyCell">
+					#{rfq.requestedMaterial.productGroup3}
+				</p:column>
+	
+				<p:column headerText="Product Group 4" sortBy="#{rfq.requestedMaterial.productGroup4}" filterMatchMode="contains" filterBy="#{rfq.requestedMaterial.productGroup4}" styleClass="column_productGroup readOnlyCell">
+					#{rfq.requestedMaterial.productGroup4}
+				</p:column>
+				<p:column headerText="Description" sortBy="#{rfq.description}" filterMatchMode="contains" filterBy="#{rfq.description}" styleClass="column_description readOnlyCell">
+					#{rfq.description}
+				</p:column>
+				<p:column headerText="Bottom Price" sortBy="#{rfq.minSellPrice}" filterMatchMode="contains" filterBy="#{rfq.minSellPrice}" styleClass="column_minSell readOnlyCell">
+					<h:outputText value="#{rfq.minSellPrice}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5"/>						
+					</h:outputText>
+				</p:column>
+				<p:column headerText="Min Sell&lt;br/&gt;Price" sortBy="#{rfq.normSellPrice}" filterMatchMode="contains" filterBy="#{rfq.normSellPrice}" styleClass="column_normSell Price readOnlyCell">
+					<h:outputText value="#{rfq.normSellPrice}">
+						<f:convertNumber minFractionDigits="2" maxFractionDigits="5"/>						
+					</h:outputText>
+				</p:column>
+				<p:column headerText="Ship To&lt;br/&gt;Code" sortBy="#{rfq.shipToCustomer.customerNumber}" filterMatchMode="contains" filterBy="#{rfq.shipToCustomer.customerNumber}" styleClass="column_shipToCustomerNumber readOnlyCell">
+					#{rfq.shipToCustomer.customerNumber}
+				</p:column>
+				<p:column headerText="Ship To Party" sortBy="#{rfq.shipToCustomerFullName}" filterMatchMode="contains" filterBy="#{rfq.shipToCustomerFullName}" styleClass="column_shipToCustomerName readOnlyCell">
+					#{rfq.shipToCustomerFullName}
+				</p:column>
+				<p:column headerText="End Customer Code" sortBy="#{rfq.endCustomer.customerNumber}" filterMatchMode="contains" filterBy="#{rfq.endCustomer.customerNumber}" styleClass="column_endCustomerNumber readOnlyCell">
+					#{rfq.endCustomer.customerNumber}
+				</p:column>
+				<p:column headerText="Created By" sortBy="#{rfq.quote.createdName}" filterMatchMode="contains" filterBy="#{rfq.quote.createdName}" styleClass="column_employeeName readOnlyCell">
+					#{rfq.quote.createdName}
+				</p:column>
+				<p:column headerText="Requester&lt;br/&gt;Reference" sortBy="#{rfq.quote.yourReference}" filterMatchMode="contains" filterBy="#{rfq.quote.yourReference}" styleClass="column_yourReference readOnlyCell">
+					#{rfq.quote.yourReference}
+				</p:column>
+				<p:column headerText="Sales&lt;br/&gt;Employee&lt;br/&gt;Code" sortBy="#{rfq.quote.sales.employeeId}" filterMatchMode="contains" filterBy="#{rfq.quote.sales.employeeId}" styleClass="column_salesEmployeeNumber readOnlyCell">
+					#{rfq.quote.sales.employeeId}
+				</p:column>
+				<p:column headerText="Sold To Code" sortBy="#{rfq.quote.soldToCustomer.customerNumber}" filterMatchMode="contains" filterBy="#{rfq.quote.soldToCustomer.customerNumber}" styleClass="column_soldToCustomerNumber readOnlyCell">
+					#{rfq.quote.soldToCustomer.customerNumber}
+				</p:column>
+				<p:column headerText="Customer&lt;br/&gt;Type" sortBy="#{rfq.quote.soldToCustomer.customerType}" filterMatchMode="contains" filterBy="#{rfq.quote.soldToCustomer.customerType}" styleClass="column_customerType readOnlyCell">
+					#{rfq.quote.soldToCustomer.customerType}
+				</p:column>
+				<p:column headerText="Project Name" sortBy="#{rfq.projectName}" filterMatchMode="contains" filterBy="#{rfq.projectName}" styleClass="column_projectName readOnlyCell">
+					#{rfq.projectName}
+				</p:column>
+				<p:column headerText="Application" sortBy="#{rfq.application}" filterMatchMode="contains" filterBy="#{rfq.application}" styleClass="column_application readOnlyCell">
+					#{rfq.application}
+				</p:column>
+				<p:column headerText="Segment" sortBy="#{rfq.enquirySegment}" filterMatchMode="contains" filterBy="#{rfq.enquirySegment}" styleClass="column_enquirySegment readOnlyCell">
+					#{rfq.enquirySegment}
+				</p:column>
+				<p:column headerText="Design Location" sortBy="#{rfq.designLocation}" filterMatchMode="contains" filterBy="#{rfq.designLocation}" styleClass="column_designLocation readOnlyCell">
+					#{rfq.designLocation}
+				</p:column>
+				<p:column headerText="Local DR" sortBy="#{rfq.ardcStr}" filterMatchMode="contains" filterBy="#{rfq.ardcStr}" styleClass="column_avnetRegionalDemandCreation readOnlyCell">
+					<h:outputText value="#{rfq.ardc?'Yes':'No'}" />  
+				</p:column>
+				<p:column headerText="DRMS Project ID" sortBy="#{rfq.drmsNumber}" filterMatchMode="contains" filterBy="#{rfq.drmsNumber}" styleClass="column_drmsNumber readOnlyCell">
+					#{rfq.drmsNumber}
+				</p:column>
+				<p:column headerText="BMT Biz" sortBy="#{rfq.bmtCheckedFlagStr}" filterMatchMode="contains" filterBy="#{rfq.bmtCheckedFlagStr}" styleClass="column_bmtChecked readOnlyCell">
+					<h:outputText value="#{rfq.bmtCheckedFlag?'Yes':'No'}" />  
+				</p:column>
+				<p:column headerText="BOM" sortBy="#{rfq.bomNumber}" filterMatchMode="contains" filterBy="#{rfq.bomNumber}" styleClass="column_bomNumber readOnlyCell">
+					#{rfq.bomNumber}
+				</p:column>
+				<p:column headerText="LOA" sortBy="#{rfq.loaFlagStr}" filterMatchMode="contains" filterBy="#{rfq.loaFlagStr}" styleClass="column_loa readOnlyCell">
+					<h:outputText value="#{rfq.loaFlag?'Yes':'No'}" />  
+				</p:column>
+				<p:column headerText="Remarks" sortBy="#{rfq.quote.remarks}" filterMatchMode="contains" filterBy="#{rfq.quote.remarks}" styleClass="column_remarks readOnlyCell">
+					#{rfq.quote.remarks}
+				</p:column>
+				<p:column headerText="Competitor Information" sortBy="#{rfq.competitorInformation}" filterMatchMode="contains" filterBy="#{rfq.competitorInformation}" styleClass="column_competitorInformation readOnlyCell">
+					#{rfq.competitorInformation}
+				</p:column>
+				<p:column headerText="MFR DR#" sortBy="#{rfq.supplierDrNumber}" filterMatchMode="contains" filterBy="#{rfq.supplierDrNumber}" styleClass="column_supplierDrNumber readOnlyCell">
+					#{rfq.supplierDrNumber}
+				</p:column>
+				<p:column headerText="PP Schedule" sortBy="#{rfq.ppSchedule}" filterMatchMode="contains" filterBy="#{rfq.ppSchedule}" styleClass="column_ppSchedule readOnlyCell">
+					#{rfq.ppSchedule}
+				</p:column>
+				<p:column headerText="MP Schedule" sortBy="#{rfq.mpSchedule}" filterMatchMode="contains" filterBy="#{rfq.mpSchedule}" styleClass="column_mpSchedule readOnlyCell">
+					#{rfq.mpSchedule}
+				</p:column>
+				<p:column headerText="Item Remarks" sortBy="#{rfq.remarks}" filterMatchMode="contains" filterBy="#{rfq.remarks}" styleClass="column_itemRemarks readOnlyCell">
+					#{rfq.remarks}
+				</p:column>
+				<p:column headerText="SPR" sortBy="#{rfq.sprFlagStr}" filterMatchMode="contains" filterBy="#{rfq.sprFlagStr}" styleClass="column_specialPriceIndicator readOnlyCell">
+					<h:outputText value="#{rfq.sprFlag?'Yes':'No'}" />  
+				</p:column>
+				<p:column headerText="Reason For Refresh" sortBy="#{rfq.reasonForRefresh}" filterMatchMode="contains" filterBy="#{rfq.reasonForRefresh}" styleClass="column_reasonForRefresh readOnlyCell">
+					#{rfq.reasonForRefresh}
+				</p:column>
+				<p:column headerText="Copy to CS" sortBy="#{rfq.quote.copyToCS}" filterMatchMode="contains" filterBy="#{rfq.quote.copyToCS}" styleClass="column_copyToCs readOnlyCell">
+					#{rfq.quote.copyToCS}
+				</p:column>
+				<p:column headerText="Biz Program Type" sortBy="#{rfq.programType}" filterMatchMode="contains" filterBy="#{rfq.programType}" styleClass="column_program readOnlyCell">
+					#{rfq.programType}
+				</p:column>
+
+			</p:dataTable>
+	    	
+
+	        <f:facet name="actions"> 
+	        <div  style="float:right;">	        
+	        		<h:outputText value="QC : #{workingPlatformMB.qcCounter}" style="padding:0px 10px 0px 0px;"/> 
+	        		<h:outputText value="IT : #{workingPlatformMB.itCounter}" style="padding:0px 10px 0px 0px;"/> 
+	        		<h:outputText value="RIT : #{workingPlatformMB.ritCounter}" style="padding:0px 10px 0px 0px;"/> 
+	        		<h:outputText value="SQ : #{workingPlatformMB.sqCounter}" style="padding:0px 20px 0px 0px;"/> 
+		        	<p:commandButton value="Refresh" update=":form_pendinglist:pendinglist" actionListener="#{workingPlatformMB.refreshQuoteTable}"></p:commandButton> 	
+		        	| <p:commandButton value="Proceed Quotation" update=":form_pendinglist:quotation_validation_panel" actionListener="#{workingPlatformMB.validateQuotation}" oncomplete="quotation_validation_dialog.show();"></p:commandButton>
+		        	| <p:commandButton value="Internal Transfer" update=":form_pendinglist:update_RFQ_panel" oncomplete="update_RFQ_dialog.show();" actionListener="#{workingPlatformMB.proceedInternalTransferEmail}"></p:commandButton>
+		        	| <p:commandButton value="Vendor System" update=":form_pendinglist:vendor_RFQ_panel" onclick="vendor_RFQ_dialog.show();" actionListener="#{workingPlatformMB.groupVendorRfqForStatusChange}"></p:commandButton>
+		        	| <p:commandButton value="Invalidate Quote" oncomplete="if(!args.emptyQcExternalCommentIsFound) { invalidate_RFQ_email_dialog.show(); }" update=":form_pendinglist:invalidate_RFQ_email_panel,workingPlatformGrowl" actionListener="#{workingPlatformMB.proceedInvalidationEmail}" ></p:commandButton>
+		        	| <p:commandButton value="Export" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">
+			        	<p:fileDownload value="#{workingPlatformMB.workingPlatformTable}" />  	        
+			          </p:commandButton>	
+		        	| <p:fileUpload value="#{workingPlatformMB.workingPlatformExcel}" allowTypes="/(\.|\/)(xls|xlsx)$/" mode="simple"/>
+						<p:commandButton value="Upload" icon="ui-icon-circle-check" update="@form" action="#{workingPlatformMB.uploadWorkingPlatform}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false"/>
+		        	| <p:commandLink actionListener="#{workingPlatformMB.saveQuotation}" update=":form_pendinglist:pendinglist,:form_rfqdetailreference:panelgrid_rfqdetailreference,workingPlatformGrowl">
+						<h:graphicImage url="./../resources/images/icon_save.gif" styleClass="iconLink"/>				        	
+					  </p:commandLink> 
+		        	| <p:commandButton value="Clear Filter" update=":form_pendinglist:pendinglist" onclick="datatable_pendinglist_var.clearFilters();"></p:commandButton>
+		        	<p:commandButton id="dummy" value="" style="width:0px;"></p:commandButton> 	
+		        	
+			 </div>
+			 </f:facet>
+		</p:panel>
+				
+ 		<p:dialog header="Quotation Validation" widgetVar="quotation_validation_dialog" modal="true" height="500">
+			<p:panel header="#{workingPlatformMB.quoteItemCount} Quote item(s) is/are found." id="quotation_validation_panel" style="font-size:12pt">
+			    <p:dataTable	var="warningQuote"
+			    				value="#{workingPlatformMB.quotationWarnings}"
+								selection="#{workingPlatformMB.selectedQuotationWarnings}"
+			    				rowKey="#{warningQuote.quoteItem.quoteNumber}" 		
+			    				rowIndexVar="warningQuote_rowIndex"
+			                 	id="datatable_quotation_warning"
+			                 	style="margin:5px 0px 0px 0px;"
+			                 	scrollHeight="200"
+			                 	emptyMessage="No invalid Quote Item (with Quoted Price) is found. Please click [Submit] to proceed the Quotation."
+			                 	scrollable="true">		
+		           		 
+			        <p:column headerText="No." styleClass="column_icon">
+				        #{warningQuote_rowIndex + 1}
+			        </p:column>	
+			        
+			        <p:column headerText="" styleClass="column_icon">
+						<p:selectBooleanCheckbox value="#{warningQuote.proceed}" rendered="#{warningQuote.standby || warningQuote.warn}"/>
+						<p:selectBooleanCheckbox value="#{warningQuote.proceed}" rendered="#{warningQuote.error}" disabled="true"/>
+					</p:column>				        
+
+			        <p:column headerText="Status" styleClass="column_icon">
+						<h:graphicImage url="./../resources/images/icon_tick.png" styleClass="iconLink" rendered="#{warningQuote.standby}" />  
+						<h:graphicImage url="./../resources/images/icon_cross.png" styleClass="iconLink" rendered="#{warningQuote.error}" />  
+						<h:graphicImage url="./../resources/images/icon_warn.jpg" styleClass="iconLink" rendered="#{warningQuote.warn}" />  
+					</p:column>				        
+								
+			        <p:column headerText="Form#" styleClass="column_formNumber">
+				        #{warningQuote.quoteItem.quote.formNumber}
+			        </p:column>	
+			        
+			        <p:column headerText="Quote#" styleClass="column_rfqCode">
+				        #{warningQuote.quoteItem.alternativeQuoteNumber}
+			        </p:column>			        				        					        					        					        
+			        			
+			        <p:column headerText="Quoted&lt;br/&gt;P/N" styleClass="column_quotedPartNumber">
+						#{warningQuote.quoteItem.quotedMaterial.fullMfrPartNumber}
+			        </p:column>
+	
+			        <p:column headerText="Cost" styleClass="column_cost">
+						<h:outputText value="#{warningQuote.quoteItem.cost}">
+						  	<f:convertNumber minFractionDigits="2" maxFractionDigits="5"/>			        												
+						</h:outputText>
+			        </p:column>
+			        
+			        <p:column headerText="Quoted&lt;br/&gt;Price" styleClass="column_quotedPrice">
+						<h:outputText value="#{warningQuote.quoteItem.quotedPrice}">
+						  	<f:convertNumber minFractionDigits="2" maxFractionDigits="5"/>			        												
+						</h:outputText>
+			        </p:column>
+		        
+			        <p:column headerText="Quoted&lt;br/&gt;Margin" styleClass="column_quotedMargin">
+						<h:outputText value="#{warningQuote.quoteItem.resaleMarginStr}">				
+						</h:outputText>
+			        </p:column>		        
+	
+			        <p:column headerText="Target&lt;br/&gt;Resale" styleClass="column_targetResale">
+						<h:outputText value="#{warningQuote.quoteItem.targetResale}">
+						  	<f:convertNumber minFractionDigits="2" maxFractionDigits="5"/>								
+						</h:outputText>
+			        </p:column>
+		
+			        <p:column headerText="Message" styleClass="column_messageBox">
+						<h:outputText value="#{warningQuote.messages}" converter="webquote.quote.QuotationWarningMessage" escape="false" />
+					</p:column>	
+																
+			    </p:dataTable> 																	 
+			 	<p:commandButton id="quotaton_validation_submitButton" value="Submit" actionListener="#{workingPlatformMB.proceedQuotationEmail}" oncomplete="quotation_validation_email_dialog.show();" update="quotation_validation_email_panel" style="margin:0px 0px 10px 0px"/>
+		
+			 </p:panel>
+		
+		</p:dialog>  	
+        
+ 		<p:dialog header="Quotation Validation" widgetVar="quotation_validation_email_dialog" modal="true" height="500">
+			<p:panel header="#{workingPlatformMB.proceedQuotationCount} email(s) is/are found." id="quotation_validation_email_panel" style="font-size:12pt">
+			    <p:dataTable	var="proceedQuote"
+			    				value="#{workingPlatformMB.proceedQuotations}"
+			    				rowKey="#{proceedQuote.formNumber}" 		
+			    				rowIndexVar="proceedQuote_rowIndex"
+			                 	id="datatable_proceed_quotation"
+			                 	style="margin:5px 0px 0px 0px;"
+			                 	scrollHeight="200"
+			                 	scrollable="true">		
+		           		 
+			        <p:column headerText="No." styleClass="column_icon">
+				        #{proceedQuote_rowIndex + 1}
+			        </p:column>	
+		        							
+			        <p:column headerText="Form#" styleClass="column_formNumber">
+				        #{proceedQuote.formNumber}
+				    </p:column>
+
+			        <p:column headerText="Quote#" styleClass="column_rfqCode">
+				        #{proceedQuote.quoteItems}
+				    </p:column>
+
+			        <p:column headerText="Sales" styleClass="column_description">
+				        #{proceedQuote.employeeName}/#{proceedQuote.employeeId}
+				    </p:column>
+
+			        <p:column headerText="(To) Emails&lt;br/&gt;(use , as separater)" styleClass="column_messageTextBox">
+			        	<p:inputTextarea value="#{proceedQuote.emailAddressTo}" rows="3" cols="50" autoResize="false"/>
+			        </p:column>
+
+			        <p:column headerText="(Cc) Emails&lt;br/&gt;(use , as separater)" styleClass="column_messageTextBox">
+			        	<p:inputTextarea value="#{proceedQuote.emailAddressCc}" rows="3" cols="50" autoResize="false"/>
+			        </p:column>
+			        
+			        <p:column headerText="Message" styleClass="column_messageTextBox">
+			        	<p:inputTextarea value="#{proceedQuote.message}" rows="3" cols="50" autoResize="false"/>
+			        </p:column>
+				    				    
+			    </p:dataTable> 																	 
+			 	<p:commandButton id="quotaton_validation_email_submitButton" value="Send" actionListener="#{workingPlatformMB.proceedQuotation}" update=":form_pendinglist:datatable_pendinglist,:form_rfqdetailreference:panelgrid_rfqdetailreference" oncomplete="quotation_validation_email_dialog.hide(); quotation_validation_dialog.hide();" style="margin:0px 0px 10px 0px"/>
+		
+			 </p:panel>
+		
+		</p:dialog>       
+		<p:dialog header="Search Parts" widgetVar="validation_dialog" modal="true" height="500">
+			<p:panel header="Search Parts (#{workingPlatformMB.searchPartsCount} record(s) is/are found)" id="alternatePartSearch_panel" style="font-size:12pt">
+				<h:panelGrid columns="5" cellpadding="0" style="padding:4px 10px 4px 10px;">
+		
+					<h:outputText value="MFR&#042;" style="padding:0px 3px 0px 3px"/>
+					<h:selectOneMenu value="#{workingPlatformMB.validationSearchMfr}">							
+		                      <f:selectItems value="#{workingPlatformMB.mfrSelectList}" />
+					</h:selectOneMenu>
+		
+					<h:outputText value="Full MFR Part&#042;" style="padding:0px 3px 0px 3px"/>
+					<p:inputText value="#{workingPlatformMB.validationSearchFullMfrPartNumber}" />								 
+			
+				 	<p:commandButton id="validation_expansion_SearchButton" value="Search" update=":form_pendinglist:alternatePartSearch_panel,workingPlatformGrowl" actionListener="#{workingPlatformMB.searchInMaterialPopup}" style="margin:0px 0px 0px 0px"/>		
+
+				</h:panelGrid>
+				
+				<h:panelGrid columns="1" cellpadding="0" style="padding:4px 10px 4px 10px;">
+					<h:outputText value="#{dbResource['wq.label.notSelOrgReqPartNo']}" style="padding:0px 3px 0px 3px"/>
+				</h:panelGrid>
+				
+			    <p:dataTable	var="search_alternate_rfq"
+			    				value="#{workingPlatformMB.searchParts}"
+			    				selection="#{workingPlatformMB.selectedSearchParts}"
+			    				rowKey="#{search_alternate_rfq.id}" 		
+			    				rowIndexVar="search_alternate_rowIndex"
+			                 	id="datatable_search_alternate"
+			    				paginator="true" 
+			    				rows="10"
+			    				rowsPerPageTemplate="5,10,20"
+			                 	paginatorPosition="top"						    										                 	
+			                 	style="margin:5px 0px 0px 0px;">		
+		           		 
+			        <p:column headerText="No." id="search_alternate_rowNumber">
+				        #{search_alternate_rowIndex + 1}
+			        </p:column>
+			        
+			        <p:column selectionMode="multiple" styleClass="column_icon"/>			        
+			        								
+			        <p:column headerText="MFR" id="search_alternate_mfr">
+				        #{search_alternate_rfq.mfr}
+			        </p:column>	
+			        
+			        <p:column headerText="Full MFR Part" id="search_alternate_fullMfrPart">
+				        #{search_alternate_rfq.fullMfrPart}
+			        </p:column>			        				        					        					        					        
+
+			        <p:column headerText="Cost" id="search_alternate_cost">
+			        	<h:outputText value="#{search_alternate_rfq.cost}">
+			        		<f:convertNumber minFractionDigits="2" maxFractionDigits="5"/>	
+			        	</h:outputText>
+			        </p:column>
+			        			
+			        <p:column headerText="MPQ" id="search_alternate_mpq">
+						#{workingPlatformMB.convertNumber(search_alternate_rfq.mpq)}
+			        </p:column>
+			        						        			
+			        <p:column headerText="MOQ" id="search_alternate_moq">
+						#{workingPlatformMB.convertNumber(search_alternate_rfq.moq)}
+			        </p:column>
+			        
+			        <p:column headerText="Lead Time" id="search_alternate_leadTime">
+						#{search_alternate_rfq.leadTime}
+			        </p:column>
+		
+			        <p:column headerText="Description" id="search_alternate_description">
+						#{search_alternate_rfq.description}
+			        </p:column>			        						
+			    </p:dataTable> 																	 
+		
+		      	<p:commandButton id="validation_expansion_SelectButton" value="Select" actionListener="#{workingPlatformMB.addPart}" update=":form_pendinglist:datatable_pendinglist" style="margin:0px 0px 10px 0px" oncomplete="validation_dialog.hide();"/>
+			 </p:panel>
+		</p:dialog>	         
+
+		<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/> 			
+		<p:dialog modal="true" widgetVar="statusDialog" header="#{dbResource['wq.label.status']}" draggable="false" closable="false" resizable="false">
+			<h:outputText value="#{dbResource['wq.message.processingWait']}." styleClass="ajaxStatus"/>
+		</p:dialog>
+				
+		<p:dialog header="PM Comment" widgetVar="pm_comment_dialog" modal="true" height="500">
+				<h:panelGrid id="pm_comment_panel" columns="1" cellpadding="0" style="padding:4px 10px 4px 10px;">
+					<h:outputText id="pm_comment_dialog" value="#{workingPlatformMB.displayPmComment}" style="padding:0px 3px 0px 3px"/>
+				</h:panelGrid>
+		</p:dialog>
+	
+		<p:dialog header="Attachment (Form Level)" widgetVar="attachment_formLevel_dialog" modal="true" height="500">
+				<h:panelGrid columns="1" cellpadding="0" style="padding:4px 10px 4px 10px;">
+					<h:outputText value="" style="padding:0px 3px 0px 3px"/>
+				</h:panelGrid>
+		</p:dialog>	  	
+	
+		<p:dialog header="Attachment" widgetVar="attachment_dialog" modal="true" height="500">
+			<p:panel header="Attachment(s)" id="display_attachment_panel" style="font-size:12pt">						
+			    <p:dataTable	var="attachment"
+			    				value="#{workingPlatformMB.displayAttachmentList}"
+			    				rowKey="#{attachment.id}" 		
+			    				rowIndexVar="attachment_rowIndex"
+			                 	id="datatable_display_attachment"
+			                 	style="margin:5px 0px 0px 0px;">		
+             		 
+			        <p:column headerText="No.">
+				        #{attachment_rowIndex + 1}
+			        </p:column>						      				       									
+			        
+			        <p:column headerText="File Name" styleClass="column_remarks">
+				        #{attachment.fileName}
+			        </p:column>	
+
+			        <p:column styleClass="column_icon">
+			        	<p:commandLink value="download" actionListener="#{workingPlatformMB.updateRfqAttachment(attachment_rowIndex)}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">
+			        		<p:fileDownload value="#{workingPlatformMB.rfqAttachment}" />				        	
+			        	</p:commandLink> 						        				        						        
+			        </p:column>					        
+			    </p:dataTable>
+			</p:panel>
+		</p:dialog>	  	
+				
+		<p:dialog header="Refresh Attachment" widgetVar="refresh_attachment_dialog" modal="true" height="500">
+				<h:panelGrid columns="1" cellpadding="0" style="padding:4px 10px 4px 10px;">
+					<h:outputText value="" style="padding:0px 3px 0px 3px"/>
+				</h:panelGrid>
+		</p:dialog>	 
+		
+		<p:dialog header="Internal Transfer" widgetVar="update_RFQ_dialog" modal="true" height="500">
+			<p:panel header="Quote (#{workingPlatformMB.updateRfqCount} item(s) is/are selected)" id="update_RFQ_panel" style="font-size:12pt">
+			    <p:dataTable	var="updateStatusQuote"
+			    				value="#{workingPlatformMB.updateStatusItems}"
+			    				rowKey="#{updateStatusQuote.mfr}" 		
+			    				rowIndexVar="update_RFQ_rowIndex"
+			                 	id="datatable_update_RFQ"
+			    				paginator="true" 
+			    				rows="10"
+			    				rowsPerPageTemplate="5,10,20"
+			                 	paginatorPosition="top"						    										                 	
+			                 	style="margin:5px 0px 0px 0px;">		
+		           		 
+			        <p:column headerText="No." styleClass="column_icon">
+				        #{update_RFQ_rowIndex + 1}
+			        </p:column>					        
+
+			        <p:column headerText="MFR" styleClass="column_mfr">
+				        #{updateStatusQuote.mfr}
+			        </p:column>	
+											        
+			        <p:column headerText="Quote#" styleClass="column_rfqCode">
+						<h:outputText value="#{updateStatusQuote.quoteItems}" converter="webquote.quote.QuoteNumber" escape="false" />
+			        </p:column>			        				        					        					        					        
+			        			
+			        <p:column headerText="P/N#" styleClass="column_fullMfrPart">
+						<h:outputText value="#{updateStatusQuote.partNumbers}" converter="webquote.quote.PartNumber" escape="false" />
+			        </p:column>
+
+			        <p:column headerText="PM Emails&lt;br/&gt;(use , as separater)" styleClass="column_messageTextBox">
+			        	<p:inputTextarea value="#{updateStatusQuote.emailTos}" rows="3" cols="50" autoResize="false"/>
+			        </p:column>
+			        			        						        			
+			        <p:column headerText="Message" styleClass="column_messageTextBox">
+			        	<p:inputTextarea value="#{updateStatusQuote.message}" rows="3" cols="50" autoResize="false"/>
+			        </p:column>
+			        
+			        <p:column headerText="Attachment" id="basicDetails_attachmentId" styleClass="column_attachmentId">
+			        	<p:commandLink actionListener="#{workingPlatformMB.updateRowIndex(update_RFQ_rowIndex)}" onclick="attachment_upload_dialog.show()">
+			        		<h:graphicImage url="./../resources/images/icon_upload.png" styleClass="iconLink"/>				        	
+			        	</p:commandLink> 						        				        						        
+			        	<p:commandLink actionListener="#{workingPlatformMB.updateAttachments(update_RFQ_rowIndex)}" update=":form_pendinglist:attachment_panel" oncomplete="attachment_list_dialog.show()"  style="padding:0px 3px 0px 3px">
+			        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>				        	
+			        	</p:commandLink> 						        				        						        
+			        </p:column>			        
+			        
+			    </p:dataTable> 																	 
+
+		 		<p:commandButton id="update_RFQ_submitButton" value="Submit" update=":form_pendinglist:pendinglist,:form_pendinglist:update_RFQ_panel" actionListener="#{workingPlatformMB.updateInternalTransfer}" oncomplete="update_RFQ_dialog.hide();" style="padding:0px 0px 0px 0px"/>
+		
+			 </p:panel>
+		
+		</p:dialog>
+		
+		<p:dialog header="Invalidate Quote" widgetVar="invalidate_RFQ_email_dialog" modal="true" height="500">
+			<p:panel header="Quote (#{workingPlatformMB.invalidateRfqCount} item(s) is/are selected)" id="invalidate_RFQ_email_panel" style="font-size:12pt">
+			    <p:dataTable	var="updateStatusQuote"
+			    				value="#{workingPlatformMB.updateStatusItems}"
+			    				rowKey="#{rowIndex}" 		
+			    				rowIndexVar="rowIndex"
+			                 	id="datatable_invalidate_RFQ_email"
+			    				paginator="true" 
+			    				rows="10"
+			    				rowsPerPageTemplate="5,10,20"
+			                 	paginatorPosition="top"						    										                 	
+			                 	style="margin:5px 0px 0px 0px;">	
+		           		 
+			        <p:column headerText="No." styleClass="column_icon">
+				        #{rowIndex + 1}
+			        </p:column>					        
+
+			        <p:column headerText="Form#" styleClass="column_mfr">
+						#{updateStatusQuote.formNumber}
+			        </p:column>	
+											        
+			        <p:column headerText="Quote#" styleClass="column_rfqCode">
+						<h:outputText value="#{updateStatusQuote.quoteItems}" converter="webquote.quote.QuoteNumber" escape="false" />
+			        </p:column>
+			        
+			        <p:column headerText="Sold To Party" styleClass="column_endCustomerName">
+						<h:outputText value="#{updateStatusQuote.quoteItems}" converter="webquote.quote.SoldToCustomerNumber" escape="false" />
+			        </p:column>	
+
+			        <p:column headerText="End Customer" styleClass="column_endCustomerName">
+						<h:outputText value="#{updateStatusQuote.quoteItems}" converter="webquote.quote.EndCustomerNumber" escape="false" />
+			        </p:column>			        			        				        					        					        					        
+
+			        <p:column headerText="Salesman" styleClass="column_endCustomerName">
+						#{updateStatusQuote.salesman}
+			        </p:column>			        			        				        					        					        					        
+
+			        <p:column headerText="Team" styleClass="column_team">
+						#{updateStatusQuote.team}
+			        </p:column>			        			        				        					        					        					        
+
+			        <p:column headerText="MFR" styleClass="column_mfr">
+						<h:outputText value="#{updateStatusQuote.mfrs}" converter="webquote.quote.PartNumber" escape="false" />
+			        </p:column>	
+			        			
+			        <p:column headerText="P/N#" styleClass="column_fullMfrPart">
+						<h:outputText value="#{updateStatusQuote.partNumbers}" converter="webquote.quote.PartNumber" escape="false" />
+			        </p:column>
+
+			        <p:column headerText="Emails TO&lt;br/&gt;(use , as separater)" styleClass="column_messageTextBox">
+			        	<p:inputTextarea value="#{updateStatusQuote.emailTos}" rows="3" cols="50" autoResize="false"/>
+			        </p:column>
+
+			        <p:column headerText="Emails CC&lt;br/&gt;(use , as separater)" styleClass="column_messageTextBox">
+			        	<p:inputTextarea value="#{updateStatusQuote.emailCcs}" rows="3" cols="50" autoResize="false"/>
+			        </p:column>
+
+			        <p:column headerText="Message" styleClass="column_messageTextBox">
+			        	<p:inputTextarea value="#{updateStatusQuote.message}" rows="3" cols="50" autoResize="false"/>
+			        </p:column>			        			        						        						        
+			    </p:dataTable> 																	 
+
+		 		<p:commandButton id="invalidate_RFQ_email_submitButton" value="Send" update=":form_pendinglist:datatable_pendinglist,:form_rfqdetailreference:panelgrid_rfqdetailreference" actionListener="#{workingPlatformMB.proceedInvalidQuotation}" oncomplete="invalidate_RFQ_email_dialog.hide();" style="padding:0px 0px 0px 0px"/>
+		
+			 </p:panel>
+		
+		</p:dialog> 		
+				
+		<p:dialog header="Vendor Quotation" widgetVar="vendor_RFQ_dialog" modal="true" height="500">
+			<p:panel header="Quote (#{workingPlatformMB.updateRfqCount} item(s) is/are selected)" id="vendor_RFQ_panel" style="font-size:12pt">
+			    <p:dataTable	var="vendorStatusQuote"
+			    				value="#{workingPlatformMB.selectedWorkingPlatformItems}"
+			    				rowKey="#{vendorStatusQuote.quoteNumber}" 		
+			    				rowIndexVar="vendor_RFQ_rowIndex"
+			                 	id="datatable_vendor_RFQ"
+			    				paginator="true" 
+			    				rows="10"
+			    				rowsPerPageTemplate="5,10,20"
+			                 	paginatorPosition="top"						    										                 	
+			                 	style="margin:5px 0px 0px 0px;">		
+		           		 
+			        <p:column headerText="No.">
+				        #{vendor_RFQ_rowIndex + 1}
+			        </p:column>					        
+								
+			        <p:column headerText="Form#">
+				        #{vendorStatusQuote.quote.formNumber}
+			        </p:column>	
+			        
+			        <p:column headerText="Quote#">
+				        #{vendorStatusQuote.quoteNumber}
+			        </p:column>			        				        					        					        					        
+			        			
+			        <p:column headerText="Quoted P/N">
+						#{vendorStatusQuote.quotedMaterial.fullMfrPartNumber}
+			        </p:column>
+			        						        			
+			        <p:column headerText="Quoted Margin">
+						<h:outputText value="#{vendorStatusQuote.resaleMargin}">
+							<f:convertNumber minFractionDigits="2" maxFractionDigits="2"/>	
+						</h:outputText>
+			        </p:column>
+			        
+			        <p:column headerText="Quoted Price">
+						<h:outputText value="#{vendorStatusQuote.quotedPrice}">
+							<f:convertNumber minFractionDigits="2" maxFractionDigits="5"/>	
+						</h:outputText>
+			        </p:column>
+		
+			        <p:column headerText="Description">
+						#{vendorStatusQuote.description}
+			        </p:column>			        						
+			    </p:dataTable> 																	 
+		
+				 <p:commandButton id="vendor_RFQ_submitButton" value="Submit" update=":form_pendinglist:datatable_pendinglist,:form_pendinglist:vendor_RFQ_panel" actionListener="#{workingPlatformMB.updateVendorRfqStatus}" oncomplete="vendor_RFQ_dialog.hide();" style="margin:0px 0px 0px 0px"/>
+		
+			 </p:panel>
+		
+		</p:dialog>
+		
+		<p:dialog id="attachment_list_dialog" header="Attachment List" widgetVar="attachment_list_dialog" modal="true" height="500">
+	
+			<p:panel header="#{workingPlatformMB.attachmentCount} Attachment(s) is/are found." id="attachment_panel" style="font-size:12pt">						
+			    <p:dataTable	var="attachment"
+			    				value="#{workingPlatformMB.attachments}"
+			    				rowKey="#{attachment.fileName}" 		
+			    				rowIndexVar="attachment_rowIndex"
+			                 	id="datatable_attachment"
+			                 	style="margin:5px 0px 0px 0px;">		
+             		 
+			        <p:column headerText="No.">
+				        #{attachment_rowIndex + 1}
+			        </p:column>						      				       									
+			        
+			        <p:column headerText="File Name" styleClass="column_remarks">
+				        #{attachment.fileName}
+			        </p:column>	
+
+			        <p:column styleClass="column_icon">
+			        	<p:commandLink update=":form_pendinglist:attachment_panel" actionListener="#{workingPlatformMB.removeAttachment(attachment_rowIndex)}">
+			        		<h:graphicImage url="./../resources/images/iconCross.gif" styleClass="iconLink"/>				        	
+			        	</p:commandLink> 						        				        						        
+			        </p:column>
+			        
+			        <p:column styleClass="column_icon">
+			        	<p:commandLink actionListener="#{workingPlatformMB.updateDownloadAttachment(attachment_rowIndex)}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">
+			        		<h:graphicImage url="./../resources/images/icon_download.png" styleClass="iconLink"/>		
+			        		<p:fileDownload value="#{workingPlatformMB.downloadAttachment}" />		        	
+			        	</p:commandLink> 						        				        						        
+			        </p:column>					        	
+			        				        
+			    </p:dataTable>
+			</p:panel>
+		</p:dialog>				
+
+		<p:dialog id="attachment_list_no_delete_dialog" header="Attachment List" widgetVar="attachment_list_no_delete_dialog" modal="true" height="500">
+	
+			<p:panel header="#{workingPlatformMB.attachmentCount} Attachment(s) is/are found." id="attachment_no_delete_panel" style="font-size:12pt">						
+			    <p:dataTable	var="attachment"
+			    				value="#{workingPlatformMB.attachments}"
+			    				rowKey="#{attachment.fileName}" 		
+			    				rowIndexVar="attachment_rowIndex"
+			                 	id="datatable_no_delete_attachment"
+			                 	style="margin:5px 0px 0px 0px;">		
+             		 
+			        <p:column headerText="No.">
+				        #{attachment_rowIndex + 1}
+			        </p:column>						      				       									
+			        
+			        <p:column headerText="File Name" styleClass="column_remarks">
+				        #{attachment.fileName}
+			        </p:column>	
+			        
+			        <p:column styleClass="column_icon">
+			        	<p:commandLink actionListener="#{workingPlatformMB.updateDownloadAttachment(attachment_rowIndex)}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">
+			        		<h:graphicImage url="./../resources/images/icon_download.png" styleClass="iconLink"/>		
+			        		<p:fileDownload value="#{workingPlatformMB.downloadAttachment}" />		        	
+			        	</p:commandLink> 						        				        						        
+			        </p:column>					        	
+			        				        
+			    </p:dataTable>
+			</p:panel>
+		</p:dialog>	
+				
+		<p:dialog id="attachment_upload_dialog" header="Attachment Upload" widgetVar="attachment_upload_dialog" modal="true" height="500">
+		
+		    <p:fileUpload fileUploadListener="#{workingPlatformMB.uploadAttachment}"
+		            mode="advanced" 
+		            update="messages"
+			        allowTypes="/(\.|\/)(xls|xlsx|zip|doc|docx|msg|pdf|txt|jpg|png|ppt|pptx|7z|XLS|XLSX|ZIP|DOC|DOCX|MSG|PDF|TXT|JPG|PNG|PPT|PPTX|7Z)$/"		            
+		            sizeLimit="100000" 
+		            style="width:500px"
+		            invalidFileMessage="#{dbResource['wq.error.invalidFileType']}" invalidSizeMessage="#{dbResource['wq.message.invalidFileSize']}" />
+		
+		    <p:growl id="messages" showDetail="true"/>
+
+		</p:dialog>		
+		
+		<p:dialog header="Cost Indicators" widgetVar="costIndicator_dialog" modal="true" height="500">
+			<p:panel header="Cost Indicators (#{workingPlatformMB.searchMaterialDetailsCount} record(s) is/are found)" id="costIndicator_panel" style="font-size:12pt">				
+			    <p:dataTable	var="searchMaterialDetail"
+			    				value="#{workingPlatformMB.searchMaterialDetails}"
+			    				rowKey="#{costIndicator.name}" 		
+			    				rowIndexVar="rowIndex"
+			                 	id="datatable_costIndicator"
+			    				paginator="true" 
+			    				rows="10"
+			    				rowsPerPageTemplate="5,10,20"
+			                 	paginatorPosition="top"						    										                 	
+			                 	style="margin:5px 0px 0px 0px;">		
+		           		 
+			        <p:column headerText="No.">
+				        #{rowIndex + 1}
+			        </p:column>
+			        
+			        <p:column headerText="Cost Indicator">
+						#{searchMaterialDetail.costIndicator.name}
+			        </p:column>
+
+			        <p:column headerText="Cost">
+						#{searchMaterialDetail.cost}
+			        </p:column>
+
+			        <p:column headerText="Price Validity">
+						#{searchMaterialDetail.priceValidity}
+			        </p:column>
+			        		        										        			
+			        <p:column headerText="MPQ">
+						#{searchMaterialDetail.mpq}
+			        </p:column>
+			        						        			
+			        <p:column headerText="MOQ">
+						#{searchMaterialDetail.moq}
+			        </p:column>
+
+			        <p:column headerText="MOV">
+						#{searchMaterialDetail.mov}
+			        </p:column>
+			        
+			        <p:column headerText="Lead Time">
+						#{searchMaterialDetail.leadTime}
+			        </p:column>
+			        	        						
+			    </p:dataTable> 																	 
+		
+			 </p:panel>
+		</p:dialog>	  
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		<p:dialog header="QC External Comment" widgetVar="qc_external_comment_dialog" modal="true" height="500">
+			<h:panelGrid id="qc_external_comment_panel" columns="2" cellpadding="0" style="padding:4px 10px 4px 10px;">
+				<p:inputTextarea value="#{workingPlatformMB.displayExternalComment}" rows="3" cols="100"/>
+	        	<p:commandLink oncomplete="qc_external_comment_select_dialog.show()">
+	        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>				        	
+	        	</p:commandLink> 				        				
+				<p:commandButton value="Submit" actionListener="#{workingPlatformMB.submitQcExternalComment}" update=":form_pendinglist:datatable_pendinglist,:form_rfqdetailreference:panelgrid_rfqdetailreference" oncomplete="qc_external_comment_dialog.hide();" />
+			</h:panelGrid>
+		</p:dialog>	 
+				
+		<p:dialog header="QC External Comments" widgetVar="qc_external_comment_select_dialog" modal="true" height="500">
+			<p:panel id="qc_external_comment_select_panel" style="font-size:12pt">				
+			    <p:dataTable	var="qcExternalComment"
+			    				value="#{workingPlatformMB.avnetQuoteCentreCommentList}"
+			    				selection="#{workingPlatformMB.selectedQcExternalComment}"			    	  				
+			    				rowKey="#{qcExternalComment.id}" 		
+			    				rowIndexVar="rowIndex"
+			                 	id="datatable_qcExternalComment"
+			                 	style="margin:5px 0px 0px 0px;">		
+		           		 
+			        <p:column headerText="No.">
+				        #{rowIndex + 1}
+			        </p:column>
+			        
+			        <p:column selectionMode="single" styleClass="column_icon"/>					        
+
+			        <p:column headerText="QC External Comment">
+						#{qcExternalComment.name}
+			        </p:column>
+			        	        						
+			    </p:dataTable> 																	 
+				 
+				 <p:commandButton value="Select" update=":form_pendinglist:qc_external_comment_panel" actionListener="#{workingPlatformMB.updateSelectedQcExternalComment}" oncomplete="qc_external_comment_select_dialog.hide();" style="margin:0px 0px 0px 0px"/>
+				
+			 </p:panel>
+		</p:dialog>
+
+		<p:dialog header="QC External Comments" widgetVar="detailpanel_qc_external_comment_select_dialog" modal="true" height="500">
+			<p:panel id="detailpanel_qc_external_comment_select_panel" style="font-size:12pt">				
+			    <p:dataTable	var="qcExternalComment"
+			    				value="#{workingPlatformMB.avnetQuoteCentreCommentList}"
+			    				selection="#{workingPlatformMB.selectedDetailQcExternalComment}"			    					    				
+			    				rowKey="#{qcExternalComment.id}" 		
+			    				rowIndexVar="rowIndex"
+			                 	id="detailpanel_datatable_qcExternalComment"
+			                 	style="margin:5px 0px 0px 0px;">		
+		           		 
+			        <p:column headerText="No.">
+				        #{rowIndex + 1}
+			        </p:column>
+			        
+			        <p:column selectionMode="single" styleClass="column_icon"/>					        
+
+			        <p:column headerText="QC External Comment">
+						#{qcExternalComment.name}
+			        </p:column>
+			        	        						
+			    </p:dataTable> 																	 
+				 
+				 <p:commandButton value="Select" update=":form_rfqdetailreference:detail_qcExternalComment" actionListener="#{workingPlatformMB.updateSelectedDetailQcExternalComment}" oncomplete="detailpanel_qc_external_comment_select_dialog.hide();" style="margin:0px 0px 0px 0px"/>
+				
+			 </p:panel>
+		</p:dialog>	
+		
+		<p:dialog header="QC Internal Comment" widgetVar="qc_internal_comment_dialog" modal="true" height="500">
+			<h:panelGrid id="qc_internal_comment_panel" columns="2" cellpadding="0" style="padding:4px 10px 4px 10px;">
+				<p:inputTextarea value="#{workingPlatformMB.displayInternalComment}" rows="3" cols="100"/>
+	        	<p:commandLink oncomplete="qc_internal_comment_select_dialog.show()">
+	        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>				        	
+	        	</p:commandLink> 				        				
+				<p:commandButton value="Submit" actionListener="#{workingPlatformMB.submitQcInternalComment}" update=":form_pendinglist:datatable_pendinglist,:form_rfqdetailreference:panelgrid_rfqdetailreference" oncomplete="qc_internal_comment_dialog.hide();" />
+			</h:panelGrid>
+		</p:dialog>	 
+				
+		<p:dialog header="QC Internal Comments" widgetVar="qc_internal_comment_select_dialog" modal="true" height="500">
+			<p:panel id="qc_internal_comment_select_panel" style="font-size:12pt">				
+			    <p:dataTable	var="qcInternalComment"
+			    				value="#{workingPlatformMB.avnetQuoteCentreCommentList}"
+			    				selection="#{workingPlatformMB.selectedQcInternalComment}"			    				    				
+			    				rowKey="#{qcInternalComment.id}" 		
+			    				rowIndexVar="rowIndex"
+			                 	id="datatable_qcInternalComment"
+			                 	style="margin:5px 0px 0px 0px;">		
+		           		 
+			        <p:column headerText="No.">
+				        #{rowIndex + 1}
+			        </p:column>
+			        
+			        <p:column selectionMode="single" styleClass="column_icon"/>					        
+
+			        <p:column headerText="QC Internal Comment">
+						#{qcInternalComment.name}
+			        </p:column>
+			        	        						
+			    </p:dataTable> 																	 
+				 
+				 <p:commandButton value="Select" update=":form_pendinglist:qc_internal_comment_panel" actionListener="#{workingPlatformMB.updateSelectedQcInternalComment}" oncomplete="qc_internal_comment_select_dialog.hide();" style="margin:0px 0px 0px 0px"/>
+				
+			 </p:panel>
+		</p:dialog>
+		
+		<p:dialog header="QC Internal Comments" widgetVar="detailpanel_qc_internal_comment_select_dialog" modal="true" height="500">
+			<p:panel id="detailpanel_qc_internal_comment_select_panel" style="font-size:12pt">				
+			    <p:dataTable	var="qcInternalComment"
+			    				value="#{workingPlatformMB.avnetQuoteCentreCommentList}"
+			    				selection="#{workingPlatformMB.selectedDetailQcInternalComment}"			    					    				
+			    				rowKey="#{qcInternalComment.id}" 		
+			    				rowIndexVar="rowIndex"
+			                 	id="detailpanel_datatable_qcInternalComment"
+			                 	style="margin:5px 0px 0px 0px;">		
+		           		 
+			        <p:column headerText="No.">
+				        #{rowIndex + 1}
+			        </p:column>
+			        
+			        <p:column selectionMode="single" styleClass="column_icon"/>					        
+
+			        <p:column headerText="QC Internal Comment">
+						#{qcInternalComment.name}
+			        </p:column>
+			        	        						
+			    </p:dataTable> 																	 
+				 
+				 <p:commandButton value="Select" update=":form_rfqdetailreference:detail_qcInternalComment" actionListener="#{workingPlatformMB.updateSelectedDetailQcInternalComment}" oncomplete="detailpanel_qc_internal_comment_select_dialog.hide();" style="margin:0px 0px 0px 0px"/>
+				
+			 </p:panel>
+		</p:dialog>		
+
+		<p:dialog header="Terms And Condtion" widgetVar="terms_and_conditions_dialog" modal="true" height="500">
+			<h:panelGrid id="terms_and_conditions_panel" columns="2" cellpadding="0" style="padding:4px 10px 4px 10px;">
+				<p:inputTextarea value="#{workingPlatformMB.displayTermsAndConditions}" rows="3" cols="100"/>
+	        	<p:commandLink oncomplete="terms_and_conditions_select_dialog.show()">
+	        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>				        	
+	        	</p:commandLink> 				        				
+				<p:commandButton value="Submit" actionListener="#{workingPlatformMB.submitTermsAndConditions}" update=":form_pendinglist:datatable_pendinglist,:form_rfqdetailreference:panelgrid_rfqdetailreference" oncomplete="terms_and_conditions_dialog.hide();" />
+			</h:panelGrid>
+		</p:dialog>	
+				
+		<p:dialog header="Terms And Conditions" widgetVar="terms_and_conditions_select_dialog" modal="true" height="500">
+			<p:panel id="terms_and_conditions_select_panel" style="font-size:12pt">			
+			    <p:dataTable	var="termsAndConditions"
+			    				value="#{workingPlatformMB.termsAndConditionsList}"
+			    				selection="#{workingPlatformMB.selectedTermsAndConditions}"			    					    				
+			    				rowKey="#{termsAndConditions.id}" 		
+			    				rowIndexVar="rowIndex"
+			                 	id="datatable_termsAndConditions"
+			                 	style="margin:5px 0px 0px 0px;">		
+		           		 
+			        <p:column headerText="No.">
+				        #{rowIndex + 1}
+			        </p:column>
+			        
+			        <p:column selectionMode="single" styleClass="column_icon"/>					        
+
+			        <p:column headerText="Terms And Conditions">
+						#{termsAndConditions.name}
+			        </p:column>
+			        	        						
+			    </p:dataTable> 																	 
+
+				 <p:commandButton value="Select" update=":form_pendinglist:terms_and_conditions_panel" actionListener="#{workingPlatformMB.updateSelectedTermsAndConditions}" oncomplete="terms_and_conditions_select_dialog.hide();" style="margin:0px 0px 0px 0px"/>
+		
+			 </p:panel>
+		</p:dialog>
+		
+		<p:dialog header="Terms And Conditions" widgetVar="detailpanel_terms_and_conditions_select_dialog" modal="true" height="500">
+			<p:panel id="detailpanel_terms_and_conditions_select_panel" style="font-size:12pt">				
+			    <p:dataTable	var="detailpanel_termsAndConditions"
+			    				value="#{workingPlatformMB.termsAndConditionsList}"
+			    				selection="#{workingPlatformMB.selectedDetailTermsAndConditions}"	    				
+			    				rowKey="#{detailpanel_termsAndConditions.id}" 		
+			    				rowIndexVar="rowIndex"
+			                 	id="detailpanel_datatable_termsAndConditions"
+			                 	style="margin:5px 0px 0px 0px;">		
+		           		 
+			        <p:column headerText="No.">
+				        #{rowIndex + 1}
+			        </p:column>
+			        
+			        <p:column selectionMode="single" styleClass="column_icon"/>					        
+
+			        <p:column headerText="Terms And Conditions">
+						#{detailpanel_termsAndConditions.name}
+			        </p:column>
+			        	        						
+			    </p:dataTable> 																	 
+
+				 <p:commandButton value="Select" update=":form_rfqdetailreference:detail_quotationTc" actionListener="#{workingPlatformMB.updateSelectedDetailTermsAndConditions}" oncomplete="detailpanel_terms_and_conditions_select_dialog.hide();" style="margin:0px 0px 0px 0px"/>
+		
+			 </p:panel>
+		</p:dialog>				
+	</h:form>										
+
+	<p:dialog header="RFQ Details" widgetVar="rfq_detail_data_dialog" modal="true" height="500">
+	
+	</p:dialog>
+</h:body>
+</f:view>
+</html>

@@ -1,0 +1,13 @@
+package mymoney;
+
+public class CustomerMoneyConvertStrategy extends MoneyConvertStrategy {
+	private CustomerMoneyConvertStrategy() {
+		
+	}
+	private static MoneyConvertStrategy s = new CustomerMoneyConvertStrategy();
+	
+	static MoneyConvertStrategy getInstance() {
+		return s;
+	}
+
+}

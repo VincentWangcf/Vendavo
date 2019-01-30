@@ -1,0 +1,591 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import javax.persistence.*;
+
+import com.avnet.emasia.webquote.entity.util.StringUtils;
+
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Logger;
+
+
+/**
+ * The persistent class for the APP_USER database table.
+ * 
+ */
+@Entity
+@Table(name="APP_USER")
+public class User implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+	static Logger logger = Logger.getLogger("User");
+	@Id
+	@SequenceGenerator(name="APP_USER_ID_GENERATOR", sequenceName="WQ_SEQ",allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="APP_USER_ID_GENERATOR")
+	@Column(unique=true, nullable=false, precision=19)
+	private long id;
+
+	@Column(nullable=false, precision=1)
+	private boolean active;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="CREATED_ON", nullable=false)
+	private Date createdOn;
+
+	@Column(name="EMAIL_ADDRESS", length=255)
+	private String emailAddress;
+
+	@Column(name="EMPLOYEE_ID", nullable=false, length=10)
+	private String employeeId;
+
+	@Column(name="\"NAME\"", nullable=false, length=20)
+	private String name;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="LAST_UPDATED_ON")
+	private Date lastUpdatedOn;
+
+	@Column(name="PHONE_NUMBER", length=30)
+	private String phoneNumber;
+
+	@Column(name="DATA_SUPERVISOR")
+	private Boolean dataSupervisor;
+
+	@ManyToOne
+	@JoinColumn(name="TEAM_ID", nullable=false)
+	private Team team;
+
+	@Version
+	@Column(name="\"VERSION\"", nullable=false, precision=10)
+	private int version;
+
+	@Column(name = "CREATED_BY", nullable = false, length = 10)
+	private String createdBy;
+
+	@Column(name = "LAST_UDPATED_BY", length = 10)
+	private String lastUpdatedBy;
+
+	//bi-directional many-to-one association to User
+	@ManyToOne
+	@JoinColumn(name="REPORT_TO")
+	private User reportTo;
+
+	//bi-directional many-to-one association to User
+	@OneToMany(mappedBy="reportTo")
+	private List<User> subordinates;
+
+	@Transient
+	private List<User> allSubordinates;
+
+	@Transient
+	private List<User> allSalesForCs;
+	
+	@Column(name="USER_LOCALE", nullable=false, length=10)
+	private String userLocale;
+	
+	@Column(name="SALES_COST_ACCESS_FLAG")
+	private Boolean salsCostAccessFlag;
+
+	//bi-directional many-to-many association to User
+	@ManyToMany
+	@JoinTable(
+			name="SALE_CS_MAPPING"
+			, joinColumns={
+					@JoinColumn(name="CS_USER_ID", nullable=false)
+			}
+			, inverseJoinColumns={
+					@JoinColumn(name="SALES_USER_ID", nullable=false)
+			}
+			)
+	private List<User> salesForCs;
+
+	//bi-directional many-to-many association to User
+	@ManyToMany(mappedBy="salesForCs")
+	private List<User> csForSales;
+
+
+	//uni-directional many-to-many association to BizUnit
+	@ManyToMany
+	@JoinTable(
+			name="USER_BIZUNIT_MAPPING"
+			, joinColumns={
+					@JoinColumn(name="USER_ID", nullable=false)
+			}
+			, inverseJoinColumns={
+					@JoinColumn(name="BIZ_UNIT_ID", nullable=false)
+			}
+			)
+	private List<BizUnit> bizUnits;
+
+	@ManyToOne
+	@JoinColumn(name="DEFAULT_BIZ_UNIT_ID")
+	private BizUnit defaultBizUnit;
+
+	@Transient
+	private BizUnit currenBizUnit;
+
+	//bi-directional many-to-many association to Group
+	@ManyToMany
+	@JoinTable(
+			name="USER_GROUP_MAPPING"
+			, joinColumns={
+					@JoinColumn(name="USER_ID", nullable=false)
+			}
+			, inverseJoinColumns={
+					@JoinColumn(name="GROUP_ID", nullable=false)
+			}
+			)
+	private List<Group> groups;
+
+
+
+	//uni-directional many-to-many association to Role
+	@ManyToMany
+	@JoinTable(
+			name="USER_ROLE_MAPPING"
+			, joinColumns={
+					@JoinColumn(name="USER_ID")
+			}
+			, inverseJoinColumns={
+					@JoinColumn(name="ROLE_ID", nullable=false)
+			}
+			)
+	private List<Role> roles;
+
+
+	//uni-directional many-to-many association to Role
+	@ManyToMany
+	@JoinTable(
+			name="USER_SALESORG_MAPPING"
+			, joinColumns={
+					@JoinColumn(name="USER_ID")
+			}
+			, inverseJoinColumns={
+					@JoinColumn(name="SALESORG_ID", nullable=false)
+			}
+			)
+	private List<SalesOrg> salesOrgs;	
+
+	//uni-directional many-to-many association to Customer
+	@ManyToMany
+	@JoinTable(
+			name="USER_CUSTOMER_MAPPING"
+			, joinColumns={
+					@JoinColumn(name="USER_ID", nullable=false)
+			}
+			, inverseJoinColumns={
+					@JoinColumn(name="CUSTOMER_NUMBER", nullable=false)
+			}
+			)
+	private List<Customer> customers;	
+
+	//uni-directional many-to-many association to BizUnit
+	@ManyToMany(cascade=CascadeType.ALL)
+	@JoinTable(
+			name="USER_DATAACCESS_MAPPING"
+			, joinColumns={
+					@JoinColumn(name="USER_ID", nullable=false)
+			}
+			, inverseJoinColumns={
+					@JoinColumn(name="DATA_ACCESS_ID", nullable=false)
+			}
+			)
+	private List<DataAccess> dataAccesses;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="LAST_LOGIN_DATE", nullable=false)
+	private Date lastLoginDate;
+
+	@Transient
+	private String roleString;
+
+	@Transient
+	private String roleName;
+	
+	@Column(name = "PASSWORD", length = 32)
+	private String password;
+	
+	public User() {
+	}
+
+	public long getId() {
+		return this.id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public boolean getActive() {
+		return this.active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
+	}
+
+	public Date getCreatedOn() {
+		return this.createdOn;
+	}
+
+	public void setCreatedOn(Date createdOn) {
+		this.createdOn = createdOn;
+	}
+
+	public String getEmailAddress() {
+		return this.emailAddress;
+	}
+
+	public void setEmailAddress(String emailAddress) {
+		this.emailAddress = emailAddress;
+	}
+
+	public String getEmployeeId() {
+		return this.employeeId;
+	}
+
+	public void setEmployeeId(String employeeId) {
+		this.employeeId = employeeId;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+
+
+	public Date getLastUpdatedOn() {
+		return this.lastUpdatedOn;
+	}
+
+	public void setLastUpdatedOn(Date lastUpdatedOn) {
+		this.lastUpdatedOn = lastUpdatedOn;
+	}
+
+	public String getPhoneNumber() {
+		return this.phoneNumber;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
+
+	public int getVersion() {
+		return this.version;
+	}
+
+	public void setVersion(int version) {
+		this.version = version;
+	}
+
+	public User getReportTo() {
+		return this.reportTo;
+	}
+
+	public void setReportTo(User reportTo) {
+		this.reportTo = reportTo;
+	}
+
+	public List<User> getSubordinates() {
+		return this.subordinates;
+	}
+
+	public void setSubordinates(List<User> subordinates) {
+		this.subordinates = subordinates;
+	}
+
+	public List<BizUnit> getBizUnits() {
+		return this.bizUnits;
+	}
+
+	public void setBizUnits(List<BizUnit> bizUnits) {
+		this.bizUnits = bizUnits;
+	}
+
+	public List<Group> getGroups() {
+		return this.groups;
+	}
+
+	public void setGroups(List<Group> groups) {
+		this.groups = groups;
+	}
+
+	public List<Role> getRoles() {
+		return this.roles;
+	}
+
+	public void setRoles(List<Role> roles) {
+		this.roles = roles;
+	}
+
+	public List<User> getSalesForCs() {
+		return salesForCs;
+	}
+
+	public void setSalesForCs(List<User> salesForCs) {
+		this.salesForCs = salesForCs;
+	}
+
+	public List<User> getCsForSales() {
+		return csForSales;
+	}
+
+	public void setCsForSales(List<User> csForSales) {
+		this.csForSales = csForSales;
+	}
+
+	public List<User> getAllSubordinates() {
+		return allSubordinates;
+	}
+
+	public void setAllSubordinates(List<User> allSubordinates) {
+		this.allSubordinates = allSubordinates;
+	}
+
+	public List<User> getAllSalesForCs() {
+		return allSalesForCs;
+	}
+
+	public void setAllSalesForCs(List<User> allSalesForCs) {
+		this.allSalesForCs = allSalesForCs;
+	}
+
+	public BizUnit getDefaultBizUnit() {
+		return defaultBizUnit;
+	}
+
+	public void setDefaultBizUnit(BizUnit defaultBizUnit) {
+		this.defaultBizUnit = defaultBizUnit;
+	}
+
+	public BizUnit getCurrenBizUnit() {
+		return currenBizUnit;
+	}
+
+	public void setCurrenBizUnit(BizUnit currenBizUnit) {
+		this.currenBizUnit = currenBizUnit;
+	}
+
+	public Boolean getDataSupervisor() {
+		return dataSupervisor;
+	}
+
+	public void setDataSupervisor(Boolean dataSupervisor) {
+		this.dataSupervisor = dataSupervisor;
+	}
+
+	public List<Customer> getCustomers() {
+		return customers;
+	}
+
+	public void setCustomers(List<Customer> customers) {
+		this.customers = customers;
+	}
+
+	public List<DataAccess> getDataAccesses() {
+		return dataAccesses;
+	}
+
+	public void setDataAccesses(List<DataAccess> dataAccesses) {
+		this.dataAccesses = dataAccesses;
+	}
+
+	public Team getTeam() {
+		return team;
+	}
+
+	public void setTeam(Team team) {
+		this.team = team;
+	}
+
+	public List<SalesOrg> getSalesOrgs() {
+		return salesOrgs;
+	}
+
+	public void setSalesOrgs(List<SalesOrg> salesOrgs) {
+		this.salesOrgs = salesOrgs;
+	}
+
+	public Object deepClone() throws IOException,ClassNotFoundException
+	{    
+
+		ByteArrayOutputStream bo=new ByteArrayOutputStream();    
+		ObjectOutputStream oo=new ObjectOutputStream(bo);    
+		oo.writeObject(this);    
+
+		ByteArrayInputStream bi=new ByteArrayInputStream(bo.toByteArray());    
+		ObjectInputStream oi=new ObjectInputStream(bi);    
+		return(oi.readObject());    
+
+	}
+
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("User [name=").append(name);
+		sb.append(" employeeId=").append(employeeId);
+		if(team!=null)
+			sb.append(" team=").append(team.getName());
+		sb.append("]");
+		return  sb.toString();
+	}   
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)	//This will compare the hashcode of the 2 objects, is this the intent? (Chris Lam, 2013/08/01)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		User other = (User) obj;
+
+		if (StringUtils.isEmpty(name))
+		{
+			if (!StringUtils.isEmpty(other.name))
+			{
+				return false;
+			}
+
+		} 
+		else if (!name.equals(other.name))
+		{
+			return false;
+		}
+
+		if (StringUtils.isEmpty(employeeId))
+		{
+			if (!StringUtils.isEmpty(other.employeeId))
+			{
+				return false;
+			}
+
+		} 
+		else if (!employeeId.equals(other.employeeId))
+		{
+			return false;
+		}
+		return true;
+	}
+	
+	@Override
+	public int hashCode()
+	{
+		int prime = 37;
+		int result = 15;
+		result = prime * result +  (int) (id ^ id >>> 32);
+		result = prime * result + (active ? 0 : 1);
+		result = prime * result + (name == null ? 0 : 1);
+		result = prime * result + (employeeId == null ? 0 : employeeId.hashCode());
+		return result;
+	}
+
+	public Date getLastLoginDate() {
+		return lastLoginDate;
+	}
+
+	public void setLastLoginDate(Date lastLoginDate) {
+		this.lastLoginDate = lastLoginDate;
+	}
+
+	public String getRoleString() {
+		roleString="";
+
+		if(roles.size()>0)
+		{
+			if(roles.size()>1)
+			{
+				for(int i = 0 ; i < roles.size() ; i++)
+				{
+					roleString+=roles.get(i).getName();
+					if(i<roles.size()-1)
+					{
+						roleString+=",";
+					}
+				}
+			}
+			else
+			{
+				roleString = roles.get(0).getName();
+			}
+		}
+		return roleString;
+	}
+	
+	public String getRoleName() {
+		return getRoleString().replace("ROLE_", "").replace("_", " ");
+	}
+
+	public String getCreatedBy()
+	{
+		return createdBy;
+	}
+
+	public void setCreatedBy(String createdBy)
+	{
+		this.createdBy = createdBy;
+	}
+
+	public String getLastUpdatedBy()
+	{
+		return lastUpdatedBy;
+	}
+
+	public void setLastUpdatedBy(String lastUpdatedBy)
+	{
+		this.lastUpdatedBy = lastUpdatedBy;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getUserLocale() {
+		return userLocale;
+	}
+
+	public void setUserLocale(String userLocale) {
+		this.userLocale = userLocale;
+	}
+
+	public Boolean isSalsCostAccessFlag() {
+		return salsCostAccessFlag;
+	}
+
+	public void setSalsCostAccessFlag(Boolean salsCostAccessFlag) {
+		this.salsCostAccessFlag = salsCostAccessFlag;
+	}	
+	
+	// user is or not belong to region 
+	public Boolean isAccessRegion(String bizUnit){
+		if(bizUnit==null||bizUnit.trim().length()<1){
+			return false;
+		}
+		if(bizUnit.equalsIgnoreCase(this.getDefaultBizUnit().getName())){
+			return true;
+		}
+		for(BizUnit bz : this.getBizUnits())
+		{
+			if(bizUnit.equalsIgnoreCase(bz.getName())){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
+}

@@ -1,0 +1,64 @@
+package com.avnet.emasia.webquote.component.show.config;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+import com.avnet.emasia.webquote.entity.User;
+
+public class ComponetConfigHelper {
+	private static volatile Map<String, List<ComponentShowConfig>> CONFIGMAP = getMap();
+	private static final String SPECIALSTR = "&$";
+
+	public static synchronized void refresh() {
+		CONFIGMAP = getMap();
+	}
+
+	private static Map<String, List<ComponentShowConfig>> getMap() {
+		List<ComponentShowConfig> list = getConfigsOderByPriority();
+		return list.stream().collect(Collectors.groupingBy(c -> c.getPageName().toUpperCase() + SPECIALSTR + c.getComponetId().toUpperCase()));
+	}
+
+	private static synchronized List<ComponentShowConfig> getConfigsOderByPriority() {
+		// TODO
+		List<ComponentShowConfig> list = new ArrayList<ComponentShowConfig>();
+		list.sort(Comparator.comparing(c -> c.getPriority()));// can do it in
+																// cache
+		return list;
+	}
+
+	public static boolean show(String pageName, String componentID, User user) {
+		if(pageName == null || componentID==null || user==null) return true;
+		List<ComponentShowConfig> list = getFromMap(pageName, componentID);
+		if(list.isEmpty()) return true;
+		Optional<ComponentShowConfig> result = list.stream().filter(c -> c.isRoleOrRegionMatch(user))
+				.findFirst();
+		return result.isPresent() ? result.get().isShow() : true;
+	}
+
+	public static boolean show(String pageName, String componentID, String region, String role) {
+		if(pageName == null || componentID==null) return true;
+		List<ComponentShowConfig> list = getFromMap(pageName, componentID);
+		if(list.isEmpty()) return true;
+		Optional<ComponentShowConfig> result = list.stream().filter(c -> c.isRoleOrRegionMatch(region, role))
+				.findFirst();
+		return result.isPresent() ? result.get().isShow() : true;
+	}
+	
+	private static List<ComponentShowConfig> getFromMap(String pageName, String componentID) {
+		//if(pageName == null || componentID==null) return null;
+		 List<ComponentShowConfig> list = CONFIGMAP.get(pageName.toUpperCase() + SPECIALSTR + componentID.toUpperCase());
+		 if(list == null) {
+			 list = Collections.EMPTY_LIST;
+		 } else {
+			 list.sort(Comparator.comparing(c -> c.getPriority()));
+		 }
+		 return list;
+	}
+}

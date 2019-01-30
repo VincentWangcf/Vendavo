@@ -1,0 +1,236 @@
+package com.avnet.emasia.webquote.web.shoppingcart.helper;
+
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Logger;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import com.avnet.emasia.webquote.commodity.constant.ShoppingCartConstant;
+import com.avnet.emasia.webquote.entity.QuantityBreakPrice;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.helper.TransferHelper;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.quote.vo.ShoppingCartLoadItemBean;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.POIUtils;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.bean.ExcelAliasBean;
+import com.avnet.emasia.webquote.web.maintenance.DownLoadStrategy;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+
+public class ShopCartSubmitResultDownLoadStrategy extends DownLoadStrategy {
+	static final Logger LOG = Logger.getLogger(ShopCartSubmitResultDownLoadStrategy.class.getSimpleName());
+
+	private static final long serialVersionUID = 1826810634921438019L;
+
+	/*
+	 * public CatalogSearchResultDownLoadStrategy(ExcelReport excelReport) {
+	 * this.excelReport = excelReport; }
+	 */
+	private static String convertToYYYYMMDD(Date date) {// convert m/d/yy to
+														// dd/MM/yyyy format
+
+		String returnStr = "";
+		try {
+			DateFormat format1 = new SimpleDateFormat("yyyy/MM/dd");
+			returnStr = format1.format(date);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return returnStr;
+	}
+
+	private static String convertToDDMMYYYY(Date date) {// convert m/d/yy to
+		// dd/MM/yyyy format
+		String returnStr = "";
+		try {
+		DateFormat format1 = new SimpleDateFormat("dd/MM/yyyy");
+		returnStr = format1.format(date);
+		
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return returnStr;
+	}
+	
+	private static String convertBigDcToStr(java.math.BigDecimal bigDecimal) {
+
+		if (bigDecimal == null) {
+			return "";
+		}
+		return bigDecimal.toString();
+
+	}
+
+	@Override
+	public void setDateTosheet(XSSFWorkbook wb, List<?> data) {
+		XSSFCell cell = null;
+		XSSFSheet sheet = wb.getSheetAt(0);
+		XSSFCellStyle cellStyle=wb.createCellStyle();     
+		cellStyle.setWrapText(true);
+		cellStyle.setAlignment(HorizontalAlignment.CENTER);
+		cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+		int HeaderRowCnt =  QuoteConstant.CATALOG_RESULT_TEMPLATE_HEADER_ROW_NUMBER;
+		if (data != null) {
+			for (int j = 0; j < data.size(); j++) {
+				XSSFRow dataRow = sheet.createRow(j + HeaderRowCnt);
+				QuoteItem obj = (QuoteItem) data.get(j);
+				/** Form # */
+				cell = dataRow.createCell(0);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getQuote().getFormNumber() != null) {
+					cell.setCellValue(obj.getQuote().getFormNumber());
+				}
+				/** Avnet Quote # */
+				cell = dataRow.createCell(1);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getQuoteNumber() != null) {
+					cell.setCellValue(obj.getQuoteNumber());
+				}
+				/** Avnet Quote # */
+				cell = dataRow.createCell(2);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getStage() != null) {
+					cell.setCellValue(obj.getStage());
+				}
+				/** MFR */
+				cell = dataRow.createCell(3);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getRequestedMfr() !=null||obj.getRequestedMfr().getName() != null) {
+					cell.setCellValue(obj.getRequestedMfr().getName());
+				}
+				/**Requested P/N */
+				cell = dataRow.createCell(4);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getQuotedPartNumber() != null) {
+					cell.setCellValue(obj.getQuotedPartNumber());
+				}
+				/** sold to */
+				if(obj.getSoldToCustomer()!=null) {
+					cell = dataRow.createCell(5);
+					cell.setCellType(Cell.CELL_TYPE_STRING);
+					if (obj.getSoldToCustomer().getCustomerNumber() != null) {
+						cell.setCellValue(obj.getSoldToCustomer().getCustomerNumber());
+					}
+					cell = dataRow.createCell(6);
+					cell.setCellType(Cell.CELL_TYPE_STRING);
+					if (obj.getSoldToCustomer().getCustomerFullName() != null) {
+						cell.setCellValue(obj.getSoldToCustomer().getCustomerFullName());
+					}
+				}
+				/** end customer */
+				if(obj.getEndCustomer()!=null) {
+					cell = dataRow.createCell(7);
+					cell.setCellType(Cell.CELL_TYPE_STRING);
+					if (obj.getEndCustomer().getCustomerNumber() != null) {
+						cell.setCellValue(obj.getEndCustomer().getCustomerNumber());
+					}
+					cell = dataRow.createCell(8);
+					cell.setCellType(Cell.CELL_TYPE_STRING);
+					if (obj.getEndCustomer().getCustomerFullName() != null) {
+						cell.setCellValue(obj.getEndCustomer().getCustomerFullName());
+					}
+				}
+				/**Pricer Remarks */
+				cell = dataRow.createCell(9);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getQcComment() != null) {
+					cell.setCellValue(obj.getQcComment());
+				}
+				/** Required Qty */
+				cell = dataRow.createCell(10);
+				cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+				if (obj.getRequestedQty() != null) {
+					cell.setCellValue(obj.getRequestedQty());
+				}
+				/** PMOQ */
+				cell = dataRow.createCell(11);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getPmoq() != null) {
+					cell.setCellValue(obj.getPmoq());
+				}
+				/** MPQ */
+				cell = dataRow.createCell(12);
+				cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+				if (obj.getMpq() != null) {
+					cell.setCellValue(obj.getMpq());
+				}
+				/** MPQ */
+				cell = dataRow.createCell(13);
+				cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+				if (obj.getMpq() != null) {
+					cell.setCellValue(obj.getMpq());
+				}
+				/** MOQ */
+				cell = dataRow.createCell(14);
+				cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+				if (obj.getMoq() != null) {
+					cell.setCellValue(obj.getMoq());
+				}
+				 
+				/** Sales Cost */
+				cell = dataRow.createCell(15);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getSalesCost() != null) {
+					cell.setCellValue(QuoteUtil.formatBigDecimal(obj.getSalesCost()));
+				}
+				/** Suggested Resale */
+				cell = dataRow.createCell(16);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getSuggestedResale() != null) {
+					cell.setCellValue(QuoteUtil.formatBigDecimal(obj.getSuggestedResale()));
+				}
+				/** Avnet Price */
+				cell = dataRow.createCell(17);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if(QuoteSBConstant.RFQ_STATUS_AQ.equalsIgnoreCase(obj.getStatus())){
+					cell.setCellValue(QuoteUtil.formatDouble(obj.getQuotedPrice()));
+				}
+				else {
+					cell.setCellValue(ResourceMB.getText("wq.message.progress"));
+				}
+				
+				/** Final Pricer */
+				/*cell = dataRow.createCell(19);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getFinalQuotationPrice() != null) {
+					cell.setCellValue(QuoteUtil.formatDouble(obj.getFinalQuotationPrice()));
+				}*/
+				/** Pricer Validity */
+				cell = dataRow.createCell(18);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getPriceValidity() != null) {
+					cell.setCellValue(obj.getPriceValidity());
+				}
+				/** Shipment Validity */
+				cell = dataRow.createCell(19);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getShipmentValidity() != null) {
+					cell.setCellValue(convertToDDMMYYYY(obj.getShipmentValidity()));
+				}
+				/** Lead Time */
+				cell = dataRow.createCell(20);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getLeadTime() != null) {
+					cell.setCellValue(obj.getLeadTime());
+				}
+				/**Special Terms & Conditions */
+				cell = dataRow.createCell(21);
+				cell.setCellType(Cell.CELL_TYPE_STRING);
+				if (obj.getTermsAndConditions() != null) {
+					cell.setCellValue(obj.getTermsAndConditions());
+				}
+			}
+		}
+	}
+}

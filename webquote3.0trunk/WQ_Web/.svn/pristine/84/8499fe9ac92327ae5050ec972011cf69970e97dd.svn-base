@@ -1,0 +1,30 @@
+
+package com.avnet.emasia.webquote.web.quote.strategy;
+
+import java.io.Serializable;
+
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.Quote;
+import com.avnet.emasia.webquote.web.quote.vo.QuotationEmailVO;
+
+/**
+ * @author 042659
+ *
+ */
+public interface SendQuotationEmailStrategy extends Serializable {
+
+	/**
+	 * @param QuotationEmailVO
+	 * @return 
+	 */
+	public void sendQuotationEmail(QuotationEmailVO vo);
+	/**
+	 * @param soldToCustomer
+	 * @param quote
+	 * @param isSubmissionDateFromQuote
+	 * @return HSSFWorkbook
+	 */
+	public HSSFWorkbook getQuoteTemplateBySoldTo(Customer soldToCustomer, Quote quote, boolean isSubmissionDateFromQuote);
+}

@@ -1,0 +1,7 @@
+1)SR for removing the DRMS checking  Add by Lenon 2016/12/01
+2)clear SALEORG_BIZUNIT_MAPPING      Add by Lenon 2016/12/01
+3)Enhanced Annoucement Panel and Promotional items Panel on WebPromoMaintain          Add by Damon 2016/12/05
+4)added more logs to BMT WorkingPlatform   Add by Damon 2016/12/05
+5)add Description column to SAP_MATERIAL table and Changed Material Data Loading Job Add by Damon 2016/12/05.
+6)WorkingPlatForm search criterial MFR dropdown List Order by alphabetical   Add by Lenon 2016/12/06
+7)Fix WorkingPlatForm DRMS Quote Send to PM Interal Comment has "null" string issue      Add by Lenon 2016/12/06

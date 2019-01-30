@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Extract method &apos;private void getCurrencyToList()&apos; from &apos;com.avnet.emasia.webquote.web.quote.ExchangeRateMB.download()&apos; to &apos;com.avnet.emasia.webquote.web.quote.ExchangeRateMB&apos;&#x0D;&#x0A;- Original project: &apos;WQ_Web&apos;&#x0D;&#x0A;- Method name: &apos;getCurrencyToList&apos;&#x0D;&#x0A;- Destination type: &apos;com.avnet.emasia.webquote.web.quote.ExchangeRateMB&apos;&#x0D;&#x0A;- Declared visibility: &apos;private&apos;&#x0D;&#x0A;- Generate method comment" comments="true" description="Extract method &apos;getCurrencyToList&apos;" destination="0" exceptions="false" flags="786434" id="org.eclipse.jdt.ui.extract.method" input="/src&lt;com.avnet.emasia.webquote.web.quote{ExchangeRateMB.java" name="getCurrencyToList" replace="false" selection="14945 299" stamp="1541398878370" version="1.0" visibility="2"/>
+</session>

@@ -1,0 +1,1171 @@
+package com.avnet.emasia.webquote.utilites.web.util;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
+import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import javax.faces.model.SelectItem;
+import javax.persistence.Tuple;
+
+import org.apache.commons.collections.iterators.EntrySetMapIterator;
+import org.apache.commons.io.IOUtils;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.ss.usermodel.Cell;
+import org.primefaces.model.UploadedFile;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.ContractPricer;
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.DrNedaItem;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.ProgramPricer;
+//TODO:CHECK THIS
+//import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.quote.vo.WorkingPlatformItemVO;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+
+public class QuoteUtil {
+	
+	private static final Logger LOGGER = Logger.getLogger(QuoteUtil.class.getName());
+	private static final String SEPRATOR="|";	
+	private final static double ZERO_DOUBLE = 0d;	
+	
+	public static String convertDateToString(Date value){
+		if(value != null){
+			try {
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+				return sdf.format(value);
+			} catch (Exception ex) {
+				 LOGGER.log(Level.SEVERE, "Exception occured while conversion, for date: "+value.toString()+", "
+				 		+ "Exception message: "+ex.getMessage(), ex);
+			}
+		}
+		return null;		
+	}
+	
+	public static void copyRow(HSSFSheet worksheet, int sourceRowNum, int destinationRowNum) {
+		// Get the source / new row
+		HSSFRow newRow = worksheet.getRow(destinationRowNum);
+		HSSFRow sourceRow = worksheet.getRow(sourceRowNum);
+
+		// If the row exist in destination, push down all rows by 1 else create a new row
+		if (newRow != null) {
+			worksheet.shiftRows(destinationRowNum, worksheet.getLastRowNum(), 1);
+		} else {
+			newRow = worksheet.createRow(destinationRowNum);
+		}
+
+		// Loop through source columns to add to new row
+		for (int i = 0; i < sourceRow.getLastCellNum(); i++) {
+			// Grab a copy of the old/new cell
+			HSSFCell oldCell = sourceRow.getCell(i);
+			HSSFCell newCell = newRow.createCell(i);
+
+			// If the old cell is null jump to next cell
+			if (oldCell == null) {
+				newCell = null;
+				continue;
+			}
+
+			// Use old cell style
+			newCell.setCellStyle(oldCell.getCellStyle());
+
+			// If there is a cell comment, copy
+			if (newCell.getCellComment() != null) {
+				newCell.setCellComment(oldCell.getCellComment());
+			}
+
+			// If there is a cell hyperlink, copy
+			if (oldCell.getHyperlink() != null) {
+				newCell.setHyperlink(oldCell.getHyperlink());
+			}
+
+			// Set the cell data type
+			newCell.setCellType(oldCell.getCellType());
+
+			// Set the cell data value
+			switch (oldCell.getCellType()) {
+				case Cell.CELL_TYPE_BLANK:
+					break;
+				case Cell.CELL_TYPE_BOOLEAN:
+					newCell.setCellValue(oldCell.getBooleanCellValue());
+					break;
+				case Cell.CELL_TYPE_ERROR:
+					newCell.setCellErrorValue(oldCell.getErrorCellValue());
+					break;
+				case Cell.CELL_TYPE_FORMULA:
+					newCell.setCellFormula(oldCell.getCellFormula());
+					break;
+				case Cell.CELL_TYPE_NUMERIC:
+					newCell.setCellValue(oldCell.getNumericCellValue());
+					break;
+				case Cell.CELL_TYPE_STRING:
+					newCell.setCellValue(oldCell.getRichStringCellValue());
+					break;
+			}
+		}
+	}	
+
+	public static Date shiftDate(Date date, int shift){
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		cal.add(Calendar.DATE, shift);
+		return cal.getTime();
+	}
+	
+	public static Date getEndOfDay(Date date) {
+	    Calendar calendar = Calendar.getInstance();
+	    calendar.setTime(date);
+	    calendar.set(Calendar.HOUR_OF_DAY, 23);
+	    calendar.set(Calendar.MINUTE, 59);
+	    calendar.set(Calendar.SECOND, 59);
+	    calendar.set(Calendar.MILLISECOND, 999);
+	    return calendar.getTime();
+	}
+
+	public static Date getStartOfDay(Date date) {
+	    Calendar calendar = Calendar.getInstance();
+	    calendar.setTime(date);
+	    calendar.set(Calendar.HOUR_OF_DAY, 0);
+	    calendar.set(Calendar.MINUTE, 0);
+	    calendar.set(Calendar.SECOND, 0);
+	    calendar.set(Calendar.MILLISECOND, 0);
+	    return calendar.getTime();
+	}	
+	
+	public static Date calculateQuoteExpiryDate(Date date, String materialType){
+		Calendar cal = Calendar.getInstance();
+		cal.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+		cal.setTime(date);
+		if(materialType.equals(QuoteSBConstant.MATERIAL_TYPE_NORMAL))
+			cal.add(Calendar.DATE, QuoteSBConstant.QUOTE_EXPIRY_DATE_SHIFT_NORMAL);
+		else if(materialType.equals(QuoteSBConstant.MATERIAL_TYPE_PROGRAM))
+			cal.add(Calendar.DATE, QuoteSBConstant.QUOTE_EXPIRY_DATE_SHIFT_PROGRAM);
+		cal.set(Calendar.HOUR_OF_DAY, 15);
+		return cal.getTime();
+	}
+	
+	public static List<String> getPastFourQuarter(){
+		List<String> quarters = new ArrayList<String>();
+		Calendar cal = Calendar.getInstance();
+		quarters.add(convertToQuarter(cal));
+		cal.add(Calendar.MONTH, -3);
+		quarters.add(convertToQuarter(cal));
+		cal.add(Calendar.MONTH, -3);
+		quarters.add(convertToQuarter(cal));
+		cal.add(Calendar.MONTH, -3);
+		quarters.add(convertToQuarter(cal));
+		return quarters;
+	}
+	
+	public static String convertToQuarter(Calendar cal){
+		String quarter = "";
+		int month = cal.get(Calendar.MONTH)+1;		
+		int year  = cal.get(Calendar.YEAR);		
+		if(month >= 7 && month <= 9) { quarter = "Q1"; year++; }
+		else if(month >= 10 && month <= 12) { quarter = "Q2"; year++; }
+		else if(month >= 1 && month <= 3) quarter = "Q3";
+		else if(month >= 4 && month <= 6) quarter = "Q4";
+		return "FY"+String.valueOf(year).substring(2)+quarter;
+	}
+
+	public static String[] generateLatest24Month(String pattern){
+		String[] months = new String[25];
+		try {
+			SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+			Calendar now = Calendar.getInstance();
+			now.add(Calendar.MONTH, -1);
+			months[0] = sdf.format(now.getTime()).toUpperCase();
+			for(int i=1; i<=24; i++){
+				now.add(Calendar.MONTH, 1);
+				months[i] = sdf.format(now.getTime()).toUpperCase();
+				//months[i] = now.getTime();
+			}
+		} catch (Exception ex) {
+			 LOGGER.log(Level.SEVERE, "Exception occurred for pattern: "+pattern+", Exception message: "+ex.getMessage(), ex);
+		}
+		return months;
+	}
+
+	public static SelectItem[] createFilterOptions(String[] data)  {
+		return createFilterOptions(data, false, false);
+	}
+	
+	public static SelectItem[] createFilterOptions(String[] data, boolean editable, boolean isAll)  {
+		return createFilterOptions(data, data, editable, isAll);
+	}
+
+	public static SelectItem[] createFilterOptions(String[] label, String[] value)  {
+		return createFilterOptions(label, value, false, false);
+	}
+
+	public static SelectItem[] createFilterOptions(String[] label, String[] value, boolean editable, boolean isAll)  {
+		return createFilterOptions(label, value, editable, isAll, false);
+	}
+	
+	public static SelectItem[] createFilterOptions(String[] data, boolean editable, boolean isAll,boolean mandatory)  {
+		return createFilterOptions(data, data, editable, isAll, mandatory);
+	}
+
+	public static SelectItem[] createFilterOptions(String[] label, String[] value, boolean editable, boolean isAll, boolean mandatory)  {
+		List<String> duplicateLabelCheck = new ArrayList<String>();
+		List<String> duplicateValueCheck = new ArrayList<String>();
+		for(int i = 0; i < label.length; i++) {
+			if(label[i] != null && !duplicateLabelCheck.contains(label[i])){			
+				duplicateLabelCheck.add(label[i]);
+				duplicateValueCheck.add(value[i]);
+			}
+		}
+		int shiftId = 1;
+		if(mandatory)	
+			shiftId = 0;
+		
+		SelectItem[] options = new SelectItem[duplicateLabelCheck.size() + shiftId];
+		
+		if(!mandatory){
+			if(isAll){
+				options[0] = new SelectItem(QuoteSBConstant.WILDCARD_ALL, QuoteSBConstant.ALL);  
+			} else {		
+				if(editable)
+					options[0] = new SelectItem(QuoteConstant.DEFAULT_SELECT_VALUE, QuoteConstant.DEFAULT_SELECT_EDIT);  
+				else
+					options[0] = new SelectItem(QuoteConstant.DEFAULT_SELECT_VALUE, QuoteConstant.DEFAULT_SELECT);
+			}
+		}
+		for(int i = 0; i < duplicateLabelCheck.size(); i++) {
+			options[i + shiftId] = new SelectItem(duplicateValueCheck.get(i), duplicateLabelCheck.get(i));
+		}
+		if(options.length > 0)
+			options[0].setNoSelectionOption(true);
+		return options;   
+	}
+	
+	public static class MapKeyComparator implements Comparator<String>{  
+	    public int compare(String str1, String str2) {  
+	        return str1.compareTo(str2);  
+	    }  
+	}  
+	
+	public static List<SelectItem> createBmtFilterOptionsForWP(Map<String, String> map) {
+        List<SelectItem> items = new ArrayList<>();
+        items.add(new SelectItem("", "All"));
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+        	items.add(new SelectItem(entry.getValue(), entry.getKey()));
+        }
+        return items;
+    }
+	
+	public static SelectItem[] createFilterOptionsForWP(String[] label, String[] value, boolean editable, boolean isAll, boolean mandatory)  {
+		List<String> duplicateLabelCheck = new ArrayList<String>();
+		List<String> duplicateValueCheck = new ArrayList<String>();
+		
+			for(int i = 0; i < label.length; i++) {
+				if(label[i] != null && !duplicateLabelCheck.contains(label[i])){			
+					duplicateLabelCheck.add(label[i]);
+					duplicateValueCheck.add(label[i]);
+				}
+			}
+
+		
+		int shiftId = 1;
+		if(mandatory)	
+			shiftId = 0;
+		
+		SelectItem[] options = new SelectItem[duplicateLabelCheck.size() + shiftId];
+		
+		if(!mandatory){
+			if(isAll){
+				options[0] = new SelectItem("", QuoteSBConstant.ALL);  
+			} else {		
+				if(editable)
+					options[0] = new SelectItem(QuoteConstant.DEFAULT_SELECT_VALUE, QuoteConstant.DEFAULT_SELECT_EDIT);  
+				else
+					options[0] = new SelectItem(QuoteConstant.DEFAULT_SELECT_VALUE, QuoteConstant.DEFAULT_SELECT);
+			}
+		}
+		for(int i = 0; i < duplicateLabelCheck.size(); i++) {
+			options[i + shiftId] = new SelectItem(duplicateValueCheck.get(i), duplicateLabelCheck.get(i));
+		}
+		if(options.length > 0)
+			options[0].setNoSelectionOption(true);
+		return options;   
+	}
+	
+	public static SelectItem[] createFilterOptionsForManufecturer(boolean editable, boolean isAll, boolean mandatory,String[] totalLabel)  {
+		List<String> duplicateLabelCheck = new ArrayList<String>();
+		List<String> duplicateValueCheck = new ArrayList<String>();
+		
+		if(totalLabel != null){
+		for(int i = 0; i < totalLabel.length; i++) {
+			if(!duplicateLabelCheck.contains(totalLabel[i])){			
+				duplicateLabelCheck.add(totalLabel[i]);
+				duplicateValueCheck.add(totalLabel[i]);
+			}
+		}
+		}
+	
+		
+		
+		int shiftId = 1;
+		if(mandatory)	
+			shiftId = 0;
+		
+		SelectItem[] options = new SelectItem[duplicateLabelCheck.size() + shiftId];
+		
+		if(!mandatory){
+			if(isAll){
+				options[0] = new SelectItem("", QuoteSBConstant.ALL);  
+			} else {		
+				if(editable)
+					options[0] = new SelectItem(QuoteConstant.DEFAULT_SELECT_VALUE, QuoteConstant.DEFAULT_SELECT_EDIT);  
+				else
+					options[0] = new SelectItem(QuoteConstant.DEFAULT_SELECT_VALUE, QuoteConstant.DEFAULT_SELECT);
+			}
+		}
+		for(int i = 0; i < duplicateLabelCheck.size(); i++) {
+			options[i + shiftId] = new SelectItem(duplicateValueCheck.get(i), duplicateLabelCheck.get(i));
+		}
+		if(options.length > 0)
+			options[0].setNoSelectionOption(true);
+		return options;   
+	}
+	
+	public static boolean isMatch(String value, String part){
+		if(value == null || part == null)
+			return false;
+		return ((part.startsWith("*") && part.endsWith("*") && value.contains(part.replaceAll("\\*", "")))
+			|| (part.startsWith("*") && value.endsWith(part.replaceAll("\\*", "")))
+			|| (part.endsWith("*") && value.startsWith(part.replaceAll("\\*", "")))
+			|| (!part.contains("*") && value.equals(part)));
+		
+	}
+	public static boolean isEmpty(String value) {
+		return (value == null || value != null && value.trim().length() == 0);
+	}
+
+	public static boolean isEmpty(Integer value) {
+		return (value == null);
+	}
+	
+	public static String convertNumber(String value) {	
+		if(!isEmpty(value)){
+			try {
+				value = value.replaceAll(",", "");
+				boolean withPlusSign = value.endsWith("+");
+				BigDecimal bd = null;
+				if(withPlusSign)
+					value = value.replaceAll("\\+", "");
+				bd = new BigDecimal(value);
+
+				DecimalFormat formatter = new DecimalFormat("###,###,###,###");
+				if(withPlusSign)
+					//return NumberFormat.getNumberInstance(new ResourceMB().getResourceLocale()).format(bd.longValue())+"+";
+					return formatter.format(bd.longValue())+"+";
+				else
+					//return NumberFormat.getNumberInstance(new ResourceMB().getResourceLocale()).format(bd.longValue());
+					return formatter.format(bd.longValue());
+			} catch (NumberFormatException ex) {
+				LOGGER.log(Level.SEVERE, "Exception occured while conversion, for date: "+value.toString()+", "
+				 		+ "Exception message: "+ex.getMessage(), ex);
+			}
+		}
+		return null;
+	}
+
+	public static String convertDoubleToString(Double value){
+		if(value != null){
+			//NumberFormat formatter = DecimalFormat.getNumberInstance(new ResourceMB().getResourceLocale());;
+			NumberFormat formatter = new DecimalFormat("#############.#####");			
+			return formatter.format(value);
+		}
+		return null;
+	}
+	public static String convertBigToString(BigDecimal value){
+		if(value != null){
+			//NumberFormat formatter = DecimalFormat.getNumberInstance(new ResourceMB().getResourceLocale());;
+			NumberFormat formatter = new DecimalFormat("#############.#####");			
+			return formatter.format(value);
+		}
+		return null;
+	}
+	
+	public static String[] convertExcelPosition(int columnIndex, int rowIndex) {
+		/*0-25 A-Z 65-90*/
+		String[] position = new String[2];
+		position[0] = String.valueOf(Character.toChars(columnIndex+65));
+		position[1] = String.valueOf(rowIndex+1);
+		return position;
+	}
+
+	public static String convertExcelPositionToString(int columnIndex, int rowIndex) {
+		/*0-25 A-Z 65-90*/
+		return String.valueOf(Character.toChars(columnIndex+65)) + String.valueOf(rowIndex+1);
+	}
+	
+	public static Date getCurrentTime() {
+		return new Date();
+	}	
+	
+	public static boolean isEmptyCustomerList(List<Customer> list){
+		if(list == null)
+			return true;
+		if(list.size() == 0)
+			return true;
+		return false;
+	}
+	public static boolean isEmptyList(List list){
+		if(list == null)
+			return true;
+		if(list.size() == 0)
+			return true;
+		return false;
+	}
+	public static boolean isEmptyQuoteList(List<QuoteItem> list){
+		if(list == null)
+			return true;
+		if(list.size() == 0)
+			return true;
+		return false;
+	}
+	//TODO:CHECK THIS
+/*	public static boolean isEmptyMaterialList(List<Material> list){
+		if(list == null)
+			return true;
+		if(list.size() == 0)
+			return true;
+		return false;
+	}*/
+	
+	public static boolean isEmptyNedaItemList(List<DrNedaItem> list){
+		if(list == null)
+			return true;
+		if(list.size() == 0)
+			return true;
+		return false;
+	}
+	
+	public static Integer convertToInteger(String value){
+		if(value != null){
+			if(value.contains(".")){
+				value = value.substring(0, value.indexOf("."));
+			}
+			try {
+				return Integer.parseInt(value);
+			} catch (Exception ex){
+				LOGGER.log(Level.SEVERE, "Exception occured while conversion, for date: "+value.toString()+", "
+				 		+ "Exception message: "+ex.getMessage(), ex);
+				return null;
+			}
+		}
+		return null;
+	}
+	
+	public static String convertToStringAsInteger(String value){
+		if(value != null && value.contains(".")){
+			value = value.substring(0, value.indexOf("."));
+			return value;
+		}
+		return value;
+	}	
+	
+	public static String numberFormatter(double dos)
+	{
+		java.text.DecimalFormat   formatter   =   new   java.text.DecimalFormat("########.#####");  	
+	    return formatter.format(dos);
+	}
+	
+	public static Integer findAqQty(QuoteItem quoteItem) {
+		return findAqQty(quoteItem, null);
+	}
+		
+	public static Integer findAqQty(QuoteItem quoteItem, Integer changedAqQty) {
+		
+		String qtyIndicator = quoteItem.getQtyIndicator();
+		//Fixed by DamonChen@20180411
+		if(QuoteUtil.isEmpty(qtyIndicator)){
+			return null;
+		}
+		qtyIndicator = qtyIndicator.trim();
+		
+		Integer mov = quoteItem.getMov();
+		Integer moq = quoteItem.getMoq();
+		Integer mpq = quoteItem.getMpq();
+		Double cost = quoteItem.getCost();
+		Integer reqQty = quoteItem.getRequestedQty();
+	
+		Integer preAqQty = null;
+		Integer aqQty = null;
+
+		if(moq == null && mov != null && mov > 0 && cost != null && cost > 0){
+			moq = (int) (Math.ceil(mov/(cost*1.0)));
+		}
+
+		if(qtyIndicator.endsWith("%")){
+			
+			if(moq != null && moq > 0 && mpq != null && mpq > 0){
+				aqQty = (int) (Math.ceil(reqQty/(mpq*1.0))*mpq);	
+				if(aqQty < moq)
+					aqQty = (int) (Math.ceil(moq/(mpq*1.0))*mpq);					
+				return aqQty;
+			}
+			LOGGER.log(Level.INFO,"%%:QuoteNumber {0}, MOQ {1}, MPQ {2} ,RequestQty{3}. ", 
+					new Object[]{ quoteItem.getQuoteNumber() ,moq,mpq,reqQty});
+			return null;
+			
+		} else if(qtyIndicator.toUpperCase().equals(QuoteConstant.QTY_INDICATOR_MOQ.toUpperCase())){
+			
+			if(moq != null && moq > 0 && mpq != null && mpq > 0){
+				aqQty = (int) (Math.ceil(reqQty/(mpq*1.0))*mpq);
+				if(aqQty < moq)
+					aqQty = (int) (Math.ceil(moq/(mpq*1.0))*mpq);					
+				return aqQty;
+			}
+			LOGGER.log(Level.INFO,"MOQ:QuoteNumber {0}, MOQ {1}, MPQ {2} ,RequestQty{3}. ", 
+					new Object[]{ quoteItem.getQuoteNumber() ,moq,mpq,reqQty});
+			return null;
+			
+		} else if(qtyIndicator.toUpperCase().equals(QuoteConstant.QTY_INDICATOR_MPQ.toUpperCase())){
+			
+			if(moq != null && moq > 0 && mpq != null && mpq > 0){
+				aqQty = (int) (Math.ceil(reqQty/(mpq*1.0))*mpq);
+				if(aqQty < moq)
+					aqQty = (int) (Math.ceil(moq/(mpq*1.0))*mpq);					
+				return aqQty;
+			}
+			LOGGER.log(Level.INFO,"MPQ:QuoteNumber {0}, MOQ {1}, MPQ {2} ,RequestQty{3}. ", 
+					new Object[]{ quoteItem.getQuoteNumber() ,moq,mpq,reqQty});
+			return null;
+
+		} else if(qtyIndicator.toUpperCase().equals(QuoteConstant.QTY_INDICATOR_MOV.toUpperCase())){
+			
+			if(mov != null && mov > 0 && cost != null && cost > 0){
+				aqQty = (int) (Math.ceil(reqQty/(mpq*1.0))*mpq);
+				moq = (int) (Math.ceil(mov/cost/(mpq*1.0))*mpq);
+				if(aqQty < moq)
+					aqQty = moq;
+				return aqQty;
+			}
+			LOGGER.log(Level.INFO,"MOV:QuoteNumber {0} ,MOV {1}, MOQ {2}, MPQ {3}, COST {4} ,RequestQty{5},QtyIndicator{6}. ", 
+					new Object[]{ quoteItem.getQuoteNumber() , mov,moq,mpq,cost,reqQty,qtyIndicator});
+			return null;
+			
+		} else if(qtyIndicator.toUpperCase().equals(QuoteConstant.QTY_INDICATOR_EXACT.toUpperCase())){
+			
+			return changedAqQty;
+			
+		} else if(qtyIndicator.toUpperCase().equals(QuoteConstant.QTY_INDICATOR_LIMIT.toUpperCase())){
+			
+			if(mpq != null && mpq > 0){
+				aqQty = (int) (Math.ceil(reqQty/(mpq*1.0))*mpq);
+				return aqQty;
+			}
+			LOGGER.log(Level.INFO,"Limit:QuoteNumber {0} , MPQ {1}, RequestQty{2} ", new Object[]{ quoteItem.getQuoteNumber() ,mpq,reqQty});
+		}
+		LOGGER.log(Level.INFO,"QuoteNumber {0} ,MOV {1}, MOQ {2}, MPQ {3}, COST {4} ,RequestQty{5},QtyIndicator{6}. ", 
+				new Object[]{ quoteItem.getQuoteNumber() , mov,moq,mpq,cost,reqQty,qtyIndicator});
+		return null;
+	}
+	
+	public static Integer findMoq(QuoteItem quoteItem) {
+		
+		Integer mov = quoteItem.getMov();
+		Integer moq = quoteItem.getMoq();
+		Integer mpq = quoteItem.getMpq();
+		Double cost = quoteItem.getCost();
+		
+		if(mov != null && cost != null && cost > 0.0 && mpq != null && mpq > 0 && moq == null){
+			moq = (int) (Math.ceil(mov/cost/(mpq*1.0))*mpq);			
+		}
+		return moq;
+		
+	}
+	
+//	//PROGRM PRICER ENHANCEMENT 
+//	public static String findPmoq(QuoteItem quoteItem,Integer changedAqQty, BizUnit bizUnit)
+//	{
+//		ProgramMaterial progMat = null;
+//		if(bizUnit!=null && bizUnit.getName()!=null && quoteItem.getCostIndicator()!=null)
+//		{
+//		   progMat =  quoteItem.getQuotedMaterial().getSpecifiedValidProgMatByBizUintAndCostIndicator(bizUnit.getName(), quoteItem.getCostIndicator());
+//		}
+//		return findPmoq(quoteItem, changedAqQty, progMat);
+//	}
+//	
+//	//PROGRM PRICER ENHANCEMENT
+//	public static String findPmoq(QuoteItem quoteItem, BizUnit bizUnit) {
+//		ProgramMaterial progMat = null;
+//		if(bizUnit!=null && bizUnit.getName()!=null && quoteItem.getCostIndicator()!=null)
+//		{
+//		   progMat =  quoteItem.getQuotedMaterial().getSpecifiedValidProgMatByBizUintAndCostIndicator(bizUnit.getName(), quoteItem.getCostIndicator());
+//		}
+//		return findPmoq(quoteItem, null, progMat);
+//	}
+	//PROGRM PRICER ENHANCEMENT 
+		public static String findPmoqWithPM(QuoteItem quoteItem,Integer changedAqQty, BizUnit bizUnit, ProgramPricer progMat)
+		{
+//			ProgramMaterial progMat = null;
+//			if(bizUnit!=null && bizUnit.getName()!=null && quoteItem.getCostIndicator()!=null)
+//			{
+//			   progMat =  quoteItem.getQuotedMaterial().getSpecifiedValidProgMatByBizUintAndCostIndicator(bizUnit.getName(), quoteItem.getCostIndicator());
+//			}
+			return findPmoq(quoteItem, changedAqQty);
+		}
+		
+		//PROGRM PRICER ENHANCEMENT
+		public static String findPmoqWithPM(QuoteItem quoteItem, BizUnit bizUnit, ProgramPricer progMat) {
+//			ProgramMaterial progMat = null;
+//			if(bizUnit!=null && bizUnit.getName()!=null && quoteItem.getCostIndicator()!=null)
+//			{
+//			   progMat =  quoteItem.getQuotedMaterial().getSpecifiedValidProgMatByBizUintAndCostIndicator(bizUnit.getName(), quoteItem.getCostIndicator());
+//			}
+			return findPmoq(quoteItem, null);
+		}
+	//PROGRM PRICER ENHANCEMENT
+	public static String findPmoq(QuoteItem quoteItem) {
+		return findPmoq(quoteItem, null);
+	}
+	//PROGRM PRICER ENHANCEMENT
+	public static String findPmoq(QuoteItem quoteItem, Integer changedAqQty) {
+		
+		String qtyIndicator = quoteItem.getQtyIndicator();	
+		//Fixed by DamonChen@20180411
+		if(QuoteUtil.isEmpty(qtyIndicator)){
+			return null;
+		}
+		qtyIndicator = qtyIndicator.trim();
+		
+		Integer mov = quoteItem.getMov();
+		Integer moq = quoteItem.getMoq();
+		Integer mpq = quoteItem.getMpq();
+		Double cost = quoteItem.getCost();
+		Integer reqQty = quoteItem.getRequestedQty();
+
+		Integer preAqQty = null;
+		Integer aqQty = null;
+		Integer pmoq = null;
+
+		if((moq == null || (moq != null && moq == 0)) && mov != null && mov > 0 && cost != null && cost > 0){				
+			moq = (int) (Math.ceil(mov/cost));
+		}
+		
+		if(qtyIndicator.endsWith("%")){
+
+			Double percent = Double.parseDouble(qtyIndicator.replace("%", ""))/100;
+			
+			if(changedAqQty != null){
+				Integer qtyBase = (int) Math.ceil(changedAqQty * percent);
+				if(mpq != null && mpq > 0){
+					
+					pmoq = 0;
+					while(pmoq < qtyBase){
+						pmoq += mpq;
+					}
+					return pmoq + "+";					
+					
+				}
+				
+				return null;
+				
+
+				
+			} else {
+				Integer qtyBase = (int) Math.ceil(reqQty * percent);
+				
+				if(mpq != null && mpq > 0 && moq != null && moq > 0){
+	
+					pmoq = 0;
+					while(pmoq < moq || pmoq < qtyBase){
+						pmoq += mpq;
+					}
+					
+					return pmoq + "+";
+				}
+			}
+			return null;
+				
+		} else if(qtyIndicator.toUpperCase().equals(QuoteConstant.QTY_INDICATOR_MOQ.toUpperCase())){
+			
+			if((moq == null || (moq != null && moq == 0)) && mov != null && mov > 0 && cost != null && cost > 0){				
+				moq = (int) (Math.ceil(mov/(cost*1.0)));
+				moq = ((int)Math.ceil(moq/(mpq*1.0)))*mpq;				
+			}
+			if(moq != null && moq > 0){
+				return moq + "+";
+			}
+			return null;
+			
+		} else if(qtyIndicator.toUpperCase().equals(QuoteConstant.QTY_INDICATOR_MPQ.toUpperCase())){
+			
+			if(mpq != null && mpq > 0)
+				return mpq + "+";
+			return null;
+			
+		} else if(qtyIndicator.toUpperCase().equals(QuoteConstant.QTY_INDICATOR_MOV.toUpperCase())){
+			
+			if(mov != null && mov > 0 && cost != null && cost > 0){
+				moq = (int) (Math.ceil(mov/(cost*1.0)));
+				moq = ((int)Math.ceil(moq/(mpq*1.0)))*mpq;
+				return moq + "+";
+			}
+			return null;
+			
+		} else if(qtyIndicator.toUpperCase().equals(QuoteConstant.QTY_INDICATOR_EXACT.toUpperCase())){
+			
+			if(changedAqQty != null)
+				return String.valueOf(changedAqQty);
+			return null;
+			
+		} else if(qtyIndicator.toUpperCase().equals(QuoteConstant.QTY_INDICATOR_LIMIT.toUpperCase())){
+			//TODO:CHECK THIS
+			/*if(quoteItem.getQuotedMaterial() != null && quoteItem.getQuotedMaterial().getProgramMaterial() != null){
+				List<Oqmsp> opmspList = ProgRfqSubmitHelper.getOpmspList(quoteItem.getQuotedMaterial().getProgramMaterial());				
+				
+				String preOq = null;
+				for(Oqmsp oqmsp : opmspList){
+					if(preOq == null)
+						preOq = oqmsp.getOq();
+					if(oqmsp.getStartQuantity() <= quoteItem.getRequestedQty() && oqmsp.getEndQuantity() >= quoteItem.getRequestedQty()){
+						return oqmsp.getOq();
+					}
+							
+				}
+				return preOq;
+			}*/
+		} 
+		
+		//logger.log(Level.INFO, "pmoq cannot be found");
+		
+		return null;
+	}
+	
+	public static boolean isInteger(String value) {
+		if(value != null && value.matches("[1-9]{1}[0-9]{0,9}"))
+			return true;
+		return false;
+	}	
+
+	public static boolean isDecimal(String value) {
+		if(value != null && value.matches("^\\d{1,9}(\\.\\d{0,5})?$"))
+			return true;
+		return false;
+	}
+	
+	public static String getNewRevertVersionAfterAlternativePart(String revertVersion){
+		if(revertVersion != null && revertVersion.matches("[0-9]{1,}[A-Y]{1}")){
+			String prefix = revertVersion.substring(0,revertVersion.length()-1);
+			int suffix = (int)(revertVersion.charAt(revertVersion.length()-1));
+			revertVersion = prefix + (char)(suffix+1);
+		}
+		return revertVersion;
+	}
+		
+	/**
+	 * validate "dd/mm/yyyy" and "d/m/yyyy" data formate.eg,12/3/2005 and 12/03/2005 also right format.
+	 * @param sDate
+	 * @return
+	 */
+	public static boolean isValidDate(String sDate) {
+//		String datePattern = "(((0[1-9]|[12][0-9]|3[01])/((0[13578]|1[012]))|((0[1-9]|[12][0-9]|30/(0[469]|11))|0[1-9]|[1][0-9]|2[0-8])/(02))/([0-9]{3}[1-9]|[0-9]{2}[1-9][0-9]{1}|[0-9]{1}[1-9][0-9]{2}|[1-9][0-9]{3}))|(29/02/(([0-9]{2})(0[48]|[2468][048]|[13579][26])|((0[48]|[2468][048]|[3579][26])00)))";
+		String datePattern = "((((0[1-9]|[12][0-9]|3[01])/((0[13578]|1[012]))|((0[1-9]|[12][0-9]|30)/(0[469]|11))|(0[1-9]|[1][0-9]|2[0-8])/(02))/([0-9]{3}[1-9]|[0-9]{2}[1-9][0-9]{1}|[0-9]{1}[1-9][0-9]{2}|[1-9][0-9]{3}))|(29/02/(([0-9]{2})(0[48]|[2468][048]|[13579][26])|((0[48]|[2468][048]|[3579][26])00))))" +
+				"|(((([1-9]|[12][0-9]|3[01])/(([13578]|1[012]))|(([1-9]|[12][0-9]|30)/([469]|11))|([1-9]|[1][0-9]|2[0-8])/(2))/([0-9]{3}[1-9]|[0-9]{2}[1-9][0-9]{1}|[0-9]{1}[1-9][0-9]{2}|[1-9][0-9]{3}))|(29/2/(([0-9]{2})([48]|[2468][048]|[13579][26])|(([48]|[2468][048]|[3579][26])00))))";
+	     if ((sDate != null)) {
+	    	 Pattern pattern = Pattern.compile(datePattern);
+	    	 Matcher match = pattern.matcher(sDate);
+	             return match.matches();
+	     }
+	     return false;
+	 }
+	
+	public static String formatDouble(Double dou)
+	{
+		String returnStr = "";
+		DecimalFormat df= new DecimalFormat("#############.#####");		
+		returnStr = df.format(dou);
+		return returnStr;
+	}
+	
+	public static String formatBigDecimal(BigDecimal big)
+	{
+		String returnStr = "";
+		DecimalFormat df= new DecimalFormat("#############.#####");		
+		returnStr = df.format(big);
+		return returnStr;
+	}
+	
+	public static String formatDouble2(Double dou)
+	{
+		String returnStr = "";
+		DecimalFormat df= new DecimalFormat("0.00000");		
+		returnStr = df.format(dou);
+		return returnStr;
+	}
+	
+	//Added By Tonmy Li on 5 Aug 2013.
+	public static String getFristPageKey(RfqItemVO rfqItem)
+	{
+		StringBuffer returnSb = new StringBuffer();
+		if(rfqItem.getMfr()!=null)
+		    returnSb.append(rfqItem.getMfr()).append(SEPRATOR);
+		else
+			returnSb.append(SEPRATOR);
+		
+		if(rfqItem.getRequiredPartNumber()!=null)
+			returnSb.append(rfqItem.getRequiredPartNumber()).append(SEPRATOR);
+		else
+			returnSb.append(SEPRATOR);
+		
+		if(rfqItem.getSoldToCustomerNumber()!=null)
+			returnSb.append(rfqItem.getSoldToCustomerNumber()).append(SEPRATOR);
+		else
+			returnSb.append(SEPRATOR);
+		
+		if(rfqItem.getEndCustomerNumber()!=null)
+			returnSb.append(rfqItem.getEndCustomerNumber()).append(SEPRATOR);
+		else
+			returnSb.append(SEPRATOR);
+		
+		return returnSb.toString();
+	}
+	
+    public static Double calculateResalesMargin(Double cost, Double quotedPrice)
+    {
+    	Double returnD = null;
+    	if(cost!=null)
+    	{
+    		if(cost.doubleValue()==ZERO_DOUBLE)
+    		{
+    			if(quotedPrice!=null && quotedPrice.doubleValue()>ZERO_DOUBLE)
+    			{
+    				returnD= 100* quotedPrice/quotedPrice;
+    			}
+    		}
+    		else if(cost.doubleValue()>ZERO_DOUBLE)
+    		{
+    			if(quotedPrice!=null && quotedPrice.doubleValue()>ZERO_DOUBLE)
+    			{
+    				returnD= 100*(quotedPrice-cost)/quotedPrice;
+    			}
+    		}
+    	}
+    	return returnD;
+    }
+	
+    public static Double calculateTargetMargin(Double cost, Double targetResale)
+    {
+    	Double returnD = null;
+    	if(cost!=null)
+    	{
+    		if(cost.doubleValue()==ZERO_DOUBLE)
+    		{
+    			if(targetResale!=null && targetResale.doubleValue()>ZERO_DOUBLE)
+    			{
+    				returnD= 100* targetResale/targetResale;
+    			}
+    		}
+    		else if(cost.doubleValue()>ZERO_DOUBLE)
+    		{
+    			if(targetResale!=null && targetResale.doubleValue()>ZERO_DOUBLE)
+    			{
+    				returnD= 100*(targetResale-cost)/targetResale;
+    			}
+    		}
+    	}
+    	return returnD;
+    }
+    
+    public static String getCallingMethodName() {
+
+        StackTraceElement stack = Thread.currentThread().getStackTrace()[3];
+
+        return stack.getClassName() + "." + stack.getMethodName();
+
+    }
+
+    
+	public static int mpqRoundUp(double qty, int mpq){
+		double  d = qty / mpq;
+		if(d==0){
+			d = 1;
+		}
+		return  (int) (mpq * Math.ceil(d));
+	}
+	
+	public static String unicodeToChinese(String source) 
+	{
+		String changedStr = "";
+//		try 
+//		{
+			if(source!=null)
+			{	
+//			    changedStr = new String(source.getBytes("ISO8859_1"), "gb2312");
+//			    logger.info("@@@ "+ changedStr);
+//			    
+//			    changedStr = new String(source.getBytes("gb2312"), "UTF-8");
+//			    logger.info("@@@ "+ changedStr);
+//			    changedStr = new String(source.getBytes("ISO8859_1"), "UTF-8");
+//			    logger.info("@@@ "+ changedStr);
+//			    changedStr = new String(source.getBytes("UTF-8"), "gb2312");
+//			    logger.info("@@@ "+ changedStr);
+//			    changedStr = new String(source.getBytes("ISO8859_1"), "UTF-8");
+//			    logger.info("@@@ "+ changedStr);
+			    changedStr= source;
+//			    logger.info("@@@ "+ changedStr);
+			}
+//		} 
+//		catch (UnsupportedEncodingException ex) 
+//		{
+//	
+//		}
+		return changedStr;
+	}
+
+	public static String extractQuoteNumberFromException(String message){
+		
+		if(message == null){
+			return null;
+		}
+		
+		Pattern pattern = Pattern.compile("quoteNumber=\\w*\\s");
+		
+		Matcher matcher = pattern.matcher(message);
+	
+		if(matcher.find()){
+			int startIndex = matcher.start();
+			int lastIndex = matcher.end();
+			String s = message.substring(startIndex,lastIndex);
+			int index = "qutoeNumber=".length();
+			return s.substring(index);
+			
+		}
+		
+		return null;
+	}
+	
+	public static boolean isNumber(String str)
+	{
+	   final String numberStr = "1234567890.";  
+	   if(str!=null)
+	   {
+	   	   str = str.replaceAll("%","");
+	   	   if(str!=null && str.length()>0)
+	   	   {
+		       for(int i = 0; i < str.length(); i++)   
+		       {   
+		             if(numberStr.indexOf(str.charAt(i))== -1)   
+		             {   
+		                     return   false;   
+		             }   
+		       }  
+	   	   }
+	   }
+	   
+       return true;
+	}
+	
+	public static File doZipFile(String zipFileName, String fileNames) throws IOException
+	{
+
+      byte[] buffer = new byte[1024];
+      File f = new File(zipFileName);
+      ZipOutputStream outStream = new ZipOutputStream(new FileOutputStream(f));
+      String[] dirs = null!=fileNames?fileNames.split("/"):null;
+      
+      int size = dirs.length;
+      String fileName = fileNames;
+      if(size>1) {
+    	  fileName = dirs[size-1];
+      }
+
+      FileInputStream in = new FileInputStream(fileNames);
+      outStream.putNextEntry(new ZipEntry(fileName));
+      int bytesRead;
+      //Each chunk of data read from the input stream
+      //is written to the output stream
+      while ((bytesRead = in.read(buffer)) > 0) {
+          outStream.write(buffer, 0, bytesRead);
+      }
+      //Close zip entry and file streams
+      outStream.closeEntry();
+      in.close();
+
+      outStream.close();
+      return f;
+
+	}
+	
+	 
+	 
+	
+
+	public static Date shitDateByProgramType(Date date, String materialType){
+		Calendar cal = Calendar.getInstance();
+		cal.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+		cal.setTime(date);
+		if(materialType.equals(QuoteSBConstant.MATERIAL_TYPE_NORMAL))
+			cal.add(Calendar.DATE, QuoteSBConstant.QUOTE_EXPIRY_DATE_SHIFT_NORMAL);
+		else if(materialType.equals(QuoteSBConstant.MATERIAL_TYPE_PROGRAM))
+			cal.add(Calendar.DATE, QuoteSBConstant.QUOTE_EXPIRY_DATE_SHIFT_PROGRAM);
+		//cal.set(Calendar.HOUR_OF_DAY, 15);
+		return cal.getTime();
+	}
+	
+	
+	public static String transferMaterialType(String costIndicatorType)
+	{
+		if(QuoteSBConstant.RFQ_COST_INDICATOR_TYPE_P.equals(costIndicatorType))
+		{
+			return QuoteSBConstant.MATERIAL_TYPE_PROGRAM;
+		}
+		else
+		{
+			return QuoteSBConstant.MATERIAL_TYPE_NORMAL;
+		}
+	}
+	
+	
+	public static Date getCurrentDateZeroHour(){
+		Calendar cal = Calendar.getInstance();
+		cal.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+
+
+		return cal.getTime();
+	}
+	
+	public static String getTermId(int termsId)
+	{
+		String returnStr ="";
+		termsId = termsId-65;
+		if(termsId>=26)
+		{
+			returnStr = returnStr+(char)((int)((termsId/26)-1)+65);
+			returnStr = returnStr+(char)((termsId-((int)(termsId/26))*26)+65);
+		}
+		else
+		{
+			//System.out.println("((char)termsId):"+((char)termsId));
+			returnStr = returnStr+((char)(termsId+65));
+		}
+
+		return returnStr;
+	}
+	
+	public static SelectItem[] convertSapPartNumberToSelectItem(String requestedMfr ,String requestPartNumber,List<Tuple> sapPartNumberTuples ){	
+		
+		if(QuoteUtil.isEmpty(requestedMfr)||QuoteUtil.isEmpty(requestPartNumber))
+			return QuoteUtil.createFilterOptions(new String[]{});
+
+		ArrayList<String> sapPartNumberHaveEqualList = new ArrayList<String>();
+		ArrayList<String> sapPartNumberNoHaveEqualList = new ArrayList<String>();
+		String mfrPn = requestedMfr + requestPartNumber;
+
+		for(int i = 0 ; i < sapPartNumberTuples.size() ; i++)
+		{
+			String sapPartNumber = (String) sapPartNumberTuples.get(i).get(0);
+			if(!QuoteUtil.isEmpty(sapPartNumber) && !QuoteUtil.isEmpty(requestedMfr)) {
+				if(sapPartNumber.startsWith(requestedMfr) && sapPartNumber.contains("=")){
+					sapPartNumberHaveEqualList.add(sapPartNumber);
+				}else if(sapPartNumber.startsWith(requestedMfr)){
+					sapPartNumberNoHaveEqualList.add(sapPartNumber);
+				}
+			}
+		}
+		if(sapPartNumberNoHaveEqualList.size()==0){
+			return QuoteUtil.createFilterOptions(sapPartNumberHaveEqualList.toArray(new String[sapPartNumberHaveEqualList.size()]));
+		}else{
+			return QuoteUtil.createFilterOptions(sapPartNumberNoHaveEqualList.toArray(new String[sapPartNumberNoHaveEqualList.size()]));
+		}
+	}	
+	
+	
+	public static byte[] getUploadFileContent(UploadedFile uploadedFile)
+	{
+		byte[] tempContent = uploadedFile.getContents();
+		if(tempContent==null)
+		{
+			LOGGER.info("upload attachment content is null");
+			try {
+				tempContent = IOUtils.toByteArray(uploadedFile.getInputstream());
+			} catch (IOException e) {
+				LOGGER.info("upload attachment toByteArray error");
+				 LOGGER.log(Level.SEVERE, "Exception occurred for uploaded file: "+uploadedFile.getFileName()+" ,Exception message: "+e.getMessage(), e);
+			}
+		}
+		return tempContent;
+	}
+	
+	/********
+	 * 1. root region at the top as possible
+	 *  2. the user default region as default selected
+	 ********/
+	public static SelectItem[] getUserRegionDownListByOrder(Set<String> userallBizUnits, LinkedHashSet<String> allbizUnitLinkedHashSet
+			,boolean... displaySpecialRegion) {
+		/*********/
+		if(userallBizUnits ==null || userallBizUnits.isEmpty() ||
+				allbizUnitLinkedHashSet==null ||allbizUnitLinkedHashSet.isEmpty()) {
+			return new SelectItem[0];
+		}
+		Iterator<String> iter = allbizUnitLinkedHashSet.iterator();
+		while (iter.hasNext()) {
+			String region = iter.next();
+			if (userallBizUnits.stream().noneMatch(b->b.equalsIgnoreCase(region))) {
+				iter.remove();
+			}
+		}
+	 
+		if(displaySpecialRegion ==null || displaySpecialRegion.length<1 || !displaySpecialRegion[0]) {
+			Iterator<String> iter2 = allbizUnitLinkedHashSet.iterator();
+			List<String> list = Arrays.asList(QuoteConstant.REGION_NOT_DISPLAY);
+			while (iter2.hasNext()) {
+				String region = iter2.next();
+				if (list.stream().anyMatch(b->b.equalsIgnoreCase(region))) {
+					iter2.remove();
+				}
+			}
+		}
+		
+		SelectItem[] selects = QuoteUtil.createFilterOptions(
+				allbizUnitLinkedHashSet.toArray(new String[allbizUnitLinkedHashSet.size()]),
+				allbizUnitLinkedHashSet.toArray(new String[allbizUnitLinkedHashSet.size()]), false, false, true);
+		return selects;
+		
+	}
+	
+}

@@ -1,0 +1,135 @@
+
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+	<h:form id="form">
+	
+	<p:wizard widgetVar="wiz" flowListener="#{instantPriceCheckMB.onFlowProcess2}">
+		<p:messages id="messages" autoUpdate="true" closable="true" showDetail="true"/>
+		<p:tab id="instantPriceCheck_searchCriteria" title="1. Search Criteria">	
+			<p:panel header="Instant Price Check">	
+			    		
+			    <p:dataTable	var="item"
+								value="#{instantPriceCheckMB.instantPriceCheckItems}"     
+			    				rowKey="#{item.fullMfrPart}" 
+			    				rowIndexVar="rowIndex"
+			                 	id="datatable_instantpricecheck"
+			                 	filteredValue="#{instantPriceCheckMB.filteredInstantPriceCheckItems}"
+			                 	editable="true"
+			                 	editMode="cell"
+			                 	cellEditEvent="click">
+
+			        <p:column headerText="No." id="rowNumber" width="10">
+				        #{rowIndex+1}
+			        </p:column>
+			        
+			        <p:column headerText="MFR" sortBy="#{item.mfr}" filterBy="#{item.mfr}" id="mfr">
+			            <p:cellEditor>  
+			                <f:facet name="output"><h:outputText value="#{item.mfr}" /></f:facet>  
+			                <f:facet name="input">  
+			                    <p:inputText value="#{item.mfr}" />  
+			                </f:facet>  
+			            </p:cellEditor>  
+			        </p:column>
+			
+			        <p:column headerText="Requested P/N" sortBy="#{item.fullMfrPart}" filterBy="#{item.fullMfrPart}" id="fullMfrPart">
+			            <p:cellEditor>  
+			                <f:facet name="output"><h:outputText value="#{item.fullMfrPart}" /></f:facet>  
+			                <f:facet name="input">  
+			                    <p:inputText value="#{item.fullMfrPart}" />  
+			                </f:facet>  
+			            </p:cellEditor>          
+			        </p:column>
+			        
+			        <f:facet name="footer">
+			        	<p:commandButton value="Add 1 More" update=":form:datatable_instantpricecheck" icon="ui-icon-plusthick" actionListener="#{instantPriceCheckMB.addOneItem}"/>  
+			        	<p:commandButton value="Add 5 More" update=":form:datatable_instantpricecheck" icon="ui-icon-plusthick" actionListener="#{instantPriceCheckMB.addFiveItem}"/>  
+			        	<p:commandButton value="Clear" update=":form:datatable_instantpricecheck, :form:datatable_instantpricecheckresult" actionListener="#{instantPriceCheckMB.clearSearchCriteria}"/>
+			        </f:facet>
+			        
+			    </p:dataTable>
+			</p:panel>     		    
+	    </p:tab>
+   		<p:tab id="instantPriceCheck_result" title="2. Search Result">	
+   		
+		    
+			<p:panel header="Instant Price Check Result">       		
+			    <p:dataTable	var="item"
+			    				value="#{instantPriceCheckMB.instantPriceCheckResults}" 
+			    				rowKey="#{item.seq}" 
+			    				paginator="true" 
+			    				rowIndexVar="rowIndex"
+			    				rows="5"
+			    				rowsPerPageTemplate="5,10,15"
+			                 	selection="#{instantPriceCheckMB.selectedResults}" 			                 	
+			                 	id="datatable_instantpricecheckresult"
+			                 	filteredValue="#{instantPriceCheckMB.filteredInstantPriceCheckResults}"
+			                 	paginatorPosition="top"
+			                 	rowStyleClass="#{rfq.changed gt 0 ? 'tdchanged' : null}">
+			
+					
+					<p:column selectionMode="multiple" /> 
+					
+			        <p:column headerText="MFR Code" sortBy="#{item.mfr}" filterBy="#{item.mfr}" id="mfr">
+			        	#{item.mfr}
+			        </p:column>
+			
+			        <p:column headerText="Full MFR Part" sortBy="#{item.fullMfrPart}" filterBy="#{item.fullMfrPart}" id="fullMfrPart">
+			            #{item.fullMfrPart}
+			        </p:column>
+			
+			        <p:column headerText="Required Qty" sortBy="#{item.requiredQty}" filterBy="#{item.requiredQty}" id="requiredQty">
+			        	#{item.requiredQty}   
+			        </p:column>
+			        
+			        <p:column headerText="MPQ" sortBy="#{item.mpq}" filterBy="#{item.mpq}" id="mpq">
+			            #{item.mpq}
+			        </p:column>
+			
+			        <p:column headerText="MOQ" sortBy="#{item.moq}" filterBy="#{item.moq}" id="moq">
+			            #{item.moq}
+			        </p:column>
+			
+			        <p:column headerText="Price" sortBy="#{item.targetResale}" filterBy="#{item.targetResale}" id="targetResale">
+			            #{item.targetResale}
+			        </p:column>                                    
+			
+			        <p:column headerText="Cost Indicator" sortBy="#{item.costIndicator}" filterBy="#{item.costIndicator}" id="costIndicator">
+				        #{item.costIndicator}
+			        </p:column>   
+			                
+			        <p:column headerText="Quote Expiry Date" sortBy="#{item.quoteExpiryDate}" filterBy="#{item.quoteExpiryDate}" id="quoteExpiryDate">
+				        #{item.quoteExpiryDate}
+			        </p:column>        
+			
+			        <p:column headerText="Lead Time" sortBy="#{item.leadTime}" filterBy="#{item.leadTime}" id="leadTime">
+				        #{item.leadTime}
+			        </p:column>                       
+			         
+			        <f:facet name="footer">
+			        	<p:commandButton value="Convert To RFQ Form" update=":form:datatable_instantpricecheckresult" icon="ui-icon-plusthick" actionListener="#{instantPriceCheckMB.convertToRfqForm}"/>  
+			        </f:facet>
+			        		         
+			    </p:dataTable>    
+			</p:panel> 		
+   		</p:tab>
+	</p:wizard>
+<h:outputScript library="javascript" name="disableRowSelection.js" />		                
+</h:form>  	
+	
+	
+	
+	</ui:define>
+
+</ui:composition>
+
+
+

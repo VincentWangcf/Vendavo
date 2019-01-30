@@ -1,0 +1,254 @@
+package com.avnet.emasia.webquote.user.ejb;
+
+import java.io.File;
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.ejb.Timer;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+
+import org.apache.poi.util.TempFile;
+import org.apache.poi.util.TempFile.DefaultTempFileCreationStrategy;
+
+import com.avnet.emasia.webquote.entity.Action;
+import com.avnet.emasia.webquote.entity.AppFunction;
+import com.avnet.emasia.webquote.entity.Role;
+import com.avnet.emasia.webquote.entity.Screen;
+import com.avnet.emasia.webquote.entity.Strategy;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.strategy.StrategyFactory;
+import com.avnet.emasia.webquote.utilities.common.OSTimeZone;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+
+/**
+ * Session Bean implementation class ApplicationSB
+ */
+@Startup
+@Singleton
+@LocalBean
+public class ApplicationSB {
+	
+	private static final Logger LOG = Logger.getLogger(ApplicationSB.class.getName());
+	
+	@PersistenceContext(unitName="Server_Source")
+	private EntityManager em;
+	
+	@EJB
+	ActiveSessionSB activeSessionSB;
+	
+	@EJB
+	private SysConfigSB sysConfigSB;
+	
+	private LinkedHashMap<String, List<String>> screenRoles = new LinkedHashMap<String,List<String>>();
+	private LinkedHashMap<String, List<String>> actionRoles = new LinkedHashMap<String,List<String>>();
+	private LinkedHashMap<String, List<String>> appFunctionRoles = new LinkedHashMap<String,List<String>>();
+	
+	private int version = 0;
+	
+	private List<ApplicationSBListener> applicationSBListeners = new ArrayList<ApplicationSBListener>(); 
+
+    /**
+     * Default constructor. 
+     */
+    public ApplicationSB() {
+        // TODO Auto-generated constructor stub
+    }
+    
+    @PostConstruct
+    public void init(){
+    	LOG.info("ApplicationSB init() called");
+    	
+    	//fix incident INC0018368 June Guo 20140527 to add jvmtimezone
+    	OSTimeZone.setOsTimeZone(Calendar.getInstance().getTimeZone());
+    	
+		TimeZone.setDefault(TimeZone.getTimeZone("GMT+08"));
+    	loadFunctionRole();
+
+    	version++;
+    	
+    	/*LOG.info("Start to clear Session ");
+    	activeSessionSB.clearSession();
+    	LOG.info("End to clear Session successfully");*/
+		String str =sysConfigSB.getProperyValue("POI_TEMP_PATH_DIR");
+		//need del
+		//TODO
+		try {
+           String address = InetAddress.getLocalHost().getHostName().toString();
+           if("cis2115vmts".equalsIgnoreCase(address)) { 
+        	   str="C:/temp";
+           }
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+        } 
+		//LOG.info("ApplicationSB init() called=====:"+str);
+		DefaultTempFileCreationStrategy strategy=new DefaultTempFileCreationStrategy(new File(str));
+		TempFile.setTempFileCreationStrategy(strategy);
+    	//
+		initStrategy();
+    }
+    
+   /* private void initStrategy() {
+    	Map<String, Object> strategyMap = new HashMap<String, Object>();
+    	TypedQuery<Strategy> query = em.createQuery("select e from Strategy e ", Strategy.class);
+		query.getResultList().stream().forEach(strategy ->  
+				strategyMap.put(strategy.getStrategyInterface() + "|" + strategy.getKey(), strategy.getStrategyImplementation())
+			);
+		StrategyFactory.getSingletonFactory().initMap(strategyMap);
+		LOG.info(" initStrategy() completed!");
+    }*/
+    
+    private void initStrategy() {
+    	TypedQuery<Strategy> query = em.createQuery("select e from Strategy e ", Strategy.class);
+		StrategyFactory.getSingletonFactory().initMap(query.getResultList());
+		LOG.info(" initStrategy() completed!");
+    }
+    
+    public void loadFunctionRole() {
+    	
+    	screenRoles.clear();
+    	actionRoles.clear();
+    	appFunctionRoles.clear();
+    	
+		Query query = em.createQuery("SELECT a FROM Screen a order by a.pathOrder");
+    	List<Screen> screens = query.getResultList();
+
+		for(Screen screen : screens){
+			List<String> roles= new ArrayList<String>();
+			for(Role role : screen.getAppFunction().getRoles()){
+				roles.add(role.getName());
+			}
+			
+			List<String> a = screenRoles.get(screen.getPath());
+			if(a == null){
+				screenRoles.put(screen.getPath(), roles);
+			}else{
+				a.addAll(roles);
+				screenRoles.put(screen.getPath(), a);
+			}
+			
+			
+			LOG.info("Putting Screen " + screen.getPath() + " with Roles " + roles + " in Map");
+		}
+
+    	
+    	query = em.createQuery("SELECT a FROM Action a");
+    	List<Action> actions = query.getResultList();
+
+		for(Action action : actions){
+			List<String> roles= new ArrayList<String>();
+			for(Role role : action.getAppFunction().getRoles()){
+				roles.add(role.getName());
+			}
+			actionRoles.put(action.getPath(), roles);
+			LOG.info("Putting Action " + action.getPath() + " with Roles " + roles + " in Map");
+		}
+
+    	query = em.createQuery("SELECT a FROM AppFunction a");
+    	List<AppFunction> appFunctions = query.getResultList();
+
+		for(AppFunction appFunction : appFunctions){
+			List<String> roles= new ArrayList<String>();
+			for(Role role : appFunction.getRoles()){
+				roles.add(role.getName());
+			}
+			appFunctionRoles.put(appFunction.getName(), roles);
+			LOG.info("Putting Function " + appFunction.getName() + " with Roles " + roles + " in Map");
+		}		
+		
+		LOG.info("loadFunctionRole finished.");
+		
+		LOG.info("screenRoles Size: " + screenRoles.size());
+		LOG.info("actionRoles Size: " + actionRoles.size());
+		LOG.info("appFunctionRoles Size: " + appFunctionRoles.size());
+		
+		for(ApplicationSBListener listener : applicationSBListeners){
+			listener.applicationSBChanged();
+		}
+    	
+    }
+    
+    
+	public boolean isActionAccessibleByUser(User user, String action) {
+		if (user != null) {
+			List<String > roles = new ArrayList<String>();
+			for(Role role : user.getRoles() ){
+				roles.add(role.getName());
+			}
+			
+			List<String> allowedRoles =actionRoles.get(action);
+			
+			if(allowedRoles == null){
+				return false;
+			}
+			
+			
+			for(String role : roles){
+				if(allowedRoles.contains(role)){
+					return true;
+				}
+			}
+
+		}
+		return false;
+	} 
+	
+	public boolean isAppFunctionAccessibleByUser(User user, String appFunction) {
+		if (user != null) {
+			List<String > roles = new ArrayList<String>();
+			for(Role role : user.getRoles() ){
+				roles.add(role.getName());
+			}
+			
+			List<String> allowedRoles = appFunctionRoles.get(appFunction);
+			
+			if(allowedRoles == null){
+				return false;
+			}
+			
+			
+			for(String role : roles){
+				if(allowedRoles.contains(role)){
+					return true;
+				}
+			}
+
+		}
+		return false;
+	}	
+    
+    
+	public LinkedHashMap<String, List<String>> getScreenRoles() {
+		return screenRoles;
+	}
+
+	public LinkedHashMap<String, List<String>> getActionRoles() {
+		return actionRoles;
+	}
+
+	public int getVersion() {
+		return version;
+	}
+
+	public LinkedHashMap<String, List<String>> getAppFunctionRoles() {
+		return appFunctionRoles;
+	}
+
+	public void addApplicationSBListener(ApplicationSBListener listener){
+		applicationSBListeners.add(listener);
+	}
+}

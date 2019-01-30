@@ -1,0 +1,173 @@
+package com.avnet.emasia.webquote.commodity.helper;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.commodity.vo.ProgramMaterialMaintVo;
+import com.avnet.emasia.webquote.entity.ProgramPricer;
+import com.avnet.emasia.webquote.entity.QuantityBreakPrice;
+import com.avnet.emasia.webquote.masterData.util.DateUtils;
+
+public class TransferHelper {
+
+	private static Logger logger = Logger.getLogger(TransferHelper.class
+			.getName());
+
+	public static List<ProgramMaterialMaintVo> transferToPIMaintList(
+			List<ProgramPricer> piList) {
+		List<ProgramMaterialMaintVo> piVoList = new ArrayList<ProgramMaterialMaintVo>();
+		for (int i = 0; i < piList.size(); i++) {
+			ProgramPricer pi = (ProgramPricer) piList.get(i);
+			ProgramMaterialMaintVo pimv = new ProgramMaterialMaintVo();
+			pimv.setId(String.valueOf(pi.getId()));
+			pimv.setAvailableToSellQuantity(pi.getProgramAvailableToSellQty());
+			pimv.setFullMFRPart(pi.getMaterial().getFullMfrPartNumber());
+			pimv.setMfr(pi.getMaterial().getManufacturer().getName());
+			pimv.setProductGroup(pi.getMaterial().getProductGroup2().getName());
+			pimv.setProgram(pi.getProgramType().getName());
+
+			// icon columns
+			pimv.setSpecialItemIndicator(pi.getProgramSpecialItemFlag());
+			// tool tip columns
+			pimv.setMoq(String.valueOf(pi.getMoq()));
+			pimv.setMpq(String.valueOf(pi.getMpq()));
+			pimv.setLeadTime(pi.getLeadTime());
+			pimv.setQuoteExpiryDate(tranferValidityToQED(pi.getPriceValidity()));
+			pimv.setTermsandConditions(pi.getTermsAndConditions());
+			pimv.setAllocation(booleanToString(pi.getAllocationFlag()));
+
+			pimv.setDisplayOnTop(pi.getMaterial().getDisplayOnTop());
+			// pimv.setMinimumCost(pi.getProgramMinimumCost());
+			// for defect 378
+			pimv.setMinimumCost(pi.getCost());
+			pimv.setCallForQuote(booleanToString(pi.getProgramCallForQuote()));
+			pimv.setMov(pi.getMov());
+			if (pi.getCostIndicator() != null)
+				pimv.setCostIndicator(pi.getCostIndicator().getName());
+			pimv.setProgramEffectiveDate(DateUtils.formatDate(pi
+					.getProgramEffectiveDate()));
+			pimv.setProgramClosingDate(DateUtils.formatDate(pi
+					.getProgramClosingDate()));
+			pimv.setQuantityIndicator(pi.getQtyIndicator());
+			pimv.setAllocationFlag(booleanToString(pi.getAllocationFlag()));
+			pimv.setNewItemIndicator(booleanToString(pi
+					.getNewProgramMaterialIndicator()));
+
+			pimv.setResaleIndicator(pi.getResaleIndicator());
+			pimv.setAqFlag(booleanToString(pi.getProgramAqFlag()));
+			pimv.setAvnetQuoteCentreComments(pi.getAvnetQcComments());
+			pimv.setLastUpdate(DateUtils.formatDatetime(pi.getLastUpdatedOn()));
+			// if(pi.getLastUpdatedBy()!=null)
+			// pimv.setLastUpdateBy(pi.getLastUpdatedBy().getEmployeeId());
+			// pimv.setCreatedOn(DateUtils.formatDatetime(pi.getCreatedOn()));
+			// if(pi.getCreatedBy()!=null)
+			// pimv.setCreatedBy(pi.getCreatedBy().getEmployeeId());
+			// Material restructure and quote_item delinkage. changed on 10 Apr
+			// 2014.
+			if (pi.getLastUpdatedBy() != null)
+				pimv.setLastUpdateBy(pi.getLastUpdatedBy());
+			pimv.setCreatedOn(DateUtils.formatDatetime(pi.getCreatedOn()));
+			if (pi.getCreatedBy() != null)
+				pimv.setCreatedBy(pi.getCreatedBy());
+
+			if (pi.getShipmentValidity() != null)
+				pimv.setValidity(DateUtils.formatDate(pi.getShipmentValidity()));
+
+			if (pi.getShipmentValidity() != null)
+				pimv.setShipmentValidity(DateUtils.formatDate(pi
+						.getShipmentValidity()));
+
+			List<QuantityBreakPrice> pricesList = pi.getQuantityBreakPrices();
+			if (null != pricesList) {
+				pimv = setVoWithPrice(pimv, pricesList);
+			}
+			piVoList.add(pimv);
+
+		}
+		return piVoList;
+	}
+
+	public static String tranferValidityToQED(String validity) {
+		String qed = null;
+		if (validity != null) {
+			if (DateUtils.isDate(validity)) {
+				qed = DateUtils.addDay(validity, -1);
+			} else {
+				if (StringUtils.isNumeric(validity)) {
+					qed = String
+							.valueOf(Integer.valueOf(validity).intValue() - 1);
+				}
+			}
+		}
+		return qed;
+	}
+
+	public static String booleanToString(Boolean booValue) {
+		if (booValue == null || !booValue)
+			return "N";
+		else
+			return "Y";
+	}
+
+	protected static ProgramMaterialMaintVo setVoWithPrice(
+			ProgramMaterialMaintVo pimv, List<QuantityBreakPrice> pricesList) {
+		int size = pricesList.size();
+		if (size > 0) {
+			pimv.setQuantityBreak1(getQuantity(pricesList.get(0)));
+			pimv.setQuantityBreakPrice1(getPrice(pricesList.get(0)));
+		}
+		if (size > 1) {
+			pimv.setQuantityBreak2(getQuantity(pricesList.get(1)));
+			pimv.setQuantityBreakPrice2(getPrice(pricesList.get(1)));
+		}
+		if (size > 2) {
+			pimv.setQuantityBreak3(getQuantity(pricesList.get(2)));
+			pimv.setQuantityBreakPrice3(getPrice(pricesList.get(2)));
+		}
+		if (size > 3) {
+			pimv.setQuantityBreak4(getQuantity(pricesList.get(3)));
+			pimv.setQuantityBreakPrice4(getPrice(pricesList.get(3)));
+		}
+		if (size > 4) {
+			pimv.setQuantityBreak5(getQuantity(pricesList.get(4)));
+			pimv.setQuantityBreakPrice5(getPrice(pricesList.get(4)));
+		}
+		if (size > 5) {
+			pimv.setQuantityBreak6(getQuantity(pricesList.get(5)));
+			pimv.setQuantityBreakPrice6(getPrice(pricesList.get(5)));
+		}
+		if (size > 6) {
+			pimv.setQuantityBreak7(getQuantity(pricesList.get(6)));
+			pimv.setQuantityBreakPrice7(getPrice(pricesList.get(6)));
+		}
+		if (size > 7) {
+			pimv.setQuantityBreak8(getQuantity(pricesList.get(7)));
+			pimv.setQuantityBreakPrice8(getPrice(pricesList.get(7)));
+		}
+		if (size > 8) {
+			pimv.setQuantityBreak9(getQuantity(pricesList.get(8)));
+			pimv.setQuantityBreakPrice9(getPrice(pricesList.get(8)));
+		}
+		if (size > 9) {
+			pimv.setQuantityBreak10(getQuantity(pricesList.get(9)));
+			pimv.setQuantityBreakPrice10(getPrice(pricesList.get(9)));
+		}
+
+		return pimv;
+	}
+
+	protected static String getPrice(QuantityBreakPrice pib) {
+		if (pib.getQuantityBreakPrice() == -999999)
+			return "";
+		else
+			return String.valueOf(pib.getQuantityBreakPrice());
+	}
+
+	protected static String getQuantity(QuantityBreakPrice pib) {
+		return String.valueOf(pib.getQuantityBreak());
+	}
+
+}

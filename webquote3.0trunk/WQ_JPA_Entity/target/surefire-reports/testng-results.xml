@@ -1,0 +1,1256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results skipped="0" failed="12" total="81" passed="69">
+  <reporter-output>
+  </reporter-output>
+  <suite name="Command line suite" duration-ms="292" started-at="2018-10-11T07:47:35Z" finished-at="2018-10-11T07:47:35Z">
+    <groups>
+    </groups>
+    <test name="Command line test" duration-ms="292" started-at="2018-10-11T07:47:35Z" finished-at="2018-10-11T07:47:35Z">
+      <class name="com.avnet.emasia.webquote.entity.PricerTest">
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calPmoqTest1()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="calPmoqTest1" duration-ms="4" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calPmoqTest1 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calPmoqTest0()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="calPmoqTest0" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calPmoqTest0 -->
+        <test-method status="PASS" signature="calPmoqTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="calPmoqTest2" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calPmoqTest2 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calPmoqTest3()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="calPmoqTest3" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calPmoqTest3 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calPmoqTest4()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="calPmoqTest4" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calPmoqTest4 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calPriceValidityDateTest1()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="calPriceValidityDateTest1" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calPriceValidityDateTest1 -->
+        <test-method status="PASS" signature="calPriceValidityDateTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="calPriceValidityDateTest2" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calPriceValidityDateTest2 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="isCustomerMatchedTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="isCustomerMatchedTest2" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- isCustomerMatchedTest2 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="isCustomerMatchedTest1()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="isCustomerMatchedTest1" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- isCustomerMatchedTest1 -->
+        <test-method status="PASS" signature="isCustomerMatchedTest4()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="isCustomerMatchedTest4" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- isCustomerMatchedTest4 -->
+        <test-method status="PASS" signature="isCustomerMatchedTest3()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="isCustomerMatchedTest3" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- isCustomerMatchedTest3 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="isEffectivePricerTest()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="isEffectivePricerTest" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- isEffectivePricerTest -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="isSalesCostTypeMatchedTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="isSalesCostTypeMatchedTest2" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- isSalesCostTypeMatchedTest2 -->
+        <test-method status="PASS" signature="isSalesCostTypeMatchedTest1()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="isSalesCostTypeMatchedTest1" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- isSalesCostTypeMatchedTest1 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.PricerTest@5a61f5df]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+      </class> <!-- com.avnet.emasia.webquote.entity.PricerTest -->
+      <class name="com.avnet.emasia.webquote.entity.CostIndicatorTest">
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.CostIndicatorTest@54a097cc]" name="setup" is-config="true" duration-ms="50" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="applyTest1()[pri:0, instance:com.avnet.emasia.webquote.entity.CostIndicatorTest@54a097cc]" name="applyTest1" duration-ms="12" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- applyTest1 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.CostIndicatorTest@54a097cc]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="applyTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.CostIndicatorTest@54a097cc]" name="applyTest2" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- applyTest2 -->
+      </class> <!-- com.avnet.emasia.webquote.entity.CostIndicatorTest -->
+      <class name="com.avnet.emasia.webquote.entity.MoneyTest">
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="test2()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="test2" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- test2 -->
+        <test-method status="PASS" signature="test1()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="test1" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- test1 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="test3()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="test3" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- test3 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="test5()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="test5" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- test5 -->
+        <test-method status="PASS" signature="test4()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="test4" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- test4 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="test6()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="test6" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- test6 -->
+        <test-method status="PASS" signature="test7()[pri:0, instance:com.avnet.emasia.webquote.entity.MoneyTest@3567135c]" name="test7" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- test7 -->
+      </class> <!-- com.avnet.emasia.webquote.entity.MoneyTest -->
+      <class name="com.avnet.emasia.webquote.entity.MaterialRegionalTest">
+        <test-method status="PASS" signature="setUp()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialRegionalTest@6df97b55]" name="setUp" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setUp -->
+        <test-method status="PASS" signature="fillInPricerTest()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialRegionalTest@6df97b55]" name="fillInPricerTest" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- fillInPricerTest -->
+        <test-method status="PASS" signature="setUp()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialRegionalTest@6df97b55]" name="setUp" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setUp -->
+        <test-method status="PASS" signature="getManufacturerDetailTest()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialRegionalTest@6df97b55]" name="getManufacturerDetailTest" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getManufacturerDetailTest -->
+        <test-method status="PASS" signature="getManufacturerDetailTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialRegionalTest@6df97b55]" name="getManufacturerDetailTest2" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getManufacturerDetailTest2 -->
+        <test-method status="PASS" signature="setUp()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialRegionalTest@6df97b55]" name="setUp" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setUp -->
+        <test-method status="PASS" signature="setUp()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialRegionalTest@6df97b55]" name="setUp" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setUp -->
+        <test-method status="PASS" signature="getMaterialRegaionalTest()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialRegionalTest@6df97b55]" name="getMaterialRegaionalTest" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getMaterialRegaionalTest -->
+        <test-method status="PASS" signature="setUp()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialRegionalTest@6df97b55]" name="setUp" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setUp -->
+        <test-method status="PASS" signature="getMaterialRegaionalTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialRegionalTest@6df97b55]" name="getMaterialRegaionalTest2" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getMaterialRegaionalTest2 -->
+      </class> <!-- com.avnet.emasia.webquote.entity.MaterialRegionalTest -->
+      <class name="com.avnet.emasia.webquote.entity.MaterialTest">
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="8" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="FAIL" signature="fillInPricerInfoTest()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="fillInPricerInfoTest" duration-ms="3" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <exception class="java.lang.NullPointerException">
+            <message>
+              <![CDATA[Name is null]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.NullPointerException: Name is null
+	at java.lang.Enum.valueOf(Enum.java:236)
+	at com.avnet.emasia.webquote.entity.Currency.valueOf(Currency.java:5)
+	at com.avnet.emasia.webquote.entity.Material.applyAQLogic(Material.java:517)
+	at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest(MaterialTest.java:234)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.testng.internal.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:80)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:714)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:901)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1231)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:127)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:111)
+	at org.testng.TestRunner.privateRun(TestRunner.java:767)
+	at org.testng.TestRunner.run(TestRunner.java:617)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:334)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:329)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:291)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:240)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:86)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1198)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1123)
+	at org.testng.TestNG.run(TestNG.java:1031)
+	at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:77)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.executeMulti(TestNGDirectoryTestSuite.java:159)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.execute(TestNGDirectoryTestSuite.java:99)
+	at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:106)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.maven.surefire.util.ReflectionUtils.invokeMethodWithArray(ReflectionUtils.java:189)
+	at org.apache.maven.surefire.booter.ProviderFactory$ProviderProxy.invoke(ProviderFactory.java:165)
+	at org.apache.maven.surefire.booter.ProviderFactory.invokeProvider(ProviderFactory.java:85)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:115)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:75)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.NullPointerException -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- fillInPricerInfoTest -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="FAIL" signature="fillInPricerInfoTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="fillInPricerInfoTest2" duration-ms="2" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <exception class="java.lang.NullPointerException">
+            <message>
+              <![CDATA[Name is null]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.NullPointerException: Name is null
+	at java.lang.Enum.valueOf(Enum.java:236)
+	at com.avnet.emasia.webquote.entity.Currency.valueOf(Currency.java:5)
+	at com.avnet.emasia.webquote.entity.Material.applyAQLogic(Material.java:517)
+	at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest2(MaterialTest.java:245)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.testng.internal.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:80)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:714)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:901)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1231)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:127)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:111)
+	at org.testng.TestRunner.privateRun(TestRunner.java:767)
+	at org.testng.TestRunner.run(TestRunner.java:617)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:334)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:329)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:291)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:240)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:86)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1198)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1123)
+	at org.testng.TestNG.run(TestNG.java:1031)
+	at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:77)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.executeMulti(TestNGDirectoryTestSuite.java:159)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.execute(TestNGDirectoryTestSuite.java:99)
+	at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:106)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.maven.surefire.util.ReflectionUtils.invokeMethodWithArray(ReflectionUtils.java:189)
+	at org.apache.maven.surefire.booter.ProviderFactory$ProviderProxy.invoke(ProviderFactory.java:165)
+	at org.apache.maven.surefire.booter.ProviderFactory.invokeProvider(ProviderFactory.java:85)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:115)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:75)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.NullPointerException -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- fillInPricerInfoTest2 -->
+        <test-method status="FAIL" signature="fillInPricerInfoTest3()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="fillInPricerInfoTest3" duration-ms="3" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <exception class="java.lang.NullPointerException">
+            <message>
+              <![CDATA[Name is null]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.NullPointerException: Name is null
+	at java.lang.Enum.valueOf(Enum.java:236)
+	at com.avnet.emasia.webquote.entity.Currency.valueOf(Currency.java:5)
+	at com.avnet.emasia.webquote.entity.Material.applyAQLogic(Material.java:517)
+	at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest3(MaterialTest.java:269)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.testng.internal.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:80)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:714)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:901)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1231)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:127)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:111)
+	at org.testng.TestRunner.privateRun(TestRunner.java:767)
+	at org.testng.TestRunner.run(TestRunner.java:617)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:334)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:329)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:291)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:240)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:86)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1198)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1123)
+	at org.testng.TestNG.run(TestNG.java:1031)
+	at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:77)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.executeMulti(TestNGDirectoryTestSuite.java:159)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.execute(TestNGDirectoryTestSuite.java:99)
+	at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:106)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.maven.surefire.util.ReflectionUtils.invokeMethodWithArray(ReflectionUtils.java:189)
+	at org.apache.maven.surefire.booter.ProviderFactory$ProviderProxy.invoke(ProviderFactory.java:165)
+	at org.apache.maven.surefire.booter.ProviderFactory.invokeProvider(ProviderFactory.java:85)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:115)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:75)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.NullPointerException -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- fillInPricerInfoTest3 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="FAIL" signature="fillInPricerInfoTest30()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="fillInPricerInfoTest30" duration-ms="2" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <exception class="java.lang.NullPointerException">
+            <message>
+              <![CDATA[Name is null]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.NullPointerException: Name is null
+	at java.lang.Enum.valueOf(Enum.java:236)
+	at com.avnet.emasia.webquote.entity.Currency.valueOf(Currency.java:5)
+	at com.avnet.emasia.webquote.entity.Material.applyAQLogic(Material.java:517)
+	at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest30(MaterialTest.java:288)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.testng.internal.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:80)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:714)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:901)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1231)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:127)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:111)
+	at org.testng.TestRunner.privateRun(TestRunner.java:767)
+	at org.testng.TestRunner.run(TestRunner.java:617)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:334)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:329)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:291)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:240)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:86)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1198)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1123)
+	at org.testng.TestNG.run(TestNG.java:1031)
+	at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:77)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.executeMulti(TestNGDirectoryTestSuite.java:159)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.execute(TestNGDirectoryTestSuite.java:99)
+	at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:106)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.maven.surefire.util.ReflectionUtils.invokeMethodWithArray(ReflectionUtils.java:189)
+	at org.apache.maven.surefire.booter.ProviderFactory$ProviderProxy.invoke(ProviderFactory.java:165)
+	at org.apache.maven.surefire.booter.ProviderFactory.invokeProvider(ProviderFactory.java:85)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:115)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:75)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.NullPointerException -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- fillInPricerInfoTest30 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="FAIL" signature="fillInPricerInfoTest4()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="fillInPricerInfoTest4" duration-ms="67" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[expected [false] but found [true]]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: expected [false] but found [true]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertEquals(Assert.java:123)
+	at org.testng.Assert.assertEquals(Assert.java:286)
+	at org.testng.Assert.assertEquals(Assert.java:296)
+	at com.avnet.emasia.webquote.entity.MaterialTest.fillInPricerInfoTest4(MaterialTest.java:306)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.testng.internal.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:80)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:714)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:901)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1231)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:127)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:111)
+	at org.testng.TestRunner.privateRun(TestRunner.java:767)
+	at org.testng.TestRunner.run(TestRunner.java:617)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:334)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:329)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:291)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:240)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:86)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1198)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1123)
+	at org.testng.TestNG.run(TestNG.java:1031)
+	at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:77)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.executeMulti(TestNGDirectoryTestSuite.java:159)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.execute(TestNGDirectoryTestSuite.java:99)
+	at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:106)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.maven.surefire.util.ReflectionUtils.invokeMethodWithArray(ReflectionUtils.java:189)
+	at org.apache.maven.surefire.booter.ProviderFactory$ProviderProxy.invoke(ProviderFactory.java:165)
+	at org.apache.maven.surefire.booter.ProviderFactory.invokeProvider(ProviderFactory.java:85)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:115)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:75)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- fillInPricerInfoTest4 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="4" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="getCandidatePricersForAQTest1()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="getCandidatePricersForAQTest1" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getCandidatePricersForAQTest1 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="getCandidatePricersForAQTest10()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="getCandidatePricersForAQTest10" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getCandidatePricersForAQTest10 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="getCandidatePricersForAQTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="getCandidatePricersForAQTest2" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getCandidatePricersForAQTest2 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="3" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="getCandidatePricersForAQTest3()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="getCandidatePricersForAQTest3" duration-ms="2" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getCandidatePricersForAQTest3 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="3" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="getCandidatePricersForAQTest4()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="getCandidatePricersForAQTest4" duration-ms="4" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getCandidatePricersForAQTest4 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="2" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="getCandidatePricersForAQTest5()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="getCandidatePricersForAQTest5" duration-ms="2" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getCandidatePricersForAQTest5 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="getCandidatePricersForAQTest6()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="getCandidatePricersForAQTest6" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getCandidatePricersForAQTest6 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="getCandidatePricersForAQTest7()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="getCandidatePricersForAQTest7" duration-ms="7" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getCandidatePricersForAQTest7 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="getCandidatePricersForAQTest8()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="getCandidatePricersForAQTest8" duration-ms="3" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getCandidatePricersForAQTest8 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="getCandidatePricersForAQTest9()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="getCandidatePricersForAQTest9" duration-ms="2" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getCandidatePricersForAQTest9 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="getMaterialRegaionalTest()[pri:0, instance:com.avnet.emasia.webquote.entity.MaterialTest@531be3c5]" name="getMaterialRegaionalTest" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getMaterialRegaionalTest -->
+      </class> <!-- com.avnet.emasia.webquote.entity.MaterialTest -->
+      <class name="com.avnet.emasia.webquote.entity.QtyCalTest">
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="FAIL" signature="calMoqTest1()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calMoqTest1" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[expected [1500] but found [1100]]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: expected [1500] but found [1100]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertEquals(Assert.java:123)
+	at org.testng.Assert.assertEquals(Assert.java:370)
+	at org.testng.Assert.assertEquals(Assert.java:380)
+	at com.avnet.emasia.webquote.entity.QtyCalTest.calMoqTest1(QtyCalTest.java:69)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.testng.internal.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:80)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:714)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:901)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1231)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:127)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:111)
+	at org.testng.TestRunner.privateRun(TestRunner.java:767)
+	at org.testng.TestRunner.run(TestRunner.java:617)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:334)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:329)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:291)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:240)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:86)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1198)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1123)
+	at org.testng.TestNG.run(TestNG.java:1031)
+	at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:77)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.executeMulti(TestNGDirectoryTestSuite.java:159)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.execute(TestNGDirectoryTestSuite.java:99)
+	at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:106)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.maven.surefire.util.ReflectionUtils.invokeMethodWithArray(ReflectionUtils.java:189)
+	at org.apache.maven.surefire.booter.ProviderFactory$ProviderProxy.invoke(ProviderFactory.java:165)
+	at org.apache.maven.surefire.booter.ProviderFactory.invokeProvider(ProviderFactory.java:85)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:115)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:75)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calMoqTest1 -->
+        <test-method status="FAIL" signature="calMoqTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calMoqTest2" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[expected [1800] but found [1100]]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: expected [1800] but found [1100]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertEquals(Assert.java:123)
+	at org.testng.Assert.assertEquals(Assert.java:370)
+	at org.testng.Assert.assertEquals(Assert.java:380)
+	at com.avnet.emasia.webquote.entity.QtyCalTest.calMoqTest2(QtyCalTest.java:74)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.testng.internal.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:80)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:714)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:901)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1231)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:127)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:111)
+	at org.testng.TestRunner.privateRun(TestRunner.java:767)
+	at org.testng.TestRunner.run(TestRunner.java:617)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:334)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:329)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:291)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:240)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:86)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1198)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1123)
+	at org.testng.TestNG.run(TestNG.java:1031)
+	at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:77)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.executeMulti(TestNGDirectoryTestSuite.java:159)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.execute(TestNGDirectoryTestSuite.java:99)
+	at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:106)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.maven.surefire.util.ReflectionUtils.invokeMethodWithArray(ReflectionUtils.java:189)
+	at org.apache.maven.surefire.booter.ProviderFactory$ProviderProxy.invoke(ProviderFactory.java:165)
+	at org.apache.maven.surefire.booter.ProviderFactory.invokeProvider(ProviderFactory.java:85)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:115)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:75)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calMoqTest2 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calMoqTest3()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calMoqTest3" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calMoqTest3 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calQtyIndicatorTest()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calQtyIndicatorTest" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQtyIndicatorTest -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calQtyIndicatorTest6()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calQtyIndicatorTest6" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQtyIndicatorTest6 -->
+        <test-method status="PASS" signature="calQtyIndicatorTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calQtyIndicatorTest2" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQtyIndicatorTest2 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calQuotedQtyTest1()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calQuotedQtyTest1" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQuotedQtyTest1 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calQuotedQtyTest11()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calQuotedQtyTest11" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQuotedQtyTest11 -->
+        <test-method status="PASS" signature="calQuotedQtyTest12()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calQuotedQtyTest12" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQuotedQtyTest12 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calQuotedQtyTest22()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calQuotedQtyTest22" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQuotedQtyTest22 -->
+        <test-method status="PASS" signature="calQuotedQtyTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calQuotedQtyTest2" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQuotedQtyTest2 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calQuotedQtyTest21()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calQuotedQtyTest21" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQuotedQtyTest21 -->
+        <test-method status="PASS" signature="calQuotedQtyTest23()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calQuotedQtyTest23" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQuotedQtyTest23 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calQuotedQtyTest24()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calQuotedQtyTest24" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQuotedQtyTest24 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calQuotedQtyTest3()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="calQuotedQtyTest3" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQuotedQtyTest3 -->
+        <test-method status="PASS" signature="qtyIndicatorTest3()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="qtyIndicatorTest3" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- qtyIndicatorTest3 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="roundDownTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="roundDownTest2" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- roundDownTest2 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="roundDownTest()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="roundDownTest" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- roundDownTest -->
+        <test-method status="PASS" signature="qtyIndicatorTest4()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="qtyIndicatorTest4" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- qtyIndicatorTest4 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="roundDownTest3()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="roundDownTest3" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- roundDownTest3 -->
+        <test-method status="PASS" signature="roundUpTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="roundUpTest2" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- roundUpTest2 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="roundUpTest()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="roundUpTest" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- roundUpTest -->
+        <test-method status="PASS" signature="roundUpTest3()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyCalTest@3551a94]" name="roundUpTest3" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- roundUpTest3 -->
+      </class> <!-- com.avnet.emasia.webquote.entity.QtyCalTest -->
+      <class name="com.avnet.emasia.webquote.vo.RfqItemVOTest">
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="FAIL" signature="matchAQConditionsTest1()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="matchAQConditionsTest1" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[expected [true] but found [false]]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: expected [true] but found [false]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertTrue(Assert.java:42)
+	at org.testng.Assert.assertTrue(Assert.java:52)
+	at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest1(RfqItemVOTest.java:48)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.testng.internal.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:80)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:714)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:901)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1231)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:127)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:111)
+	at org.testng.TestRunner.privateRun(TestRunner.java:767)
+	at org.testng.TestRunner.run(TestRunner.java:617)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:334)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:329)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:291)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:240)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:86)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1198)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1123)
+	at org.testng.TestNG.run(TestNG.java:1031)
+	at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:77)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.executeMulti(TestNGDirectoryTestSuite.java:159)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.execute(TestNGDirectoryTestSuite.java:99)
+	at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:106)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.maven.surefire.util.ReflectionUtils.invokeMethodWithArray(ReflectionUtils.java:189)
+	at org.apache.maven.surefire.booter.ProviderFactory$ProviderProxy.invoke(ProviderFactory.java:165)
+	at org.apache.maven.surefire.booter.ProviderFactory.invokeProvider(ProviderFactory.java:85)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:115)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:75)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- matchAQConditionsTest1 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="matchAQConditionsTest3()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="matchAQConditionsTest3" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- matchAQConditionsTest3 -->
+        <test-method status="FAIL" signature="matchAQConditionsTest2()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="matchAQConditionsTest2" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[expected [true] but found [false]]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: expected [true] but found [false]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertTrue(Assert.java:42)
+	at org.testng.Assert.assertTrue(Assert.java:52)
+	at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest2(RfqItemVOTest.java:56)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.testng.internal.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:80)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:714)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:901)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1231)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:127)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:111)
+	at org.testng.TestRunner.privateRun(TestRunner.java:767)
+	at org.testng.TestRunner.run(TestRunner.java:617)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:334)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:329)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:291)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:240)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:86)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1198)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1123)
+	at org.testng.TestNG.run(TestNG.java:1031)
+	at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:77)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.executeMulti(TestNGDirectoryTestSuite.java:159)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.execute(TestNGDirectoryTestSuite.java:99)
+	at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:106)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.maven.surefire.util.ReflectionUtils.invokeMethodWithArray(ReflectionUtils.java:189)
+	at org.apache.maven.surefire.booter.ProviderFactory$ProviderProxy.invoke(ProviderFactory.java:165)
+	at org.apache.maven.surefire.booter.ProviderFactory.invokeProvider(ProviderFactory.java:85)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:115)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:75)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- matchAQConditionsTest2 -->
+        <test-method status="FAIL" signature="matchAQConditionsTest5()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="matchAQConditionsTest5" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[expected [true] but found [false]]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: expected [true] but found [false]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertTrue(Assert.java:42)
+	at org.testng.Assert.assertTrue(Assert.java:52)
+	at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest5(RfqItemVOTest.java:77)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.testng.internal.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:80)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:714)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:901)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1231)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:127)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:111)
+	at org.testng.TestRunner.privateRun(TestRunner.java:767)
+	at org.testng.TestRunner.run(TestRunner.java:617)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:334)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:329)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:291)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:240)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:86)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1198)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1123)
+	at org.testng.TestNG.run(TestNG.java:1031)
+	at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:77)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.executeMulti(TestNGDirectoryTestSuite.java:159)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.execute(TestNGDirectoryTestSuite.java:99)
+	at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:106)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.maven.surefire.util.ReflectionUtils.invokeMethodWithArray(ReflectionUtils.java:189)
+	at org.apache.maven.surefire.booter.ProviderFactory$ProviderProxy.invoke(ProviderFactory.java:165)
+	at org.apache.maven.surefire.booter.ProviderFactory.invokeProvider(ProviderFactory.java:85)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:115)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:75)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- matchAQConditionsTest5 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="matchAQConditionsTest4()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="matchAQConditionsTest4" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- matchAQConditionsTest4 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="FAIL" signature="matchAQConditionsTest7()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="matchAQConditionsTest7" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[expected [true] but found [false]]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: expected [true] but found [false]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertTrue(Assert.java:42)
+	at org.testng.Assert.assertTrue(Assert.java:52)
+	at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest7(RfqItemVOTest.java:91)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.testng.internal.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:80)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:714)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:901)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1231)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:127)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:111)
+	at org.testng.TestRunner.privateRun(TestRunner.java:767)
+	at org.testng.TestRunner.run(TestRunner.java:617)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:334)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:329)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:291)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:240)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:86)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1198)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1123)
+	at org.testng.TestNG.run(TestNG.java:1031)
+	at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:77)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.executeMulti(TestNGDirectoryTestSuite.java:159)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.execute(TestNGDirectoryTestSuite.java:99)
+	at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:106)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.maven.surefire.util.ReflectionUtils.invokeMethodWithArray(ReflectionUtils.java:189)
+	at org.apache.maven.surefire.booter.ProviderFactory$ProviderProxy.invoke(ProviderFactory.java:165)
+	at org.apache.maven.surefire.booter.ProviderFactory.invokeProvider(ProviderFactory.java:85)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:115)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:75)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- matchAQConditionsTest7 -->
+        <test-method status="PASS" signature="matchAQConditionsTest6()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="matchAQConditionsTest6" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- matchAQConditionsTest6 -->
+        <test-method status="FAIL" signature="matchAQConditionsTest8()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="matchAQConditionsTest8" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[expected [true] but found [false]]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: expected [true] but found [false]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:494)
+	at org.testng.Assert.assertTrue(Assert.java:42)
+	at org.testng.Assert.assertTrue(Assert.java:52)
+	at com.avnet.emasia.webquote.vo.RfqItemVOTest.matchAQConditionsTest8(RfqItemVOTest.java:100)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.testng.internal.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:80)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:714)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:901)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1231)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:127)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:111)
+	at org.testng.TestRunner.privateRun(TestRunner.java:767)
+	at org.testng.TestRunner.run(TestRunner.java:617)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:334)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:329)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:291)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:240)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:86)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1198)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1123)
+	at org.testng.TestNG.run(TestNG.java:1031)
+	at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:77)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.executeMulti(TestNGDirectoryTestSuite.java:159)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.execute(TestNGDirectoryTestSuite.java:99)
+	at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:106)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.maven.surefire.util.ReflectionUtils.invokeMethodWithArray(ReflectionUtils.java:189)
+	at org.apache.maven.surefire.booter.ProviderFactory$ProviderProxy.invoke(ProviderFactory.java:165)
+	at org.apache.maven.surefire.booter.ProviderFactory.invokeProvider(ProviderFactory.java:85)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:115)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:75)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- matchAQConditionsTest8 -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.vo.RfqItemVOTest@34b7bfc0]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+      </class> <!-- com.avnet.emasia.webquote.vo.RfqItemVOTest -->
+      <class name="com.avnet.emasia.webquote.entity.ManufacturerTest">
+        <test-method status="PASS" signature="setUp()[pri:0, instance:com.avnet.emasia.webquote.entity.ManufacturerTest@36f6e879]" name="setUp" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setUp -->
+        <test-method status="PASS" signature="getManufacturerDetailTest()[pri:0, instance:com.avnet.emasia.webquote.entity.ManufacturerTest@36f6e879]" name="getManufacturerDetailTest" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getManufacturerDetailTest -->
+      </class> <!-- com.avnet.emasia.webquote.entity.ManufacturerTest -->
+      <class name="com.avnet.emasia.webquote.entity.QtyBreakPricerTest">
+        <test-method status="PASS" signature="calQtyBreakRangeTest()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyBreakPricerTest@366e2eef]" name="calQtyBreakRangeTest" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQtyBreakRangeTest -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyBreakPricerTest@366e2eef]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyBreakPricerTest@366e2eef]" name="setup" is-config="true" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyBreakPricerTest@366e2eef]" name="setup" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="calQtyBreakRangeTest2()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyBreakPricerTest@366e2eef]" name="calQtyBreakRangeTest2" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- calQtyBreakRangeTest2 -->
+        <test-method status="PASS" signature="getQtyBreakPriceTest()[pri:0, instance:com.avnet.emasia.webquote.entity.QtyBreakPricerTest@366e2eef]" name="getQtyBreakPriceTest" duration-ms="0" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- getQtyBreakPriceTest -->
+      </class> <!-- com.avnet.emasia.webquote.entity.QtyBreakPricerTest -->
+      <class name="com.avnet.emasia.webquote.entity.BizUnitTest">
+        <test-method status="PASS" signature="setup()[pri:0, instance:com.avnet.emasia.webquote.entity.BizUnitTest@7225790e]" name="setup" is-config="true" duration-ms="26" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setup -->
+        <test-method status="PASS" signature="findMaterial()[pri:0, instance:com.avnet.emasia.webquote.entity.BizUnitTest@7225790e]" name="findMaterial" duration-ms="3" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- findMaterial -->
+      </class> <!-- com.avnet.emasia.webquote.entity.BizUnitTest -->
+      <class name="com.avnet.emasia.webquote.entity.ManufacturerDetailTest">
+        <test-method status="PASS" signature="setUp()[pri:0, instance:com.avnet.emasia.webquote.entity.ManufacturerDetailTest@52af6cff]" name="setUp" is-config="true" duration-ms="1" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setUp -->
+        <test-method status="PASS" signature="fillInTest()[pri:0, instance:com.avnet.emasia.webquote.entity.ManufacturerDetailTest@52af6cff]" name="fillInTest" duration-ms="2" started-at="2018-10-11T15:47:35Z" finished-at="2018-10-11T15:47:35Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- fillInTest -->
+      </class> <!-- com.avnet.emasia.webquote.entity.ManufacturerDetailTest -->
+    </test> <!-- Command line test -->
+  </suite> <!-- Command line suite -->
+</testng-results>

@@ -1,0 +1,2 @@
+CREATE INDEX SAPMATERIALINDEX
+ON SAP_MATERIAL (material_id,deletion_flag)

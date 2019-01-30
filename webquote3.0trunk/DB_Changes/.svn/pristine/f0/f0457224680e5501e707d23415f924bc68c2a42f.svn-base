@@ -1,0 +1,82 @@
+﻿1:enhancement :Customer Type missing in the RFQ Submission Form fixed by andy 2014/9/29
+
+2:INC0038341 fixed by andy 2014/9/29 The root cause: ora-01795 maximum number of expressions in a list is 1000
+
+3:enhancement : SAP Part Number  display in the RFQ submission and Working Platform Page fixed by andy and alex  2014/10/13
+
+4:INC0038334 fixed by andy 2014/10/14 
+
+5:INC0042067 the same to INC0026978 fixed by andy 2014/10/27 
+
+6:INC0046130 fixed by andy 2014/11/28
+
+7:INC0046526 fixed by andy 2014/12/1
+
+8:INC0046501 fixed by andy 2014/12/3 
+
+9:INC0043919 fixed by andy 2014/12/4 it need data patch see /DB_Changes/Branches/V2.1/V2.1.13/002 REFERENCE_MARGIN RESALE_MARGIN data patch.sql 
+
+10:INC0026978 fixed by andy ,tough 2014/12/10 
+	1:processing quotation in working platform  , According to our discussion  please merge source code from 2.2 to 2.13 by tough 
+	2:searching quotation history       I have added a  index ,  please see 003addQUOTED_PART_NUMBER_INDEX.sql  by andy 
+
+11:Fix defect 67 at quote match logic project 
+   and defect 8687 at project DRMS Margin Rentension set customer chinse name according to the quote item's sold to code number
+   by June 2014/09/17
+12:Fix INC0033494 by June on 2014/09/24 and 2014/09/29
+13:Fix INC0045089 by June on 2014/11/13 
+
+15: DRMS Project Defect 92 , fixed by Tough on 2014/09/19
+16: DRMS Project Defect 102 , fixed by Tough on 2014/09/22
+17: Fix the user name may change in WQ banner after viewing user details, Tough, 2014/11/10
+18: INC0038599, fixed by Tough, 2014/11/13
+19: Fix defect 196 (Quote Matching Logic Enhancement). Tough, 2014/11/18
+20: INC0029433, Tough, 2014/12/09
+21: INC0030737, Tough, 2014/12/09
+21: INC0026978, fixed by Andy and Tough, 2014/12/11 
+23: INC0042067, fixed by Andy and Tough, 2014/12/11
+24: INC0040867, Tough, 2014/12/12
+
+enhancement: 
+24: Add populateDefaultCostIndicator in Invalid and Create new Quote in DataMaintenance, Tough, 2014/09/26
+25: Allow the role and function load from DB via schedule job , Tough , 2014/10/15
+26: Remove timezone related code, US server JVM's timezone changed to GMT+8, 2014/12/04
+
+27: INC0037738 Alex 2014/10/15   
+28: INC0038879 Alex 2014/10/17
+29: INC0040301 Alex 2014/10/22
+30: Defect 176(Quote Matching Logic) Alex 2014/10/24
+
+31: INC0045685 Tough 2014/12/12
+
+32: Fixed the webpromo null pointer exception. fixed by Tonmy 2015/1/7
+
+
+
+================================================
+1	INC0045925	fixed by Tonmy 2014/11/20
+2	INC0044405	fixed by Tonmy 2014/11/12
+3	INC0032827	fixed by Tonmy 2014/9/25
+4	INC0032799	fixed by Tonmy 2014/9/25
+5	Offline report restructure	Done by Tonmy 2014/9/17
+6	DRMS Project defect 90	fixed by Tonmy 2014/9/16
+7	Program PRICER enhancement. Done by Tonmy 2014/11/17
+	<1>, when retrieve the program PRICER, it required region and the cost indicator name.
+    <2>, impact module.
+      (1)Target list
+      (2)AQ
+      (3)Order Qty min sell converter
+8	Enhancement	Done by Tonmy 2014/9/29
+	<1>.	The button of ��Upload�� is renamed to ��Verify and Upload��
+	<2>.	If the RFQ Batch Form is verified without errors, all RFQs will be displayed in the RFQ Items Table.
+	<3>.	If the RFQ Batch Form is verified with errors,
+	   a.	System shows the dialog as below. Sales can download the verified RFQ Batch Form via the dialog. The RFQ(s) with error(s) are highlighted and the reason(s) is/are attached in the verified RFQ Batch Form.
+	   b.	All correct RFQ(s) is/are uploaded to the system and displayed in the RFQ Items table even the error(s) is/are found in the RFQ Batch Form
+	   c.	Sales can re-upload the verified RFQ Batch Form after corrected the information. (Remarks : After re-upload the RFQ Batch Form, all RFQs in the RFQ Item table are overwritten.)
+
+9    remove clearsession method when restart server , fixed by June 2014/12/30
+10  Fix NullPointerException on CurCurrencyChange on RefreshQuoteMB.java fixed By June 2015/01/07
+
+
+
+

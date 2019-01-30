@@ -1,0 +1,398 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition 
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<p:tabView id="myQuoteSearchDetailInfo">
+        <p:tab title="#{dbResource['wq.label.quote']}">
+        	<p:panelGrid styleClass="panelGrid" style="padding:0px 0px 0px 0px;" >   
+             	 <p:row>    	
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.button.no']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" style="width:150px" colspan="0">
+					#{myQuoteSearchMB.currentQuoteItemVo.seq>0?myQuoteSearchMB.currentQuoteItemVo.seq:""}
+					</p:column>
+				</p:row>
+            </p:panelGrid>
+            <h:outputText value="#{dbResource['wq.label.salesmanInfo']}"  escape="false" />
+            <p:panelGrid styleClass="panelGrid" style="padding:0px 0px 0px 0px;" >
+				<p:row>  
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.salesmanEmpCode']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" style="width:150px" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.sales.employeeId}</p:column>
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.salesmanName']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  style="width:150px"  colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.sales.name}</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.team']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.sales.team.name}</p:column>
+					<p:column styleClass="tdtag" ></p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3"></p:column>
+				</p:row>
+            </p:panelGrid>
+            <h:outputText value="#{dbResource['wq.label.quoteInfo']}"  escape="false" />
+            <p:panelGrid styleClass="panelGrid" style="padding:0px 0px 0px 0px;" >
+				<p:row>  
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.message.multiUsage']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" style="width:150px" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.multiUsageFlagStr}</p:column>
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.qtyIndicator']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" style="width:150px" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.qtyIndicator}</p:column>
+				 
+					<p:column styleClass="tdtag" style="width:180px !important;" >#{dbResource['wq.label.mfrDebit']} #</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" style="width:150px"  colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.vendorDebitNumber}</p:column>
+				</p:row>
+				<p:row> 
+					<p:column styleClass="tdtag">#{dbResource['wq.label.mfrQoute']} #</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.vendorQuoteNumber}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.mfrQuoteQty']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.vendorQuoteQty}</p:column>
+				 
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.resaleIndicator']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.resaleIndicator}</p:column>
+				</p:row>
+				<p:row> 
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.resaleMIN']} %</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.resaleMin}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.resaleMAX']} %</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.resaleMax}</p:column>
+				  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.leadTimeWKS']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.leadTime}</p:column>
+				</p:row>
+				<p:row> 
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.MPQ']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.mpq}">
+							<f:convertNumber  pattern="#,###" />
+						</h:outputText>
+					</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.moq']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.moq}">
+							<f:convertNumber  pattern="#,###" />
+						</h:outputText>
+					</p:column>
+				  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.mov']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.mov}">
+							<f:convertNumber  pattern="#,###" />
+						</h:outputText>
+					</p:column>
+				</p:row>
+				<p:row> 
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.PMOQ']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.pmoq}">
+							<f:convertNumber  pattern="#,###" />
+						</h:outputText>
+					</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.allocatnPart']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.allocationFlagStr}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.materialType']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.materialTypeId}</p:column>
+				</p:row>
+				<p:row> 
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.reschedulingWindow']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.rescheduleWindow}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.cancellationWindow']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.cancellationWindow}</p:column> 
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.proGroup']} 2</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.productGroup2.name}</p:column>
+				</p:row>
+				<p:row> 
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.quotation']} #{dbResource['wq.label.tc']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.termsAndConditions}"  style="word-wrap:break-word;width:150px !important;" >
+							<f:view></f:view>
+						</h:outputText>
+					
+					</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.bProgType']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.programType}</p:column>
+				 
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.avnetQC']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.aqcc}</p:column>
+				</p:row>
+				<p:row> 
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.qcCommentAIO']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.internalComment}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.pmCommnets']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.internalTransferComment}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.reasonRefresh']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.reasonForRefresh}</p:column>
+				</p:row>
+				<p:row> 
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.quotedBy']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.lastUpdatedQcName}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.quoteRelDate']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.sentOutTime}">
+							<f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" />
+						</h:outputText>
+					</p:column> 
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.rfqAtt']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						
+			        	<p:commandLink actionListener="#{attachmentDownloadMB.listAttachmentsByType()}" update=":form:attachment_list_panel" oncomplete="PF('attachment_list_dialog').show()">
+			        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"  rendered="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.formAttachmentFlag}"/>	
+			        		<f:param name="quoteItem_id" value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.id}"/>
+	        				<f:param name="quote_id" value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.id}"/>
+			        		<f:param name="att_type" value="RFQ Form Attachment"/>				           	
+			        	</p:commandLink> 
+					</p:column>
+				</p:row>
+				<p:row> 
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.rfqItem']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						
+			        	<p:commandLink actionListener="#{attachmentDownloadMB.listAttachmentsByType()}" update=":form:attachment_list_panel" oncomplete="PF('attachment_list_dialog').show()">
+			        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink" rendered="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.itemAttachmentFlag}"/>	
+			        		<f:param name="quoteItem_id" value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.id}"/>
+	        				<f:param name="quote_id" value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.id}"/>
+			        		<f:param name="att_type" value="RFQ Item Attachment"/>				           	
+			        	</p:commandLink> 
+			        	
+					</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.PMAtt']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+			        	<p:commandLink actionListener="#{attachmentDownloadMB.listAttachmentsByType()}" update=":form:attachment_list_panel" oncomplete="PF('attachment_list_dialog').show()">
+			        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink" rendered="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.pmAttachmentFlag}"/>	
+			        		<f:param name="att_type" value="PM Attachment"/>				           	
+			        		<f:param name="quoteItem_id" value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.id}"/>
+	        				<f:param name="quote_id" value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.id}"/>
+			        	</p:commandLink> 
+			        	
+					</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.qcAtt']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						<p:commandLink actionListener="#{attachmentDownloadMB.listAttachmentsByType()}" update=":form:attachment_list_panel" oncomplete="PF('attachment_list_dialog').show()">
+			        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink" rendered="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.qcAttachmentFlag}" />
+			        		<f:param name="quoteItem_id" value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.id}"/>
+	        				<f:param name="quote_id" value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.id}"/>	
+			        		<f:param name="att_type" value="QC Attachment"/>				           	
+			        	</p:commandLink> 
+					</p:column>
+				</p:row>
+				<p:row> 
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.revertVersion']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.revertVersion}</p:column>
+					<p:column styleClass="tdtag" ></p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3"></p:column>
+					<p:column styleClass="tdtag" ></p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3"></p:column>
+				</p:row>
+            </p:panelGrid>
+            <h:outputText value="#{dbResource['wq.label.rfqDetails']}"  escape="false" />
+             <p:panelGrid styleClass="panelGrid" style="padding:0px 0px 0px 0px;" >
+				<p:row>  
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.rfqSubmissionDate']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" style="width:150px"  colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.submissionDate}">
+								<f:convertDateTime  pattern="dd/MM/yyyy"  />
+						</h:outputText>
+					</p:column>
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.designRegion']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" style="width:150px"  colspan="3"></p:column>
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.designLoc']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" style="width:150px"  colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.designLocation}</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.spr']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.sprFlagStr}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.segment']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.enquirySegment}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.projectName']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.projectName}</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag">#{dbResource['wq.label.app']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.application}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.ppSchedule']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.ppSchedule}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.MpSchedule']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.mpSchedule}</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.QuoteType']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quoteType}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.loa']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.loaFlagStr}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.designInCatHiphen']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.designInCat}</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.reqQty']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+					
+					<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.requestedQty}">
+							<f:convertNumber  pattern="#,###" />
+						</h:outputText>
+					</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.reqRef']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.yourReference}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.remarks']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.remarks}</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.itmRemark']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.remarks}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.message.comptInfo']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.competitorInformation}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.EAU']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.eau}">
+							<f:convertNumber  pattern="#,###" />
+						</h:outputText>
+					</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.costs']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.cost}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.avnetQPrice']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quotedPriceStr}</p:column>
+					<p:column styleClass="tdtag" ></p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						
+					</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.CopyToCS']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.copyToCsName}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.rfqCreatedBy']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.createdName}</p:column>
+					<p:column styleClass="tdtag" ></p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3"></p:column>
+				</p:row>
+			</p:panelGrid>
+        </p:tab>
+        <p:tab title="#{dbResource['wq.label.cust']}">
+        	<p:panelGrid styleClass="panelGrid" style="padding:0px 0px 0px 0px;" >   
+             	 <p:row>    	
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.button.no']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" style="width:150px" colspan="0">#{myQuoteSearchMB.currentQuoteItemVo.seq>0?myQuoteSearchMB.currentQuoteItemVo.seq:""}</p:column>
+				</p:row>
+            </p:panelGrid>
+        	<h:outputText value="#{dbResource['wq.label.custInfo']}"  escape="false" />
+            <p:panelGrid styleClass="panelGrid" style="padding:0px 0px 0px 0px;" >
+				<p:row>  
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.SoldToCode']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" style="width:150px" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.soldToCustomer.customerNumber}</p:column>
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.soldPartyName']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  style="width:150px"  colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.soldToCustomerName}</p:column>
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.soldToPartyNameChinese']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  style="width:150px"  colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.soldToCustomerNameChinese}</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.EndCustomerCode']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.endCustomer.customerNumber}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.endCustName']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3">#{empty(myQuoteSearchMB.currentQuoteItemVo.quoteItem.endCustomer) ? myQuoteSearchMB.currentQuoteItemVo.quoteItem.endCustomerName : myQuoteSearchMB.currentQuoteItemVo.quoteItem.endCustomer.name }</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.custmrType']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.customerType}</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.ShipToCode']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.shipToCustomer.customerNumber}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.ShipToParty']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3">#{empty(myQuoteSearchMB.currentQuoteItemVo.quoteItem.shipToCustomer) ? myQuoteSearchMB.currentQuoteItemVo.quoteItem.shipToCustomerName : myQuoteSearchMB.currentQuoteItemVo.quoteItem.shipToCustomer.name}</p:column>
+					<p:column styleClass="tdtag" ></p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3"></p:column>
+				</p:row>
+            </p:panelGrid>
+        </p:tab>
+        <p:tab title="#{dbResource['wq.label.bmt']}">
+        	<p:panelGrid styleClass="panelGrid" style="padding:0px 0px 0px 0px;" >   
+             	 <p:row>    	
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.button.no']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" style="width:150px" colspan="0">#{myQuoteSearchMB.currentQuoteItemVo.seq>0?myQuoteSearchMB.currentQuoteItemVo.seq:""}</p:column>
+				</p:row>
+            </p:panelGrid>
+            <h:outputText value="#{dbResource['wq.label.bmtInfo']}"  escape="false" />
+            <p:panelGrid styleClass="panelGrid" style="padding:0px 0px 0px 0px;" >
+				<p:row>  
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.bmtMFRDR']}#</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" style="width:150px" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drMfrNo}</p:column>
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.bmtSuggCost']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  style="width:150px"  colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drCost}">
+							<f:convertNumber   pattern="#,##0.00000" minFractionDigits="5"/>
+						</h:outputText>
+					</p:column>
+					<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.bmtSuggResale']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  style="width:150px"  colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drResale}">
+							<f:convertNumber   pattern="#,##0.00000"  minFractionDigits="5"/>
+						</h:outputText>
+					
+					</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.bmtSuggMargin']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drMargin}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.bmtMFRQuote']} #</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drMfrQuoteNo}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.bmtEffDate']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drEffectiveDate}">
+								<f:convertDateTime  pattern="dd/MM/yyyy"  />
+						</h:outputText>
+					
+					</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.bmtExpDate']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drExpiryDate}">
+								<f:convertDateTime  pattern="dd/MM/yyyy"  />
+						</h:outputText>
+					</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.bmtComm']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drComments}</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.bmtAtts']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3">
+			        	<p:commandLink actionListener="#{attachmentDownloadMB.listAttachmentsByType()}" update=":form:attachment_list_panel" oncomplete="PF('attachment_list_dialog').show()">
+			        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink" rendered="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.bmtAttachmentFlag}"/>	
+			        		<f:param name="quoteItem_id" value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.id}"/>
+	        				<f:param name="quote_id" value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quote.id}"/>
+			        		<f:param name="att_type" value="BMT Attachment"/>				           	
+			        	</p:commandLink> 
+					</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.bmtSuggestedCostNonUSD']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drCostAltCurrency}">
+							<f:convertNumber   pattern="#,##0.00000"  minFractionDigits="5"/>
+						</h:outputText>
+					</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.bmtSuggestedResalesNonUSD']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drResaleAltCurrency}">
+							<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5"/>
+						</h:outputText>
+					</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.bmtCurr']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3">#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drAltCurrency}</p:column>
+				</p:row>
+				<p:row>  
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.bmtExchRate']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+						<h:outputText value="#{vo.quoteItem.quoteItemDesign.drExchangeRate}">
+							<f:convertNumber   pattern="#,##0.00000"  minFractionDigits="5"/>
+						</h:outputText>
+					</p:column>
+					<p:column styleClass="tdtag" >#{dbResource['wq.label.bmtQuotedQty']}</p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3">
+						<h:outputText value="#{myQuoteSearchMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drQuoteQty}">
+							<f:convertNumber  pattern="#,###" />
+						</h:outputText>
+					</p:column>
+					<p:column styleClass="tdtag" ></p:column>
+					<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="3"></p:column>
+				</p:row>
+            </p:panelGrid>
+        </p:tab>
+    </p:tabView>
+
+</ui:composition>

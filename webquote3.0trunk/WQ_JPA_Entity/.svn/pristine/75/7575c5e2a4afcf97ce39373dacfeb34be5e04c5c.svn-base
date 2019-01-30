@@ -1,0 +1,108 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+
+import javax.persistence.*;
+
+
+/**
+ * The persistent class for the QUANTITY_BREAK_PRICE database table.
+ * 
+ */
+@Entity
+@Table(name="QUANTITY_BREAK_PRICE")
+public class QuantityBreakPrice implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	@SequenceGenerator(name="QUANTITY_BREAK_PRICE_ID_GENERATOR", sequenceName="WQ_SEQ",allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="QUANTITY_BREAK_PRICE_ID_GENERATOR")
+	@Column(unique=true, nullable=false, precision=18)
+	private long id;
+
+	@Column(name="QUANTITY_BREAK", nullable=false)
+	private Integer quantityBreak;
+
+	@Column(name="QUANTITY_BREAK_PRICE")
+	private Double quantityBreakPrice;
+	
+	@Column(name="SALES_COST")
+	private BigDecimal salesCost;
+
+	@Column(name="SUGGESTED_RESALE")
+	private BigDecimal suggestedResale;
+
+	
+	@Column(name="\"VERSION\"")
+	@Version
+	private Integer version;
+
+	//bi-directional many-to-one association to MaterialDetail
+	@ManyToOne
+	@JoinColumn(name="MATERIAL_DETAIL_ID", nullable=false)
+	private Pricer materialDetail;
+
+	public QuantityBreakPrice() {
+	}
+
+	public long getId() {
+		return this.id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public Double getQuantityBreakPrice() {
+		if(this.quantityBreakPrice ==null)
+			return new Double(-999999);
+		else
+		    return this.quantityBreakPrice;
+	}
+	
+	public BigDecimal getSalesCost() {
+		return salesCost;
+	}
+
+	public void setSalesCost(BigDecimal salesCost) {
+		this.salesCost = salesCost;
+	}
+
+	public BigDecimal getSuggestedResale() {
+		return suggestedResale;
+	}
+
+	public void setSuggestedResale(BigDecimal suggestedResale) {
+		this.suggestedResale = suggestedResale;
+	}
+
+	public void setQuantityBreakPrice(Double quantityBreakPrice) {
+		this.quantityBreakPrice = quantityBreakPrice;
+	}
+
+	public Integer getVersion() {
+		return this.version;
+	}
+
+	public void setVersion(Integer version) {
+		this.version = version;
+	}
+
+	public Pricer getMaterialDetail() {
+		return this.materialDetail;
+	}
+
+	public void setMaterialDetail(Pricer materialDetail) {
+		this.materialDetail = materialDetail;
+	}
+
+	public Integer getQuantityBreak() {
+		return quantityBreak;
+	}
+
+	public void setQuantityBreak(Integer quantityBreak) {
+		this.quantityBreak = quantityBreak;
+	}
+
+}

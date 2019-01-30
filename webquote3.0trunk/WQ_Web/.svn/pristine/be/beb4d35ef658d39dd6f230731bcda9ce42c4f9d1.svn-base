@@ -1,0 +1,185 @@
+package com.avnet.emasia.webquote.component.show.config;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.persistence.Column;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Role;
+import com.avnet.emasia.webquote.entity.User;
+import com.sun.faces.util.CollectionsUtils;
+
+public class ComponentShowConfig_d {
+	// private final static String BLANK = "";
+	private final static String SPLITOR = ",";
+
+	@Id
+	@SequenceGenerator(name = "TI_3A1_ID_GENERATOR", sequenceName = "WQ_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "TI_3A1_ID_GENERATOR")
+	@Column(unique = true, nullable = false)
+	private long id;
+
+	// private long id;
+	@Column(name = "REGIONS", length = 60)
+	private String regions;
+
+	@Column(name = "ROLES", length = 200)
+	private String roles;
+
+	@Column(name = "LOGIC_CONNECTOR", length = 10, nullable = false)
+	@Enumerated(EnumType.STRING)
+	private LogicConnector logicConnector;
+
+	@Column(name = "LOGIC_RESULT_REVERSE")
+	private boolean logicResultReverse;
+
+	@Column(name = "SHOW")
+	private boolean show;
+
+	@Column(name = "PAGE_NAME", length = 60, nullable = false)
+	private String pageName;
+
+	@Column(name = "COMPONET_ID", length = 50, nullable = false)
+	private String componetId;
+
+	@Column(name = "PRIORITY")
+	private int priority;
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getRegions() {
+		return regions;
+	}
+
+	public void setRegions(String regions) {
+		this.regions = regions;
+	}
+
+	public String getRoles() {
+		return roles;
+	}
+
+	public void setRoles(String roles) {
+		this.roles = roles;
+	}
+
+	public LogicConnector getLogicConnector() {
+		return logicConnector;
+	}
+
+	public void setLogicConnector(LogicConnector logicConnector) {
+		this.logicConnector = logicConnector;
+	}
+
+	public boolean isLogicResultReverse() {
+		return logicResultReverse;
+	}
+
+	public void setLogicResultReverse(boolean logicResultReverse) {
+		this.logicResultReverse = logicResultReverse;
+	}
+
+	public boolean isShow() {
+		return show;
+	}
+
+	public void setShow(boolean show) {
+		this.show = show;
+	}
+
+	public String getPageName() {
+		return pageName;
+	}
+
+	public void setPageName(String pageName) {
+		this.pageName = pageName;
+	}
+
+	public String getComponetId() {
+		return componetId;
+	}
+
+	public void setComponetId(String componetId) {
+		this.componetId = componetId;
+	}
+
+	public int getPriority() {
+		return priority;
+	}
+
+	public void setPriority(int priority) {
+		this.priority = priority;
+	}
+
+	public boolean isRoleOrRegionMatch(User user) {
+		if (user == null)
+			return false;
+		Set<String> bs = user.getAllBizUnits();
+		List<Role> rs = user.getRoles();
+		if (bs == null || rs == null)
+			return false;
+		Set<String> roles = new HashSet<String>();
+		bs.add(null);
+		rs.stream().forEach(r -> roles.add(r.getName()));
+		rs.add(null);
+		boolean match = bs.stream().anyMatch(b -> roles.stream().anyMatch(r -> isRoleOrRegionFirstMatch(b, r)));
+		return logicResultReverse ? !match : match;
+
+	}
+
+	public boolean isRoleOrRegionMatch(String region, String role) {
+		 
+		boolean match = isRoleOrRegionFirstMatch(region, role);
+		return logicResultReverse ? !match : match;
+
+	}
+
+	private boolean isRoleOrRegionFirstMatch(String region, String role) {
+		if (region == null && role == null) {
+			return false;
+		}
+		boolean match = logicConnector.test(b -> hasContains(regions, region), b -> hasContains(roles, role));
+		return match;
+
+	}
+	
+	private static boolean hasContains(String source, String target) {
+		// null and null as contains
+		if (target == null)
+			return source == null;
+		// null contains all.
+		if (source == null)
+			return true;
+		source = source.trim().toUpperCase();
+		target = target.trim().toUpperCase();
+		int i = source.indexOf(target);
+		if (i < 0) {
+			return false;
+		} else if (i == 0) {
+			// (endWith target or next char of matched string in source is ",")
+			return i + target.length() == source.length() || SPLITOR.equals(source.charAt(i + target.length()));
+		} else {
+			// prev is "," and (endWith target or next char of matched string in
+			// source is ",")
+			return SPLITOR.equals(source.charAt(i - 1))
+					&& (i + target.length() == source.length() || SPLITOR.equals(source.charAt(i + target.length())));
+		}
+	}
+}

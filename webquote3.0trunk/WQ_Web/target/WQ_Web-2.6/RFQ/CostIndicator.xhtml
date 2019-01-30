@@ -1,0 +1,122 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="myquote-004.css" />
+	</ui:define>
+
+	<ui:define name="content">
+		<h:form id="CostIndicatorForm">
+			<p:growl id="growl" for="growl" showDetail="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" />
+			
+		<p:panel header="#{dbResource['wq.label.costIndicators']}" style="font-size:12pt" >
+		
+			<h:panelGrid columns="13" cellpadding="0" >
+		       <p:commandButton value="#{dbResource['wq.label.addCostIndicator']}" update=":addCostIndicatorForm:dialogAddCostIndicator" oncomplete="PF('dialogAddCostIndicatorWidget').show()"></p:commandButton>
+		        <p:commandButton value="#{dbResource['wq.label.editCostIndicator']}" update=":CostIndicatorForm:costIndicators_datatable, :CostIndicatorForm:growl, :editCostIndicatorForm:dialogEditCostIndicator" action="#{costIndicatorMB.checkSelectedCostIndicatorEditCostIndicator}"></p:commandButton>
+			</h:panelGrid>	
+			
+	    <p:dataTable		var="vo" 
+		    				value="#{costIndicatorMB.costIndicators}"  
+		    				paginator="true" 
+		    				rowIndexVar="rowIndex" 
+		    				rows="30" 
+		    				rowKey="#{vo.name}"
+	    					rowsPerPageTemplate="30,60,90"
+		                 	selection="#{costIndicatorMB.selectedCostIndicator}"  
+		                 	id="costIndicators_datatable" 
+		                 	paginatorPosition="top" 
+		                 	selectionMode="single"
+		                 	scrollable="true" 
+		                 	scrollHeight="100%" 
+		                 	resizableColumns="true"
+		                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}." >
+	   
+	   			<p:ajax event="rowSelect"
+                          listener="#{costIndicatorMB.onRowSelect}">
+               </p:ajax>
+               <p:ajax event="rowUnselectCheckbox"
+                          listener="#{costIndicatorMB.onRowUnselect}">
+               </p:ajax>                 	
+	
+			<p:column headerText="#{dbResource['wq.label.code']}" sortBy="#{vo.name}" filterBy="#{vo.name}" filterMatchMode="contains" style="width:200px;">
+				<h:outputText value="#{vo.name}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.description']}" sortBy="#{vo.description}"  filterBy="#{vo.description}" filterMatchMode="contains" styleClass="myquote_column_reschedulingWindow" style="width:300px;" >
+			<h:outputText value="#{vo.description}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.active']}" sortBy="#{vo.status? 'Yes':'No'}"  filterBy="#{vo.status? 'Yes':'No'}" filterMatchMode="contains" styleClass="myquote_column_multiUsageFlag" style="width:50px;">
+			<h:outputText value="#{vo.status? 'Yes':'No'}"/>
+			</p:column>
+   		</p:dataTable>
+    	</p:panel>
+		</h:form>
+		
+		<h:form id ="addCostIndicatorForm">	
+		<p:dialog id="dialogAddCostIndicator" header="#{dbResource['wq.label.addCostIndicator']}" widgetVar="dialogAddCostIndicatorWidget"  
+		                showEffect="fade" hideEffect="explode">
+	        <h:panelGrid columns="2" cellpadding="4">
+	       	 		<h:outputText value="#{dbResource['wq.label.code']}:" />
+		            <p:inputText size="30" value="#{costIndicatorMB.code}" autoResize="false" />
+		            <h:outputText value="#{dbResource['wq.label.description']}:" />
+		            <p:inputText size="30" value="#{costIndicatorMB.description}" autoResize="false" />
+		            <h:outputText value="#{dbResource['wq.label.active']}:" />
+		            <p:selectOneMenu value="#{costIndicatorMB.status}">  
+            			<f:selectItem itemLabel="Yes" itemValue="true" />  
+            			<f:selectItem itemLabel="No" itemValue="false" />  
+            		</p:selectOneMenu>
+		    </h:panelGrid>
+		         
+			<h:panelGrid columns="2" cellpadding="4">
+			  <p:commandButton value="#{dbResource['wq.button.submit']}" actionListener="#{costIndicatorMB.addCostIndicator}" onclick="PF('dialogAddCostIndicatorWidget').hide();" update=":CostIndicatorForm:costIndicators_datatable, :CostIndicatorForm:growl"></p:commandButton>
+			  <p:commandButton value="#{dbResource['wq.button.cancel']}" onclick="PF('dialogAddCostIndicatorWidget').hide();"></p:commandButton>
+			</h:panelGrid>
+		</p:dialog>
+		</h:form>
+	
+		<h:form id ="editCostIndicatorForm">	
+		<p:dialog id="dialogEditCostIndicator" header="#{dbResource['wq.label.editCostIndicator']}" widgetVar="dialogEditCostIndicatorWidget"  
+		                showEffect="fade" hideEffect="explode">
+	        <h:panelGrid columns="2" cellpadding="4">
+		            <h:outputText value="#{dbResource['wq.label.code']}:" />
+		            <h:outputText value="#{costIndicatorMB.code}" />
+		            <h:outputText value="#{dbResource['wq.label.description']}:" />
+		            <p:inputText size="30" value="#{costIndicatorMB.description}" autoResize="false"/>
+		            <h:outputText value="#{dbResource['wq.label.active']}:" />
+		            <p:selectOneMenu value="#{costIndicatorMB.status}">  
+            			<f:selectItem itemLabel="Yes" itemValue="true" />  
+            			<f:selectItem itemLabel="No" itemValue="false" />  
+            			<p:ajax event="change" listener="#{costIndicatorMB.onChangeStatus}" update=":CostIndicatorForm:growl"/>
+            		</p:selectOneMenu>
+		    </h:panelGrid>
+		         
+			<h:panelGrid columns="2" cellpadding="4">
+			  <p:commandButton value="#{dbResource['wq.button.submit']}" actionListener="#{costIndicatorMB.editCostIndicator}" onclick="PF('dialogEditCostIndicatorWidget').hide();" update=":CostIndicatorForm:costIndicators_datatable, :CostIndicatorForm:growl"></p:commandButton>
+			  <p:commandButton value="#{dbResource['wq.button.cancel']}" onclick="PF('dialogEditCostIndicatorWidget').hide();"></p:commandButton>
+			</h:panelGrid>
+		</p:dialog>
+		</h:form>
+	
+	<p:dialog id="addCostIndicatorConfirmationDialog" header="#{dbResource['wq.label.message']}" widgetVar="addCostIndicatorConfirmationWidget"  
+		                showEffect="fade" hideEffect="explode">
+ 		<h:panelGrid columns="1" cellpadding="4">	  
+ 			<h:outputText rendered="#{costIndicatorMB.updateSuccess == false}" value="#{dbResource['wq.message.addNewCostIndiFail']}: #{costIndicatorMB.errorMessage}" />	
+            <h:outputText rendered="#{costIndicatorMB.updateSuccess == true}" value="#{dbResource['wq.message.costInd']}"/>
+	    </h:panelGrid>
+	</p:dialog>
+	
+	<p:dialog id="editCostIndicatorConfirmationDialog" header="#{dbResource['wq.label.message']}" widgetVar="editCostIndicatorConfirmationWidget"  
+		                showEffect="fade" hideEffect="explode">
+ 		<h:panelGrid columns="1" cellpadding="4">	  
+ 			<h:outputText rendered="#{costIndicatorMB.updateSuccess == false}" value="#{dbResource['wq.message.editCostIndicatorFail']}: #{costIndicatorMB.errorMessage}" />	
+            <h:outputText rendered="#{costIndicatorMB.updateSuccess == true}" value="#{dbResource['wq.message.editCost']}"/>
+	    </h:panelGrid>
+	</p:dialog>
+	
+	</ui:define>
+</ui:composition>

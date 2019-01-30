@@ -1,0 +1,138 @@
+package com.avnet.emasia.webquote.quote.vo;
+
+import java.io.Serializable;
+import java.util.Date;
+
+public class CostExtractSearchCriterial implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	private String[] selectedRegions;
+	
+	private String[] selectedCostSoures;
+	
+	private String[] selectedMfrs;
+	
+	private String partNumber;
+	
+	private String[] selectedCostIndicators;
+	
+	private String saleCostPart;
+	
+	private String productGroup1;
+	
+	private String productGroup2;
+	
+	private String productGroup3;
+	
+	private String productGroup4;
+	
+	private Date quoteEffectiveDateForm;
+	
+	private Date quoteEffectiveDateTo;
+
+	public String[] getSelectedRegions() {
+		return selectedRegions;
+	}
+
+	public void setSelectedRegions(String[] selectedRegions) {
+		this.selectedRegions = selectedRegions;
+	}
+
+	public String[] getSelectedCostSoures() {
+		return selectedCostSoures;
+	}
+
+	public void setSelectedCostSoures(String[] selectedCostSoures) {
+		this.selectedCostSoures = selectedCostSoures;
+	}
+
+	public String[] getSelectedMfrs() {
+		return selectedMfrs;
+	}
+
+	public void setSelectedMfrs(String[] selectedMfrs) {
+		this.selectedMfrs = selectedMfrs;
+	}
+
+	public String getPartNumber() {
+		return partNumber;
+	}
+
+	public void setPartNumber(String partNumber) {
+		this.partNumber = partNumber;
+	}
+
+	
+
+	public String[] getSelectedCostIndicators() {
+		return selectedCostIndicators;
+	}
+
+	public void setSelectedCostIndicators(String[] selectedCostIndicators) {
+		this.selectedCostIndicators = selectedCostIndicators;
+	}
+
+	public String getSaleCostPart() {
+		return saleCostPart;
+	}
+
+	public void setSaleCostPart(String saleCostPart) {
+		this.saleCostPart = saleCostPart;
+	}
+
+	public String getProductGroup1() {
+		return productGroup1;
+	}
+
+	public void setProductGroup1(String productGroup1) {
+		this.productGroup1 = productGroup1;
+	}
+
+	public String getProductGroup2() {
+		return productGroup2;
+	}
+
+	public void setProductGroup2(String productGroup2) {
+		this.productGroup2 = productGroup2;
+	}
+
+	public String getProductGroup3() {
+		return productGroup3;
+	}
+
+	public void setProductGroup3(String productGroup3) {
+		this.productGroup3 = productGroup3;
+	}
+
+	public String getProductGroup4() {
+		return productGroup4;
+	}
+
+	public void setProductGroup4(String productGroup4) {
+		this.productGroup4 = productGroup4;
+	}
+
+	public Date getQuoteEffectiveDateForm() {
+		return quoteEffectiveDateForm;
+	}
+
+	public void setQuoteEffectiveDateForm(Date quoteEffectiveDateForm) {
+		this.quoteEffectiveDateForm = quoteEffectiveDateForm;
+	}
+
+	public Date getQuoteEffectiveDateTo() {
+		return quoteEffectiveDateTo;
+	}
+
+	public void setQuoteEffectiveDateTo(Date quoteEffectiveDateTo) {
+		this.quoteEffectiveDateTo = quoteEffectiveDateTo;
+	}
+
+	
+	
+
+}

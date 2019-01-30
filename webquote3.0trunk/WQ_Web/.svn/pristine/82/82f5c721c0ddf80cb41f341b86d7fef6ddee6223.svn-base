@@ -1,0 +1,28 @@
+package com.avnet.emasia.webquote.component.show.config;
+
+import java.util.List;
+import java.util.function.Predicate;
+
+public enum LogicAction {
+	ANYMATCH {
+		@Override
+		boolean test(List<String> sources, List<String> conditons) {
+			return conditons.stream().anyMatch(p -> sources.stream().anyMatch(
+					s -> (s!=null && s.equalsIgnoreCase(p))));
+		}
+	},ALLMATCH {
+		@Override
+		boolean test(List<String> sources, List<String> conditons) {
+			return conditons.stream().allMatch(p -> 
+				sources.stream().anyMatch(s -> (s!=null && s.equalsIgnoreCase(p))));
+		}
+	},NONEMATCH {
+		@Override
+		boolean test(List<String> sources, List<String> conditons) {
+			return conditons.stream().noneMatch(p -> 
+				sources.stream().anyMatch(s -> (s!=null && s.equalsIgnoreCase(p))));
+		}
+	};
+	//private final static boolean MATCH = true;
+	abstract boolean test(List<String> sources, List<String> conditons);
+}

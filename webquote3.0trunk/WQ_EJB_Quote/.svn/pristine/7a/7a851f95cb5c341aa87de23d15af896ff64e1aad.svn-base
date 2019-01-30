@@ -1,0 +1,2248 @@
+package com.avnet.emasia.webquote.quote.ejb;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
+import com.avnet.emasia.webquote.constants.StageEnum;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.CostIndicator;
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.DataAccess;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.MaterialRegional;
+import com.avnet.emasia.webquote.entity.NormalPricer;
+import com.avnet.emasia.webquote.entity.Pricer;
+import com.avnet.emasia.webquote.entity.ProductGroup;
+import com.avnet.emasia.webquote.entity.Quote;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.Team;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.quote.vo.CostComparisonBean;
+import com.avnet.emasia.webquote.quote.vo.CostExtractSearchCriterial;
+import com.avnet.emasia.webquote.quote.vo.MyQuoteSearchCriteria;
+import com.avnet.emasia.webquote.util.CostAndDateComparator;
+import com.avnet.emasia.webquote.utilities.common.OSTimeZone;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+import com.avnet.emasia.webquote.vo.CostCompareVO;
+import com.avnet.emasia.webquote.vo.CostInfoVO;
+
+@Stateless
+@LocalBean
+public class CostExtractSB {
+	private static final Logger LOG = Logger.getLogger(CostExtractSB.class.getName());
+
+	@PersistenceContext(unitName = "Server_Source")
+	private EntityManager em;
+	
+//	@EJB
+//	FiscalMappingSB fiscalMappingSB;
+
+	//	public List<CostInfoVO> queryCostInfo(CostExtractSearchCriterial criterial) {
+	//		return search( criterial);
+	//	}
+	//	
+	//	public List<CostCompareVO> queryCostCompareInfo(List<CostInfoVO> costInfoVOs,CostExtractSearchCriterial criterial) {
+	//		return search( criterial);
+	//	}
+
+//	public List<CostExtractSearchCriterial> search(CostExtractSearchCriterial criteria, boolean isOnline, int first,
+//			int pageSize) {
+//
+//		List<CostExtractSearchCriterial> result = null;
+//		
+//		
+//		
+//		
+////		String[] costSources = criteria.getSelectedCostSoures();
+//		
+////		for(String costSource : costSources){
+////			if (costSource.equalsIgnoreCase("NormalPricer")) {
+//				CriteriaBuilder cb = em.getCriteriaBuilder();
+//				CriteriaQuery<Pricer> cq = cb.createQuery(Pricer.class);
+//				//q.distinct(true);
+//				Root<Pricer> mt = cq.from(Pricer.class);
+//				//mt.fetch("material", JoinType.LEFT);
+//
+//				Join<Pricer, BizUnit> bizUnit = mt.join("bizUnitBean");
+//
+//				Join<Pricer, Material> material = mt.join("material");
+//				populateCriteriaForNormal(criteria, material, cq, bizUnit, mt);
+//				TypedQuery<Pricer> q = em.createQuery(cq);
+//				// NEC Pagination Changes: Sets numbers of records to be fetched for
+//				// current page
+//				if (isOnline) {
+//					q.setFirstResult(first);
+//
+//					q.setMaxResults(pageSize);
+//				}
+//
+//				List<Pricer> searchResult = q.getResultList();
+//
+//				System.out.println("cost extract normal pricer: " + searchResult.size());
+////				for(Pricer p : searchResult){
+////					System.out.println("Pricer id: " + p.getId());
+////					System.out.println("Region: " + p.getBizUnitBean().getName());
+////					//String region = p.getBizUnitBean().getName();
+////					//if(p.getMaterial().getMaterialRegaional(criterial) != null){
+////					System.out.println("Sales Cost Flag: " + p.getMaterial().getMaterialRegionals().get(0).isSalesCostFlag());
+////					//System.out.println("PG1 id: " + p.getMaterial().getMaterialRegionals().get(0).getProductGroup1().getId());
+////					//System.out.println("PG1 name: " + p.getMaterial().getMaterialRegionals().get(0).getProductGroup1().getName());
+////					System.out.println("PG2 id: " + p.getMaterial().getMaterialRegionals().get(0).getProductGroup2().getId());
+////					System.out.println("PG2 name: " + p.getMaterial().getMaterialRegionals().get(0).getProductGroup2().getName());
+////					//System.out.println("PG3: " + p.getMaterial().getMaterialRegionals().get(0).getProductGroup3());
+////					//System.out.println("PG4: " + p.getMaterial().getMaterialRegionals().get(0).getProductGroup4());
+////					//}
+////					System.out.println("MFR: " + p.getMaterial().getManufacturer().getName());
+////					System.out.println("MFR PN: " + p.getMaterial().getFullMfrPartNumber());
+////					System.out.println("Cost: " + p.getCost());
+////					System.out.println("Cost Source: " + p.getPricerType());
+////					System.out.println("Cost ind: " + p.getCostIndicator());
+////					System.out.println("quote eff date: " + p.getQuotationEffectiveDate());
+////					System.out.println("Mpq: " + p.getMpq());
+////					System.out.println("moq: " + p.getMoq());
+////
+////
+////				}
+//				
+//				//result = convertPricerToBeans(searchResult);
+////			}
+////		}
+//				
+////		if (criteria.getSelectedCostSoures() != null && criteria.getSelectedCostSoures().length > 0) {
+////			for(String cs : criteria.getSelectedCostSoures()){
+////				if(cs.equals("QuoteRecord")){
+////					searchQuote(criteria, isOnline, first, pageSize);
+////					break;
+////				}
+////			}
+////		}
+//
+//		return result;
+//	}
+
+//	private void populateCriteriaForNormal(CostExtractSearchCriterial criteria, Join<Pricer, Material> material,
+//			CriteriaQuery c, Join<Pricer, BizUnit> bizUnit, Root<Pricer> mt) {
+//		List<Predicate> criterias = new ArrayList<Predicate>();
+//		CriteriaBuilder cb = em.getCriteriaBuilder();
+//		Predicate p1 = null;
+//		Join<Material, Manufacturer> manufacturer = material.join("manufacturer");
+//
+//		Join<Material, MaterialRegional> mRegional = material.join("materialRegionals");
+//		if (criteria.getSelectedRegions() != null && criteria.getSelectedRegions().length > 0) {
+//			Join<MaterialRegional, BizUnit> mBizUnit = mRegional.join("bizUnit");
+//
+//			p1 = mBizUnit.<String>get("name").in(Arrays.asList(criteria.getSelectedRegions()));
+//			criterias.add(p1);
+//		}
+//		
+//		//p1 = cb.equal(bizUnit.<String>get("name"), criteria.getRegion());
+//		p1 = bizUnit.<String>get("name").in(Arrays.asList(criteria.getSelectedRegions()));
+//		criterias.add(p1);
+//
+////		if (criteria.getSelectedCostSoures() != null && criteria.getSelectedCostSoures().length > 0) {
+////			p1 = mt.<String>get("pricerType").in(Arrays.asList(criteria.getSelectedCostSoures()));
+////			criterias.add(p1);	
+////		}
+//
+//
+//		if (criteria.getSelectedMfrs() != null && criteria.getSelectedMfrs().length > 0) {
+//			p1= manufacturer.<String>get("name").in(Arrays.asList(criteria.getSelectedMfrs()));	
+//			criterias.add(p1);	
+//		}
+//
+//		if (!QuoteUtil.isEmpty(criteria.getPartNumber())) {
+//			p1 = cb.like(cb.upper(material.<String>get("fullMfrPartNumber")),
+//					"%" + criteria.getPartNumber().toUpperCase() + "%");
+//			criterias.add(p1);
+//		}
+//		//		if (!QuoteUtil.isEmpty(criteria.getCost())) {
+//		p1 = cb.gt(mt.<Double>get("cost"), 0);
+//		criterias.add(p1);
+//		//		}
+//		//
+//		//		/**
+//		//		 * SALESCOSTFLAG
+//		//		 ****/
+//		System.out.println("criteria.getSaleCostPart(): " + criteria.getSaleCostPart());
+//		if (!QuoteUtil.isEmpty(criteria.getSaleCostPart())
+//				&& !criteria.getSaleCostPart().equalsIgnoreCase(QuoteSBConstant.OPTION_ALL)) {
+//			System.out.println("criteria.getSaleCostPart()...");
+//			p1 = cb.equal(mRegional.<String>get("salesCostFlag"),
+//					criteria.getSaleCostPart().equals(QuoteSBConstant.OPTION_YES) ? "1" : "0");
+//			criterias.add(p1);
+//		}
+//
+//		Date quotationEffectiveDateFrom = criteria.getQuoteEffectiveDateFrom();
+//		Date quotationEffectiveDateTo = criteria.getQuoteEffectiveDateTo();
+//		if (criteria.getQuoteEffectiveDateFrom() != null || criteria.getQuoteEffectiveDateTo() != null) {
+//			if (criteria.getQuoteEffectiveDateFrom() == null) {// dd/MM/yyyy
+//				quotationEffectiveDateFrom = convertToDate("01/01/1900");
+//			}
+//
+//			if (criteria.getQuoteEffectiveDateTo() == null) {
+//				quotationEffectiveDateTo = convertToDate("01/01/2100");
+//			}
+//			quotationEffectiveDateFrom = getTimesmorning(quotationEffectiveDateFrom);
+//			quotationEffectiveDateTo = getTimesnight(quotationEffectiveDateTo);
+//			List<Predicate> qedcriterias = new ArrayList<Predicate>();
+//			Predicate qedFrom = cb.greaterThanOrEqualTo(mt.<Date>get("quotationEffectiveDate"),
+//					quotationEffectiveDateFrom);
+//
+//			Predicate qedTo = cb.lessThanOrEqualTo(mt.<Date>get("quotationEffectiveDate"), quotationEffectiveDateTo);
+//			Predicate qedPredicate = cb.and(qedFrom, qedTo);
+//			qedcriterias.add(qedPredicate);
+//
+//			Predicate qetForm = cb.greaterThanOrEqualTo(mt.<Date>get("quotationEffectiveTo"),
+//					quotationEffectiveDateFrom);
+//
+//			Predicate qetTo = cb.lessThanOrEqualTo(mt.<Date>get("quotationEffectiveTo"), quotationEffectiveDateTo);
+//			Predicate qetPredicate = cb.and(qetForm, qetTo);
+//			qedcriterias.add(qetPredicate);
+//
+//			Predicate qetForm2 = cb.lessThanOrEqualTo(mt.<Date>get("quotationEffectiveDate"),
+//					quotationEffectiveDateFrom);
+//
+//			Predicate qetTo2 = cb.greaterThanOrEqualTo(mt.<Date>get("quotationEffectiveTo"), quotationEffectiveDateTo);
+//			Predicate qetPredicate2 = cb.and(qetForm2, qetTo2);
+//			qedcriterias.add(qetPredicate2);
+//			criterias.add(cb.or(qedcriterias.toArray(new Predicate[0])));
+//		}
+//
+//
+//		if (criteria.getSelectedCostIndicators() != null && criteria.getSelectedCostIndicators().length > 0) {
+//			Join<NormalPricer, CostIndicator> costIndicator = mt.join("costIndicator");
+//
+//			p1 = costIndicator.<String>get("name").in(Arrays.asList(criteria.getSelectedCostIndicators()));
+//			criterias.add(p1);		
+//		}
+//				
+//				if (!QuoteUtil.isEmpty(criteria.getProductGroup1())) {
+//					Join<MaterialRegional, ProductGroup> productGroup1 = mRegional.join("productGroup1");
+//					p1 = cb.equal(productGroup1.<String>get("name"), criteria.getProductGroup1());
+//					criterias.add(p1);
+//				}
+//		
+//				if (!QuoteUtil.isEmpty(criteria.getProductGroup2())) {
+//					Join<MaterialRegional, ProductGroup> productGroup2 = mRegional.join("productGroup2");
+//					p1 = cb.like(cb.upper(productGroup2.<String>get("name")), "%" + criteria.getProductGroup2() + "%");
+//					criterias.add(p1);
+//				}
+//		
+//				if (!QuoteUtil.isEmpty(criteria.getProductGroup3())) {
+//					p1 = cb.like(mRegional.<String>get("productGroup3"), "%" + criteria.getProductGroup3() + "%");
+//					criterias.add(p1);
+//				}
+//				if (!QuoteUtil.isEmpty(criteria.getProductGroup4())) {
+//					p1 = cb.like(mRegional.<String>get("productGroup4"), "%" + criteria.getProductGroup4() + "%");
+//					criterias.add(p1);
+//				}
+//
+//
+//		if (criterias.size() == 0) {
+//
+//		} else if (criterias.size() == 1) {
+//			c.where(criterias.get(0));
+//		} else {
+//			c.where(cb.and(criterias.toArray(new Predicate[0])));
+//		}
+//	}
+
+//	// Get 00:00:00 on the day time
+//	private Date getTimesmorning(Date date) {
+//		Calendar cal = Calendar.getInstance();
+//		cal.setTime(date);
+//		cal.set(Calendar.HOUR_OF_DAY, 0);
+//		cal.set(Calendar.SECOND, 0);
+//		cal.set(Calendar.MINUTE, 0);
+//		cal.set(Calendar.MILLISECOND, 0);
+//		return cal.getTime();
+//	}
+
+//	// Get 23:59:59 on the day time
+//	private Date getTimesnight(Date date) {
+//		Calendar cal = Calendar.getInstance();
+//		cal.setTime(date);
+//		cal.set(Calendar.HOUR_OF_DAY, 23);
+//		cal.set(Calendar.SECOND, 59);
+//		cal.set(Calendar.MINUTE, 59);
+//		return cal.getTime();
+//	}
+	
+	public static Date convertToDate(String source) {
+		DateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+		format.setLenient(false);
+		try {
+			return format.parse(source);
+		} catch (ParseException e) {
+			LOG.log(Level.WARNING, "Error occureed in parsing the date :: " + e.getMessage(), e);
+		}
+		return null;
+	}
+	
+//	public List<CostExtractSearchCriterial> convertPricerToBeans(List<Pricer> pricerLst) {
+//		List<CostExtractSearchCriterial> resultLst = new ArrayList<CostExtractSearchCriterial>();
+//		if (pricerLst != null) {
+//			Pricer pg = null;
+//			for (int i = 0; i < pricerLst.size(); i++) {
+//				pg = pricerLst.get(i);
+//				CostExtractSearchCriterial bean = new CostExtractSearchCriterial();
+////				bean.setLineSeq((int) pg.getId());
+////				bean.setMetarialDetailId(pg.getId());
+////				bean.setContractPriceId(pg.getId());
+//				if (pg.getBizUnitBean() != null) {
+//					bean.setRegion(pg.getBizUnitBean().getName());
+//				}
+//				
+//				bean.setSaleCostPart(pg.getMaterial().getMaterialRegaional(pg.getBizUnitBean().getName()).isSalesCostFlag()?QuoteSBConstant.OPTION_YES:QuoteSBConstant.OPTION_NO);
+//				
+//				if (pg.getMaterial().getManufacturer().getName() != null) {
+//					bean.setMfr(pg.getMaterial().getManufacturer().getName());
+//				}
+//				
+//				if (pg.getMaterial().getFullMfrPartNumber() != null) {
+//					bean.setPartNumber(pg.getMaterial().getFullMfrPartNumber());
+//				}
+//
+//				bean.setCost(pg.getCost());
+//				
+//				if (pg.getPricerType() != null) {
+//					bean.setCostSource(pg.getPricerType());
+//				}
+//				
+//				if (pg.getCostIndicator().getName() != null) {
+//					bean.setCostIndicator(pg.getCostIndicator().getName());
+//				}
+//				
+//				if (pg.getQuotationEffectiveDate() != null) {
+//					bean.setQuoteEffectiveDate(QuoteUtil.convertDateToStr(pg.getQuotationEffectiveDate()));
+//				}
+//				
+//				if (pg.getMpq() != null) {
+//					bean.setMpq(String.valueOf(pg.getMpq()));
+//				}
+//
+//				if (pg.getMoq() != null) {
+//					bean.setMoq(String.valueOf(pg.getMoq()));
+//				}
+//
+//
+//				if (pg.getMaterial() != null) {
+//					MaterialRegional mRegional = pg.getMaterial().getMaterialRegaional(pg.getBizUnitBean().getName());
+//					if(mRegional !=null) {
+//						if (mRegional.getProductGroup1() != null) {
+//							bean.setProductGroup1(mRegional.getProductGroup1().getName());
+//						}
+//	
+//						if (mRegional.getProductGroup2() != null) {
+//							bean.setProductGroup2(mRegional.getProductGroup2().getName());
+//						}
+//						bean.setProductGroup3(mRegional.getProductGroup3());
+//						bean.setProductGroup4(mRegional.getProductGroup4());
+//	
+//					}
+//
+//				}
+//
+//				resultLst.add(bean);
+//			}
+//		}
+//
+//		return resultLst;
+//	}
+	
+	public List<CostExtractSearchCriterial> convertPricerToBeans(List<Object[]> pricerLst) {
+		List<CostExtractSearchCriterial> resultLst = new ArrayList<CostExtractSearchCriterial>();
+		if (pricerLst != null) {
+			//Pricer pg = null;
+			for (Object[] item : pricerLst) {
+				//pg = pricerLst.get(i);
+
+				CostExtractSearchCriterial bean = new CostExtractSearchCriterial();
+				//				bean.setLineSeq((int) pg.getId());
+				//				bean.setMetarialDetailId(pg.getId());
+				//				bean.setContractPriceId(pg.getId());
+				if (item[0] != null) {
+					bean.setRegion(item[0].toString());
+				}
+
+				if (item[1] != null){
+					bean.setSaleCostPart(item[1].toString().equals("Y")?QuoteSBConstant.OPTION_YES:QuoteSBConstant.OPTION_NO);
+				}
+
+				if (item[2] != null) {
+					bean.setMfr(item[2].toString());
+				}
+
+				if (item[3] != null) {
+					bean.setPartNumber(item[3].toString());
+				}
+
+				if (item[4] != null) {
+					bean.setCost(((BigDecimal)item[4]).doubleValue());
+				}
+
+				if (item[5] != null) {
+					bean.setCostSource(item[5].toString());
+				}
+
+				if (item[6] != null) {
+					bean.setCostIndicator(item[6].toString());
+				}
+
+				if (item[7] != null) {
+					//bean.setQuoteEffectiveDate(QuoteUtil.convertDateToStr((Date)item[7]));
+					bean.setQuoteEffectiveDate(((Date)item[7]));
+				}
+
+				if (item[8] != null) {
+					bean.setMpq(((BigDecimal)item[8]).toString());
+				}
+
+				if (item[9] != null) {
+					bean.setMoq(((BigDecimal)item[9]).toString());
+				}
+
+				if (item[10] != null) {
+					bean.setProductGroup1(item[10].toString());
+				}
+
+				if (item[11] != null) {
+					bean.setProductGroup2(item[11].toString());
+				}
+				if (item[12] != null) {
+					bean.setProductGroup3(item[12].toString());
+				}
+
+				if (item[13] != null) {
+					bean.setProductGroup4(item[13].toString());
+				}
+				
+				if (item[14] != null) {
+					bean.setSoldToCode(item[14].toString());
+				}
+
+				if (item[15] != null) {
+					bean.setSoldToName(item[15].toString());
+				}
+				
+				if (item[16] != null) {
+					
+					System.out.println("item[16] != null");
+					
+					if(item[16] instanceof BigDecimal){
+						System.out.println("BigDecimal convertion...");
+						int value = ((BigDecimal)item[16]).intValue();
+						bean.setQuotedQty(value);
+					}else{
+						bean.setQuotedQty((int)item[16]);
+					}
+				}
+
+				resultLst.add(bean);
+			}
+		}
+
+		return resultLst;
+	}
+	
+	public List<CostExtractSearchCriterial> convertResultToBeans(List<Object[]> list) {
+		List<CostExtractSearchCriterial> resultLst = new ArrayList<CostExtractSearchCriterial>();
+		
+		if (list != null) {
+			for (Object[] item : list) {
+				CostExtractSearchCriterial bean = new CostExtractSearchCriterial();
+
+				if (item[0] != null) {
+					bean.setMfr(item[0].toString());
+				}
+				
+				if (item[1] != null) {
+					bean.setPartNumber(item[1].toString());
+				}
+
+				if (item[2] != null) {
+					bean.setCost(((BigDecimal)item[2]).doubleValue());
+				}
+
+				if (item[3] != null) {
+					bean.setCostSource(item[3].toString());
+				}
+
+				if (item[4] != null) {
+					bean.setCostIndicator(item[4].toString());
+				}
+				
+				if (item[5] != null) {
+					bean.setRegion(item[5].toString());
+				}
+				
+				if (item[6] != null) {
+					bean.setQuoteEffectiveDate(((Date)item[6]));
+				}
+
+				resultLst.add(bean);
+			}
+		}
+
+		return resultLst;
+	}
+	
+//	@Asynchronous
+//	@TransactionTimeout(value = 30000, unit = TimeUnit.SECONDS)
+//	public void asynchSearch(CostExtractSearchCriterial criteria, boolean isOnline, int first, int pageSize,
+//			int pageNumber, ConcurrentHashMap<Integer, List<CostExtractSearchCriterial>> map, Queue<Integer> queue,
+//			int cachePageSize) {
+//		
+//		List<CostExtractSearchCriterial> result = search(criteria, isOnline, first, pageSize);
+//		
+//		if (result != null && result.size() > 0) {
+//			map.put(pageNumber, result);
+//			queue.add(pageNumber);
+//			if (cachePageSize < map.size()) {
+//				map.remove(queue.remove());
+//			}
+//		}
+//		
+//	}
+	
+	/*
+	public int count(CostExtractSearchCriterial criteria, boolean isOnline) {
+		int count = 0;
+//		List<CostExtractSearchCriterial> result = null;
+//		
+//		String[] costSources = criteria.getSelectedCostSoures();
+		
+//		for(String costSource : costSources){
+//			if (costSource.equalsIgnoreCase("NormalPricer")) {
+				CriteriaBuilder cb = em.getCriteriaBuilder();
+				CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+				//q.distinct(true);
+				Root<Pricer> mt = cq.from(Pricer.class);
+				//mt.fetch("material", JoinType.LEFT);
+
+				Join<Pricer, BizUnit> bizUnit = mt.join("bizUnitBean");
+
+				Join<Pricer, Material> material = mt.join("material");
+				populateCriteriaForNormal(criteria, material, cq, bizUnit, mt);
+				cq.select(cb.count(mt));
+				count = em.createQuery(cq).getSingleResult().intValue();
+				System.out.println(count);
+//				result = convertPricerToBeans(searchResult);
+//			}
+//		}
+
+		return count;
+	}*/
+	
+	public int countCostInformation(CostExtractSearchCriterial criteria, boolean isOnline) {
+		int count = 0;
+		
+		StringBuffer sql = new StringBuffer();
+		StringBuffer sql2 = new StringBuffer();
+		boolean quoteRecord = false;
+		boolean pricer = false;
+
+		
+		if (criteria.getSelectedCostSoures() != null && criteria.getSelectedCostSoures().length > 0) {
+			
+			for(String cs : criteria.getSelectedCostSoures()){
+				if(cs.contains("QuoteRecord")){
+					quoteRecord = true;
+				}else{
+					pricer = true;
+				}
+			}
+			
+		}
+    	
+		sql.append("SELECT count(*) FROM ( ");
+		if(pricer){
+			sql2.append(buildPricerQuery(criteria, false));
+		}
+		if(pricer && quoteRecord){
+			sql2.append(" union all ");
+		}
+		if (quoteRecord) {
+			sql2.append(buildQuoteQuery(criteria, false, false));
+		}
+		
+		//filter by DataAccess
+		if(criteria.getDataAccesses() != null && criteria.getDataAccesses().size() > 0){
+			sql.append(buildDataAccessQuery(criteria.getDataAccesses(), sql2.toString()));
+		}else{
+			sql.append(sql2);
+		}
+		
+		sql.append(" ) ");
+
+		Query query = em.createNativeQuery(sql.toString());
+		
+		queryCriteria(criteria, query, pricer, quoteRecord);
+
+		count = ((BigDecimal) query.getSingleResult()).intValue();
+		
+		System.out.println("count: " + count);
+		return count;
+	}
+	
+	public int countCostComparison(CostExtractSearchCriterial criteria, boolean isOnline) {
+		int count = 0;
+		
+		StringBuffer sql = new StringBuffer();
+		StringBuffer sql2 = new StringBuffer();
+		boolean quoteRecord = false;
+		boolean pricer = false;
+
+		
+		if (criteria.getSelectedCostSoures() != null && criteria.getSelectedCostSoures().length > 0) {
+			
+			for(String cs : criteria.getSelectedCostSoures()){
+				if(cs.contains("QuoteRecord")){
+					quoteRecord = true;
+				}else{
+					pricer = true;
+				}
+			}
+			
+		}
+    	
+
+		sql.append("SELECT count(*) FROM ( ");
+		sql.append("	SELECT distinct mfr_name, part_no FROM ( ");
+		
+		if(pricer){
+			sql2.append(buildPricerQuery(criteria, false));
+		}
+		if(pricer && quoteRecord){
+			sql2.append(" union all ");
+		}
+		if (quoteRecord) {
+			sql2.append(buildQuoteQuery(criteria, false, false));
+		}
+		
+		//filter by DataAccess
+		if(criteria.getDataAccesses() != null && criteria.getDataAccesses().size() > 0){
+			sql.append(buildDataAccessQuery(criteria.getDataAccesses(), sql2.toString()));	
+		}else{
+			sql.append(sql2);
+		}
+
+		sql.append("	) 				");
+		sql.append(") ");
+
+
+		Query query = em.createNativeQuery(sql.toString());
+		
+		queryCriteria(criteria, query, pricer, quoteRecord);
+
+		count = ((BigDecimal) query.getSingleResult()).intValue();
+		
+		System.out.println("count: " + count);
+		return count;
+	}
+	
+//	public List<CostExtractSearchCriterial> searchQuote(CostExtractSearchCriterial criteria, boolean isOnline, int first,
+//			int pageSize) {
+//System.out.println("searchQuote..." + StageEnum.FINISH.name());
+//		List<CostExtractSearchCriterial> result = null;
+//
+//
+//		CriteriaBuilder cb = em.getCriteriaBuilder();
+//		CriteriaQuery<QuoteItem> cq = cb.createQuery(QuoteItem.class);
+//		//q.distinct(true);
+//		//Root<QuoteItem> mt = cq.from(QuoteItem.class);
+//		//mt.fetch("material", JoinType.LEFT);
+//		
+//		Root<QuoteItem> quoteItem = cq.from(QuoteItem.class);
+//
+//		Join<QuoteItem, ProductGroup> productGroup = quoteItem.join("productGroup2", JoinType.LEFT);
+//
+//		Join<QuoteItem, Quote> quote = quoteItem.join("quote");
+//		//Join<Quote, User> sales = quote.join("sales", JoinType.LEFT);
+//		//Join<Quote, Team> team = quote.join("team", JoinType.LEFT);
+//		Join<Quote, BizUnit> bizUnit = quote.join("bizUnit", JoinType.LEFT);
+//		Join<Quote, Customer> soldToCustomer = quote.join("soldToCustomer", JoinType.LEFT);
+//		//Join<QuoteItem, Customer> endCustomer = quoteItem.join("endCustomer", JoinType.LEFT);
+//		//Join<QuoteItem, Customer> shipToCustomer = quoteItem.join("shipToCustomer", JoinType.LEFT);
+//		Join<QuoteItem, Manufacturer> manufacturer = quoteItem.join("requestedMfr", JoinType.LEFT);
+//		populateCriteriaForQuote(cq, criteria, quoteItem, productGroup, quote, soldToCustomer, 
+//				manufacturer, bizUnit);
+////		Join<QuoteItem, BizUnit> bizUnit = mt.join("bizUnitBean");
+////
+////		Join<QuoteItem, Material> material = mt.join("material");
+////		populateCriteriaForQuote(criteria, material, cq, bizUnit, mt);
+//		TypedQuery<QuoteItem> q = em.createQuery(cq);
+//		// NEC Pagination Changes: Sets numbers of records to be fetched for
+//		// current page
+//		if (isOnline) {
+//			q.setFirstResult(first);
+//
+//			q.setMaxResults(pageSize);
+//		}
+//
+//		List<QuoteItem> searchResult = q.getResultList();
+//
+//		System.out.println("cost extract normal pricer: " + searchResult.size());
+//		//				for(Pricer p : searchResult){
+//		//					System.out.println("Pricer id: " + p.getId());
+//		//					System.out.println("Region: " + p.getBizUnitBean().getName());
+//		//					//String region = p.getBizUnitBean().getName();
+//		//					//if(p.getMaterial().getMaterialRegaional(criterial) != null){
+//		//					System.out.println("Sales Cost Flag: " + p.getMaterial().getMaterialRegionals().get(0).isSalesCostFlag());
+//		//					//System.out.println("PG1 id: " + p.getMaterial().getMaterialRegionals().get(0).getProductGroup1().getId());
+//		//					//System.out.println("PG1 name: " + p.getMaterial().getMaterialRegionals().get(0).getProductGroup1().getName());
+//		//					System.out.println("PG2 id: " + p.getMaterial().getMaterialRegionals().get(0).getProductGroup2().getId());
+//		//					System.out.println("PG2 name: " + p.getMaterial().getMaterialRegionals().get(0).getProductGroup2().getName());
+//		//					//System.out.println("PG3: " + p.getMaterial().getMaterialRegionals().get(0).getProductGroup3());
+//		//					//System.out.println("PG4: " + p.getMaterial().getMaterialRegionals().get(0).getProductGroup4());
+//		//					//}
+//		//					System.out.println("MFR: " + p.getMaterial().getManufacturer().getName());
+//		//					System.out.println("MFR PN: " + p.getMaterial().getFullMfrPartNumber());
+//		//					System.out.println("Cost: " + p.getCost());
+//		//					System.out.println("Cost Source: " + p.getPricerType());
+//		//					System.out.println("Cost ind: " + p.getCostIndicator());
+//		//					System.out.println("quote eff date: " + p.getQuotationEffectiveDate());
+//		//					System.out.println("Mpq: " + p.getMpq());
+//		//					System.out.println("moq: " + p.getMoq());
+//		//
+//		//
+//		//				}
+//
+//		//result = convertPricerToBeans(searchResult);
+//
+//
+//		return result;
+//	}
+	
+//	private void populateCriteriaForQuote(CriteriaQuery c, CostExtractSearchCriterial criteria, Root<QuoteItem> quoteItem, 
+//			Join<QuoteItem, ProductGroup> productGroup,
+//			Join<QuoteItem, Quote> quote, Join<Quote, Customer> soldToCustomer, 
+//			Join<QuoteItem, Manufacturer> manufacturer, Join<Quote, BizUnit> bizUnit) {
+//		List<Predicate> criterias = new ArrayList<Predicate>();
+//		CriteriaBuilder cb = em.getCriteriaBuilder();
+//		Predicate p1 = null;
+//
+//		p1 = bizUnit.<String>get("name").in(Arrays.asList(criteria.getSelectedRegions()));
+//		criterias.add(p1);
+//
+//		if (criteria.getSelectedMfrs() != null && criteria.getSelectedMfrs().length > 0) {
+//			p1= manufacturer.<String>get("name").in(Arrays.asList(criteria.getSelectedMfrs()));	
+//			criterias.add(p1);
+//		}
+//
+//		if (!QuoteUtil.isEmpty(criteria.getPartNumber())) {
+//			p1 = cb.like(cb.upper(quoteItem.<String>get("quotedPartNumber")),
+//					"%" + criteria.getPartNumber().toUpperCase() + "%");
+//			criterias.add(p1);
+//		}
+//
+//		p1 = cb.gt(quoteItem.<Double>get("cost"), 0);
+//		criterias.add(p1);
+//
+//		p1 = cb.equal(quoteItem.<Double>get("stage"), "FINISH");
+//		criterias.add(p1);
+//
+//
+//		System.out.println("criteria.getSaleCostPart(): " + criteria.getSaleCostPart());
+//		if (!QuoteUtil.isEmpty(criteria.getSaleCostPart())
+//				&& !criteria.getSaleCostPart().equalsIgnoreCase(QuoteSBConstant.OPTION_ALL)) {
+//			System.out.println("criteria.getSaleCostPart()...");
+//			p1 = cb.equal(quoteItem.<String>get("salesCostFlag"),
+//					criteria.getSaleCostPart().equals(QuoteSBConstant.OPTION_YES) ? "1" : "0");
+//			criterias.add(p1);
+//		}
+//
+//		if (criteria.getQuoteEffectiveDateFrom() != null ) {
+//			Predicate p0 = cb.greaterThanOrEqualTo(quoteItem.<Date>get("quoteExpiryDate"), criteria.getQuoteEffectiveDateFrom());
+//			criterias.add(p0);
+//		}		
+//
+//		if (criteria.getQuoteEffectiveDateTo() != null ) {
+//			Predicate p0 = cb.lessThanOrEqualTo(quoteItem.<Date>get("quoteExpiryDate"), criteria.getQuoteEffectiveDateTo());
+//			criterias.add(p0);
+//		}
+//
+//
+//		if (criteria.getSelectedCostIndicators() != null && criteria.getSelectedCostIndicators().length > 0) {
+//
+//
+//			p1 = quoteItem.<String>get("costIndicator").in(Arrays.asList(criteria.getSelectedCostIndicators()));
+//			criterias.add(p1);		
+//		}
+//
+////		if (!QuoteUtil.isEmpty(criteria.getProductGroup1())) {
+////			Join<MaterialRegional, ProductGroup> productGroup1 = mRegional.join("productGroup1");
+////			p1 = cb.equal(productGroup1.<String>get("name"), criteria.getProductGroup1());
+////			criterias.add(p1);
+////		}
+////
+////		if (!QuoteUtil.isEmpty(criteria.getProductGroup2())) {
+////			Join<MaterialRegional, ProductGroup> productGroup2 = mRegional.join("productGroup2");
+////			p1 = cb.like(cb.upper(productGroup2.<String>get("name")), "%" + criteria.getProductGroup2() + "%");
+////			criterias.add(p1);
+////		}
+//
+////		if (!QuoteUtil.isEmpty(criteria.getProductGroup2())) {
+////			p1 = cb.like(cb.upper(productGroup.<String>get("name")), "%" + criteria.getProductGroup2() + "%");
+////			criterias.add(p1);
+////		}
+//		
+//		if (!QuoteUtil.isEmpty(criteria.getProductGroup3())) {
+//			p1 = cb.like(quoteItem.<String>get("productGroup3"), "%" + criteria.getProductGroup3() + "%");
+//			criterias.add(p1);
+//		}
+//		if (!QuoteUtil.isEmpty(criteria.getProductGroup4())) {
+//			p1 = cb.like(quoteItem.<String>get("productGroup4"), "%" + criteria.getProductGroup4() + "%");
+//			criterias.add(p1);
+//		}
+//
+//
+//		if (criterias.size() == 0) {
+//
+//		} else if (criterias.size() == 1) {
+//			c.where(criterias.get(0));
+//		} else {
+//			c.where(cb.and(criterias.toArray(new Predicate[0])));
+//		}
+//	}
+	
+	/*
+	public String buildPricerQuery(CostExtractSearchCriterial criteria, boolean distinct){
+		StringBuffer sql = new StringBuffer();
+		
+		if(distinct){
+			sql.append("select mfr.name, m.fullMfrPartNumber from Pricer p ");
+		}else{
+			sql.append("select b.name as name, mr.salesCostFlag, mfr.name, m.fullMfrPartNumber, p.cost, p.pricerType, ci.name as costIndicator, p.quotationEffectiveDate, p.mpq, p.moq, pg1.name, pg2.name, mr.productGroup3, mr.productGroup4, '', '', 0 from Pricer p ");
+		}
+		
+		sql.append("join p.bizUnitBean b ");
+		sql.append("join p.material m ");
+		sql.append("join p.costIndicator ci ");
+		sql.append("join m.materialRegionals mr ");
+		sql.append("join m.manufacturer mfr ");
+		sql.append("left join mr.productGroup1 pg1 ");
+		sql.append("left join mr.productGroup2 pg2 ");
+    	
+		sql.append("where p.cost > 0 ");
+    	
+    	if (criteria.getSelectedRegions() != null && criteria.getSelectedRegions().length > 0) {	
+    		sql.append("and b.name in :bizUnit ");
+    	}
+    	
+    	if (criteria.getSelectedRegions() != null && criteria.getSelectedRegions().length > 0) {	
+    		sql.append("and mr.bizUnit in :bizUnit ");
+    	}
+    	
+    	if (criteria.getSelectedCostSoures() != null && criteria.getSelectedCostSoures().length > 0) {
+    		sql.append("and p.pricerType in :pricerTypes ");
+		}
+    	
+    	if (criteria.getSelectedMfrs() != null && criteria.getSelectedMfrs().length > 0) {
+    		sql.append("and mfr.name in :mfrs ");	
+		}
+    	
+    	if (!QuoteUtil.isEmpty(criteria.getPartNumber())) {
+    		sql.append("and m.fullMfrPartNumber like :partNo ");	
+    	}
+		
+    	if (!QuoteUtil.isEmpty(criteria.getSaleCostPart())
+				&& !criteria.getSaleCostPart().equalsIgnoreCase(QuoteSBConstant.OPTION_ALL)) {
+    		sql.append("and mr.salesCostFlag = :salesCostFlag ");
+		}
+    	
+		if (criteria.getQuoteEffectiveDateFrom() != null || criteria.getQuoteEffectiveDateTo() != null) {
+			
+			sql.append("and ( (p.quotationEffectiveDate >= :quotationEffectiveFrom and p.quotationEffectiveDate <= :quotationEffectiveTo) ");
+			sql.append("or (p.quotationEffectiveTo >= :quotationEffectiveFrom and p.quotationEffectiveTo <= :quotationEffectiveTo) ");
+			sql.append("or (p.quotationEffectiveDate >= :quotationEffectiveFrom and p.quotationEffectiveTo <= :quotationEffectiveTo) ) ");
+
+		}
+		
+		if (criteria.getSelectedCostIndicators() != null && criteria.getSelectedCostIndicators().length > 0) {	
+			sql.append("and ci.name in :costIndicators ");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup1())) {
+			sql.append("and pg1.name like :pg1 ");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup2())) {
+			sql.append("and pg2.name like :pg2 ");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup3())) {
+			sql.append("and mr.productGroup3 like :pg3 ");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup4())) {
+			sql.append("and mr.productGroup4 like :pg4 ");
+		}
+		
+		return sql.toString();
+	}*/
+	
+	public String buildPricerQuery(CostExtractSearchCriterial criteria, boolean costComparison){
+		StringBuffer sql = new StringBuffer();
+		
+//		if(distinct){
+//			sql.append("select mfr.name, m.fullMfrPartNumber from Pricer p ");
+//		}else{
+//			sql.append("select b.name as name, mr.salesCostFlag, mfr.name, m.fullMfrPartNumber, p.cost, p.pricerType, ci.name as costIndicator, p.quotationEffectiveDate, p.mpq, p.moq, pg1.name, pg2.name, mr.productGroup3, mr.productGroup4, '', '', 0 from Pricer p ");
+//		}
+		
+		sql.append("SELECT                                                                                 ");
+		sql.append("    b.name AS region,                                                                  ");
+		sql.append("    mr.sales_cost_flag AS sales_cost_flag,                                             ");
+		sql.append("    mfr.name AS mfr_name,                                                              ");
+		sql.append("    m.full_mfr_part_number AS part_no,                                                 ");
+		sql.append("    p.cost AS cost,                                                                    ");
+		sql.append("    p.pricer_type AS cost_source,                                                      ");
+		sql.append("    ci.name AS cost_indicator,                                                         ");
+		sql.append("    p.quotation_effective_date AS effective_date,                                      ");
+		sql.append("    p.mpq AS mpq,                                                                      ");
+		sql.append("    p.moq AS moq,                                                                      ");
+		sql.append("    pg1.name AS product_group1,                                                        ");
+		sql.append("    pg2.name AS product_group2,                                                        ");
+		sql.append("    mr.product_group3 AS product_group3,                                               ");
+		sql.append("    mr.product_group4 AS product_group4,                                               ");
+		sql.append("    '' as customer_number,                                                             ");
+		sql.append("    '' as customer_name,                                                               ");
+		sql.append("    0 as quoted_qty,                                                                   ");
+		sql.append("    mfr.id AS mfr_id, 																   ");
+		sql.append("    mr.product_group2_id as product_group2_id, 										   ");
+		sql.append("    p.material_category as material_type,                                              ");
+		sql.append("    pt.name AS program_type_name,                                                      ");
+		sql.append("    '' as team                                                                         ");
+		sql.append("FROM                                                                                   ");
+		sql.append("    pricer p                                                                           ");
+		sql.append("    LEFT OUTER JOIN program_type pt ON ( pt.id = p.program_type_id ),                  ");
+		sql.append("    biz_unit b,                                                                        ");
+		sql.append("    manufacturer mfr,                                                                  ");
+		sql.append("    material m,                                                                        ");
+		sql.append("	material_regional mr                                                               ");
+		sql.append("    LEFT OUTER JOIN product_group pg1 ON ( pg1.id = mr.product_group1_id )             ");
+		sql.append("    LEFT OUTER JOIN product_group pg2 ON ( pg2.id = mr.product_group2_id ),            ");
+		sql.append("    cost_indicator ci                                                                  ");
+		sql.append("WHERE                                                                                  ");
+		sql.append("    p.material_id = m.id                                                               ");
+		sql.append("	AND p.biz_unit = b.name                                                            ");
+		sql.append("	AND p.cost_indicator = ci.name                                                     ");
+		sql.append("    AND mr.material_id = m.id                                                          ");
+		sql.append("    AND mfr.id = m.manufacturer_id                                                     ");
+		sql.append("    and p.biz_unit = mr.biz_unit                                                       ");
+		sql.append("    AND p.cost > 0                                                                     ");
+    	
+    	if (criteria.getSelectedRegions() != null && criteria.getSelectedRegions().length > 0) {	
+    		sql.append("    AND p.biz_unit IN " + buildInSql(new HashSet<String>(Arrays.asList(criteria.getSelectedRegions()))));
+    	}
+    	
+    	if (criteria.getSelectedRegions() != null && criteria.getSelectedRegions().length > 0) {
+    		sql.append("    AND mr.biz_unit IN " + buildInSql(new HashSet<String>(Arrays.asList(criteria.getSelectedRegions()))));
+    	}
+    	
+    	if (criteria.getSelectedCostSoures() != null && criteria.getSelectedCostSoures().length > 0) {
+    		sql.append("    AND p.pricer_type IN " + buildInSql(new HashSet<String>(Arrays.asList(criteria.getSelectedCostSoures()))));
+		}
+    	
+    	if(!costComparison){
+    		if (criteria.getSelectedMfrs() != null && criteria.getSelectedMfrs().length > 0) {
+    			sql.append("    AND mfr.name IN " + buildInSql(new HashSet<String>(Arrays.asList(criteria.getSelectedMfrs()))));	
+    		}
+
+    		if (!QuoteUtil.isEmpty(criteria.getPartNumber())) {
+    			sql.append("    AND m.full_mfr_part_number LIKE #partNo                                                  ");	
+    		}
+    	}else{
+    		if (criteria.getMfrAndPartNo() != null && criteria.getMfrAndPartNo().size() > 0) {
+    			sql.append("    AND (mfr.name|| m.full_mfr_part_number) IN " + buildInSql(new HashSet<String>(criteria.getMfrAndPartNo())));	
+    		}
+    	}
+		
+    	if (!QuoteUtil.isEmpty(criteria.getSaleCostPart())
+				&& !criteria.getSaleCostPart().equalsIgnoreCase(QuoteSBConstant.OPTION_ALL)) {
+    		sql.append("    AND mr.sales_cost_flag = #salesCostFlag                                                         ");
+		}
+    	
+		if (criteria.getQuoteEffectiveDateFrom() != null || criteria.getQuoteEffectiveDateTo() != null) {
+			sql.append("    AND (                                                                              ");
+			sql.append("			(( p.quotation_effective_date >= #quotationEffectiveFrom) AND ( p.quotation_effective_date <= #quotationEffectiveTo))  ");
+			sql.append("			OR                                                                         ");
+			sql.append("			(( p.quotation_effective_to >= #quotationEffectiveFrom) AND ( p.quotation_effective_to <= #quotationEffectiveTo))      ");
+			sql.append("            OR                                                                         ");
+			sql.append("			(( p.quotation_effective_date >= #quotationEffectiveFrom) AND ( p.quotation_effective_to <= #quotationEffectiveTo))    ");
+			sql.append("        )                                                                              ");
+		}
+		
+		if (criteria.getSelectedCostIndicators() != null && criteria.getSelectedCostIndicators().length > 0) {
+			sql.append("    AND p.cost_indicator IN " + buildInSql(new HashSet<String>(Arrays.asList(criteria.getSelectedCostIndicators()))));
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup1())) {
+			sql.append("    AND pg1.name LIKE #pg1                                                                ");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup2())) {
+			sql.append("    AND pg2.name LIKE #pg2                                                                ");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup3())) {
+			sql.append("    AND mr.product_group3 LIKE #pg3                                                       ");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup4())) {
+			sql.append("    AND mr.product_group4 LIKE #pg4                                                       ");
+		}
+		
+		return sql.toString();
+	}
+	
+	public List<CostExtractSearchCriterial> searchCostInformation(CostExtractSearchCriterial criteria, boolean isOnline, int first,
+			int pageSize) {
+		
+		StringBuffer sql = new StringBuffer();
+		StringBuffer sql2 = new StringBuffer();
+		boolean quoteRecord = false;
+		boolean pricer = false;
+		List<CostExtractSearchCriterial> result = null;
+		
+		if (criteria.getSelectedCostSoures() != null && criteria.getSelectedCostSoures().length > 0) {
+			
+			for(String cs : criteria.getSelectedCostSoures()){
+				if(cs.contains("QuoteRecord")){
+					quoteRecord = true;
+				}else{
+					pricer = true;
+				}
+			}
+			
+		}
+		sql.append("SELECT * FROM ( ");
+		sql.append("	SELECT a.*, ROWNUM rnum FROM ( ");
+		
+		if(pricer){
+			sql2.append(buildPricerQuery(criteria, false));
+		}
+		if(pricer && quoteRecord){
+			sql2.append(" union all ");
+		}
+		if (quoteRecord) {
+			sql2.append(buildQuoteQuery(criteria, false, false));
+		}
+		
+		//filter by DataAccess
+		if(criteria.getDataAccesses() != null && criteria.getDataAccesses().size() > 0){
+			System.out.println("Got dataaccess...");
+			sql.append(buildDataAccessQuery(criteria.getDataAccesses(), sql2.toString()));
+			
+			
+		}else{
+			sql.append(sql2);
+		}
+		
+		sql.append("	) a WHERE ROWNUM <= #rowTo ");
+		sql.append(") WHERE rnum > #rowFrom ");
+
+    	
+		Query query = em.createNativeQuery(sql.toString());
+		
+		queryCriteria(criteria, query, pricer, quoteRecord);
+
+		query.setParameter("rowTo", pageSize + first);
+		query.setParameter("rowFrom", first);			
+
+		List<Object[]> searchResult = query.getResultList();
+		
+		System.out.println("searchResult: " + searchResult.size());
+		
+
+		result = convertPricerToBeans(searchResult);
+		
+		//Start Cost Comparison
+		//getCostComparisonList(criteria, isOnline, first, pageSize);
+		
+		return result;
+	}
+	
+	public List<CostComparisonBean> searchCostComparison(CostExtractSearchCriterial criteria, boolean isOnline, int first, int pageSize) {
+		
+		long start = System.currentTimeMillis();
+		StringBuffer sql = new StringBuffer();
+		StringBuffer sql2 = new StringBuffer();
+		boolean quoteRecord = false;
+		boolean pricer = false;
+		
+		if (criteria.getSelectedCostSoures() != null && criteria.getSelectedCostSoures().length > 0) {
+			
+			for(String cs : criteria.getSelectedCostSoures()){
+				if(cs.contains("QuoteRecord")){
+					quoteRecord = true;
+				}else{
+					pricer = true;
+				}
+			}
+			
+		}
+		sql.append("SELECT * FROM ( ");
+		sql.append("	SELECT a.*, ROWNUM rnum FROM ( ");
+		sql.append("		SELECT distinct mfr_name, part_no FROM ( ");
+
+		
+		if(pricer){
+			sql2.append(buildPricerQuery(criteria, false));
+		}
+		if(pricer && quoteRecord){
+			sql2.append(" union all ");
+		}
+		if (quoteRecord) {
+			sql2.append(buildQuoteQuery(criteria, false, false));
+		}
+		
+		//filter by DataAccess
+		if(criteria.getDataAccesses() != null && criteria.getDataAccesses().size() > 0){
+			sql.append(buildDataAccessQuery(criteria.getDataAccesses(), sql2.toString()));	
+		}else{
+			sql.append(sql2);
+		}
+
+		sql.append("		) 				");
+		sql.append("	) a WHERE ROWNUM <= #rowTo ");
+		sql.append(") WHERE rnum > #rowFrom ");
+    	
+		Query query = em.createNativeQuery(sql.toString());
+		
+		queryCriteria(criteria, query, pricer, quoteRecord);
+
+		query.setParameter("rowTo", pageSize + first);
+		query.setParameter("rowFrom", first);			
+
+		List<Object[]> searchResult = query.getResultList();
+		
+		System.out.println("searchResult: " + searchResult.size());
+
+		//Start prepare key
+		List<String> mfrAndPartNo = new ArrayList<String>(); 
+		Map<String,CostComparisonBean> costComparisonMap = new HashMap<String,CostComparisonBean>();
+		for(Object[] p : searchResult){
+			if(p[0] != null && p[1] != null){
+				String key = p[0].toString()+p[1].toString();
+				mfrAndPartNo.add(key);
+				costComparisonMap.put(key, new CostComparisonBean(p[0].toString(), p[1].toString()));
+			}
+
+		}
+		criteria.setMfrAndPartNo(mfrAndPartNo);
+		//End
+		
+		if(criteria.getMfrAndPartNo()!= null && criteria.getMfrAndPartNo().size() > 0){
+			find3LowestCostByPart(costComparisonMap, criteria);
+
+			for (Map.Entry<String, CostComparisonBean> entry : costComparisonMap.entrySet()) {
+				System.out.println("show top 3 lowest cost : " + entry.getKey() );
+
+
+				CostComparisonBean b = entry.getValue(); 
+				System.out.println(b.getFirstLowestCost() + " " +b.getFirstCostSource() + " " +b.getFirstCostIndicator() + " " +b.getFirstRegion()+ " " +b.getFirstQuoteEffectiveDate() 
+				+ "\n "+ " " +b.getSecondLowestCost() + " " +b.getSecondCostSource() + " " +b.getSecondCostIndicator() + " " +b.getSecondRegion()+ " " +b.getSecondQuoteEffectiveDate()
+				+ "\n "+ " " +b.getThirdLowestCost() + " " +b.getThirdCostSource() + " " +b.getThirdCostIndicator() + " " +b.getThirdRegion()+ " " +b.getThirdQuoteEffectiveDate()
+						);
+
+			}
+
+			findLowestCostWithinNMonth(costComparisonMap, criteria);
+
+			for (Map.Entry<String, CostComparisonBean> entry : costComparisonMap.entrySet()) {
+				System.out.println("show  lowest cost within 3/6/12mth : " + entry.getKey() );
+
+
+				CostComparisonBean b = entry.getValue(); 
+				System.out.println(b.getLowestCostPast12Mths() + " " +b.getLowestCostRegionPast12Mths() + " " +b.getLowestCostQuoteEffectiveDatePast12Mths()  
+				+ "\n "+ " " +b.getLowestCostPast6Mths() + " " +b.getLowestCostRegionPast6Mths() + " " +b.getLowestCostQuoteEffectiveDatePast6Mths() 
+				+ "\n "+ " " +b.getLowestCostPast3Mths() + " " +b.getLowestCostRegionPast3Mths() + " " +b.getLowestCostQuoteEffectiveDatePast3Mths() 
+						);
+
+			}
+		}
+		
+		
+		System.out.println("getCostComparisonList process time: " + (System.currentTimeMillis() - start));
+
+		return new ArrayList<CostComparisonBean>(costComparisonMap.values());
+	}
+	
+	/*
+	public List<CostExtractSearchCriterial> search(CostExtractSearchCriterial criteria, boolean isOnline, int first,
+			int pageSize) {
+		
+		StringBuffer sql = new StringBuffer();
+		boolean quoteRecord = false;
+		boolean pricer = false;
+		List<CostExtractSearchCriterial> result = null;
+		
+		if (criteria.getSelectedCostSoures() != null && criteria.getSelectedCostSoures().length > 0) {
+			
+			for(String cs : criteria.getSelectedCostSoures()){
+				if(cs.contains("QuoteRecord")){
+					quoteRecord = true;
+				}else{
+					pricer = true;
+				}
+			}
+			
+		}
+		//sql.append("select * from { ");
+		if(pricer){
+			sql.append(buildPricerQuery(criteria, false));
+		}
+		if(pricer && quoteRecord){
+			sql.append(" union all ");
+		}
+		if (quoteRecord) {
+			sql.append(buildQuoteQuery(criteria, false));
+		}
+		//sql.append(" } as hh ");
+    	
+		TypedQuery<Object[]> query = em.createQuery(sql.toString(), Object[].class);
+		
+		queryCriteria(criteria, query, pricer, quoteRecord);
+    			
+		
+		query.setFirstResult(first).setMaxResults(pageSize);
+
+		List<Object[]> searchResult = query.getResultList();
+		
+		System.out.println("searchResult: " + searchResult.size());
+		
+		for(Object[] p : searchResult){
+			//System.out.println("quote id: " + p[17]);
+			System.out.println("region: " + p[0]);
+			System.out.println("sales cost flag: " + p[1]);
+			System.out.println("pg1: " + p[10]);
+			System.out.println("pg2: " + p[11]);
+			
+			//System.out.println("pg2: " + p.getMaterial().getMaterialRegaional("CHINA").getProductGroup2().getName());
+		}
+
+		result = convertPricerToBeans(searchResult);
+		
+		//Start Cost Comparison
+		costComparisonList(criteria, isOnline, first, pageSize);
+		
+		return result;
+	}*/
+	
+//	public List<CostExtractSearchCriterial> searchQuote2(CostExtractSearchCriterial criteria, boolean isOnline, int first,
+//			int pageSize) {
+//		
+//		StringBuffer sql = new StringBuffer();
+//		StringBuffer sql2 = new StringBuffer();
+//    	
+//    	sql2.append("select NEW com.avnet.emasia.webquote.quote.vo.CostExtractSearchCriterial(b.name, qi.cost) from QuoteItem qi ");
+//    	sql2.append("join qi.quote q ");
+//    	sql2.append("join qi.soldToCustomer stc ");
+//    	sql2.append("join q.bizUnit b ");
+//    	sql2.append("join qi.requestedMfr mfr ");
+//    	
+//    	if(!QuoteUtil.isEmpty(criteria.getProductGroup1())){
+//    		sql2.append("join qi.productGroup1 pg1 ");
+//    	}
+//    	if(!QuoteUtil.isEmpty(criteria.getProductGroup2())){
+//    		sql2.append("join qi.productGroup2 pg2 ");
+//    	}
+//    	
+//    	sql2.append("where qi.stage > 'FINISH' ");
+//    	
+//    	if (criteria.getSelectedRegions() != null && criteria.getSelectedRegions().length > 0) {	
+//    		sql2.append("and b.name in :bizUnit ");
+//    	}
+//    	
+//    	if (criteria.getSelectedMfrs() != null && criteria.getSelectedMfrs().length > 0) {
+//			sql2.append("and mfr.name in :mfrs ");	
+//		}
+//    	
+//    	if (!QuoteUtil.isEmpty(criteria.getPartNumber())) {
+//			sql2.append("and qi.quotedPartNumber like :partNo ");	
+//    	}
+//		
+//    	if (!QuoteUtil.isEmpty(criteria.getSaleCostPart())
+//				&& !criteria.getSaleCostPart().equalsIgnoreCase(QuoteSBConstant.OPTION_ALL)) {
+//			sql2.append("and qi.salesCostFlag = :salesCostFlag ");
+//		}
+//    	
+//    	if (criteria.getSelectedCostIndicators() != null && criteria.getSelectedCostIndicators().length > 0) {	
+//			sql2.append("and qi.costIndicator in :costIndicators ");
+//		}
+//    	
+//    	if (criteria.getQuoteEffectiveDateFrom() != null ) {
+//			sql2.append("and qi.quoteExpiryDate >= :quoteExpiryDateFrom ");
+//		}
+//    	
+//    	if (criteria.getQuoteEffectiveDateTo() != null ) {
+//			sql2.append("and qi.quoteExpiryDate <= :quoteExpiryDateTo ");
+//		}
+//    	
+//    	if (!QuoteUtil.isEmpty(criteria.getProductGroup1())) {
+//			sql2.append("and pg1.name like :pg1 ");
+//		}
+//		if (!QuoteUtil.isEmpty(criteria.getProductGroup2())) {
+//			sql2.append("and pg2.name like :pg2 ");
+//		}
+//		
+//		if (!QuoteUtil.isEmpty(criteria.getProductGroup3())) {
+//			sql2.append("and qi.productGroup3 like :pg3 ");
+//		}
+//		
+//		if (!QuoteUtil.isEmpty(criteria.getProductGroup4())) {
+//			sql2.append("and qi.productGroup4 like :pg4 ");
+//		}
+//    	
+//    	TypedQuery<CostExtractSearchCriterial> query = em.createQuery(sql2.toString(), CostExtractSearchCriterial.class);
+//		
+//		if (criteria.getSelectedRegions() != null && criteria.getSelectedRegions().length > 0) {		
+//			query.setParameter("bizUnit", Arrays.asList(criteria.getSelectedRegions()));	
+//		}
+//		
+//		if (criteria.getSelectedMfrs() != null && criteria.getSelectedMfrs().length > 0) {
+//			query.setParameter("mfrs", Arrays.asList(criteria.getSelectedMfrs()));	
+//		}
+//		
+//		if (!QuoteUtil.isEmpty(criteria.getPartNumber())) {
+//			query.setParameter("partNo", "%" + criteria.getPartNumber().toUpperCase() + "%");	
+//    	}
+//		
+//		if (!QuoteUtil.isEmpty(criteria.getSaleCostPart()) && !criteria.getSaleCostPart().equalsIgnoreCase(QuoteSBConstant.OPTION_ALL)) {
+//			query.setParameter("salesCostFlag", criteria.getSaleCostPart().equals(QuoteSBConstant.OPTION_YES) ? true : false);
+//		}
+//		
+//		if (criteria.getSelectedCostIndicators() != null && criteria.getSelectedCostIndicators().length > 0) {	
+//			query.setParameter("costIndicators", Arrays.asList(criteria.getSelectedCostIndicators()));
+//		}
+//		
+//		if (criteria.getQuoteEffectiveDateFrom() != null ) {
+//			query.setParameter("quoteExpiryDateFrom", criteria.getQuoteEffectiveDateFrom());
+//		}
+//    	
+//    	if (criteria.getQuoteEffectiveDateTo() != null ) {
+//    		query.setParameter("quoteExpiryDateTo", criteria.getQuoteEffectiveDateTo());
+//		}
+//    	
+//    	if (!QuoteUtil.isEmpty(criteria.getProductGroup1())) {
+//			query.setParameter("pg1", "%" + criteria.getProductGroup1() + "%");
+//		}
+//		if (!QuoteUtil.isEmpty(criteria.getProductGroup2())) {
+//			query.setParameter("pg2", "%" + criteria.getProductGroup2() + "%");
+//		}
+//		
+//		if (!QuoteUtil.isEmpty(criteria.getProductGroup3())) {
+//			query.setParameter("pg3", "%" + criteria.getProductGroup3() + "%");
+//		}
+//		
+//		if (!QuoteUtil.isEmpty(criteria.getProductGroup4())) {
+//			query.setParameter("pg4", "%" + criteria.getProductGroup4() + "%");
+//		}
+//		
+//		query.setFirstResult(first).setMaxResults(pageSize);
+//		List<CostExtractSearchCriterial> searchResult = query.getResultList();
+//		
+//		System.out.println("searchQuote2 Result: " + searchResult.size());
+//		
+//		for(CostExtractSearchCriterial qi : searchResult){
+//			System.out.println("" + qi.getRegion() + " - " + qi.getCost());
+//			//System.out.println("" + qi.getId() + "   PartNo: " + qi.getQuotedPartNumber() + "  Quote expiry: " + qi.getQuoteExpiryDate());
+//		}
+//    	
+//    	return null;
+//	}
+	
+public String buildQuoteQuery(CostExtractSearchCriterial criteria, boolean costComparison, boolean lowestCostNMothFlag) {
+		
+		StringBuffer sql = new StringBuffer();
+		
+//		if(distinct){
+//			sql2.append("select mfr.name, qi.quotedPartNumber from QuoteItem qi ");
+//		}else{
+//			sql2.append("select b.name as name, qi.salesCostFlag, mfr.name, qi.quotedPartNumber, qi.cost, 'Quote Record', qi.costIndicator, qi.quoteExpiryDate, qi.mpq, qi.moq, pg1.name, pg2.name, qi.productGroup3, qi.productGroup4, stc.customerNumber, concat(stc.customerName1, '', stc.customerName2, '', stc.customerName3, '', stc.customerName4) as soldToName, qi.quotedQty from QuoteItem qi ");
+//		}
+    	
+		sql.append("SELECT																														");
+		sql.append("    b.name  AS region,                                                                                                      ");
+		sql.append("    qi.sales_cost_flag AS sales_cost_flag,                                                                                  ");
+		sql.append("    mfr.name AS mfr_name,                                                                                                   ");
+		sql.append("    qi.quoted_part_number AS part_no,                                                                                       ");
+		sql.append("    qi.cost AS cost,                                                                                                        ");
+		sql.append("    'Quote Record' AS cost_source,                                                                                          ");
+		sql.append("    qi.cost_indicator AS cost_indicator,                                                                                    ");
+		sql.append("    qi.quote_expiry_date AS effective_date,                                                                                 ");
+		sql.append("    qi.mpq AS mpq,                                                                                                          ");
+		sql.append("    qi.moq AS moq,                                                                                                          ");
+		sql.append("    pg1.name AS product_group1,                                                                                             ");
+		sql.append("    pg2.name AS product_group2,                                                                                             ");
+		sql.append("    qi.product_group3 AS product_group3,                                                                                    ");
+		sql.append("    qi.product_group4 AS product_group4,                                                                                    ");
+		sql.append("    c.customer_number as customer_number,                                                                                   ");
+		sql.append("    (c.customer_name1 || ' ' || c.customer_name2 || ' ' || c.customer_name3 || ' ' || c.customer_name4) as customer_name,  ");
+		sql.append("    qi.quoted_qty as quoted_qty,                                                                                            ");
+		sql.append("    mfr.id as mfr_id, ");
+		sql.append("    qi.product_group2_id AS product_group2_id, ");
+		sql.append("    qi.material_type_id AS material_type, "); 
+		sql.append("    qi.program_type AS program_type, ");
+		sql.append("    q.team_id AS team ");
+		sql.append("  FROM                                                                                                                      ");
+		sql.append("    quote_item qi                                                                                                         ");
+		sql.append("    LEFT OUTER JOIN product_group pg1 ON ( pg1.id = qi.product_group1_id )                                                  ");
+		sql.append("    LEFT OUTER JOIN product_group pg2 ON ( pg2.id = qi.product_group2_id ),                                                 ");
+		sql.append("	quote q                                                                                                                ");
+		sql.append("	LEFT OUTER JOIN team t ON ( t.name = q.team_id ), ");
+		sql.append("	biz_unit b,                                                                                                             ");
+		sql.append("	manufacturer mfr,                                                                                                       ");
+		sql.append("    customer c                                                                                                            ");
+		sql.append("  WHERE                                                                                                                     ");
+		sql.append("	q.id = qi.quote_id                                                                                                      ");
+		sql.append("    AND mfr.id = qi.requested_mfr_id                                                                                        ");
+		sql.append("    AND b.name = q.biz_unit                                                                                                 ");
+		sql.append("    AND c.customer_number = qi.sold_to_customer_number                                                                      ");
+		sql.append("	AND qi.stage = 'FINISH'                                                                                                 ");
+		sql.append("	AND qi.cost > 0                                                                                                 ");
+    	
+    	if (criteria.getSelectedRegions() != null && criteria.getSelectedRegions().length > 0) {	
+    		sql.append("    AND q.biz_unit IN " + buildInSql(new HashSet<String>(Arrays.asList(criteria.getSelectedRegions()))));
+    	}
+    	
+    	if(!costComparison){
+    		if (criteria.getSelectedMfrs() != null && criteria.getSelectedMfrs().length > 0) {
+    			sql.append("    AND mfr.name IN " + buildInSql(new HashSet<String>(Arrays.asList(criteria.getSelectedMfrs()))));
+    		}
+
+    		if (!QuoteUtil.isEmpty(criteria.getPartNumber())) {
+    			sql.append("    AND qi.quoted_part_number LIKE #partNo                                                                                        ");	
+    		}
+    	}else{
+    		if (criteria.getMfrAndPartNo() != null && criteria.getMfrAndPartNo().size() > 0) {
+    			sql.append("    AND (mfr.name || qi.quoted_part_number) IN " + buildInSql(new HashSet<String>(criteria.getMfrAndPartNo())));
+    		}
+    	}
+		
+    	if (!QuoteUtil.isEmpty(criteria.getSaleCostPart())
+				&& !criteria.getSaleCostPart().equalsIgnoreCase(QuoteSBConstant.OPTION_ALL)) {
+    		sql.append("    AND qi.sales_cost_flag = #salesCostFlag                                                                                               ");
+		}
+    	
+    	if (criteria.getSelectedCostIndicators() != null && criteria.getSelectedCostIndicators().length > 0) {	
+			sql.append("    AND qi.cost_indicator IN " + buildInSql(new HashSet<String>(Arrays.asList(criteria.getSelectedCostIndicators()))));
+		}
+    	
+    	if(!lowestCostNMothFlag){
+    		if (criteria.getQuoteEffectiveDateFrom() != null ) {
+    			sql.append("    AND qi.quote_expiry_date >= #quoteExpiryDateFrom                                                                                            ");
+    		}
+
+    		if (criteria.getQuoteEffectiveDateTo() != null ) {
+    			sql.append("    AND qi.quote_expiry_date <= #quoteExpiryDateTo                                                                                            ");
+    		}
+    	}else{
+    		if (criteria.getQuoteEffectiveDate12MthFrom() != null ) {
+    			sql.append("    AND qi.quote_expiry_date >= #quoteExpiryDateFrom                                                                                            ");
+    		}
+
+    		if (criteria.getQuoteEffectiveDate12MthTo() != null ) {
+    			sql.append("    AND qi.quote_expiry_date <= #quoteExpiryDateTo                                                                                            ");
+    		}
+    	}
+    	
+    	if (!QuoteUtil.isEmpty(criteria.getProductGroup1())) {
+    		sql.append("    AND   pg1.name LIKE #pg1                                                                                                   ");
+		}
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup2())) {
+			sql.append("    AND   pg2.name LIKE #pg2                                                                                                   ");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup3())) {
+			sql.append("    AND   qi.product_group3 LIKE #pg3                                                                                          ");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup4())) {
+			sql.append("    AND   qi.product_group3 LIKE #pg3                                                                                          ");
+		}
+
+    	return sql.toString();
+	}
+
+	
+//	public String buildQuoteQuery(CostExtractSearchCriterial criteria, boolean distinct) {
+//		
+//		StringBuffer sql2 = new StringBuffer();
+//		
+//		if(distinct){
+//			sql2.append("select mfr.name, qi.quotedPartNumber from QuoteItem qi ");
+//		}else{
+//			sql2.append("select b.name as name, qi.salesCostFlag, mfr.name, qi.quotedPartNumber, qi.cost, 'Quote Record', qi.costIndicator, qi.quoteExpiryDate, qi.mpq, qi.moq, pg1.name, pg2.name, qi.productGroup3, qi.productGroup4, stc.customerNumber, concat(stc.customerName1, '', stc.customerName2, '', stc.customerName3, '', stc.customerName4) as soldToName, qi.quotedQty from QuoteItem qi ");
+//		}
+//    	
+//    	sql2.append("join qi.quote q ");
+//    	sql2.append("join qi.soldToCustomer stc ");
+//    	sql2.append("join q.bizUnit b ");
+//    	sql2.append("join qi.requestedMfr mfr ");
+//    	sql2.append("left join qi.productGroup1 pg1 ");
+//    	sql2.append("left join qi.productGroup2 pg2 ");
+//    	
+//    	sql2.append("where qi.stage > 'FINISH' ");
+//    	
+//    	if (criteria.getSelectedRegions() != null && criteria.getSelectedRegions().length > 0) {	
+//    		sql2.append("and b.name in :bizUnit ");
+//    	}
+//    	
+//    	if (criteria.getSelectedMfrs() != null && criteria.getSelectedMfrs().length > 0) {
+//			sql2.append("and mfr.name in :mfrs ");	
+//		}
+//    	
+//    	if (!QuoteUtil.isEmpty(criteria.getPartNumber())) {
+//			sql2.append("and qi.quotedPartNumber like :partNo ");	
+//    	}
+//		
+//    	if (!QuoteUtil.isEmpty(criteria.getSaleCostPart())
+//				&& !criteria.getSaleCostPart().equalsIgnoreCase(QuoteSBConstant.OPTION_ALL)) {
+//			sql2.append("and qi.salesCostFlag = :salesCostFlag ");
+//		}
+//    	
+//    	if (criteria.getSelectedCostIndicators() != null && criteria.getSelectedCostIndicators().length > 0) {	
+//			sql2.append("and qi.costIndicator in :costIndicators ");
+//		}
+//    	
+//    	if (criteria.getQuoteEffectiveDateFrom() != null ) {
+//			sql2.append("and qi.quoteExpiryDate >= :quoteExpiryDateFrom ");
+//		}
+//    	
+//    	if (criteria.getQuoteEffectiveDateTo() != null ) {
+//			sql2.append("and qi.quoteExpiryDate <= :quoteExpiryDateTo ");
+//		}
+//    	
+//    	if (!QuoteUtil.isEmpty(criteria.getProductGroup1())) {
+//			sql2.append("and pg1.name like :pg1 ");
+//		}
+//		if (!QuoteUtil.isEmpty(criteria.getProductGroup2())) {
+//			sql2.append("and pg2.name like :pg2 ");
+//		}
+//		
+//		if (!QuoteUtil.isEmpty(criteria.getProductGroup3())) {
+//			sql2.append("and qi.productGroup3 like :pg3 ");
+//		}
+//		
+//		if (!QuoteUtil.isEmpty(criteria.getProductGroup4())) {
+//			sql2.append("and qi.productGroup4 like :pg4 ");
+//		}
+//
+//    	return sql2.toString();
+//	}
+	
+	//private <T> void queryCriteria(CostExtractSearchCriterial criteria, TypedQuery<T> query, boolean pricer, boolean quoteRecord){
+	private void queryCriteria(CostExtractSearchCriterial criteria, Query query, boolean pricer, boolean quoteRecord){
+//		if (criteria.getSelectedRegions() != null && criteria.getSelectedRegions().length > 0) {		
+//			query.setParameter("bizUnit", Arrays.asList(criteria.getSelectedRegions()));
+//		}
+		
+//		if(pricer){
+//			if (criteria.getSelectedCostSoures() != null && criteria.getSelectedCostSoures().length > 0) {
+//				query.setParameter("pricerTypes", Arrays.asList(criteria.getSelectedCostSoures()));
+//			}
+//		}
+//		
+//		if (criteria.getSelectedMfrs() != null && criteria.getSelectedMfrs().length > 0) {
+//			query.setParameter("mfrs", Arrays.asList(criteria.getSelectedMfrs()));	
+//		}
+//		
+		if (!QuoteUtil.isEmpty(criteria.getPartNumber())) {
+			query.setParameter("partNo", "%" + criteria.getPartNumber().toUpperCase() + "%");	
+    	}
+		
+		if (!QuoteUtil.isEmpty(criteria.getSaleCostPart()) && !criteria.getSaleCostPart().equalsIgnoreCase(QuoteSBConstant.OPTION_ALL)) {
+			query.setParameter("salesCostFlag", criteria.getSaleCostPart().equals(QuoteSBConstant.OPTION_YES) ? true : false);
+		}
+		
+		if(pricer){
+			Date quotationEffectiveDateFrom = criteria.getQuoteEffectiveDateFrom();
+			Date quotationEffectiveDateTo = criteria.getQuoteEffectiveDateTo();
+			if (criteria.getQuoteEffectiveDateFrom() != null || criteria.getQuoteEffectiveDateTo() != null) {
+				if (criteria.getQuoteEffectiveDateFrom() == null) {// dd/MM/yyyy
+					quotationEffectiveDateFrom = convertToDate("01/01/1900");
+				}
+
+				if (criteria.getQuoteEffectiveDateTo() == null) {
+					quotationEffectiveDateTo = convertToDate("01/01/2100");
+				}
+
+				query.setParameter("quotationEffectiveFrom", quotationEffectiveDateFrom);
+				query.setParameter("quotationEffectiveTo", quotationEffectiveDateTo);
+
+			}
+		}
+//		
+//		if (criteria.getSelectedCostIndicators() != null && criteria.getSelectedCostIndicators().length > 0) {
+//			query.setParameter("costIndicators", Arrays.asList(criteria.getSelectedCostIndicators()));	
+//		}
+//		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup1())) {
+			query.setParameter("pg1", "%" + criteria.getProductGroup1() + "%");
+		}
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup2())) {
+			query.setParameter("pg2", "%" + criteria.getProductGroup2() + "%");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup3())) {
+			query.setParameter("pg3", "%" + criteria.getProductGroup3() + "%");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup4())) {
+			query.setParameter("pg4", "%" + criteria.getProductGroup4() + "%");
+		}
+		
+		//For Quote Record - Start
+		if (quoteRecord) {
+
+			if (criteria.getQuoteEffectiveDateFrom() != null ) {
+				query.setParameter("quoteExpiryDateFrom", criteria.getQuoteEffectiveDateFrom());
+			}
+
+			if (criteria.getQuoteEffectiveDateTo() != null ) {
+				query.setParameter("quoteExpiryDateTo", criteria.getQuoteEffectiveDateTo());
+			}
+		}
+    	//For Quote Record - End
+	}
+	
+	public Map<String,CostComparisonBean> getCostComparisonList(CostExtractSearchCriterial criteria, boolean isOnline, int first,
+			int pageSize) {
+		
+		long start = System.currentTimeMillis();
+		List<CostExtractSearchCriterial> result = null;
+
+		//START
+		StringBuffer sql = new StringBuffer();
+		StringBuffer sql2 = new StringBuffer();
+		boolean quoteRecord = false;
+		boolean pricer = false;
+		
+		if (criteria.getSelectedCostSoures() != null && criteria.getSelectedCostSoures().length > 0) {
+			
+			for(String cs : criteria.getSelectedCostSoures()){
+				if(cs.contains("QuoteRecord")){
+					quoteRecord = true;
+				}else{
+					pricer = true;
+				}
+			}
+			
+		}
+		sql.append("SELECT * FROM ( ");
+		sql.append("	SELECT a.*, ROWNUM rnum FROM ( ");
+		sql.append("		SELECT distinct mfr_name, part_no FROM ( ");
+
+		
+		if(pricer){
+			sql2.append(buildPricerQuery(criteria, false));
+		}
+		if(pricer && quoteRecord){
+			sql2.append(" union all ");
+		}
+		if (quoteRecord) {
+			sql2.append(buildQuoteQuery(criteria, false, false));
+		}
+		
+		//filter by DataAccess
+		if(criteria.getDataAccesses() != null && criteria.getDataAccesses().size() > 0){
+			sql.append(buildDataAccessQuery(criteria.getDataAccesses(), sql2.toString()));	
+		}else{
+			sql.append(sql2);
+		}
+
+		sql.append("		) 				");
+		sql.append("	) a WHERE ROWNUM <= #rowTo ");
+		sql.append(") WHERE rnum > #rowFrom ");
+    	
+		Query query = em.createNativeQuery(sql.toString());
+		
+		queryCriteria(criteria, query, pricer, quoteRecord);
+
+		query.setParameter("rowTo", pageSize + first);
+		query.setParameter("rowFrom", first);			
+
+		List<Object[]> searchResult = query.getResultList();
+		
+		System.out.println("searchResult: " + searchResult.size());
+//		CostExtractSearchCriterial clonedCriteria = (CostExtractSearchCriterial)deepCopy(criteria);
+//		Map<String,CostComparisonBean> partMap = new HashMap<String,CostComparisonBean>();
+//		for(Object[] p : searchResult){
+//			String key = p[0].toString()+"_"+p[1].toString();
+//			partMap.put(key, new CostComparisonBean(p[0].toString(),p[1].toString()));
+//			System.out.println("mfr name: " + partMap.get(key).getMfr());
+//			System.out.println("part no: " + partMap.get(key).getPartNo());
+//			clonedCriteria.setSelectedMfrs(new String[]{partMap.get(key).getMfr()});
+//			clonedCriteria.setPartNumber(partMap.get(key).getPartNo());
+//			findLowestCostByPart(partMap.get(key).getMfr(), partMap.get(key).getPartNo(), 3, clonedCriteria);
+//
+//		}
+		List<String> mfrAndPartNo = new ArrayList<String>(); 
+		Map<String,CostComparisonBean> costComparisonMap = new HashMap<String,CostComparisonBean>();
+		for(Object[] p : searchResult){
+			if(p[0] != null && p[1] != null){
+				String key = p[0].toString()+p[1].toString();
+				mfrAndPartNo.add(key);
+				costComparisonMap.put(key, new CostComparisonBean(p[0].toString(), p[1].toString()));
+			}
+
+		}
+		criteria.setMfrAndPartNo(mfrAndPartNo);
+		
+		if(criteria.getMfrAndPartNo()!= null && criteria.getMfrAndPartNo().size() > 0){
+			find3LowestCostByPart(costComparisonMap, criteria);
+
+			for (Map.Entry<String, CostComparisonBean> entry : costComparisonMap.entrySet()) {
+				System.out.println("show top 3 lowest cost : " + entry.getKey() );
+
+
+				CostComparisonBean b = entry.getValue(); 
+				System.out.println(b.getFirstLowestCost() + " " +b.getFirstCostSource() + " " +b.getFirstCostIndicator() + " " +b.getFirstRegion()+ " " +b.getFirstQuoteEffectiveDate() 
+				+ "\n "+ " " +b.getSecondLowestCost() + " " +b.getSecondCostSource() + " " +b.getSecondCostIndicator() + " " +b.getSecondRegion()+ " " +b.getSecondQuoteEffectiveDate()
+				+ "\n "+ " " +b.getThirdLowestCost() + " " +b.getThirdCostSource() + " " +b.getThirdCostIndicator() + " " +b.getThirdRegion()+ " " +b.getThirdQuoteEffectiveDate()
+						);
+
+			}
+
+			findLowestCostWithinNMonth(costComparisonMap, criteria);
+
+			for (Map.Entry<String, CostComparisonBean> entry : costComparisonMap.entrySet()) {
+				System.out.println("show  lowest cost within 3/6/12mth : " + entry.getKey() );
+
+
+				CostComparisonBean b = entry.getValue(); 
+				System.out.println(b.getLowestCostPast12Mths() + " " +b.getLowestCostRegionPast12Mths() + " " +b.getLowestCostQuoteEffectiveDatePast12Mths()  
+				+ "\n "+ " " +b.getLowestCostPast6Mths() + " " +b.getLowestCostRegionPast6Mths() + " " +b.getLowestCostQuoteEffectiveDatePast6Mths() 
+				+ "\n "+ " " +b.getLowestCostPast3Mths() + " " +b.getLowestCostRegionPast3Mths() + " " +b.getLowestCostQuoteEffectiveDatePast3Mths() 
+						);
+
+			}
+		}
+		//END
+		
+		
+		System.out.println("getCostComparisonList process time: " + (System.currentTimeMillis() - start));
+		return costComparisonMap;
+	}
+	
+	public static String buildInSql(Set<?> set) {
+		Iterator<?> it = set.iterator();
+		StringBuffer sb = new StringBuffer("(");
+		while (it.hasNext()) {
+			sb.append("'").append(it.next()).append("',");
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		sb.append(")");
+		return sb.toString();
+	}
+	
+	public String buildDataAccessQuery(List<DataAccess> list, String query) {
+
+		StringBuffer sql = new StringBuffer();
+		boolean firstCriteria = true;
+		int count = 1;
+		
+		
+		if(list != null && list.size()==1){
+			if(list.get(0).getManufacturer() == null 
+				&& list.get(0).getMaterialType() == null 
+				&& list.get(0).getProductGroup() == null
+				&& list.get(0).getProgramType() == null
+				&& list.get(0).getTeam() == null){
+				
+				return query;
+			}
+		}
+		
+
+		sql.append("SELECT	* FROM ( ");
+		sql.append(query);
+		sql.append(") WHERE ");
+
+		for(DataAccess dataAccess : list){
+			System.out.println(dataAccess.getManufacturer() + " - " + dataAccess.getMaterialType() + " - " + dataAccess.getProgramType() + " - " + dataAccess.getProductGroup() + " - " + dataAccess.getTeam());
+			if(count > 1){
+				sql.append(" OR ");
+			}
+			sql.append("( ");
+			if(dataAccess.getManufacturer() != null){
+				if(!firstCriteria)
+					sql.append(" AND ");
+
+				sql.append(" mfr_id = " + dataAccess.getManufacturer().getId());
+
+				firstCriteria = false;
+			}
+
+			if(dataAccess.getMaterialType() != null){
+				if(!firstCriteria)
+					sql.append(" AND ");
+
+				sql.append(" material_type = " + dataAccess.getMaterialType().getName());
+
+				firstCriteria = false;
+			}
+
+			if(dataAccess.getProgramType() != null){
+				if(!firstCriteria)
+					sql.append(" AND ");
+
+				sql.append(" program_type_name = " + dataAccess.getProgramType().getId());
+
+				firstCriteria = false;
+			}
+
+			if(dataAccess.getProductGroup() !=null){
+				if(!firstCriteria)
+					sql.append(" AND ");
+
+				sql.append(" (product_group2_id = " + dataAccess.getProductGroup().getId() + " OR product_group2_id IS NULL ) ");
+
+				firstCriteria = false;
+			}
+
+			if(dataAccess.getTeam() !=	null){
+				if(!firstCriteria)
+					sql.append(" AND ");	
+
+				sql.append(" (team = " + dataAccess.getTeam().getName() + " OR team IS NULL ) ");
+
+				firstCriteria = false;
+			}
+
+			sql.append(") ");
+
+			count++;
+			firstCriteria = true;
+		}
+
+		return sql.toString();
+	}
+	
+	private void find3LowestCostByPart(Map<String,CostComparisonBean> costComparisonMap, CostExtractSearchCriterial criteria){
+		System.out.println("find3LowestCostByPart...");
+		StringBuffer sql = new StringBuffer();
+		StringBuffer sql2 = new StringBuffer();
+		boolean quoteRecord = false;
+		boolean pricer = false;
+		//List<CostExtractSearchCriterial> result = null;
+
+		if (criteria.getSelectedCostSoures() != null && criteria.getSelectedCostSoures().length > 0) {
+			for(String cs : criteria.getSelectedCostSoures()){
+				if(cs.contains("QuoteRecord")){
+					quoteRecord = true;
+				}else{
+					pricer = true;
+				}
+			}
+		}
+
+		sql.append("SELECT mfr_name, part_no, cost, cost_source, cost_indicator, region, effective_date FROM ( ");
+
+		if(pricer){
+			sql2.append(buildPricerQuery(criteria, true));
+		}
+		if(pricer && quoteRecord){
+			sql2.append(" union all ");
+		}
+		if (quoteRecord) {
+			sql2.append(buildQuoteQuery(criteria, true, false));
+		}
+
+		//filter by DataAccess
+		if(criteria.getDataAccesses() != null && criteria.getDataAccesses().size() > 0){
+			sql.append(buildDataAccessQuery(criteria.getDataAccesses(), sql2.toString()));	
+		}else{
+			sql.append(sql2);
+		}
+		sql.append(") ");
+		//sql.append(") ORDER BY mfr_name, part_no, cost, effective_date DESC");
+
+
+		Query query = em.createNativeQuery(sql.toString());
+
+		queryCriteria2(criteria, query, pricer, quoteRecord);
+
+
+
+		List<Object[]> searchResult = query.getResultList();
+		List<CostExtractSearchCriterial> convertedList = convertResultToBeans(searchResult);
+		
+		//Grouping
+		Map<String, List<CostExtractSearchCriterial>> groupedMap = convertedList.stream()
+				.collect(Collectors.groupingBy(CostExtractSearchCriterial::getKey));
+
+		//Sort list for each element.
+		for (Map.Entry<String, List<CostExtractSearchCriterial>> entry : groupedMap.entrySet()) {
+			System.out.println("Sorted Key : " + entry.getKey() );
+
+			Collections.sort(entry.getValue(), new CostAndDateComparator(true, false));
+			for(CostExtractSearchCriterial b : entry.getValue()) {
+				System.out.println(b.getCostSource() + " " + b.getMfr() + " "+b.getPartNumber() + " " +b.getCost() + " " + b.getQuoteEffectiveDate() + " " + b.getCostIndicator());
+			}
+		}
+		
+		for (Map.Entry<String, List<CostExtractSearchCriterial>> entry : groupedMap.entrySet()) {
+			System.out.println("Key2 : " + entry.getKey() );
+
+			String previousCostind = "";
+			double previousCost= 0;
+			int count = 0;
+			for(CostExtractSearchCriterial b : entry.getValue()) {
+				System.out.println(b.getMfr() + " "+b.getPartNumber() + " " +b.getCost() + " " + b.getQuoteEffectiveDate() + " " + b.getCostIndicator());
+			
+				if(b.getCost() != previousCost && !b.getCostIndicator().equals(previousCostind)){
+					CostComparisonBean bean = null;
+
+					
+					if(count == 0){
+						bean = costComparisonMap.get(entry.getKey());
+						bean.setFirstLowestCost(b.getCost());
+						bean.setFirstCostIndicator(b.getCostIndicator());
+						bean.setFirstCostSource(b.getCostSource());
+						bean.setFirstQuoteEffectiveDate(b.getQuoteEffectiveDate());
+						bean.setFirstRegion(b.getRegion());
+						
+						count++;
+					}else if(count == 1){
+						bean = costComparisonMap.get(entry.getKey());
+						bean.setSecondLowestCost(b.getCost());
+						bean.setSecondCostIndicator(b.getCostIndicator());
+						bean.setSecondCostSource(b.getCostSource());
+						bean.setSecondQuoteEffectiveDate(b.getQuoteEffectiveDate());
+						bean.setSecondRegion(b.getRegion());
+						
+						count++;
+					}else if(count == 1){
+						bean = costComparisonMap.get(entry.getKey());
+						bean.setThirdLowestCost(b.getCost());
+						bean.setThirdCostIndicator(b.getCostIndicator());
+						bean.setThirdCostSource(b.getCostSource());
+						bean.setThirdQuoteEffectiveDate(b.getQuoteEffectiveDate());
+						bean.setThirdRegion(b.getRegion());
+						
+						count++;
+					}
+					
+					previousCostind = b.getCostIndicator();
+					previousCost = b.getCost();
+				}
+			}
+		}
+		
+	}
+	
+	private void findLowestCostWithinNMonth(Map<String,CostComparisonBean> costComparisonMap, CostExtractSearchCriterial criteria){
+		System.out.println("findLowestCostWithinNMonth...");
+		StringBuffer sql = new StringBuffer();
+		StringBuffer sql2 = new StringBuffer();
+		boolean quoteRecord = false;
+		boolean pricer = false;
+		//List<CostExtractSearchCriterial> result = null;
+
+		if (criteria.getSelectedCostSoures() != null && criteria.getSelectedCostSoures().length > 0) {
+			for(String cs : criteria.getSelectedCostSoures()){
+				if(cs.contains("QuoteRecord")){
+					quoteRecord = true;
+				}else{
+					pricer = true;
+				}
+			}
+		}
+
+		sql.append("SELECT mfr_name, part_no, cost, cost_source, cost_indicator, region, effective_date FROM ( ");
+
+		if(pricer){
+			sql2.append(buildPricerQuery(criteria, true));
+		}
+		if(pricer && quoteRecord){
+			sql2.append(" union all ");
+		}
+		if (quoteRecord) {
+			sql2.append(buildQuoteQuery(criteria, true, true));
+		}
+
+		//filter by DataAccess
+		if(criteria.getDataAccesses() != null && criteria.getDataAccesses().size() > 0){
+			sql.append(buildDataAccessQuery(criteria.getDataAccesses(), sql2.toString()));	
+		}else{
+			sql.append(sql2);
+		}
+		sql.append(") ");
+		//sql.append(") ORDER BY mfr_name, part_no, cost, effective_date DESC");
+
+
+		Query query = em.createNativeQuery(sql.toString());
+
+		queryCriteriaForLowestCostWithNMonth(criteria, query, pricer, quoteRecord);
+
+
+
+		List<Object[]> searchResult = query.getResultList();
+		List<CostExtractSearchCriterial> convertedList = convertResultToBeans(searchResult);
+
+		//Grouping
+		Map<String, List<CostExtractSearchCriterial>> groupedMap = convertedList.stream()
+				.collect(Collectors.groupingBy(CostExtractSearchCriterial::getKey));
+
+		//Sort list for each element.
+		for (Map.Entry<String, List<CostExtractSearchCriterial>> entry : groupedMap.entrySet()) {
+			System.out.println("Sorted Key : " + entry.getKey() );
+
+			Collections.sort(entry.getValue(), new CostAndDateComparator(true, false));
+			for(CostExtractSearchCriterial b : entry.getValue()) {
+				System.out.println(b.getCostSource() +" "+b.getMfr() + " "+b.getPartNumber() + " " +b.getCost() + " " + b.getQuoteEffectiveDate() + " " + b.getCostIndicator());
+			}
+		}
+
+		//Get the lowest within 12 month
+		for (Map.Entry<String, List<CostExtractSearchCriterial>> entry : groupedMap.entrySet()) {
+			System.out.println("within 12 mth Key2 : " + entry.getKey() );
+
+
+			for(CostExtractSearchCriterial b : entry.getValue()) {
+				System.out.println(b.getCostSource() +" " + b.getMfr() + " "+b.getPartNumber() + " " +b.getCost() + " " + b.getQuoteEffectiveDate() + " " + b.getCostIndicator());
+
+				CostComparisonBean bean = costComparisonMap.get(entry.getKey());
+				bean.setLowestCostPast12Mths(b.getCost());
+				bean.setLowestCostQuoteEffectiveDatePast12Mths(b.getQuoteEffectiveDate());
+				bean.setLowestCostRegionPast12Mths(b.getRegion());
+
+				break;
+			}
+		}
+
+		//Get the lowest within 6 month
+		for (Map.Entry<String, List<CostExtractSearchCriterial>> entry : groupedMap.entrySet()) {
+			System.out.println("within 6 mthKey2 : " + entry.getKey() );
+
+			List<CostExtractSearchCriterial> filterList = filterList(entry.getValue(), criteria.getQuoteEffectiveDate6MthFrom(), criteria.getQuoteEffectiveDate6MthTo());
+			for(CostExtractSearchCriterial b : filterList) {
+				System.out.println(b.getCostSource() +" "+b.getMfr() + " "+b.getPartNumber() + " " +b.getCost() + " " + b.getQuoteEffectiveDate() + " " + b.getCostIndicator());
+
+				CostComparisonBean bean = costComparisonMap.get(entry.getKey());
+				bean.setLowestCostPast6Mths(b.getCost());
+				bean.setLowestCostQuoteEffectiveDatePast6Mths(b.getQuoteEffectiveDate());
+				bean.setLowestCostRegionPast6Mths(b.getRegion());
+
+				break;
+			}
+		}
+
+		//Get the lowest within 3 month
+		for (Map.Entry<String, List<CostExtractSearchCriterial>> entry : groupedMap.entrySet()) {
+			System.out.println("within 3 mthKey2 : " + entry.getKey() );
+
+			List<CostExtractSearchCriterial> filterList = filterList(entry.getValue(), criteria.getQuoteEffectiveDate3MthFrom(), criteria.getQuoteEffectiveDate3MthTo());
+			for(CostExtractSearchCriterial b : filterList) {
+				System.out.println(b.getCostSource() +" "+b.getMfr() + " "+b.getPartNumber() + " " +b.getCost() + " " + b.getQuoteEffectiveDate() + " " + b.getCostIndicator());
+
+				CostComparisonBean bean = costComparisonMap.get(entry.getKey());
+				bean.setLowestCostPast3Mths(b.getCost());
+				bean.setLowestCostQuoteEffectiveDatePast3Mths(b.getQuoteEffectiveDate());
+				bean.setLowestCostRegionPast3Mths(b.getRegion());
+
+				break;
+			}
+		}
+
+	}
+	
+	private List<CostExtractSearchCriterial> filterList(List<CostExtractSearchCriterial> list, Date from, Date to){
+		
+//		for (Map.Entry<String, List<CostExtractSearchCriterial>> entry : map.entrySet()) {
+//			System.out.println("filtering by date : Key -> " + entry.getKey() );
+			System.out.println("before filterList size: " + list.size());
+			System.out.println("from: " + from + " to: " + to);
+			List<CostExtractSearchCriterial> result = 
+					list.stream()                // convert list to stream
+	                .filter(item -> {
+	                	System.out.println(item.getCostSource() +" - " +item.getQuoteEffectiveDate());
+	                	if((item.getQuoteEffectiveDate().after(from) || item.getQuoteEffectiveDate().equals(from))
+	                			&& (item.getQuoteEffectiveDate().before(to) || item.getQuoteEffectiveDate().equals(to))) {
+	                		
+	                		return true;
+	                	}
+	                	return false;
+	                }).collect(Collectors.toList());
+			
+		//	entry.setValue(result);
+//		}
+			
+			return result;
+	}
+	
+//	private static Object deepCopy(Object object) {
+//		try {
+//			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+//			ObjectOutputStream outputStrm = new ObjectOutputStream(outputStream);
+//			outputStrm.writeObject(object);
+//			ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+//			ObjectInputStream objInputStream = new ObjectInputStream(inputStream);
+//			return objInputStream.readObject();
+//		}
+//		catch (Exception e) {
+//			e.printStackTrace();
+//			return null;
+//		}
+//	}
+	
+	private void queryCriteria2(CostExtractSearchCriterial criteria, Query query, boolean pricer, boolean quoteRecord){
+		
+
+		
+		if (!QuoteUtil.isEmpty(criteria.getSaleCostPart()) && !criteria.getSaleCostPart().equalsIgnoreCase(QuoteSBConstant.OPTION_ALL)) {
+			query.setParameter("salesCostFlag", criteria.getSaleCostPart().equals(QuoteSBConstant.OPTION_YES) ? true : false);
+		}
+		
+		if(pricer){
+			Date quotationEffectiveDateFrom = criteria.getQuoteEffectiveDateFrom();
+			Date quotationEffectiveDateTo = criteria.getQuoteEffectiveDateTo();
+			if (criteria.getQuoteEffectiveDateFrom() != null || criteria.getQuoteEffectiveDateTo() != null) {
+				if (criteria.getQuoteEffectiveDateFrom() == null) {// dd/MM/yyyy
+					quotationEffectiveDateFrom = convertToDate("01/01/1900");
+				}
+
+				if (criteria.getQuoteEffectiveDateTo() == null) {
+					quotationEffectiveDateTo = convertToDate("01/01/2100");
+				}
+
+				query.setParameter("quotationEffectiveFrom", quotationEffectiveDateFrom);
+				query.setParameter("quotationEffectiveTo", quotationEffectiveDateTo);
+
+			}
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup1())) {
+			query.setParameter("pg1", "%" + criteria.getProductGroup1() + "%");
+		}
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup2())) {
+			query.setParameter("pg2", "%" + criteria.getProductGroup2() + "%");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup3())) {
+			query.setParameter("pg3", "%" + criteria.getProductGroup3() + "%");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup4())) {
+			query.setParameter("pg4", "%" + criteria.getProductGroup4() + "%");
+		}
+		
+		//For Quote Record - Start
+		if (quoteRecord) {
+
+			if (criteria.getQuoteEffectiveDateFrom() != null ) {
+				query.setParameter("quoteExpiryDateFrom", criteria.getQuoteEffectiveDateFrom());
+			}
+
+			if (criteria.getQuoteEffectiveDateTo() != null ) {
+				query.setParameter("quoteExpiryDateTo", criteria.getQuoteEffectiveDateTo());
+			}
+		}
+    	//For Quote Record - End
+	}
+	
+	private void queryCriteriaForLowestCostWithNMonth(CostExtractSearchCriterial criteria, Query query, boolean pricer, boolean quoteRecord){
+		
+
+		
+		if (!QuoteUtil.isEmpty(criteria.getSaleCostPart()) && !criteria.getSaleCostPart().equalsIgnoreCase(QuoteSBConstant.OPTION_ALL)) {
+			query.setParameter("salesCostFlag", criteria.getSaleCostPart().equals(QuoteSBConstant.OPTION_YES) ? true : false);
+		}
+		
+		if(pricer){
+			Date quotationEffectiveDateFrom = criteria.getQuoteEffectiveDate12MthFrom();
+			Date quotationEffectiveDateTo = criteria.getQuoteEffectiveDate12MthTo();
+			if (criteria.getQuoteEffectiveDateFrom() != null || criteria.getQuoteEffectiveDateTo() != null) {
+				if (criteria.getQuoteEffectiveDateFrom() == null) {// dd/MM/yyyy
+					quotationEffectiveDateFrom = convertToDate("01/01/1900");
+				}
+
+				if (criteria.getQuoteEffectiveDateTo() == null) {
+					quotationEffectiveDateTo = convertToDate("01/01/2100");
+				}
+
+				query.setParameter("quotationEffectiveFrom", quotationEffectiveDateFrom);
+				query.setParameter("quotationEffectiveTo", quotationEffectiveDateTo);
+
+			}
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup1())) {
+			query.setParameter("pg1", "%" + criteria.getProductGroup1() + "%");
+		}
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup2())) {
+			query.setParameter("pg2", "%" + criteria.getProductGroup2() + "%");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup3())) {
+			query.setParameter("pg3", "%" + criteria.getProductGroup3() + "%");
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup4())) {
+			query.setParameter("pg4", "%" + criteria.getProductGroup4() + "%");
+		}
+		
+		//For Quote Record - Start
+		if (quoteRecord) {
+
+			if (criteria.getQuoteEffectiveDate12MthFrom() != null ) {
+				query.setParameter("quoteExpiryDateFrom", criteria.getQuoteEffectiveDate12MthFrom());
+			}
+
+			if (criteria.getQuoteEffectiveDate12MthTo() != null ) {
+				query.setParameter("quoteExpiryDateTo", criteria.getQuoteEffectiveDate12MthTo());
+			}
+		}
+    	//For Quote Record - End
+	}
+
+}

@@ -1,0 +1,30 @@
+insert into app_messages(id, locale_id, message_code, message) values ((select max(id) + 1 from app_messages), 'en', 'wq.message.selectRegionCouldNotDownload', 'select Region do not allow Download Exchange Rate Template.'); 
+COMMIT;
+
+INSERT INTO EXCEL_REPORT_COLUMN (ID,HEADER_NAME, BEAN_PROPERTY,cell_data_type)VALUES ((select max(id) + 1 from EXCEL_REPORT_COLUMN),'BUY CUR','buyCurrency',2);
+INSERT INTO EXCEL_REPORT_SEQ (ID, REPORT_ID, COLUMN_ID, SEQ_NO) 
+VALUES ((select max(id)+1 from EXCEL_REPORT_SEQ), (SELECT ID FROM EXCEL_REPORT WHERE REPORT_NAME='CATALOG_MAINTENANCE'), 
+    (SELECT MAX(ID) FROM EXCEL_REPORT_COLUMN WHERE HEADER_NAME='BUY CUR'), '75');
+   
+
+    
+insert into app_messages(id, locale_id, message_code, message) values ((select max(id) + 1 from app_messages), 'en', 'wq.message.exchangeToError', 'Must input a positive number in Ex Rate column.'); 
+insert into app_messages(id, locale_id, message_code, message) values ((select max(id) + 1 from app_messages), 'en', 'wq.message.HandlingError', 'Must input a positive number in Handling column.'); 
+insert into app_messages(id, locale_id, message_code, message) values ((select max(id) + 1 from app_messages), 'en', 'wq.message.VATError', 'Must input a positive number in VAT column.'); 
+
+--just remove JPAN DB
+--delete from APP_FUNCTION_ROLE_MAPPING where role_id=(select id from role where name ='ROLE_QC_OPERATION')and function_id=(select id from app_function where name ='QuoteRateRequest');
+
+
+
+Insert into LOGIC_CAL_CONFIG (ID,LOGIC_RESULT_REVERSE, CONFIG_TYPE, LOGIC_ACTION, CONDITION_TYPE, CONDITION_VALUE, PARENT_ID)
+VALUES ((select max(id)+1 from LOGIC_CAL_CONFIG),'0','CONDITION','ANYMATCH','REGION','JAPAN', null);
+commit;
+Insert into PAGE_COMPONENT_ITEM (ID, SHOW, PAGE_NAME, COMPONENT_ID, PRIORITY, LOGIC_CAL_CONFIG_ID)
+VALUES ((select max(id)+1 from PAGE_COMPONENT_ITEM),'0','QuoteRateRequestUpload','showQuoteRateRequestUpload','1000', (select max(id) from LOGIC_CAL_CONFIG));
+commit;
+
+
+
+
+update app_messages set MESSAGE='Company Rate cannot have value in Sold To Code Column.' where MESSAGE_code='wq.message.CompanyRatehasValueInSoldToCode';

@@ -1,0 +1,379 @@
+
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="content">
+
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+
+	<h:form id="form2" onkeypress="if (event.keyCode == 13) { return false; }">
+	
+	
+		<p:panel header="#{dbResource['wq.header.userDetails']}">
+		<p:messages id="messages" autoUpdate="true" closable="true" showDetail="true"/>
+
+			<h:panelGrid columns="1" style="width:90%">
+
+				<h:panelGrid columns="1">
+				
+					<p:fieldset legend="#{dbResource['wq.header.basicInformation']}">
+
+						<h:panelGrid columns="11" cellpadding="5" style="width:100%">
+
+							<h:outputText value="#{dbResource['wq.label.EmpID']}*:" />
+							<p:inputText id="employeeId" value="#{userDetailsMB.user.employeeId}" >
+								
+							</p:inputText>
+							
+
+							<h:outputText value="#{dbResource['wq.label.name']}*:"  />
+							<p:inputText id="name" value="#{userDetailsMB.user.name}" >
+								
+							</p:inputText>
+							
+							<h:outputText value="#{dbResource['wq.label.superName']}:"/>
+							
+							<p:autoComplete  id="reportToName" value="#{userDetailsMB.user.reportTo.name}" completeMethod="#{userDetailsMB.autoCompleteSupervisorName}" minQueryLength="3" global="false">
+								<p:ajax event="itemSelect" update=":form2:reportTo,:form2:reportToName" listener="#{userDetailsMB.onBlurSupervisorName}"/>
+									<p:ajax event="query" global="false"/>
+							</p:autoComplete>
+							
+							<h:outputText value="#{dbResource['wq.label.supervisorID']}:" />
+							<p:autoComplete  id="reportTo" value="#{userDetailsMB.user.reportTo.employeeId}" completeMethod="#{userDetailsMB.autoCompleteSupervisorEmployeeID}" minQueryLength="3" global="false">
+								<p:ajax event="itemSelect" update=":form2:reportTo,:form2:reportToName" listener="#{userDetailsMB.onBlurSupervisorEmployeeID}"/>
+									<p:ajax event="query" global="false"/>
+							</p:autoComplete>							
+
+							<h:outputText value="#{dbResource['wq.label.group']}:" />
+							
+							<p:selectCheckboxMenu  id="group" filter="true" filterText="Filter" filterMatchMode="startsWith" label="Select Groups" value="#{userDetailsMB.selectedGroups}" style="width:120px">
+								<f:selectItems value="#{userDetailsMB.groupsMap}" />  
+							</p:selectCheckboxMenu>
+
+							<p:message for="group" display="icon" />
+							
+
+							<h:outputText value="#{dbResource['wq.label.email']}:"  />
+							<p:inputText id="emailAddress" value="#{userDetailsMB.user.emailAddress}" />
+													
+
+							<h:outputText value="#{dbResource['wq.label.phone']}:"/>
+							<p:inputText id="phone" value="#{userDetailsMB.user.phoneNumber}" />
+							
+
+							<h:outputText value="#{dbResource['wq.label.dataSuper']}:" />
+							<p:selectBooleanCheckbox value="#{userDetailsMB.user.dataSupervisor}" id="dataSupervisor"/>
+							
+
+							<h:outputText value="#{dbResource['wq.label.isActive']}:"  />
+							<p:selectBooleanCheckbox value="#{userDetailsMB.user.active}" id="active"/>
+							
+							<h:outputText value="#{dbResource['wq.label.salesCostPart']}: " />
+						<p:selectOneMenu value="#{userDetailsMB.salsCostAccessStr}" >
+						<f:selectItem itemLabel="No" itemValue="No"/>
+						<f:selectItem itemLabel="Yes" itemValue="Yes"/>
+						<f:selectItem itemLabel="ALL" itemValue="ALL"/>
+						
+						</p:selectOneMenu>
+
+
+						</h:panelGrid>
+
+					</p:fieldset>
+
+				
+					<h:panelGrid columns="3">
+						<p:inputText value="#{userDetailsMB.copiedEmployeeId}" id="copiedEmployeeId"/>
+						<p:message for="copiedEmployeeId" display="icon"/>
+						<p:commandButton id="copy" value="#{dbResource['wq.header.copyFromExistingUser']}" action="#{userDetailsMB.copyUser}"  update="@all" ajax="false"/>
+					</h:panelGrid>
+					
+					<p:panel header="#{dbResource['wq.label.roleRegion']}" toggleable="true"
+						toggleSpeed="500">
+						<h:panelGrid columns="3" >
+						<p:pickList value="#{userDetailsMB.roles}"
+							var="role" itemLabel="#{role.name}" itemValue="#{role.id}"
+							converter="webquote.user.Role" filterMatchMode="contains"
+							addLabel="#{dbResource['wq.button.add']}" addAllLabel="#{dbResource['wq.button.addAll']}" removeLabel="#{dbResource['wq.button.remove']}" removeAllLabel="#{dbResource['wq.button.removeAll']}"
+							>
+
+							<f:facet name="sourceCaption"><h:outputText value="#{dbResource['wq.label.availRoles']}"  /></f:facet>
+							<f:facet name="targetCaption"><h:outputText value="#{dbResource['wq.label.selRoles']}"  /></f:facet>
+
+						</p:pickList>
+						
+						<p:pickList value="#{userDetailsMB.bizUnits}"
+							var="bizUnit" itemLabel="#{bizUnit.name}" itemValue="#{bizUnit.name}"
+							converter="webquote.user.BizUnit" filterMatchMode="contains"
+							addLabel="#{dbResource['wq.button.add']}" addAllLabel="#{dbResource['wq.button.addAll']}" removeLabel="#{dbResource['wq.button.remove']}" removeAllLabel="#{dbResource['wq.button.removeAll']}"
+							>
+
+							<f:facet name="sourceCaption"><h:outputText value="#{dbResource['wq.label.availRegion']}"  /></f:facet>
+							<f:facet name="targetCaption"><h:outputText value="#{dbResource['wq.label.selRegion']}"  /></f:facet>
+
+						</p:pickList>		
+						
+						<p:fieldset legend="#{dbResource['wq.header.defaultRegion']}">
+							<p:selectOneMenu value="#{userDetailsMB.user.defaultBizUnit}" converter="webquote.user.BizUnit" >  
+								<f:selectItem itemLabel="Default Region" itemValue="" />
+								<f:selectItems value="#{userDetailsMB.lstBizUnits}" var="bizUnit" itemLabel="#{bizUnit.name}" itemValue="#{bizUnit.name}" />
+							</p:selectOneMenu>
+						</p:fieldset>
+															
+						
+						</h:panelGrid>			
+
+					</p:panel>		
+
+
+
+					<p:panel header="#{dbResource['wq.label.DAassign']}" toggleable="true" toggleSpeed="500">
+							
+								<p:dataTable id="dataAccess" 
+									var="dataAccess" 
+									value="#{userDetailsMB.dataAccessVos}"
+									filteredValue="#{userDetailsMB.filteredDataAccessVos}"
+									editable="true" 
+									editMode="cell" 
+									widgetVar="carsTable"
+									rowKey="#{dataAccess.seq}"
+									paginator="true"
+									rowsPerPageTemplate="10,20,50"
+									rows="10"
+									style="width:100%"
+									emptyMessage="#{dbResource['wq.message.na']}"
+									>
+									
+									<p:column headerText="#{dbResource['wq.label.mfr']}" style="width:15%" sortBy="#{dataAccess.manufacturer}" filterBy="#{dataAccess.manufacturer}" filterMatchMode="contains">
+               							<h:selectOneMenu style="width:100%" value="#{dataAccess.manufacturer}" filter="true">  
+               								<f:selectItem itemLabel="Select One" itemValue="Select One" />
+               								<f:selectItem itemLabel="*ALL" itemValue="*ALL" />
+                   							<f:selectItems value="#{userDetailsMB.manufacturers}" var="manufacturer" itemLabel="#{manufacturer.name}" itemValue="#{manufacturer.name}" />
+               							</h:selectOneMenu>  
+									</p:column>
+									
+									
+									<p:column headerText="#{dbResource['wq.label.proGroup']}" style="width:20%" sortBy="#{dataAccess.productGroup}" filterBy="#{dataAccess.productGroup}" filterMatchMode="contains">
+               							<h:selectOneMenu style="width:100%" value="#{dataAccess.productGroup}" filter="true" immediate="true">
+               								<f:selectItem itemLabel="ALL" itemValue="ALL" />
+                   							<f:selectItems value="#{userDetailsMB.productGroups}" var="productGroup" itemLabel="#{productGroup.name}" itemValue="#{productGroup.name}" />
+                   							
+               							</h:selectOneMenu>  
+									</p:column>									
+
+									<p:column headerText="#{dbResource['wq.label.team']}" style="width:20%" sortBy="#{dataAccess.team}" filterBy="#{dataAccess.team}" filterMatchMode="contains">
+              							<h:selectOneMenu style="width:100%" value="#{dataAccess.team}" filter="true">  
+              								<f:selectItem itemLabel="ALL" itemValue="ALL" />
+                  							<f:selectItems value="#{userDetailsMB.allTeams}" var="team" itemLabel="#{team.name}" itemValue="#{team.name}" />
+                  						
+              							</h:selectOneMenu>  
+									</p:column>
+									
+									<p:column headerText="#{dbResource['wq.label.materialType']}" style="width:20%" sortBy="#{dataAccess.materialType}" filterBy="#{dataAccess.materialType}" filterMatchMode="contains">
+               							<h:selectOneMenu style="width:100%" value="#{dataAccess.materialType}" filter="true">
+               								<f:selectItem itemLabel="ALL" itemValue="ALL" />
+                   							<f:selectItems value="#{userDetailsMB.materialTypes}" var="materialType" itemLabel="#{materialType.name}" itemValue="#{materialType.name}" />
+                   						 
+               							</h:selectOneMenu>  
+									</p:column>
+									
+									<p:column headerText="#{dbResource['wq.label.proType']}" style="width:20%" sortBy="#{dataAccess.programType}" filterBy="#{dataAccess.programType}" filterMatchMode="contains">
+               							<h:selectOneMenu style="width:100%" value="#{dataAccess.programType}">
+               								<f:selectItem itemLabel="ALL" itemValue="ALL" /> 
+                   							<f:selectItems value="#{userDetailsMB.programTypes}" var="programType" itemLabel="#{programType.name}" itemValue="#{programType.name}" />
+                   							
+               							</h:selectOneMenu>  
+									</p:column>					
+												
+									<p:column style="width:5%">  
+											<p:commandLink id="removeDataAccessBtn" value="#{dbResource['wq.label.delete']}" actionListener="#{userDetailsMB.removeDataAccess}" partialSubmit="true" process="removeDataAccessBtn dataAccess" update="dataAccess">
+												<f:param name="id" value="#{dataAccess.seq}"/>
+											</p:commandLink>
+        							</p:column>
+									
+						        <f:facet name="footer">
+						        	<p:commandButton id="addDataAccessBtn" value="#{dbResource['wq.label.addOneMore']}" update="dataAccess" icon="ui-icon-plusthick" actionListener="#{userDetailsMB.addOneDataAccess}"
+						        	partialSubmit="true" process="addDataAccessBtn dataAccess" />  
+						        </f:facet>
+									
+									
+								</p:dataTable>
+							
+					</p:panel>
+					
+
+					<p:panel header="#{dbResource['wq.label.dMapping']}" toggleable="true" toggleSpeed="500">
+						<h:panelGrid columns="3" columnClasses="alignTop,alignTop">
+
+						<p:fieldset legend="#{dbResource['wq.label.team']}">
+							<h:outputText value="#{dbResource['wq.label.team']}:" /> 
+							<p:selectOneMenu value="#{userDetailsMB.user.team.name}" label="Select Team">  
+								 <f:selectItem itemLabel="Select Team" itemValue="" />
+								 <f:selectItems value="#{userDetailsMB.teams}" var="team" itemLabel="#{team.name}" itemValue="#{team.name}" />
+								 <p:ajax event="change" listener="#{userDetailsMB.changeTeam}" update="@form"/> 
+							</p:selectOneMenu>
+
+						</p:fieldset>
+						
+
+						<p:fieldset legend="#{dbResource['wq.label.salesCSMap']}">
+						 <p:orderList value="#{userDetailsMB.css}" var="cs" controlsLocation="none"  
+                 			itemValue="#{cs.id}" id="csList" converter="webquote.user.User">  
+
+									<f:facet name="caption"><h:outputText value="#{dbResource['wq.header.csForSalesOnly']}" /> </f:facet>
+									
+										<p:column style="width:90%">
+											#{cs.employeeId} #{cs.name}
+										</p:column>
+										
+										<p:column style="width:10%">
+											<p:commandLink id="removeCSBtn" value="D" actionListener="#{userDetailsMB.removeCS}" 
+												partialSubmit="true" process="removeCSBtn, csList" update="csList">
+												<f:param name="id" value="#{cs.id}"/>
+											</p:commandLink>
+										</p:column>
+            										 
+									  
+							</p:orderList>
+							<p:inputText value="#{userDetailsMB.csEmployeeId}" id="csEmployeeIdTxt"/>
+							<p:commandButton id="addCSBtn" value="#{dbResource['wq.button.add']}"
+								 actionListener="#{userDetailsMB.addCS}" partialSubmit="true" process="csEmployeeIdTxt, addCSBtn" update="csList, csEmployeeIdTxt">
+							</p:commandButton>
+
+
+						</p:fieldset>
+						
+						<p:fieldset legend="#{dbResource['wq.label.mapWithCustomer']}">
+						 <p:orderList value="#{userDetailsMB.customers}" var="customer" controlsLocation="none" itemValue="#{customer}" id="customerList">  
+
+									<f:facet name="caption"><h:outputText value="#{dbResource['wq.label.cust']}"/></f:facet>
+									
+										<p:column style="width:90%">
+											#{customer}
+										</p:column>
+										
+										<p:column style="width:10%">
+											<p:commandLink id="removeCustomerBtn" value="#{dbResource['wq.label.d']}" actionListener="#{userDetailsMB.removeCustomer}" 
+												partialSubmit="true" process="removeCustomerBtn, customerList" update="customerList">
+												<f:param name="customerNumber" value="#{customer}"/>
+											</p:commandLink>
+										</p:column>
+            										 
+									  
+							</p:orderList>
+							<p:inputText value="#{userDetailsMB.customerNumber}" id="customerNumberTxt"/>
+							<p:commandButton id="addCustomerBtn" value="#{dbResource['wq.button.add']}"
+								 actionListener="#{userDetailsMB.addCustomer}" partialSubmit="true" process="customerNumberTxt, addCustomerBtn" update="customerList, customerNumberTxt">
+							</p:commandButton>
+
+
+						</p:fieldset>						
+						</h:panelGrid>
+						</p:panel>
+						
+
+						<p:panel header="#{dbResource['wq.label.dMappingCS']}" toggleable="true" toggleSpeed="500">
+						<p:fieldset legend="#{dbResource['wq.label.salesCSMap']}">
+						 <p:orderList value="#{userDetailsMB.sales}" var="sales" controlsLocation="none"  
+                 			itemValue="#{sales.id}" id="salesList" converter="webquote.user.User">  
+
+									<f:facet name="caption"><h:outputText value="#{dbResource['wq.label.salesCS']}"/></f:facet>
+									
+										<p:column style="width:90%">
+											#{sales.employeeId} #{sales.name}
+										</p:column>
+										
+										<p:column style="width:10%">
+											<p:commandLink id="removeSalesBtn" value="#{dbResource['wq.label.d']}" actionListener="#{userDetailsMB.removeSales}" 
+												partialSubmit="true" process="removeSalesBtn, salesList" update="salesList">
+												<f:param name="id" value="#{sales.id}"/>
+											</p:commandLink>
+										</p:column>
+            										 
+									  
+							</p:orderList>
+							<p:inputText value="#{userDetailsMB.salesEmployeeId}" id="salesEmployeeIdTxt"/>
+							<p:commandButton id="addSalesBtn" value="#{dbResource['wq.button.add']}"
+								 actionListener="#{userDetailsMB.addSales}" partialSubmit="true" process="salesEmployeeIdTxt, addSalesBtn" update="salesList, salesEmployeeIdTxt">
+							</p:commandButton>
+
+		
+
+						</p:fieldset>				
+			
+
+
+						</p:panel>			
+					
+
+				</h:panelGrid>
+
+			</h:panelGrid>
+		</p:panel>
+
+		<h:panelGrid columns="3">
+		<f:facet name="footer">
+			<p:commandButton value="#{dbResource['wq.header.save']}" actionListener="#{userDetailsMB.checkMfrMapToAll}" oncomplete="button='Save';mfrMapToAllChecking(xhr, status, args)" >
+				<f:attribute name="button" value="#{dbResource['wq.header.save']}" />
+			</p:commandButton>
+			<p:commandButton value="#{dbResource['wq.header.saveAndCreateAnother']}" actionListener="#{userDetailsMB.checkMfrMapToAll}" oncomplete="button='SaveAndCreate';mfrMapToAllChecking(xhr, status, args)" >
+				<f:attribute name="button" value="#{dbResource['wq.header.saveAndCreateAnother']}" />
+			</p:commandButton>
+			<p:commandButton value="#{dbResource['wq.button.cancel']}" immediate="true" action="#{userDetailsMB.cancel}" ajax="false"/>
+		</f:facet>
+		</h:panelGrid>
+		
+		
+		<p:remoteCommand name="save" action="#{userDetailsMB.save}" /> 
+		 
+		<p:remoteCommand name="saveAndCreateAnother" action="#{userDetailsMB.saveAndCreateNewUser}" update="@all" ajax="false"/>
+
+		
+		<p:dialog id="confirmDialogForSave"
+			header="#{dbResource['wq.diglog.header.confirm']}" severity="alert" widgetVar="confirmDialogForSave">
+			#{dbResource['wq.message.MFRContainsAll']}?
+			<br/>
+			<p:commandButton value="#{dbResource['wq.button.yes']}" action="#{userDetailsMB.save}" oncomplete="PF('confirmDialogForSave').hide()" />
+			<p:commandButton value="#{dbResource['wq.button.no']}" onclick="PF('confirmDialogForSave').hide()" type="button" />
+		</p:dialog>		
+
+		<p:dialog id="confirmDialogForSaveAndCreate"
+			header="#{dbResource['wq.diglog.header.confirm']}" severity="alert" widgetVar="confirmDialogForSaveAndCreate">
+			#{dbResource['wq.message.MFRContainsAll']}?
+			<br/>
+			<p:commandButton value="#{dbResource['wq.button.yes']}" action="#{userDetailsMB.saveAndCreateNewUser}" update="@all" oncomplete="PF('confirmDialogForSaveAndCreate').hide()" />
+			<p:commandButton value="#{dbResource['wq.button.no']}" onclick="PF('confirmDialogForSaveAndCreate').hide()" type="button" />
+		</p:dialog>
+		
+	</h:form>
+	
+	<script type="text/javascript">
+		var button;
+		function mfrMapToAllChecking(xhr, status, args) {
+	        if(args.mfrMapToAllFound ==null || args.mfrMapToAllFound== '1'){
+	        	if(button=='Save'){
+		        	save();
+	        	}else if(button=='SaveAndCreate'){
+	        		saveAndCreateAnother();
+				}
+	        }else if(args.mfrMapToAllFound == '2'){
+
+		        if(button=='Save'){
+		        	PF('confirmDialogForSave').show();
+			    }else if(button=='SaveAndCreate'){
+			    	PF('confirmDialogForSaveAndCreate').show();
+				}
+	        	 
+	        }
+	    }
+
+	</script>
+	
+</ui:define>
+
+
+</ui:composition>

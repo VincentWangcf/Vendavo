@@ -1,0 +1,146 @@
+package com.avnet.emasia.webquote.utilites.web.schedule;
+
+
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.bean.TaskInfoBean;
+import com.avnet.emasia.webquote.utilities.schedule.TaskScheduleManager;
+import java.io.Serializable;
+import java.util.logging.Logger;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+
+import org.jboss.logmanager.Level;
+
+/**
+ * 
+ * @author 914975
+ */
+@ManagedBean(name = "TaskMB")
+@SessionScoped
+public class TaskMB implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private static final Logger LOG = Logger.getLogger(TaskMB.class.getName());
+	@EJB
+	private TaskScheduleManager taskScheduleManager;
+	private TaskInfoBean selectedTask;
+	private TaskInfoBean newTask;
+
+	/**
+	 * Creates a new instance of TaskMB
+	 */
+	public TaskMB() {
+	}
+
+	/*
+	 * Getter method for the newTask property
+	 */
+	public TaskInfoBean getNewTask() {
+		return newTask;
+	}
+
+	/*
+	 * Setter method for the newTask property
+	 */
+	public void setNewTask(TaskInfoBean newTask) {
+		this.newTask = newTask;
+	}
+
+	/*
+	 * Getter method for the selectedTask property
+	 */
+	public TaskInfoBean getSelectedTask() {
+		return selectedTask;
+	}
+
+	/*
+	 * Setter method for the selectedTask property
+	 */
+	public String setSelectedTask(TaskInfoBean selectedTask) {
+		this.selectedTask = taskScheduleManager.getTaskInfo(selectedTask);
+		LOG.info("return selected task.");
+		return "TaskDetails";
+	}
+
+	/*
+	 * Action handler for back to Listing Page
+	 */
+	public String gotoListing() {
+		return "TaskList";
+	}
+
+	/*
+	 * Action handler for New Task button
+	 */
+	public String gotoNew() {
+		newTask = new TaskInfoBean();
+		LOG.info("create new task.");
+		return "TaskNew";
+	}
+
+	/*
+	 * Action handler for Duplicate button in the Details page
+	 */
+	public String duplicateTask() {
+		newTask = selectedTask;
+		newTask.setTaskId("<task ID>");
+		LOG.info("duplicate new task.");
+		return "TaskNew";
+	}
+
+	/*
+	 * Action handler for Update button in the Details page
+	 */
+	public String updateTask() {
+		FacesContext context = FacesContext.getCurrentInstance();
+		try {
+			selectedTask = taskScheduleManager.updateTask(selectedTask);
+			LOG.info("task successfully updated!");
+			context.addMessage(null, new FacesMessage(  
+					FacesMessage.SEVERITY_INFO, ResourceMB.getText("wq.message.success"),
+					ResourceMB.getText("wq.message.taskUpdateSuccess")+"!"));  
+		} catch (Exception ex) {
+			LOG.log(Level.SEVERE, "task successfully Failed! Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(ex), ex);
+			context.addMessage(null, new FacesMessage(
+					FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.fail"), ex.getCause()  
+							.getMessage()));
+		}
+		return null;
+	}
+
+	/*
+	 * Action handler for Delete button in the Details page
+	 */
+	public String deleteTask() {
+		taskScheduleManager.deleteTask(selectedTask);
+		return "TaskList";
+	}
+
+	/*
+	 * Action handler for Create button in the New page
+	 */
+	public String createTask() {
+		FacesContext context = FacesContext.getCurrentInstance();
+		try {
+			selectedTask = taskScheduleManager.createTask(newTask);
+			context.addMessage(null, new FacesMessage(
+					FacesMessage.SEVERITY_INFO, ResourceMB.getText("wq.message.success"),
+					ResourceMB.getText("wq.message.taskCreatedSuccess")+"!"));
+			LOG.info("task successfully created!");  
+			return "TaskDetails";
+		} catch (Exception ex) {
+			LOG.log(Level.SEVERE, "task successfully Failed! Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(ex), ex);
+			context.addMessage(null, new FacesMessage(
+					FacesMessage.SEVERITY_ERROR, ResourceMB.getText("wq.message.fail"), ex.getCause()
+							.getMessage()));
+		}
+		return null;
+	}
+}

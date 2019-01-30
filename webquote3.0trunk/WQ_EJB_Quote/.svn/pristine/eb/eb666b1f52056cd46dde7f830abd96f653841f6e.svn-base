@@ -1,0 +1,36 @@
+package com.avnet.emasia.webquote.rowdata;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+
+public interface Converter<A extends Annotation> {
+	
+	void initialize(A a);
+	void convert(String sourceValue, Bean bean, Field field);
+
+	public static <A extends Annotation> Converter<A> create(Field field) {
+		
+		for(Annotation a : field.getDeclaredAnnotations()) {
+			Class<? extends Annotation> type = a.annotationType();
+			for (Annotation aa : type.getAnnotations()) {
+				if (aa.annotationType().equals(AConverter.class)) {
+					Class<? extends Converter> convertBy = ((AConverter)aa).convertBy();
+					try {
+						Converter converter = convertBy.newInstance();
+						converter.initialize(a);
+						return converter;
+					} catch (InstantiationException | IllegalAccessException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		
+		return null;
+		
+
+	}
+
+	
+}

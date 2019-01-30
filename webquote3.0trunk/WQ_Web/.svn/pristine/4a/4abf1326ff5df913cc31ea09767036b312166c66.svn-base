@@ -1,0 +1,98 @@
+package com.avnet.emasia.webquote.dp;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+import javax.faces.bean.ManagedProperty;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+
+import org.jboss.as.server.CurrentServiceContainer;
+import org.jboss.msc.service.ServiceController;
+
+import com.avnet.emasia.webquote.commodity.util.StringUtils;
+import com.avnet.emasia.webquote.entity.DpRfq;
+import com.avnet.emasia.webquote.entity.DpRfqItem;
+import com.avnet.emasia.webquote.exception.AppException;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.schedule.HATimerService;
+import com.avnet.emasia.webquote.utilities.schedule.IScheduleTask;
+
+@Stateless
+public class DpReprocessRfqScheduleJob implements IScheduleTask{
+	
+	@PersistenceContext(unitName = "Server_Source")
+	private EntityManager em;
+	
+	@EJB
+	private DpRfqProcessSB dpRfqProcessSB;
+	
+	@EJB
+	private SysConfigSB sysConfigSB;
+	
+	@EJB
+	protected EJBCommonSB ejbCommonSB;
+	
+	private static final Logger LOGGER = Logger.getLogger(DpReprocessRfqScheduleJob.class.getName());
+	
+	@Override
+	public void executeTask(Timer timer) {
+		
+		ServiceController<?> service = CurrentServiceContainer.getServiceContainer().getService(HATimerService.SINGLETON_SERVICE_NAME);
+		
+		LOGGER.info("SERVICE " + service);
+		if (service != null) {
+			LOGGER.info("service.getValue(): " + service.getValue());
+			if (ejbCommonSB.isRanOnThisServer((String) service.getValue())) {
+				run();
+			}
+		} 
+		
+	}
+
+	private void run() {
+		
+		LOGGER.info("DpReprocessRfqScheduleJob Job begin");
+		
+		int maxReprocessCount = Integer.valueOf(sysConfigSB.getProperyValue("DP_MAX_REPROCESS_COUNT"));
+		
+		TypedQuery<DpRfq> query = em.createQuery("select rfq from DpRfq rfq join rfq.dpRfqItems item "
+				+ "where (item.internalError is not null or item.internalError != '') and "
+				+ "(item.reprocessCount is null or item.reprocessCount <= " + maxReprocessCount +")", DpRfq.class);
+		
+		List<DpRfq> dpRfqs = query.getResultList();
+		
+		for (DpRfq dpRfq : dpRfqs){
+			try {
+				DpRfqItem item = dpRfq.getDpRfqItems().get(0);
+				LOGGER.info("Reprocessing DpRfqItem ( referenceLineId = " + item.getReferenceLineId() + " )");
+				dpRfqProcessSB.submitRfq(dpRfq);
+				
+				if (StringUtils.isNotEmpty(item.getInternalError())){
+					int reprocessCount = item.getReprocessCount() == null ? 0 : item.getReprocessCount();
+					item.setReprocessCount(++reprocessCount);
+					item.setReprocessTime(new Date());
+					em.merge(item);
+				}
+				
+			} catch (AppException e) {
+				LOGGER.log(Level.WARNING, MessageFormatorUtil.getParameterizedStringFromException(e),e);
+			}
+			
+		}
+		
+		
+		LOGGER.info("DpReprocessRfqScheduleJob Job end");
+		
+	}
+	
+}

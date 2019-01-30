@@ -1,0 +1,233 @@
+package com.avnet.emasia.webquote.masterData.ejb;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import javax.ejb.EJB;
+import javax.ejb.Timer;
+
+import org.jboss.as.server.CurrentServiceContainer;
+import org.jboss.msc.service.ServiceController;
+
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.exception.WebQuoteRuntimeException;
+import com.avnet.emasia.webquote.masterData.exception.CheckedException;
+import com.avnet.emasia.webquote.masterData.util.Constants;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.utilities.schedule.HATimerService;
+import com.avnet.emasia.webquote.utilities.schedule.IScheduleTask;
+import com.avnet.emasia.webquote.utilities.util.SftpUtil;
+
+/**
+ * @author Bryan,Toh
+ * @Created on 2017-11-14
+ * 
+ */
+public class SapJob implements IScheduleTask {
+
+	private static Logger logger = Logger.getLogger(SapJob.class.getName());
+	@EJB
+	private ScheduleConfigSB schedConfSB;
+
+	@EJB
+	private MailUtilsSB mailUtilsSB;
+	
+	@EJB
+	private SystemCodeMaintenanceSB systemCodeMaintenanceSB;
+
+	//private String type;
+	protected String processId;
+	protected String jobName;
+
+
+	@Override
+	public void executeTask(Timer timer) {
+
+	}
+
+	public boolean isRanOnThisServer(String serviceName) {
+		boolean returnB = false;
+		String hostName = null;
+		try {
+			InetAddress addr = InetAddress.getLocalHost();
+			hostName = addr.getHostName().toString();
+			logger.info("hostName: " + hostName);
+			if (serviceName != null && hostName != null && serviceName.contains(hostName)) {
+				returnB = true;
+			}
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "Exception occured for service: " + serviceName, e);
+			return false;
+		}
+
+		return returnB;
+
+	}
+
+	public void run() throws CheckedException {
+		try {
+/*			ServiceController<?> service = CurrentServiceContainer.getServiceContainer()
+					.getService(HATimerService.SINGLETON_SERVICE_NAME);
+			logger.info("SERVICE " + service);
+			if (service != null) {
+				logger.info("service.getValue(): " + service.getValue());
+				if (isRanOnThisServer((String) service.getValue())) {
+*///					ljt = new LoadingJobTrack();
+//					ljt.setType(getType());
+//					ljt.setStartTime(DateUtils.getCurrentAsiaDateObj());
+					try {
+						//loadingAction();
+						process();
+						//ljt.setStatus("S");
+					} catch (CheckedException e) {
+						//ljt.setStatus("F");
+						logger.info("email error msg: " + e.getMessage());
+						sendErrorEmail("Error occured during processing job: " + this.processId + "("+this.jobName+")" + "\n\n" + e.getMessage(),Constants.MASTER_EXTRACT_TO_SAP_ERROR_EMAIL_SUBJECT);
+						throw new CheckedException(e);
+					} finally {
+						//ljt.setEndTime(DateUtils.getCurrentAsiaDateObj());
+						//ladingJobTrackSB.createLoadingJobCheck(ljt);
+					}
+/*				}
+			} else {
+				throw new WebQuoteRuntimeException(CommonConstants.COMMON_SERVICE_NOT_FOUND,
+						new Object[] { HATimerService.SINGLETON_SERVICE_NAME });
+			}
+*/		} catch (Exception e) {
+			logger.log(Level.SEVERE, "Error occured on run for task: " + this.processId, e);
+		}
+
+	}
+	
+	public void process() throws CheckedException {
+		
+	}
+
+	/*
+	 * loading actions
+	 */
+	public void loadingAction() throws CheckedException {
+
+	}
+
+	/*
+	 * Send error mail
+	 * 
+	 * @param errorMsg : email content
+	 */
+	public void sendErrorEmail(String errorMsg,String subjectStr) {
+
+		String jbossNodeName = System.getProperty(HATimerService.JBOSS_NODE_NAME);
+		MailInfoBean mib = new MailInfoBean();
+		mib.setMailFrom("GIS-EM-ASIA-ECO-WEB@Avnet.com");
+		// add by Lenon.Yang(043044) 2016/05/23
+		String subject = subjectStr;
+		if (org.apache.commons.lang.StringUtils.isNotBlank(jbossNodeName)) {
+			subject += "(Jboss Node:" + jbossNodeName + ")";
+		}
+		mib.setMailSubject(subject);
+		mib.setMailContent(errorMsg);
+		List<String> toList = new ArrayList<String>();
+		String[] emailArray = schedConfSB.getErrorEmailAddress();
+		for (String address : emailArray) {
+			toList.add(address);
+		}
+		mib.setMailTo(toList);
+
+		try {
+			mailUtilsSB.sendTextMail(mib);
+		} catch (Exception e) {
+			logger.log(Level.SEVERE,
+					"Exception occured in sending email for error message: " + errorMsg + ", Sender: "
+							+ mib.getMailFrom() + ", " + "Recepient(s): " + mib.getMailTo().toString() + ", Subject: "
+							+ mib.getMailSubject() + ", Reason for failure: "
+							+ MessageFormatorUtil.getParameterizedStringFromException(e),
+					e);
+		}
+	}
+	
+	public void copyFileToSAP(String fileName) throws CheckedException{
+		String sftpConfig = systemCodeMaintenanceSB.getSapSftpConfig();
+		String remotePath = systemCodeMaintenanceSB.getSapSftpDestinationPath();
+		List<String> sftpConfigs = null;
+		String username = "";
+		String host = "";
+		int port = 0;
+		
+		
+		try{
+			if(sftpConfig != null){
+				
+				sftpConfigs = Collections.list(new StringTokenizer(sftpConfig, "|")).stream()
+			      .map(token -> (String) token)
+			      .collect(Collectors.toList());
+			}
+
+			if(sftpConfigs != null && sftpConfigs.size() == 3){
+				username = sftpConfigs.get(0);
+				host = sftpConfigs.get(1);
+				port = Integer.parseInt(sftpConfigs.get(2));
+				logger.info("SFTP config: " + username + " - " + host + " - " + port);
+			}
+
+			SftpUtil stfpUtil = new SftpUtil(username,host,port);
+			stfpUtil.setKnownHost("~/.ssh/known_hosts");
+			stfpUtil.setPrivateKeyFile("~/.ssh/id_rsa");
+			
+			File sourceFile = new File(fileName);
+			remotePath = remotePath + sourceFile.getName();
+			logger.info("Start send file "+remotePath+" to SAP SFTP server: " + username + "@" + host);
+			logger.info("fileName: "+fileName);
+			stfpUtil.sendFileToRemote(sourceFile, remotePath);
+			logger.info("Completed send file (" + fileName + ") to SAP SFTP server: " + username + "@" + host);
+			
+			
+		}catch(Exception e){
+			Writer result = new StringWriter();
+    		PrintWriter printWriter = new PrintWriter(result);
+    		e.printStackTrace(printWriter);
+
+    		CheckedException ce = new CheckedException(e);
+    		ce.setMessage(e.getMessage() + ": \n" + result);
+    		throw ce;
+		}
+		
+	}
+	
+	public String getProcessId() {
+		return processId;
+	}
+
+	public void setProcessId(String processId) {
+		this.processId = processId;
+	}
+	
+	public void moveFile(String source, String target) throws IOException {
+  
+	    Path fileToMovePath  = Paths.get(source);
+	    Path targetPath = Paths.get(target);
+	 
+	    logger.info("Start moving file (" + source + ") to (" + target + ")");
+	    Files.move(fileToMovePath, targetPath.resolve(fileToMovePath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+	    logger.info("Completed moving file (" + source + ") to (" + target + ")");
+	}
+
+}

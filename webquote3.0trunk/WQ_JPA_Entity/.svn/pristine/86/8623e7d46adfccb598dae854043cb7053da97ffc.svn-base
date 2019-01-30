@@ -1,0 +1,216 @@
+package com.avnet.emasia.webquote.cache;
+
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import javax.cache.Caching;
+import javax.cache.configuration.FactoryBuilder;
+import javax.cache.configuration.MutableConfiguration;
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
+import javax.cache.integration.CacheLoader;
+import javax.cache.spi.CachingProvider;
+import javax.ejb.Local;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+
+import com.avnet.emasia.webquote.entity.DesignLocation;
+import com.avnet.emasia.webquote.entity.ExchangeRate;
+
+@Startup
+@Singleton
+@Local
+@SuppressWarnings("unchecked")
+public class CacheUtil implements ICacheUtil {
+	private static final Logger LOG = Logger.getLogger(CacheUtil.class.getName());
+	
+	@PersistenceContext(unitName="Server_Source")
+	EntityManager em;
+	
+	private Cache<String, Map<?,?>> mapCache;
+	
+	public CacheUtil() {
+		
+
+	}
+	
+
+	@PostConstruct
+	public void init(){
+
+		CachingProvider cachingProvider = Caching.getCachingProvider();
+		CacheManager cacheManager = cachingProvider.getCacheManager();
+		//.setStoreByValue(false) let outbound get real data , not duplicate.
+		MutableConfiguration<String, Map<?,?>> configMapCache
+		= new MutableConfiguration<String, Map<?,?>>()
+		.setReadThrough(true).setStoreByValue(false)
+		.setCacheLoaderFactory(
+		        new FactoryBuilder.SingletonFactory<CacheLoader<String, Map<?,?>>>(
+		            new TreeMapCacheLoader(em)
+		        ));
+//		.setCacheLoaderFactory((Factory<? extends CacheLoader<String, Map<?,?>>>) new FactoryBuilder.SingletonFactory<>(
+//				new TreeMapCacheLoader(em)));
+		configMapCache.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, getCacheExpiryTime())));
+
+		if(cacheManager.getCache("EjbMapCache") != null) {
+			LOG.info("EjbMapCache is not null");
+			this.mapCache = cacheManager.getCache("EjbMapCache");
+		}else {
+			LOG.info("EjbMapCache is null");
+			this.mapCache = cacheManager.createCache("EjbMapCache", configMapCache);
+		}
+		//initStrategyFactory();
+	}
+	
+	/*private void initStrategyFactory() {
+		StrategyFactory.getSingletonFactory().initMap(mapCache.get(Constants.STRATEGY));
+	}*/
+	
+	private int getCacheExpiryTime(){
+		Query query = em
+				.createQuery("select c.propValue from AppProperty c where c.propKey='CACHE_EXPIRY_POLICY_MINUTE'");
+		List<String> list = query.getResultList();
+		
+		if(list.size() > 0){
+			try{
+				LOG.info("Expiry time drom db: " +list.get(0));
+				return Integer.parseInt(list.get(0));
+			}catch(NumberFormatException e){
+				
+			}
+		}
+		LOG.info("DEFAULT Expiry time: " +list.get(0));
+		return Constants.EXPIRY_TIME;
+	}
+	
+	//For Design Location
+	@Override
+	public DesignLocation getDesignLocation(String designLocation) {
+		TreeMap<String, Map> map = (TreeMap<String, Map>)this.mapCache.get(Constants.DESIGN_LOCATION);
+		
+        return (DesignLocation) map.get("DESIGN_LOCATION_TREE").get(designLocation);
+    }
+	
+	@Override
+	public List<String> getLocationByRegion(String region) {
+		TreeMap<String, Map> map = (TreeMap<String, Map>)this.mapCache.get(Constants.DESIGN_LOCATION);
+		
+    	if(region == null || "".equals(region)){
+    		
+    		return new ArrayList<>(map.get("DESIGN_LOCATION_MAP").keySet());
+    	}
+    	ArrayList<String> designLocation = new ArrayList<String>();
+//    	designLocation.add("-select-"); 
+    	List<String> cacheRegionLocation = (List<String>)map.get("REGION_LOCATION_MAP").get(region);
+    	if(cacheRegionLocation != null && !cacheRegionLocation.isEmpty()){
+    		designLocation.addAll((List<String>)map.get("REGION_LOCATION_MAP").get(region));
+    	}
+		return designLocation;
+	}
+	
+	@Override
+	public List<DesignLocation> getDesignLocationList(){
+		TreeMap<String, Map> map = (TreeMap<String, Map>)this.mapCache.get(Constants.DESIGN_LOCATION);
+		
+    	Set<DesignLocation> entrySet =  map.get("DESIGN_LOCATION_TREE").entrySet();
+    	List<DesignLocation> suggested = new ArrayList<DesignLocation>();
+    	  
+    	Iterator it=entrySet.iterator();
+    	while(it.hasNext()){
+    		Entry e= (Entry) it.next();
+    		suggested.add((DesignLocation) e.getValue());
+    	
+    	}
+    	
+    	return suggested;
+    }
+	
+	@Override
+	public Map<String,String> getDesignLocationMap(){ 
+		TreeMap<String, Map> map = (TreeMap<String, Map>)this.mapCache.get(Constants.DESIGN_LOCATION);
+    	return map.get("DESIGN_LOCATION_MAP");
+    }
+	
+	//For Design Region
+	@Override
+	public String getDesignRegion(String designRegion){
+		TreeMap<String, String> map = (TreeMap<String, String>)this.mapCache.get(Constants.DESIGN_REGION);
+		return  (String) map.get(designRegion);
+	}
+	
+	@Override
+	public List<String> getDesignRegionList(){
+		TreeMap<String, String> map = (TreeMap<String, String>)this.mapCache.get(Constants.DESIGN_REGION);
+
+		Set<String> keys=map.keySet();
+		List<String> regionList =new ArrayList<String>();
+		for(String  key:keys){
+			regionList.add(key);
+		}
+
+		return regionList;
+	}
+	
+	//For DRMS Validation
+	/*
+	public DrmsValidationUpdateStrategy getDrmsValidationUpdateStrategy(String region) {
+		TreeMap<String,DrmsValidationUpdateStrategyFactory> map = (TreeMap<String,DrmsValidationUpdateStrategyFactory>)this.mapCache.get(Constants.DRMS_VALIDATION);
+	
+		return map.get(Constants.DRMS_VALIDATION).getDrmsValidationUpdateStrategy(region);
+	}
+	*/
+	
+	/* (non-Javadoc)
+	 * @see com.avnet.emasia.webquote.cache.ICacheUtil#getExchangeRates()
+	 */
+	@Override
+	public List<ExchangeRate> getExchangeRates() 
+	{
+		//long st = System.currentTimeMillis();
+		List<ExchangeRate> results = new ArrayList<>();
+		TreeMap<Long, ExchangeRate> map = (TreeMap<Long, ExchangeRate>)this.mapCache.get(Constants.EXCHANGE_RATE);
+		for (Entry<Long, ExchangeRate> entry :  map.entrySet()) {
+			results.add(entry.getValue());
+		}
+		//long end = System.currentTimeMillis();
+		//LOG.info("cost of getExchangeRates()::" + (st -end));
+		return results;
+	}
+
+
+	@Override
+	public void clear(ActionIndicator actionIndicator) {
+		
+		LOG.info("Clear this Entity mapCache :::::::::" + System.identityHashCode(this.mapCache));
+    	switch (actionIndicator) { 
+		case CLEARALL :
+			LOG.info("Clear All Begin.");
+	    	this.mapCache.clear();
+	    	LOG.info("Clear All end.");
+			break;
+		case CLEAREXRATES:
+			LOG.info("Clear ExRates Begin.");
+	    	this.mapCache.remove(Constants.EXCHANGE_RATE);
+	    	LOG.info("Clear ExRates end.");
+			break;
+		default :
+			LOG.warning(" No Enum match " + actionIndicator);
+			break;
+    	}
+	}
+}
+

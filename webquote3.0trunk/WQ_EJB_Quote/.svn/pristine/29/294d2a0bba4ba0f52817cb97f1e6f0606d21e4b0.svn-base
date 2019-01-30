@@ -1,0 +1,33 @@
+package com.avnet.emasia.webquote.columndata;
+
+import java.lang.reflect.Field;
+
+public class DoubleConverter implements Converter<ADoubleConverter>{
+	
+	private ADoubleConverter annotation;
+	
+	public DoubleConverter() {
+		
+	}
+	
+	@Override
+	public void initialize(ADoubleConverter a) {
+		annotation = a;
+	}
+
+	@Override
+	public void convert(String value, Bean bean, Field field) {
+		
+		try {
+			field.set(bean, Double.parseDouble(value));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			bean.putConvertError(field.getName(), annotation.errMsg());
+		}
+		
+		
+	}
+
+
+}

@@ -1,0 +1,107 @@
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+<h:head>
+	<f:facet name="first">
+		<meta http-equiv="X-UA-Compatible"  content="IE=edge"/>
+		<meta content='text/html; charset=UTF-8' http-equiv="Content-Type" />
+		<title>#{dbResource['wq.title.webQuoteVersion']}</title>
+		<f:view locale="#{userMB.user.userLocale}"></f:view>
+	</f:facet>
+</h:head> 
+<h:body>
+
+<h:form id="menu_form">
+    
+    <p:menubar styleClass="menubar">
+
+        <p:submenu label="#{dbResource['wq.label.admin']}" >
+			
+			<p:menuitem value="#{dbResource['wq.label.myProfile']}" action="#{userMB.viewMyProfile}" ajax="false"/>
+			<p:menuitem value="#{dbResource['wq.label.maintainUserProfile']}" rendered="#{menuMB.isAccessible('User management')}" url="/UserMgmt/UserManagement.jsf" />
+			<p:menuitem value="#{dbResource['wq.label.maintainRole']}" rendered="#{menuMB.isAccessible('Role Management')}" url="/UserMgmt/RoleManagement.jsf"/>
+			<p:menuitem value="#{dbResource['wq.label.maintainGroup']}" rendered="#{menuMB.isAccessible('Group Management')}" url="/UserMgmt/GroupManagement.jsf" />
+			<p:menuitem value="#{dbResource['wq.label.exchangeRate']}" rendered="#{menuMB.isAccessible('Exchange Rate')}" url="/RFQ/ExchangeRate.jsf" />
+			<p:menuitem value="#{dbResource['wq.label.exCurrencySetting']}" rendered="#{menuMB.isAccessible('Exchange Rate')}" url="/RFQ/ExchangeCurrencySetting.jsf" />
+			<p:menuitem value="#{dbResource['wq.label.versionPage']}" rendered="#{menuMB.isAccessible('version page')}" url="/Utilities/Version.jsf" />
+			<ui:remove>
+	     	<p:menuitem value="#{dbResource['wq.header.auditTrail']}" rendered="#{menuMB.isAccessible('Audit Trail')}" url="#" />
+ 			</ui:remove>
+		</p:submenu>
+		
+		<p:submenu label="#{dbResource['wq.label.quote']}" icon="ui-icon-document">
+	     	<p:menuitem value="#{dbResource['wq.header.rfqSubmission']}" rendered="#{menuMB.isAccessible('RFQ Submission')}" url="/RFQ/RFQSubmissionLayout.jsf?clear=1" />	     	
+	     	<p:menuitem value="#{dbResource['wq.label.instantPriceCheck']}" rendered="#{menuMB.isAccessible('Instant Price Check')}" url="/RFQ/InstantPriceCheck.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.myQuoteSearch']}" rendered="#{menuMB.isAccessible('My Quote Search - Sales')}" url="/RFQ/MyQuoteListForSales.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.myQuoteSearch']}" rendered="#{menuMB.isAccessible('My Quote Search - CS')}" url="/RFQ/MyQuoteListForCS.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.myQuoteSearch']}" rendered="#{menuMB.isAccessible('My Quote Search - QC')}" url="/RFQ/MyQuoteListForQC.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.myQuoteSearch']}" rendered="#{menuMB.isAccessible('My Quote Search - PM')}" url="/RFQ/MyQuoteListForPM.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.myQuoteSearch']}" rendered="#{menuMB.isAccessible('My Quote Search - MM')}" url="/RFQ/MyQuoteListForMM.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.myQuoteSearch']}" rendered="#{menuMB.isAccessible('My Quote Search - BMT')}"  url="/RFQ/MyQuoteListForBMT.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.myFormSearch']}" rendered="#{menuMB.isAccessible('My Form Search')}" url="/RFQ/MyFormList.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.catalogPage']}" rendered="#{menuMB.isAccessible('CatalogPage')}" url="/WebPromo/CatalogPage.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.catalogMaintain']}" rendered="#{menuMB.isAccessible('CataLogMaintain')}" url="/WebPromo/CataLogMaintain.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.workingPlateForm']}" rendered="#{menuMB.isAccessible('Working Platform')}" url="/WorkingPlatform/WorkingPlatformLayout.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.bmtWorkingPlatform']}" rendered="#{menuMB.isAccessible('BMT Working Platform')}" url="/BMTPlatform/BMTWorkingPlatform.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.respondIt']}" rendered="#{menuMB.isAccessible('Response Internal Transfer')}" url="/RFQ/ResponseInternalTransfer.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.vendorQuoteMaintenance']}" rendered="#{menuMB.isAccessible('Vendor Quote Maintenance')}" url="/stm/VendorQuoteMaintenance.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.maintainVendorCustomer']}" rendered="#{menuMB.isAccessible('Maintain Vendor Customer')}" url="/stm/BpmMaintenance.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.header.quoteBuilder']}" rendered="#{menuMB.isAccessible('QuoteBuilder')}"  url="/RFQ/QuoteBuilder.jsf" />
+	     	
+        </p:submenu>
+
+
+    	<p:submenu label="#{dbResource['wq.label.qcDataMaintain']}" rendered="#{menuMB.isAccessible('Pricer Material Upload') || menuMB.isAccessible('Contract Price Upload') || menuMB.isAccessible('Pricer Enquiry') || menuMB.isAccessible('Quote Data Maintenance') || menuMB.isAccessible('Cost Indicator') || menuMB.isAccessible('MFR Detail') || menuMB.isAccessible('Vendor Report Upload')}">
+	     	<p:menuitem value="#{dbResource['wq.menu.uploadPrricerMenu']}" rendered="#{menuMB.isAccessible('Pricer Material Upload')}" url="/PricerUpload/PricerUpload.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.pricerEnquiry']}" rendered="#{menuMB.isAccessible('Pricer Enquiry')}" url="/RFQ/PricerEnquiry.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.partMasterEnquiry']}" rendered="#{menuMB.isAccessible('Part Master Enquiry')}" url="/RFQ/PartMasterEnquiry.jsf" />
+	     	
+	     	<p:menuitem value="#{dbResource['wq.label.partMasterDownload']}" rendered="#{menuMB.isAccessible('Part Master Download')}" url="/RFQ/PartMasterDownload.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.quoteDataMaintenance']}" rendered="#{menuMB.isAccessible('Quote Data Maintenance')}" url="/RFQ/DataMaintenance.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.costIndicator']}" rendered="#{menuMB.isAccessible('Cost Indicator')}" url="/RFQ/CostIndicator.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.mfrDetail']}" rendered="#{menuMB.isAccessible('MFR Detail')}" url="/RFQ/MFRDetails.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.label.uploadVendorReport']}" rendered="#{menuMB.isAccessible('Vendor Report Upload')}" url="/PricerUpload/VendorReportUploadLayout.jsf" />
+       	<p:menuitem value="#{dbResource['wq.label.restrictedCustControl']}" rendered="#{menuMB.isAccessible('Restricted Customer Control')}" url="/RFQ/RestrictedCustomerControl.jsf" />
+        	
+        	<p:menuitem value="#{dbResource['wq.label.massQuoteRequest']}" rendered="#{menuMB.isAccessible('QuoteRateRequest')}" url="/RFQ/QuoteRateRequestUpload.jsf" />
+        	
+        </p:submenu>
+      
+       	<p:submenu label="#{dbResource['wq.label.report']}" icon="ui-icon-document">
+	     	<p:menuitem value="#{dbResource['wq.header.recipientsMaintenance']}" rendered="#{menuMB.isAccessible('Maintain DRMS_report_recipients')}" url="/Report/RecipientMaintenance.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.header.RFQReport']}" rendered="#{menuMB.isAccessible('RFQBacklogReport')}" url="/Report/RFQBacklogReport.jsf" />
+	     	<p:menuitem value="#{dbResource['wq.header.rorReport']}" rendered="#{menuMB.isAccessible('RORReport')}" url="/Report/RorReport.jsf"/>
+	     	<p:menuitem value="#{dbResource['wq.label.quoteCyc']}" rendered="#{menuMB.isAccessible('CycleReport')}" url="/Report/QuoteCycleReport.jsf"/>
+	     	<p:menuitem value="#{dbResource['wq.label.dailyQuoteReport']}" rendered="#{menuMB.isAccessible('DailyReport')}" url="/Report/QuoteDailyOptReport.jsf"/>
+	     	<p:menuitem value="#{dbResource['wq.label.auditReport']}" rendered="#{menuMB.isAccessible('AuditReport')}" url="/Report/AuditReport.jsf"/>
+	     	<p:menuitem value="#{dbResource['wq.label.quoteHitRateReport']}" rendered="#{menuMB.isAccessible('QuoteHitRateReport')}" url="/Report/QuoteHitRateReport.jsf"/>
+	     	<p:menuitem value="#{dbResource['wq.label.orderOnHandReport']}" rendered="#{menuMB.isAccessible('OrderOnHandReport')}" url="/Report/OrderOnHandReport.jsf"/>
+			<p:menuitem value="#{dbResource['wq.label.auditExchRateReport']}" rendered="#{menuMB.isAccessible('Audit Exchange Rate Report')}" url="/Report/AuditExchangeRateReport.jsf" />	     	
+       		<p:menuitem value="#{dbResource['wq.label.auditLogReport']}" rendered="#{menuMB.isAccessible('AuditLogReport')}" url="/Report/AuditLogReport.jsf"/>
+       	</p:submenu>
+        
+        <f:facet name="options">
+            <p:commandLink   style="margin-top:8px;color:blue;font: bold;font-size: 11px;position:absolute; right:80px;">
+				<h:outputText value="#{dbResource['wq.link.shoppingCart']}  (100)" />
+			</p:commandLink>
+        </f:facet>
+       
+        <p:menuitem value="#{dbResource['wq.label.logout']}" style="position:absolute; right:4px;" url="/j_spring_security_logout" />
+        
+    </p:menubar>
+    
+    
+</h:form>
+
+<script type="text/javascript">  
+    function handleLoginRequest(xhr, status, args) {  
+    	if(args.changed){   
+        	PF('changeBizUnitDlg').hide();
+        }  
+    }  
+</script> 
+
+</h:body>
+</html>

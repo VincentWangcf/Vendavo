@@ -1,0 +1,195 @@
+package com.avnet.emasia.webquote.columndata;
+
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+
+public class DefaultColumnDataConverter<T extends Bean> implements ColumnDataConverter<T>{
+	
+	
+/*	@Override
+	public List<T> convertAndValidate (InputStream is, String type, BeanDefinition<T> beanDef) {
+		
+		ColumnDataSource source = ColumnDataSource.create(is, FileType.TEXT, null);
+		
+//		List<? super T> results = new ArrayList<>();
+		
+		Class<? extends Bean> beanClass = beanDef.getBeanClass();
+		try {
+			Bean bean = beanClass.newInstance();
+//			results.add(bean);
+			while (source.hasNext()) {
+				source.next();
+				for(FieldDefinition fieldDef : beanDef.getFieldDefinitions()) {
+					Field<?> field = new Field<>();
+					field.setSourceValue(source.getColumnValue(fieldDef.getColumnName()));
+					fieldDef.getField().set(bean, field);
+					
+//					Field.class.getMethod("set" + , parameterTypes)
+				}
+			}
+			
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		
+		
+		
+		
+		return null;
+	}*/
+	
+	@Override
+	public List<T> convertAndValidate (InputStream is, String type, BeanDefinition<T> beanDef) {
+		
+		
+		ColumnDataSource source = new MemoryColumnDataSource();
+		
+		Class<? extends Bean> beanClass = beanDef.getBeanClass();
+		
+		List<Bean> beans = new ArrayList<>();
+		
+		try {
+			Bean bean = beanClass.newInstance();
+			beans.add(bean);
+			while (source.hasNext()) {
+				source.next();
+				for(FieldDefinition fieldDef : beanDef.getFieldDefinitions()) {
+					
+					fieldDef.getConverter().convert(source.getColumnValue(fieldDef.getColumnName()), bean, fieldDef.getField());
+					
+//					Field.class.getMethod("set" + , parameterTypes)
+				}
+			}
+			
+			System.out.println(((PricerBean)bean).getDate());
+			System.out.println(((PricerBean)bean).getCost());			
+//			System.out.println(((PricerBean)bean).getCost().getSourceValue());
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		
+		
+		
+		
+		return null;
+	}
+/*	
+	public List<T> convert(List<T> beans, BeanDefinition<T> beanDef) {
+		
+		for(T bean : beans) {
+			for (FieldDefinition fieldDef : beanDef.getFieldDefinitions()) {
+				
+				try {
+					Field f = (Field)fieldDef.getField().get(bean);
+					Object convertedValue = fieldDef.getConverter().convert(((Field)fieldDef.getField().get(bean)).getSourceValue());
+//					Object convertedValue = fieldDef.getConverter().convert(fieldDef.);
+					f.setValue(convertedValue);
+					System.out.println(convertedValue);
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				
+				
+				
+			}
+		}
+		
+		
+		return null;
+	}*/
+	
+	public static void main(String args[]) throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
+		DefaultColumnDataConverter d = new DefaultColumnDataConverter<>();
+		List<PricerBean> beans = d.convertAndValidate(null,null , BeanDefinition.create(PricerBean.class));
+		
+		
+		
+		PricerBean bean = new PricerBean();
+		
+		
+		List<PricerBean> list = new ArrayList<>();
+		list.add(bean);
+		
+//		d.convert(list, BeanDefinition.create(PricerBean.class));
+		System.out.println(beans.get(0).getDate());
+		System.out.println(beans.get(0).getCost());
+		/*java.lang.reflect.Field f = DefaultColumnDataConverter.class.getDeclaredField("date");
+		f.setAccessible(true);
+		
+		f.set(d, new Field<>());
+		d.date.setValue(new Date());
+		System.out.println(d.date.getValue());
+		*/
+	}
+	
+	static class MemoryColumnDataSource implements ColumnDataSource {
+		int i = 0;
+
+		@Override
+		public int getSeq() {
+			return i;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return i < 1;
+		}
+
+		@Override
+		public void next() {
+			i++;
+		}
+
+		@Override
+		public String getColumnValue(String columnName) {
+			if (columnName.equalsIgnoreCase("date")) {
+				return "20170901";
+				
+			} else if (columnName.equalsIgnoreCase("cost")) {
+				return "0.369";
+			}
+			return "";
+			
+		}
+		
+	}
+	
+	static class PricerBean extends DefaultBean {
+	
+		
+		@ADateConverter
+		private Date date;
+		
+		@ADoubleConverter
+		private double cost;
+		
+		public PricerBean () {
+			
+		}
+
+		public Date getDate() {
+			return date;
+		}
+
+		public void setDate(Date date) {
+			this.date = date;
+		}
+
+		public double getCost() {
+			return cost;
+		}
+
+		public void setCost(double cost) {
+			this.cost = cost;
+		}
+
+		
+	}
+	
+
+}

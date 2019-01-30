@@ -1,0 +1,209 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+<f:view contentType="text/html">
+	<h:head>
+		<f:facet name="first">
+			<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+			<meta content='text/html; charset=UTF-8' http-equiv="Content-Type" />
+			<meta http-equiv="Cache-Control" Content="no-cache"/>
+			<meta http-equiv="Pragma" Content="no-cache"/>
+			<meta http-equiv="Expires" Content="0"/>   			
+			<title>#{dbResource['wq.label.createUser']}</title>
+		</f:facet>
+
+		<link type="text/css" rel="stylesheet" href="../resources/css/style-004.css" />
+	</h:head>
+	<h:body>
+
+		<h:form id="form1">
+
+
+			<p:panel header="#{dbResource['wq.label.createUser']}">
+
+				<h:panelGrid columns="1" style="width:100%">
+
+					<p:fieldset legend="#{dbResource['wq.header.basicInformation']}">
+
+						<h:panelGrid columns="8" cellpadding="5" style="width:100%">
+
+							<h:outputText value="#{dbResource['wq.label.EmpID']}: " />
+							<p:inputText id="employeeId" label="#{dbResource['wq.label.userID']}" value="#{userMB.user.employeeId}" />
+
+							<h:outputText value="#{dbResource['wq.label.firstname']}: " />
+							<p:inputText id="firstName" label="#{dbResource['wq.label.userName']}" value="#{userMB.user.firstName}"/>
+							
+							<h:outputText value="#{dbResource['wq.label.lastname']}: " />
+							<p:inputText id="lastName" label="#{dbResource['wq.label.userName']}" value="#{userMB.user.lastName}"/>							
+
+							<h:outputText value="#{dbResource['wq.label.supervisorID']}: " />
+							<p:inputText id="supervisorID" label="#{dbResource['wq.label.supervisorID']}" />
+
+
+							<h:outputText value="#{dbResource['wq.label.email']}: " />
+							<p:inputText id="email" label="#{dbResource['wq.label.email']}" value="#{userMB.user.emailAddress}" />
+							
+							<h:outputText value="#{dbResource['wq.label.phone']}: " />
+							<p:inputText id="phone" label="#{dbResource['wq.label.phone']}" value="#{userMB.user.phoneNumber}" />							
+
+							<h:outputText value="#{dbResource['wq.label.isActive']}: " />
+							<p:selectBooleanCheckbox value="#{userMB.user.active}"/>
+
+						</h:panelGrid>
+
+					</p:fieldset>
+					
+					<h:panelGrid columns="1">
+						<p:commandButton id="copy" value="#{dbResource['wq.header.copyFromExistingUser']}"
+							type="Submit" action="#{userMB.retrieveAllUsers}" oncomplete="PF('copyUserdialog').show()"/>
+
+					</h:panelGrid>
+					
+					    <p:panel header="#{dbResource['wq.label.roleassing']}"  toggleable="true" toggleSpeed="500">  
+					
+					
+
+						<p:pickList id="pickList_userRoles" value="#{userMB.roles}" var="role" itemLabel="#{role.name}" itemValue="#{role.id}" 
+							converter="webquote.user.Role"  addLabel="#{dbResource['wq.button.add']}" addAllLabel="#{dbResource['wq.button.addAll']}" removeLabel="#{dbResource['wq.button.remove']}" removeAllLabel="#{dbResource['wq.button.removeAll']}"
+							>
+
+							<f:facet name="sourceCaption">#{dbResource['wq.label.availRoles']}</f:facet>
+							<f:facet name="targetCaption">#{dbResource['wq.label.selRoles']}</f:facet>
+
+						</p:pickList>
+
+						</p:panel>
+						
+				 <p:panel header="#{dbResource['wq.label.DAassign']}"  toggleable="true" toggleSpeed="500"> 
+						<h:panelGrid columns="2" columnClasses="alignTop,alignTop">
+						
+						<h:panelGrid columns="2" columnClasses="alignTop,alignTop">
+						
+						<p:fieldset legend="#{dbResource['wq.header.bizUnit']}">
+							<p:selectManyCheckbox value="#{userMB.selectedBizUnits}" layout="pageDirection">  
+							 	<f:selectItems value="#{userMB.bizUnitsMap}" />  
+							</p:selectManyCheckbox>  
+       					</p:fieldset>
+       					 
+       					 <p:fieldset legend="#{dbResource['wq.label.region']}">
+							<p:selectManyCheckbox value="#{userMB.selectedRegions}" layout="pageDirection">  
+							 	<f:selectItems value="#{userMB.regionsMap}" />  
+							</p:selectManyCheckbox>       					 
+	       				</p:fieldset>
+       					 
+       					 </h:panelGrid>
+						
+						<p:fieldset legend="#{dbResource['wq.label.mfr']}">
+
+							<p:pickList id="pickList_mfr"
+								value="#{userMB.mfrs}" var="mfr"
+								itemLabel="#{mfr.name}" itemValue="#{mfr.id}" showSourceFilter="true" showTargetFilter="true" filterMatchMode="contains"  converter="webquote.user.Mfr"
+								addLabel="#{dbResource['wq.button.add']}" addAllLabel="#{dbResource['wq.button.addAll']}" removeLabel="#{dbResource['wq.button.remove']}" removeAllLabel="#{dbResource['wq.button.removeAll']}"
+								>
+								<f:facet name="sourceCaption">#{dbResource['wq.label.availMFR']}</f:facet>
+								<f:facet name="targetCaption">#{dbResource['wq.label.selMfr']}</f:facet>
+							</p:pickList>
+
+						</p:fieldset>								
+						<p:fieldset legend="#{dbResource['wq.label.productGroup']}">
+
+							<p:pickList id="pickList_prodGroup"
+								value="#{userMB.productGroups}" var="productGroup"
+								itemLabel="#{productGroup.groupCode}" itemValue="#{productGroup.id}" showSourceFilter="true" showTargetFilter="true" filterMatchMode="contains" converter="webquote.user.ProductGroup"
+								addLabel="#{dbResource['wq.button.add']}" addAllLabel="#{dbResource['wq.button.addAll']}" removeLabel="#{dbResource['wq.button.remove']}" removeAllLabel="#{dbResource['wq.button.removeAll']}"
+								>
+
+								<f:facet name="sourceCaption">#{dbResource['wq.label.availPro']}</f:facet>
+								<f:facet name="targetCaption">#{dbResource['wq.label.selProd']}</f:facet>
+							</p:pickList>
+							</p:fieldset>
+							
+							<p:fieldset legend="#{dbResource['wq.label.proType']}">
+
+							<p:pickList id="pickList_program"
+								value="#{userMB.programTypes}" var="programType"
+								itemLabel="#{programType.name}" itemValue="#{programType.id}" showSourceFilter="true" showTargetFilter="true" filterMatchMode="contains" converter="webquote.user.ProgramType"
+								addLabel="#{dbResource['wq.button.add']}" addAllLabel="#{dbResource['wq.button.addAll']}" removeLabel="#{dbResource['wq.button.remove']}" removeAllLabel="#{dbResource['wq.button.removeAll']}"
+								>
+
+								<f:facet name="sourceCaption">#{dbResource['wq.label.availProtype']}</f:facet>
+								<f:facet name="targetCaption">#{dbResource['wq.label.selProg']}</f:facet>
+							</p:pickList>
+							
+							
+
+						</p:fieldset>				
+						
+						
+					</h:panelGrid>
+					
+					</p:panel>
+						
+						
+					<h:panelGrid columns="1">
+						<p:commandButton id="submit" value="#{dbResource['wq.header.save']}" ajax="false" action="#{userMB.saveUser}" />
+					</h:panelGrid>						
+						</h:panelGrid>
+			</p:panel>
+
+		</h:form>
+		
+		<h:form>
+					<p:dialog id="copyUserdialog" header="#{dbResource['wq.label.copyToUser']}" 
+						widgetVar="copyUserdialog" position="center" scrollable="true" modal="true">
+
+
+						<p:dataTable styleClass="dtable" var="user"
+							value="#{userMB.fullUserList}"
+							rowKey="#{user.id}" paginator="true" rows="10"
+							id="searchUserTable" rowIndexVar="rowIndex" style="width:auto" 
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}."
+							>
+
+							<p:column headerText="#{dbResource['wq.button.no']}">
+								<h:outputText id="sequenceNumber" value="#{rowIndex+1}" />
+							</p:column>
+
+							<p:column headerText="#{dbResource['wq.label.EmpID']}" sortBy="#{user.employeeId}"
+								filterBy="#{user.employeeId}" id="employeeID">
+	            #{user.employeeId}
+	        </p:column>
+
+							<p:column headerText="#{dbResource['wq.label.firstname']}"
+								sortBy="#{user.firstName}" filterBy="#{user.firstName}"
+								id="employeeFirstName">
+	            #{user.firstName}
+	        </p:column>
+	        							<p:column headerText="#{dbResource['wq.label.lastname']}"
+								sortBy="#{user.lastName}" filterBy="#{user.lastName}"
+								id="employeeLastName">
+	            #{user.lastName}
+	        </p:column>
+	        
+	        	<p:column>
+<p:commandButton value="#{dbResource['wq.button.select']}">
+<f:setPropertyActionListener value="#{user}"
+target="#{userMB.selectedUser}" />
+</p:commandButton>
+</p:column>
+	        
+	        
+						</p:dataTable>
+						<h:panelGrid columns="2">
+							<p:commandButton id="submitCopy" value="#{dbResource['wq.label.copy']}" type="Submit" ajax="false" action="#{userMB.copyUser}"
+								oncomplete="PF('copyUserdialog').hide()" />
+							<p:commandButton id="cancelCopy" value="#{dbResource['wq.button.cancel']}" type="button"
+								onclick="PF('copyUserdialog').hide()" />
+						</h:panelGrid>
+					</p:dialog>
+					</h:form>
+
+	</h:body>
+</f:view>
+
+
+</html>

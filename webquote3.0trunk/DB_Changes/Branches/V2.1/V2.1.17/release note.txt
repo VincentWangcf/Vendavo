@@ -1,0 +1,2 @@
+1). Fixed production ticket INC0113738 , INC0113718 by Tough Lin 2015/03/06
+2). Enable the calling to POS_SUMMARY_PROC (stored procedure) in POS schedule job.   

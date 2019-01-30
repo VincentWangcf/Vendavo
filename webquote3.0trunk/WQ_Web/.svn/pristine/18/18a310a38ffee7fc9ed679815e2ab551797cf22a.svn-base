@@ -1,0 +1,272 @@
+package com.avnet.emasia.webquote.web.stm.job;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+import javax.faces.bean.ManagedProperty;
+import javax.mail.MessagingException;
+import javax.mail.internet.AddressException;
+import javax.naming.NamingException;
+
+import org.jboss.as.server.CurrentServiceContainer;
+import org.jboss.ejb3.annotation.TransactionTimeout;
+import org.jboss.msc.service.ServiceController;
+
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.MfrRequestInfo;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.SubregionRecipientMapping;
+import com.avnet.emasia.webquote.entity.SubregionTeamMapping;
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.exception.WebQuoteRuntimeException;
+import com.avnet.emasia.webquote.masterData.util.DateUtils;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.stm.ejb.MfrRequestInfoSB;
+import com.avnet.emasia.webquote.stm.ejb.SubregionRecipientMappingSB;
+import com.avnet.emasia.webquote.stm.ejb.SubregionTeamMappingSB;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.utilities.schedule.IScheduleTask;
+import com.avnet.emasia.webquote.web.quote.job.EnvironmentService;
+
+
+@Stateless 
+public class STMAutoRemindTask implements IScheduleTask {
+	private static final Logger LOG = Logger.getLogger(STMAutoRemindTask.class.getName());
+	
+	@EJB
+	SubregionRecipientMappingSB subregionRecipientMappingSB;
+	
+	@EJB
+	SubregionTeamMappingSB subregionTeamMappingSB;
+	
+	@EJB
+	protected MailUtilsSB mailUtilsSB;
+	
+	@EJB
+	private BizUnitSB bizutSB;	
+	
+	@EJB
+	MfrRequestInfoSB mfrRequestInfoSB;
+	
+	@EJB
+	private SystemCodeMaintenanceSB sysCodeMaintSB;
+	
+	@EJB
+	protected EJBCommonSB ejbCommonSB;
+	
+	public final static String SUBJECT = "Auto Remind: Avnet RFQ waiting for your response";
+
+	@Override
+	@Asynchronous
+    @TransactionTimeout(value = 20000, unit = TimeUnit.SECONDS) 
+	public void executeTask(Timer timer) {
+		boolean isSuccessfully = true;
+		ServiceController<?> service = CurrentServiceContainer.getServiceContainer().getService(EnvironmentService.SINGLETON_SERVICE_NAME);
+		if (service != null) {
+			service.getValue();
+			if (ejbCommonSB.isRanOnThisServer((String) service.getValue())) {
+				List<BizUnit> bizLst = bizutSB.findAll();
+				if(null!=bizLst) {
+					for(BizUnit bu :bizLst) {
+						LOG.info("STM project Autom Remind job beginning. with Region.." + bu.getName());
+						Map<String,List<String>> subRegionRecipients = this.findRegionsRecipients(bu);
+						Map<String,List<String>> subRegionTeams= this.findRegionTeam(bu);
+						
+						if(null!=subRegionRecipients) {
+							if(null!=subRegionTeams) {
+								Iterator<Entry<String, List<String>>> it = subRegionRecipients.entrySet().iterator();  
+								if(null!=it) {
+									while (it.hasNext()) {  
+										@SuppressWarnings("rawtypes")
+										Map.Entry entry = (Map.Entry) it.next();  
+										
+										String subRegion = (String)entry.getKey();   
+										
+										@SuppressWarnings("unchecked")
+										List<String> recipients = (List<String>)entry.getValue();
+										
+										List<String>  teams = subRegionTeams.get(subRegion);
+										if(null!=teams && teams.size()>0) {
+											List<MfrRequestInfo> pendingMfrRequests = mfrRequestInfoSB.findPendingItem(teams,bu);
+											if(null!=pendingMfrRequests && pendingMfrRequests.size()>0) {
+												try {
+													sendAutoRemindEmail(pendingMfrRequests,recipients,bu);
+												} catch (NamingException
+														| MessagingException e) {
+													isSuccessfully = false;
+													LOG.log(Level.WARNING, "STM project Auto Remind job Send Email error: =======>>>" + bu.getName()+e.getMessage());
+												}
+											}
+											LOG.info("STM project Auto Remind job==>in subRegion "+subRegion+" have " +pendingMfrRequests.size()+" pendingMfrRequests..." + bu.getName());
+										}else {
+											LOG.info("STM project Auto Remind job==>in subRegion " +subRegion+"==> no team finding in region==>>" + bu.getName());
+										}
+										  
+									}
+								}else { //it.hasnext
+									LOG.info("STM project Auto Remind job End with ===>>>> empty recipients2...in region==>>" + bu.getName());
+								}
+							}else { //subRegionTeams
+								LOG.info("STM project Auto Remind job End with ===>>>> empty team ...in region==>>"+ bu.getName());
+							}
+						}else { //empty subRegionRecipients
+							LOG.info("STM project Auto Remind job End with ===>>>> empty recipients ...in region==>>"+ bu.getName());
+						}
+						LOG.info("STM project Autom Remind job End with Region.." + bu.getName());
+					}//for bizLst
+				}//bizlst is not null
+			}//isRanOnThisServer
+		} else {// service != null
+			isSuccessfully = false;
+			throw new WebQuoteRuntimeException(
+					CommonConstants.COMMON_SERVICE_NOT_FOUND, new Object[]{EnvironmentService.SINGLETON_SERVICE_NAME});
+		}	
+		
+		LOG.info("STM project Autom Remind job End with sucessfully == "+isSuccessfully+"...");
+		
+	}
+	
+	private void sendAutoRemindEmail(List<MfrRequestInfo> mfrRequestInfos,List<String> toList,BizUnit bu) throws NamingException, MessagingException {
+		
+		try {
+			String fromEmailAddr = sysCodeMaintSB.getEmailAddress(bu.getName());
+			String signature = sysCodeMaintSB.getEmailSignName(bu.getName());
+			String hotLine = sysCodeMaintSB.getEmailHotLine(bu.getName());
+			String signContent = sysCodeMaintSB.getEmailSignContent(bu.getName());
+			String ccEmailAddr = sysCodeMaintSB.getSTMReminderCCList(bu.getName());
+			
+			List<String> mailCc = new ArrayList<String>();
+			if(null!=ccEmailAddr && !ccEmailAddr.isEmpty()) {
+				String[] ccs = ccEmailAddr.split(";");
+				for(String cc:ccs) {
+					mailCc.add(cc);
+				}
+			}
+			
+			MailInfoBean mib = new MailInfoBean();
+			mib.setMailSubject(SUBJECT);
+			mib.setMailFrom(fromEmailAddr);
+			mib.setMailTo(toList);
+			if(null!=mailCc && mailCc.size()>0) {
+				mib.setMailCc(mailCc);
+			}
+			
+
+			String content = "Dear ST,<br/>";
+			content += "Please note that below RFQs have been pending for more than 48 hours,<br/>";
+			content += "<table border=\"1\" cellspacing=\"0\" bordercolor=\"#000000\" width = \"60%\" "
+					+ "style=\"border-collapse:collapse;font-size:14\">";
+			content += "<tr bgcolor=\"#FFFFFF\">";
+			content += "<td width = 15%><B>Avnet Quote#</B></td>";
+			content += "<td width = 10%><B>Pending Day</B></td>";
+			content += "<td width = 20% bgcolor=\"#FBEC88\" ><B>Avnet Requested P/N</B></td>";
+			//content += "<td width = 20% bgcolor=\"#F2DCDB\"><B>MFR Quote #</B></td>";
+			content += "<td width = 35%><B>Sold-To-Party</B></td>";
+			content += "</tr>";
+			
+			Date now = new Date();
+			for(MfrRequestInfo mfrRequestInfo: mfrRequestInfos) {
+				QuoteItem item = mfrRequestInfo.getQuoteItem();
+				content += "<tr bgcolor=\"#FFFFFF\">";
+					content += "<td>"+item.getQuoteNumber()+"</td>";
+					content += "<td>"+DateUtils.getDayDiff(item.getSentOutTime(), now)+"</td>";
+					content += "<td bgcolor=\"#FBEC88\" >"+item.getQuotedPartNumber()+"</td>";
+					//content += "<td bgcolor=\"#F2DCDB\"></td>";
+					content += "<td>"+item.getSoldToCustomerFullName()+"</td>";
+					
+				content += "</tr>";
+			}
+			content += "</table><br/>";
+			content += "Best Regards," + "<br/>";
+			content += signature + "<br/>";
+			content += hotLine + "<br/>";
+			content += "Email Box: "+signContent;
+			
+			mib.setMailContent(content);
+		
+			mailUtilsSB.sendHtmlMail(mib);
+		} catch (IllegalArgumentException | NamingException | MessagingException e) {
+			throw e;
+		} 
+		
+	}
+
+	
+	private Map<String, List<String>> findRegionTeam(BizUnit bu) {
+		List<SubregionTeamMapping> teamsMapping = subregionTeamMappingSB.findAllTeams(bu);
+		if(null!=teamsMapping && teamsMapping.size()>0) {
+//			List<String> regions = new ArrayList<String>();
+			List<String> teams = new ArrayList<String>();
+			Map<String,List<String>> regionTeams = new HashMap<String,List<String>>();
+
+			String subRegion =null;
+			for(SubregionTeamMapping teamMapping:teamsMapping ) {
+				String newSubRegion = teamMapping.getSubRegion();
+				if(!newSubRegion.equalsIgnoreCase(subRegion)){
+					//start a new one
+					subRegion = newSubRegion;
+					teams = new ArrayList<String>();
+					teams.add(null!=teamMapping.getTeam()?teamMapping.getTeam().getName():"");
+					regionTeams.put(subRegion, teams);
+					
+					
+				}else {
+					subRegion = newSubRegion;
+					teams.add(null!=teamMapping.getTeam()?teamMapping.getTeam().getName():"");
+				}
+				
+				
+			}
+			return regionTeams;
+		}
+		return null;
+	}
+	
+	private Map<String, List<String>> findRegionsRecipients(BizUnit bu) {
+		List<SubregionRecipientMapping> recipients = subregionRecipientMappingSB.findAllRecipients(bu);
+		if(null!=recipients && recipients.size()>0) {
+//			List<String> regions = new ArrayList<String>();
+			List<String> emailTos = new ArrayList<String>();
+			Map<String, List<String>> regions = new HashMap<String, List<String>>();
+			String subRegion =null;
+			for(SubregionRecipientMapping recipient:recipients ) {
+				String newSubRegion = recipient.getSubRegion();
+				
+				if(!newSubRegion.equalsIgnoreCase(subRegion) ){
+					//start a new one;
+					subRegion = newSubRegion;
+					emailTos = new ArrayList<String>();
+					emailTos.add(recipient.getRecipient());
+					regions.put(newSubRegion,emailTos);
+					
+				}else {
+					subRegion = newSubRegion;
+					emailTos.add(recipient.getRecipient());
+				}
+				
+				
+			}
+			return regions;
+		}
+		return null;
+	}
+	
+}

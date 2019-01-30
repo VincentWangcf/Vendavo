@@ -1,0 +1,208 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+
+@Entity
+public class SalesCostPricer extends Pricer implements Serializable {
+	
+	private static final long serialVersionUID = 1L;
+
+	
+	@Column(name="SALES_COST_TYPE")
+	@Enumerated(EnumType.STRING)
+	private SalesCostType salesCostType;
+
+	@Column(name="MOV")
+	private Integer mov;
+	
+	@Column(name="LEAD_TIME", length=30)
+	private String leadTime;
+
+	@Column(name="AVNET_QC_COMMENTS")
+	private String aventQcCommnets;	
+	
+	@JoinColumn(name="PROGRAM_TYPE_ID")
+	private ProgramType programType;
+	
+	@Column(name="DISPLAY_ON_TOP")
+	private Integer displayOnTop;
+	
+	@Column(name="PROGRAM_SPECIAL_ITEM_FLAG")
+	private Integer specialItemFlag;
+	
+	@Column(name="PROGRAM_AVAILABLE_TO_SELL_QTY")
+	private Integer availableToSellQty;
+	
+	@Column(name="QTY_CONTROL")
+	private Integer qtyControl;
+	
+	@Column(name="QTY_INDICATOR")
+	private String qtyIndicator;
+	
+	@Column(name="NEW_PROGRAM_MATERIAL_INDICATOR")
+	private Boolean newItemIndicator;
+
+	@Column(name="ALLOCATION_FLAG", length=1)
+	private Boolean allocationFlag;
+
+	@Column(name="PROGRAM_AQ_FLAG")
+	private Boolean aqFlag;
+
+	
+	@OneToMany(mappedBy="materialDetail", cascade={CascadeType.PERSIST, CascadeType.REMOVE})
+	private List<QuantityBreakPrice> quantityBreakPrices;
+
+
+	public SalesCostType getSalesCostType() {
+		return salesCostType;
+	}
+
+	public void setSalesCostType(SalesCostType salesCostType) {
+		this.salesCostType = salesCostType;
+	}
+
+	public Integer getMov() {
+		return mov;
+	}
+
+	public void setMov(Integer mov) {
+		this.mov = mov;
+	}
+
+	public String getLeadTime() {
+		return leadTime;
+	}
+
+	public void setLeadTime(String leadTime) {
+		this.leadTime = leadTime;
+	}
+
+	public String getAventQcCommnets() {
+		return aventQcCommnets;
+	}
+
+	public void setAventQcCommnets(String aventQcCommnets) {
+		this.aventQcCommnets = aventQcCommnets;
+	}
+	
+	public ProgramType getProgramType() {
+		return programType;
+	}
+
+	public void setProgramType(ProgramType programType) {
+		this.programType = programType;
+	}
+	
+	public Integer getDisplayOnTop() {
+		return displayOnTop;
+	}
+
+	public void setDisplayOnTop(Integer displayOnTop) {
+		this.displayOnTop = displayOnTop;
+	}
+
+	public Integer getSpecialItemFlag() {
+		return specialItemFlag;
+	}
+
+	public void setSpecialItemFlag(Integer specialItemFlag) {
+		this.specialItemFlag = specialItemFlag;
+	}
+
+	public Integer getAvailableToSellQty() {
+		return availableToSellQty;
+	}
+
+	public void setAvailableToSellQty(Integer availableToSellQty) {
+		this.availableToSellQty = availableToSellQty;
+	}
+
+	public Integer getQtyControl() {
+		return qtyControl;
+	}
+
+	public void setQtyControl(Integer qtyControl) {
+		this.qtyControl = qtyControl;
+	}
+
+	public String getQtyIndicator() {
+		return qtyIndicator;
+	}
+
+	public void setQtyIndicator(String qtyIndicator) {
+		this.qtyIndicator = qtyIndicator;
+	}
+
+	public Boolean getNewItemIndicator() {
+		return newItemIndicator;
+	}
+
+	public void setNewItemIndicator(Boolean newItemIndicator) {
+		this.newItemIndicator = newItemIndicator;
+	}
+
+	public Boolean getAllocationFlag() {
+		return allocationFlag;
+	}
+
+	public void setAllocationFlag(Boolean allocationFlag) {
+		this.allocationFlag = allocationFlag;
+	}
+
+	public Boolean getAqFlag() {
+		return aqFlag;
+	}
+
+	public void setAqFlag(Boolean aqFlag) {
+		this.aqFlag = aqFlag;
+	}
+
+	public List<QuantityBreakPrice> getQuantityBreakPrices() {
+		return quantityBreakPrices;
+	}
+
+	public void setQuantityBreakPrices(List<QuantityBreakPrice> quantityBreakPrices) {
+		this.quantityBreakPrices = quantityBreakPrices;
+	}
+
+	
+	@Override
+	public String getCostIndicatorType() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	int getPriority() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	boolean isValidFor(String region, Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	boolean allowOverride() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	boolean isCustomerMatched(Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+}

@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Built-By: 046755
+Build-Jdk: 1.8.0_144
+Created-By: Maven Integration for Eclipse
+Dependencies: org.jboss.msc, org.wildfly.clustering.singleton, org.jbo
+ ss.as.server
+

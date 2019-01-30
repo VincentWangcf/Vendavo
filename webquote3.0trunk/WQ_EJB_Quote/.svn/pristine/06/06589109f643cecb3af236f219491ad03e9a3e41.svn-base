@@ -1,0 +1,16 @@
+package com.avnet.emasia.webquote.rowdata;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import com.avnet.emasia.webquote.rowdata.converter.DateConverter;
+
+@Retention(RetentionPolicy.RUNTIME)
+@AConverter(convertBy=DateConverter.class)
+@Target(ElementType.FIELD)
+public @interface ADateConverter {
+	String value() default "YYYYMMDD";
+	String errMsg() default "Invalid date type";
+}

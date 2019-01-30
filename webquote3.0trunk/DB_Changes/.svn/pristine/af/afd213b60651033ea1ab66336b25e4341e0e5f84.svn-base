@@ -1,0 +1,10 @@
+001.sql- Insert query for APP_MESSAGES table changes
+002.sql- LOCALE_MASTER table changes
+003.sql- Create table scripts for APP_LABEL and APP_MESSAGES
+004.sql- Insert script for APP_LABEL table
+005.sql- Insert script for APP_MESSAGES table
+006.sql- Update script for APP_PROPERTY table TEMPLATE_PATH
+007.sql- Insert and update script for QC Defect ID 18 and 19
+008.sql- Create pricer table
+009.sql- Move cost indicator rule to cost indicator
+010.sql- rename min_sell to bottom_sell, norm_sell to min_sell

@@ -1,0 +1,121 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
+
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+
+@Entity
+@DiscriminatorValue("CONDITION")
+public class LeafLogicCalConfig  extends LogicCalConfig {
+
+	@Column(name = "LOGIC_ACTION", length = 20, nullable = false)
+	@Enumerated(EnumType.STRING)
+	private MatchMode matchMode;
+	
+	@Column(name = "CONDITION_TYPE", length = 20, nullable = false)
+	@Enumerated(EnumType.STRING)
+	private ConditionType conditionType;
+	
+	@Column(name = "CONDITION_VALUE", length = 300)
+	private String conditionValue;
+	
+	private final static Map<String, List<String>> CACHEMAP = new ConcurrentHashMap<String, List<String>>();
+	
+	private final static String SPLITOR = ",";
+	
+	public MatchMode getMatchMode() {
+		return matchMode;
+	}
+
+	public void setMatchMode(MatchMode matchMode) {
+		this.matchMode = matchMode;
+	}
+
+	public ConditionType getConditionType() {
+		return conditionType;
+	}
+
+	public void setConditionType(ConditionType conditionType) {
+		this.conditionType = conditionType;
+	}
+
+	public String getConditionValue() {
+		return conditionValue;
+	}
+
+	public void setConditionValue(String conditionValue) {
+		this.conditionValue = conditionValue;
+	}
+	
+	
+	/*@Override
+	protected Predicate<Boolean> isRegionAndRoleMatched(List<String> regions, List<String> roles) {
+		return (Boolean b) -> {
+			List<String> values = getAndCacheConditionValueList();
+			boolean firstMatch = conditionType.test(regions, roles, values, matchMode);
+			return this.logicResultReverse ? !firstMatch : firstMatch;
+		};
+	}*/
+	
+	@Override
+	protected Predicate<Boolean> isMatched(EnumMap<ConditionType, Collection<String>> mapParam){
+		return (Boolean b) -> {
+			List<String> values = getAndCacheConditionValueList();
+			boolean firstMatch = conditionType.test(mapParam, values, matchMode);
+			return this.logicResultReverse ? !firstMatch : firstMatch;
+		};
+		
+	};
+	
+	private List<String> getAndCacheConditionValueList() {
+		return CACHEMAP.computeIfAbsent(conditionValue, (String k)-> {
+			return Arrays.asList(conditionValue.split(SPLITOR));
+		});
+	}
+	
+	public static enum ConditionType {
+		ROLE, REGION;
+		boolean test(EnumMap<ConditionType, Collection<String>> mapParam,
+				List<String> values, MatchMode matchMode) {
+			Collection<String> needMatchParams = mapParam.getOrDefault(this, Collections.emptyList());
+			if(needMatchParams == null) needMatchParams = Collections.emptyList();
+			return matchMode.test(needMatchParams, values);
+		}
+	}
+	
+	private static enum MatchMode {
+		ANYMATCH {
+			@Override
+			boolean test(Collection<String> sources, Collection<String> conditons) {
+				return conditons.stream().anyMatch(p -> sources.stream().anyMatch(
+						s -> (s!=null && s.equalsIgnoreCase(p))));
+			}
+		},ALLMATCH {
+			@Override
+			boolean test(Collection<String> sources, Collection<String> conditons) {
+				return conditons.stream().allMatch(p -> 
+					sources.stream().anyMatch(s -> (s!=null && s.equalsIgnoreCase(p))));
+			}
+		},NONEMATCH {
+			@Override
+			boolean test(Collection<String> sources, Collection<String> conditons) {
+				return conditons.stream().noneMatch(p -> 
+					sources.stream().anyMatch(s -> (s!=null && s.equalsIgnoreCase(p))));
+			}
+		};
+		//private final static boolean MATCH = true;
+		abstract boolean test(Collection<String> sources, Collection<String> conditons);
+	}
+	
+}

@@ -1,0 +1,114 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+@Entity
+@Table(name="PAGE_COMPONENT_ITEM")
+public class PageComponentItem {
+	@Id
+	@SequenceGenerator(name = "P_C_GENERATOR", sequenceName = "WQ_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "P_C_GENERATOR")
+	@Column(unique = true, nullable = false)
+	private long id;
+	
+	@Column(name = "SHOW")
+	private boolean show;
+
+	@Column(name = "PAGE_NAME", length = 60, nullable = false)
+	private String pageName;
+
+	@Column(name = "COMPONENT_ID", length = 50, nullable = false)
+	private String componetId;
+
+	@Column(name = "PRIORITY")
+	private int priority;
+	
+	@ManyToOne
+	@JoinColumn(name = "LOGIC_CAL_CONFIG_ID", nullable = false)
+	private LogicCalConfig logicCalConfig;
+	
+	public LogicCalConfig getLogicCalConfig() {
+		return logicCalConfig;
+	}
+
+	public void setLogicCalConfig(LogicCalConfig logicCalConfig) {
+		this.logicCalConfig = logicCalConfig;
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public boolean isShow() {
+		return show;
+	}
+
+	public void setShow(boolean show) {
+		this.show = show;
+	}
+
+	public String getPageName() {
+		return pageName;
+	}
+
+	public void setPageName(String pageName) {
+		this.pageName = pageName;
+	}
+
+	public String getComponetId() {
+		return componetId;
+	}
+
+	public void setComponetId(String componetId) {
+		this.componetId = componetId;
+	}
+
+	public int getPriority() {
+		return priority;
+	}
+
+	public void setPriority(int priority) {
+		this.priority = priority;
+	}
+	
+	public boolean isConditionMatch(User user) {
+		if (user == null)
+			return false;
+		Set<String> bs = user.getAllBizUnits();
+		List<Role> rs = user.getRoles();
+		return isConditionMatch(bs.stream().collect(Collectors.toList()),
+				rs.stream().map(p -> p.getName()).collect(Collectors.toList()));
+		 
+
+	}
+	
+	@SuppressWarnings("unchecked")
+	public boolean isConditionMatch(List<String> regions, List<String> roles) {
+		List<String> rgs = regions == null ? Collections.EMPTY_LIST : regions;
+		List<String> rs = roles == null ? Collections.EMPTY_LIST : roles;
+		return this.logicCalConfig.isRegionAndRoleMatched(rgs, rs).test(true);
+	}
+	
+}

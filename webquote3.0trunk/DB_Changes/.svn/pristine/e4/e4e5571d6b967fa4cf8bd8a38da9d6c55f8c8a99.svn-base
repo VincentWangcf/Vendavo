@@ -1,0 +1,10 @@
+1:INC0064370  INC0080013 is same as INC0064370   fixed by andy 2014/12/30
+2:INC0072581   fixed by andy 2014/12/30
+3:tough:Please note:  merge the source  QuoteItem  ZquoteLst SAPWebServiceSB   if you deploy it to prod
+
+5:Fix nullPointerException on RefreshQuoteMB fixed By June 2015/1/6
+6:Fixed the production ticket INC0063300 fixed by Tonmy
+7:Fixed Production ticket INC0056433 fixed by Tonmy
+8:Fix Incident INC0076866  Fixed by June 2015/1/7
+9:Fixed the webpromo null pointer exception. fixed by Tonmy 2015/1/7
+10:run UpdateFINISH_QUOTE_PROTECT_BEFORETrigger.sql

@@ -1,0 +1,603 @@
+package com.avnet.emasia.webquote.quote.ejb;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+
+
+
+
+
+
+
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.CustomerAddress;
+import com.avnet.emasia.webquote.entity.CustomerAddressPK;
+import com.avnet.emasia.webquote.entity.CustomerPartner;
+import com.avnet.emasia.webquote.entity.SpecialCustomer;
+import com.avnet.emasia.webquote.entity.SalesOrg;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+
+/**
+ * Session Bean implementation class MaterialSB
+ */
+@Stateless
+@LocalBean
+public class CustomerSB {
+	
+	@PersistenceContext(unitName="Server_Source")
+	EntityManager em;
+
+	@EJB
+	transient SysConfigSB sysConfigSB;
+	
+	private static final Logger LOG =Logger.getLogger(CustomerSB.class.getName());
+	
+	private String sortByCustomerName = "";
+	private String sortByCustomerNumber =" order by c.customerNumber+0 ";
+	//private String sortByCustomerName = " order by c.customerNumber ASC";
+	
+    /**
+     * Default constructor. 
+     */
+    public CustomerSB() {
+        // TODO Auto-generated constructor stub
+    }
+    
+    public Customer findByPK(String pk){
+    	if(pk ==null) {
+    		return null;
+    	}
+    	return em.find(Customer.class, pk);
+    }
+    
+    public Customer updateCustomer(Customer customer){
+    	return em.merge(customer);
+    }
+    
+    public Customer createCustomer(Customer customer){
+    	return em.merge(customer);    	
+    }
+    
+    public List<Object[]> wFindCustomerByNumber(String partialNumber, String accountGroup, List<SalesOrg> salesOrgs ){
+    	
+    	
+    	
+    	Query query = em.createQuery("select c.customerNumber, c.customerName1, c.customerType, cs.salesOrgBean.name " +
+    			"from CustomerSale cs join cs.customer c join cs.salesOrgBean so where upper(c.customerNumber) like :number and " +
+    			"c.accountGroup like :accountGroup" + sortByCustomerNumber);
+    			//"c.accountGroup like :accountGroup and so in :salesOrgs order by c.customerNumber");
+    	query.setParameter("number", "%" + partialNumber.toUpperCase() + "%" )
+    	.setParameter("accountGroup", accountGroup);
+//    	.setParameter("salesOrgs", salesOrgs);
+    	query.setFirstResult(0);
+    	query.setMaxResults(Integer.parseInt(sysConfigSB.getProperyValue("MAX_SEARCH_RESULT")));
+    	
+    	List list = query.getResultList();
+    	
+    	List<Object[]> result = new ArrayList<Object[]>();
+    	
+    	if(list.size() != 0){
+    		
+    		Map<String, String> map = new LinkedHashMap<String, String>();
+    		
+	    	for (Iterator i = list.iterator(); i.hasNext();) {
+	    		Object[] values = (Object[]) i.next();
+	    		
+	    		String number = (String)values[0];
+	    		
+	    		if (map.keySet().contains(number)){
+	    			
+	    			map.put(number, map.get(number) + "/" + values[3]);
+	    			
+	    		}else{
+	    			map.put(number, (String)values[3]);
+	    		}
+	    		
+	    	}
+	    	
+	    	
+	    	for(String key : map.keySet()){
+	    		Object[] objects = new Object[4];
+
+	    		objects[0] = key;
+	    		
+	    		int i = 0;
+		    	for ( ; i< list.size(); i++) {
+		    		Object[] values = (Object[]) list.get(i);
+		    		
+		    		String number = (String)values[0];
+		    		
+		    		if(key.equals(number)){
+		    			break;
+		    		}
+		    		
+		    	}
+		    	objects[1] = ((Object[])list.get(i))[1];
+		    	objects[2] = ((Object[])list.get(i))[2];
+		    	objects[3] = map.get(key);
+	    		
+	    		result.add(objects);
+	    		
+	    	}
+    	
+    	}		
+    	
+    	return result;
+    	
+    }
+
+	public List<Customer> wFindCustomerByName(String partialName, String accountGroup, List<SalesOrg> salesOrgs){
+    	
+    	List<Customer> customers = em.createQuery("select c from Customer c where upper(c.customerName1) like :name and c.accountGroup like :accountGroup" + sortByCustomerNumber, Customer.class)
+    	.setParameter("name", "%" + partialName.toUpperCase() + "%")
+    	.setParameter("accountGroup", accountGroup)
+    	.setFirstResult(0)
+    	.setMaxResults(Integer.parseInt(sysConfigSB.getProperyValue("MAX_SEARCH_RESULT")))    	
+    	.getResultList();
+    	
+    	return customers;
+    	
+    }
+		
+	public List<CustomerPartner> findEndCustomerBySoldToCode(String soldToCustomerNumber, BizUnit bizUnit){
+		
+    	List<CustomerPartner> customerPartners = em.createQuery("select cp from CustomerPartner cp join cp.customerSale cs join cs.customer c join cp.salesOrgBean.bizUnits b where cp.customerNumber = :soldToCustomerNumber and cp.partnerFunction = :partnerFunction and b = :bizUnit" + sortByCustomerNumber, CustomerPartner.class)
+    	.setParameter("soldToCustomerNumber", soldToCustomerNumber)
+    	.setParameter("partnerFunction", QuoteSBConstant.PARTNER_FUNCTION_ENDCUSTOMER)
+    	.setParameter("bizUnit", bizUnit)
+    	.setFirstResult(0)
+    	.setMaxResults(Integer.parseInt(sysConfigSB.getProperyValue("MAX_SEARCH_RESULT")))    	    	
+    	.getResultList();
+    	
+    	return customerPartners;
+		
+	}
+	
+	public CustomerAddress findCustomerAddressByCustomerCodeAndLanguageCode(String customerCode, String languageCode){
+		
+		CustomerAddressPK pk = new CustomerAddressPK();
+		pk.setCustomerNumber(customerCode);
+		pk.setLanguageCode(languageCode);
+		CustomerAddress customerAddress = em.find(CustomerAddress.class, pk);
+		
+		return customerAddress;
+	}
+	
+
+	public List<Customer> findCustomerByCustomerName(String key, String customerType, List<String> accountGroup, BizUnit bizUnit){
+		return findCustomerByCustomerName(key, customerType, accountGroup, bizUnit, 0, Integer.parseInt(sysConfigSB.getProperyValue("MAX_SEARCH_RESULT")));
+	}
+
+	public List<Customer> findCustomerByCustomerName(String key, String customerType, List<String> accountGroup, BizUnit bizUnit, int firstResult, int maxResults){
+		String sql = "select c from CustomerSale cs join cs.customer c join fetch cs.salesOrgBean org join cs.salesOrgBean.bizUnits b where c.deleteFlag != 1 and upper(concat(c.customerName1,' ',c.customerName2,' ',c.customerName3,' ',c.customerName4)) like :key and b = :bizUnit";
+TypedQuery<Customer> query = commonQuery(key, customerType, accountGroup, bizUnit, firstResult, maxResults,
+				sql);
+		return query.getResultList();
+	}
+
+	public List<Customer> findCustomerByCustomerNameContain(String key, String customerType, List<String> accountGroup, BizUnit bizUnit){
+		return findCustomerByCustomerName("%" + key.toUpperCase() + "%", customerType, accountGroup, bizUnit, 0, Integer.parseInt(sysConfigSB.getProperyValue("MAX_SEARCH_RESULT")));
+	}
+
+	public List<Customer> findCustomerByCustomerNameStartWith(String key, String customerType, List<String> accountGroup, BizUnit bizUnit){
+		return findCustomerByCustomerName(key.toUpperCase() + "%", customerType, accountGroup, bizUnit, 0, Integer.parseInt(sysConfigSB.getProperyValue("MAX_SEARCH_RESULT")));
+	}
+	
+	public List<Customer> findCustomerByCustomerNameEndWith(String key, String customerType, List<String> accountGroup, BizUnit bizUnit){
+		return findCustomerByCustomerName("%" + key.toUpperCase(), customerType, accountGroup, bizUnit, 0, Integer.parseInt(sysConfigSB.getProperyValue("MAX_SEARCH_RESULT")));
+	}
+
+	public List<Customer> findCustomerByCustomerNameContain(String key, String customerType, List<String> accountGroup, BizUnit bizUnit, int firstResult, int maxResults){
+		return findCustomerByCustomerName("%" + key.toUpperCase() + "%", customerType, accountGroup, bizUnit, firstResult, maxResults);
+	}
+
+	public List<Customer> findCustomerByCustomerNameStartWith(String key, String customerType, List<String> accountGroup, BizUnit bizUnit, int firstResult, int maxResults){
+		return findCustomerByCustomerName(key.toUpperCase() + "%", customerType, accountGroup, bizUnit, firstResult, maxResults);
+	}
+	
+	public List<Customer> findCustomerByCustomerNameEndWith(String key, String customerType, List<String> accountGroup, BizUnit bizUnit, int firstResult, int maxResults){
+		return findCustomerByCustomerName("%" + key.toUpperCase(), customerType, accountGroup, bizUnit, firstResult, maxResults);
+	}
+
+	public List<Customer> findCustomerByCustomerNumber(String key, String customerType, List<String> accountGroup, BizUnit bizUnit, int firstResult, int maxResults){
+		String sql = "select c from CustomerSale cs join cs.customer c join fetch cs.salesOrgBean org join cs.salesOrgBean.bizUnits b where c.customerNumber like :key and b = :bizUnit" ;
+		TypedQuery<Customer> query = commonQuery(key, customerType, accountGroup, bizUnit, firstResult, maxResults,
+				sql);
+		return query.getResultList();
+	}
+
+	private TypedQuery<Customer> commonQuery(String key, String customerType, List<String> accountGroup,
+			BizUnit bizUnit, int firstResult, int maxResults, String sql) {
+		if(customerType != null && !customerType.equals(QuoteSBConstant.ALL))
+			sql += " and c.customerType = :customerType";
+		if(accountGroup != null)
+			sql += " and c.accountGroup in :accountGroup";
+		
+		sql = sql + sortByCustomerNumber;
+		
+		TypedQuery<Customer> query = em.createQuery(sql, Customer.class);		
+		query.setParameter("key", key.toUpperCase()).setParameter("bizUnit", bizUnit);
+
+		if(customerType != null && !customerType.equals(QuoteSBConstant.ALL))
+			query.setParameter("customerType", customerType);
+		if(accountGroup != null)
+			query.setParameter("accountGroup", accountGroup);
+
+		query.setFirstResult(firstResult).setMaxResults(maxResults);
+		return query;
+	}
+	
+	public boolean verifyCustomerNumberWithSalesDefaultBizUnit(String key, List<String> accountGroup, BizUnit bizUnit){
+		String sql = "select c from CustomerSale cs join cs.customer c join fetch cs.salesOrgBean org join cs.salesOrgBean.bizUnits b where c.customerNumber like :key and b = :bizUnit and c.accountGroup in :accountGroup";
+		 
+		TypedQuery<Customer> query = em.createQuery(sql, Customer.class);		
+		query.setParameter("key", key.toUpperCase()).setParameter("bizUnit", bizUnit);
+		query.setParameter("accountGroup", accountGroup);
+		
+		query.setFirstResult(0).setMaxResults(1);
+		List<Customer> outcome =  query.getResultList();
+		return outcome != null && outcome.size() > 0;
+	}
+	
+	public List<Customer> findCustomerByCustomerNumberContain(String key, String customerType, List<String> accountGroup, BizUnit bizUnit, int firstResult, int maxResults){
+		return findCustomerByCustomerNumber("%" + key.toUpperCase() + "%", customerType, accountGroup, bizUnit, firstResult, maxResults);
+	}	
+	
+    public List<Customer> wFindCustomerByNameWithPage(String customerName, List<BizUnit> bizUnits, int firstResult, int maxResults){
+
+		List<String> sBizUnits = new ArrayList<String>();
+		for(BizUnit bizUnit : bizUnits){
+			sBizUnits.add(bizUnit.getName());
+		}
+    	
+    	TypedQuery<Customer> query = em.createQuery("select DISTINCT c from CustomerSale cs join cs.customer c join cs.salesOrgBean so join so.bizUnits b where UPPER(concat(c.customerName1,' ', c.customerName2,' ', c.customerName3,' ', c.customerName4)) like :customerName and b.name in :bizUnits" + sortByCustomerNumber, Customer.class);
+    	
+    	query.setFirstResult(firstResult)
+    	.setMaxResults(maxResults)
+    	.setParameter("customerName", "%" + customerName.toUpperCase() + "%")
+    	.setParameter("bizUnits", sBizUnits);
+    	
+    	return query.getResultList();
+    }    	
+
+    public List<Customer> findCustomerByRegion(List<String> accountGroup, BizUnit bizUnit){
+		String sql = "select c from CustomerSale cs join cs.customer c join fetch cs.salesOrgBean org join cs.salesOrgBean.bizUnits b where b = :bizUnit" ;
+		if(accountGroup != null)
+			sql += " and c.accountGroup in :accountGroup";
+		
+		sql = sql + " order by c.customerName1, org.name , b.name ";;
+		
+		TypedQuery<Customer> query = em.createQuery(sql, Customer.class);		
+		query.setParameter("bizUnit", bizUnit);
+
+		if(accountGroup != null)
+			query.setParameter("accountGroup", accountGroup);
+
+		query.setFirstResult(0).setMaxResults(Integer.parseInt(sysConfigSB.getProperyValue("MAX_SEARCH_RESULT")));
+		return query.getResultList();
+	}
+    
+    public List<Customer> findCustomerByRegionAndName(List<String> accountGroup, BizUnit bizUnit, String customerName){
+    	customerName= customerName.toUpperCase();
+		String sql = "select c from CustomerSale cs join cs.customer c join fetch cs.salesOrgBean org join cs.salesOrgBean.bizUnits b where b = :bizUnit and UPPER(c.customerName1) like :customerName " ;
+		if(accountGroup != null)
+			sql += " and c.accountGroup in :accountGroup";
+		
+		sql = sql + " order by c.customerName1, org.name , b.name ";;
+		
+		TypedQuery<Customer> query = em.createQuery(sql, Customer.class);		
+		query.setParameter("bizUnit", bizUnit);
+		query.setParameter("customerName","%" + customerName + "%");
+
+		if(accountGroup != null)
+			query.setParameter("accountGroup", accountGroup);
+
+		query.setFirstResult(0).setMaxResults(Integer.parseInt(sysConfigSB.getProperyValue("MAX_SEARCH_RESULT")));
+		return query.getResultList();
+	}
+    
+    public List<Customer> findAllCustomer(){   
+    	TypedQuery<Customer> query = em.createQuery("select distinct c from Customer c",Customer.class);
+    	return query.getResultList();
+    }
+    
+    
+    public boolean isInvalidCustomer(String soldToCustomerNumber)
+    {
+    	Long resultCount;
+	    CriteriaBuilder cb = em.getCriteriaBuilder();
+	    CriteriaQuery<Long> cqCount = cb.createQuery(Long.class);
+	   	Root<SpecialCustomer> specialCustomer = cqCount.from(SpecialCustomer.class);
+	   	cqCount.select(cb.count(specialCustomer));
+	   	List<Predicate> predicates = new ArrayList<Predicate>();
+		Expression<String>  soldToCustomerNumberStr = specialCustomer.<String>get("soldToCustomerNumber");
+		Expression<String>  endCustomerNumberStr = specialCustomer.<String>get("endCustomerNumber");
+		Expression<Date>  validFrom = specialCustomer.<Date>get("validFrom");
+		Expression<Date>  validTo = specialCustomer.<Date>get("validTo");
+		List<Predicate> subPredicatesWhole = new ArrayList<Predicate>();
+		subPredicatesWhole.add(cb.equal(soldToCustomerNumberStr, soldToCustomerNumber));
+		subPredicatesWhole.add(cb.equal(endCustomerNumberStr, soldToCustomerNumber));
+		predicates.add(cb.or(subPredicatesWhole.toArray(new Predicate[0])));
+	   	predicates.add(cb.greaterThanOrEqualTo(validTo, QuoteUtil.getCurrentDateZeroHour()));
+	   	predicates.add(cb.lessThanOrEqualTo(validFrom, QuoteUtil.getCurrentDateZeroHour()));
+	   	cqCount.where(predicates.toArray(new Predicate[]{}));
+	   	resultCount = em.createQuery(cqCount).getSingleResult();
+    	if(resultCount>0l)
+    		return true;
+    	else 
+    		return false;
+    }
+    
+    
+    
+    public boolean isValidEndCustomer(String endCustomerNumber){
+    	if(endCustomerNumber==null || endCustomerNumber.isEmpty())
+    		return false;
+    	List<String> customerPartners = em.createQuery("select cp.partnerName from CustomerPartner cp where cp.partnerFunction =:partnerFunction and cp.partnerCustomerCode = :endCustomerCode ", String.class)
+    	.setParameter("partnerFunction", QuoteSBConstant.PARTNER_FUNCTION_ENDCUSTOMER)
+    	.setParameter("endCustomerCode", endCustomerNumber)
+    	.getResultList();
+    	
+    	if(customerPartners!=null && customerPartners.size()>0)
+    	{
+    		return true;
+    	}
+    	else
+    	{
+    		Customer tempCus = findByPK(endCustomerNumber);
+    		if(tempCus!=null && QuoteSBConstant.ACCOUNT_GROUP_ENDCUSTOMER.equalsIgnoreCase(tempCus.getAccountGroup()))
+    		{
+    			return true;
+    		}
+    		return false;
+    	}
+
+	}
+    
+    /**
+     * for Fix ticket INC0170065 20150805
+     * a.	If Sold To Code is input ((1 AND 2 AND 3) OR (4 AND 5 AND 6 AND 7 AND 8)) Order by End Customer, End Customer Code
+     * 1.	CUSTOMER.ACCOUNT_GROUP = Z004
+     * 2.	CUSTOMER.DELETE_FLAG = 0
+     * 3.	CUSTOMER.CUSTOMER_NUMBER contains Customer Number (Wild Card Search, Non case-sensitive)
+     * 4.	CUSTOMER_PARTNER.PARTNER_CUSTOMER_CODE contains Customer Number (Wild Card Search, Non case-sensitive)
+     * 5.	CUSTOMER_PARTNER.CUSTOMER_NUMBER = Sold To Code
+     * 6.	CUSTOMER_PARTNER.PARTNER_FUNCTION =   EC  
+     * 7.	CUSTOMER.CUSTOMER_NUMBER = CUSTOMER_PARTNER.PARTNER_CUSTOMER_CODE
+     * 8.	CUSTOMER.DELETE_FLAG = 0
+     * @param customerNumber
+     * @param soldToCode
+     * @param accountGroup
+     * @param bizUnit
+     * @param firstResult
+     * @param maxResults
+     * @return
+     * @author 916138
+     */
+    public List<Customer> findEndCustomer(String customerNumber, String soldToCode, List<String> accountGroup, BizUnit bizUnit, int firstResult, int maxResults){
+    	
+    	StringBuffer sql2 = new StringBuffer();
+    	List<String> customerNumberInParter = new ArrayList<String>();
+    	//		1) find all customer under this sold to code    	
+    	if(null!=soldToCode && !soldToCode.trim().isEmpty()) {
+	    	StringBuffer sql1 = new StringBuffer();
+			sql1.append("select cp from CustomerPartner cp ");
+			sql1.append("join cp.customerSale cs ");
+			sql1.append("join cs.customer c ");
+			sql1.append("join cs.salesOrgBean org ");
+			sql1.append("join cs.salesOrgBean.bizUnits b ");
+			sql1.append("where c.deleteFlag != 1 and b = :bizUnit and cp.partnerCustomerCode like :customerNumber ");
+			sql1.append(" and cp.partnerFunction = 'EC' and cp.customerNumber = :soldToCode");
+			
+			TypedQuery<CustomerPartner> partnerQuery = em.createQuery(sql1.toString(), CustomerPartner.class);
+			partnerQuery.setParameter("bizUnit", bizUnit);
+			partnerQuery.setParameter("customerNumber", "%"+customerNumber+"%");
+			partnerQuery.setParameter("soldToCode", soldToCode);
+			List<CustomerPartner>  partners = partnerQuery.getResultList();
+			if(null!=partners) {
+				for(CustomerPartner partner:partners) {
+					customerNumberInParter.add(partner.getPartnerCustomerCode());
+				}
+			}
+    	}
+    	
+    	//2) start to search customer
+    	StringBuffer sql = new StringBuffer();
+    	
+    	sql2.append("select c from CustomerSale cs ");
+    	sql2.append("join cs.customer c ");
+    	sql2.append("join cs.salesOrgBean org ");
+    	sql2.append("join cs.salesOrgBean.bizUnits b ");
+    	sql2.append("where c.deleteFlag != 1 and b = :bizUnit ");
+    	String where1 = "and c.customerNumber like :customerNumber and c.accountGroup in :accountGroup ";
+    	if(null!=customerNumberInParter && customerNumberInParter.size()>0) {
+    		String where2 = "and c.customerNumber in :partnerCodes ";
+    		sql.append(sql2).append(where2).append( " union ");
+    	}
+    	sql.append(sql2).append(where1);
+		
+		TypedQuery<Customer> query = em.createQuery(sql.toString(), Customer.class);
+		query.setParameter("bizUnit", bizUnit);
+		query.setParameter("customerNumber", "%"+customerNumber+"%");
+		query.setParameter("accountGroup", accountGroup);
+		if(null!=customerNumberInParter && customerNumberInParter.size()>0) {
+			query.setParameter("partnerCodes", customerNumberInParter);
+		}
+		
+		query.setFirstResult(firstResult).setMaxResults(maxResults);
+		List<Customer>  customers = query.getResultList();
+		Collections.sort(customers, new Comparator<Customer>(){
+			public int compare(Customer arg0, Customer arg1) {
+				
+				int i =  arg1.getCustomerNumber().compareTo(arg0.getCustomerNumber());
+				
+				if(i !=0 ){
+					return i;
+				}else{
+					return (int)(arg1.getCustomerNumberInt() - arg0.getCustomerNumberInt());
+				}
+			}
+		});
+		
+		return customers;
+	}
+    
+ public List<Customer> findEndCustomerExact(String customerNumber, String soldToCode, List<String> accountGroup, BizUnit bizUnit, int firstResult, int maxResults){
+    	
+    	StringBuffer sql2 = new StringBuffer();
+    	List<String> customerNumberInParter = new ArrayList<String>();
+    	//		1) find all customer under this sold to code    	
+    	if(null!=soldToCode && !soldToCode.trim().isEmpty()) {
+	    	StringBuffer sql1 = new StringBuffer();
+			sql1.append("select cp from CustomerPartner cp ");
+			sql1.append("join cp.customerSale cs ");
+			sql1.append("join cs.customer c ");
+			sql1.append("join cs.salesOrgBean org ");
+			sql1.append("join cs.salesOrgBean.bizUnits b ");
+			sql1.append("where c.deleteFlag != 1 and b = :bizUnit and cp.partnerCustomerCode = :customerNumber ");
+			sql1.append(" and cp.partnerFunction = 'EC' and cp.customerNumber = :soldToCode");
+			
+			TypedQuery<CustomerPartner> partnerQuery = em.createQuery(sql1.toString(), CustomerPartner.class);
+			partnerQuery.setParameter("bizUnit", bizUnit);
+			partnerQuery.setParameter("customerNumber", customerNumber);
+			partnerQuery.setParameter("soldToCode", soldToCode);
+			List<CustomerPartner>  partners = partnerQuery.getResultList();
+			if(null!=partners) {
+				for(CustomerPartner partner:partners) {
+					customerNumberInParter.add(partner.getPartnerCustomerCode());
+				}
+			}
+    	}
+    	
+    	//2) start to search customer
+    	StringBuffer sql = new StringBuffer();
+    	
+    	sql2.append("select c from CustomerSale cs ");
+    	sql2.append("join cs.customer c ");
+    	sql2.append("join cs.salesOrgBean org ");
+    	sql2.append("join cs.salesOrgBean.bizUnits b ");
+    	sql2.append("where c.deleteFlag != 1 and b = :bizUnit ");
+    	String where1 = "and c.customerNumber =:customerNumber and c.accountGroup in :accountGroup ";
+    	if(null!=customerNumberInParter && customerNumberInParter.size()>0) {
+    		String where2 = "and c.customerNumber in :partnerCodes ";
+    		sql.append(sql2).append(where2).append( " union ");
+    	}
+    	sql.append(sql2).append(where1);
+		
+		TypedQuery<Customer> query = em.createQuery(sql.toString(), Customer.class);
+		query.setParameter("bizUnit", bizUnit);
+		query.setParameter("customerNumber", customerNumber);
+		query.setParameter("accountGroup", accountGroup);
+		if(null!=customerNumberInParter && customerNumberInParter.size()>0) {
+			query.setParameter("partnerCodes", customerNumberInParter);
+		}
+		
+		query.setFirstResult(firstResult).setMaxResults(maxResults);
+		List<Customer>  customers = query.getResultList();
+		Collections.sort(customers, new Comparator<Customer>(){
+			public int compare(Customer arg0, Customer arg1) {
+				
+				int i =  arg1.getCustomerNumber().compareTo(arg0.getCustomerNumber());
+				
+				if(i !=0 ){
+					return i;
+				}else{
+					return (int)(arg1.getCustomerNumberInt() - arg0.getCustomerNumberInt());
+				}
+			}
+		});
+		
+		return customers;
+	}
+public Customer findEndCustomerForRFQ(String customerNumber, String soldToCode, List<String> accountGroup, BizUnit bizUnit){
+    	
+    	StringBuffer sql2 = new StringBuffer();
+    	List<String> customerNumberInParter = new ArrayList<String>();
+    	//		1) find all customer under this sold to code    	
+    	if(null!=soldToCode && !soldToCode.trim().isEmpty()) {
+    		StringBuffer sql1 = new StringBuffer();
+    		sql1.append("select cp from CustomerPartner cp ");
+    		sql1.append("join cp.customerSale cs ");
+    		sql1.append("join cs.customer c ");
+    		sql1.append("join cs.salesOrgBean org ");
+    		sql1.append("join cs.salesOrgBean.bizUnits b ");
+    		sql1.append("where c.deleteFlag != 1 and b = :bizUnit and cp.partnerCustomerCode like :customerNumber ");
+    		sql1.append(" and cp.partnerFunction = 'EC' and cp.customerNumber = :soldToCode");
+    		
+    		TypedQuery<CustomerPartner> partnerQuery = em.createQuery(sql1.toString(), CustomerPartner.class);
+    		partnerQuery.setParameter("bizUnit", bizUnit);
+    		partnerQuery.setParameter("customerNumber", customerNumber.trim().toUpperCase());
+    		partnerQuery.setParameter("soldToCode", soldToCode.trim().toUpperCase());
+    		List<CustomerPartner>  partners = partnerQuery.getResultList();
+    		if(null!=partners) {
+    			for(CustomerPartner partner:partners) {
+    				customerNumberInParter.add(partner.getPartnerCustomerCode());
+    			}
+    		}
+    	}
+    	
+    	//2) start to search customer
+    	StringBuffer sql = new StringBuffer();
+    	
+    	sql2.append("select c from CustomerSale cs ");
+    	sql2.append("join cs.customer c ");
+    	sql2.append("join cs.salesOrgBean org ");
+    	sql2.append("join cs.salesOrgBean.bizUnits b ");
+    	sql2.append("where c.deleteFlag != 1 and b = :bizUnit ");
+    	String where1 = "and c.customerNumber = :customerNumber and c.accountGroup in :accountGroup ";
+    	if(null!=customerNumberInParter && customerNumberInParter.size()>0) {
+    		String where2 = "and c.customerNumber in :partnerCodes ";
+    		sql.append(sql2).append(where2).append( " union ");
+    	}
+    	sql.append(sql2).append(where1);
+    	
+    	TypedQuery<Customer> query = em.createQuery(sql.toString(), Customer.class);
+    	query.setParameter("bizUnit", bizUnit);
+    	query.setParameter("customerNumber", customerNumber.trim().toUpperCase());
+    	query.setParameter("accountGroup", accountGroup);
+    	if(null!=customerNumberInParter && customerNumberInParter.size()>0) {
+    		query.setParameter("partnerCodes", customerNumberInParter);
+    	}
+    	try{
+    		
+    	List<Customer> customers = query.getResultList();
+   	
+    	return (customers == null || customers.isEmpty()) ? null : customers.get(0);
+    	}catch(NoResultException e){
+    		LOG.log(Level.SEVERE, "Error occured for customer number: "+customerNumber+", Sold to code: "+soldToCode+", "
+    				+ "Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e),e);
+    	}catch (Exception e) {
+    		LOG.log(Level.SEVERE, "Error occured for customer number: "+customerNumber+", Sold to code: "+soldToCode+", "
+    				+ "Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e),e);
+    		
+		}
+    	return null;
+    }
+}

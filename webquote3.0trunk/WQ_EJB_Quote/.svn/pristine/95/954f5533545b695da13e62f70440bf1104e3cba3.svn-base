@@ -1,0 +1,82 @@
+package com.avnet.emasia.webquote.quote.vo;
+
+import java.io.Serializable;
+
+public class ExchangeRateVo extends ExcahngeRateAndAuditExchangeFields implements Serializable{
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 112284754154758965L;
+	
+	private int seq;
+	private String exchangeRateFrom;
+	private String exchangeRateTo;
+	private String vat;
+	private String handling;
+
+	private boolean error;
+	
+	public ExchangeRateVo(){
+	}
+	
+	public String getKey(){
+		String key = this.getCurrencyFrom() + this.getCurrencyTo() + "|";
+		
+		String soldToCode = this.getSoldToCode();
+		if(soldToCode != null &&  ! soldToCode.equals("")){
+			key = key + soldToCode;
+		}
+		
+		return key;
+	}	
+	
+	
+	public int getSeq() {
+		return seq;
+	}
+
+	public void setSeq(int seq) {
+		this.seq = seq;
+	}
+	
+	public String getExchangeRateFrom() {
+		return exchangeRateFrom;
+	}
+	
+	public void setExchangeRateFrom(String exchangeRateFrom) {
+		this.exchangeRateFrom = exchangeRateFrom;
+	}
+	
+	public String getExchangeRateTo() {
+		return exchangeRateTo;
+	}
+	
+	public void setExchangeRateTo(String exchangeRateTo) {
+		this.exchangeRateTo = exchangeRateTo;
+	}
+	
+	public String getVat() {
+		return vat;
+	}
+	
+	public void setVat(String vat) {
+		this.vat = vat;
+	}
+	public String getHandling() {
+		return handling;
+	}
+	
+	public void setHandling(String handling) {
+		this.handling = handling;
+	}
+	
+	public boolean isError() {
+		return error;
+	}
+
+	public void setError(boolean error) {
+		this.error = error;
+	}
+
+}

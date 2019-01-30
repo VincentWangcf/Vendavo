@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible"  content="IE=edge"/>
+            <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+			<meta http-equiv="Cache-Control" Content="no-cache"/>
+			<meta http-equiv="Pragma" Content="no-cache"/>
+			<meta http-equiv="Expires" Content="0"/>            
+            <title>#{dbResource['wq.title.webQuoteVersion']}</title>
+        </f:facet>    
+      <!--   <f:view locale="#{userMB.user.userLocale}"></f:view> -->
+    </h:head>
+<h:body>
+
+
+<table width="800" border="0" cellspacing="2" cellpadding="0" align="center">
+	<tr>
+		<td ></td>
+	</tr>
+	<tr>
+		<td align="center">
+		<b>#{dbResource['wq.message.unauthorisedAccess']}.</b>
+		</td>
+	</tr>
+	<tr>
+		<td></td>
+	</tr>
+	<tr>
+		<td align="center">
+		
+		
+		<input type="button" name="Relogin" value="#{dbResource['wq.button.relogin']}" onclick="location.href='#{webSealLogoutMB.logoutURL}'" />
+		
+		<input type="button" name="Close" value="#{dbResource['wq.button.close']}" onclick="window.opener=null;window.close();" /></td>
+	</tr>
+</table>
+
+                    
+</h:body>
+</html>

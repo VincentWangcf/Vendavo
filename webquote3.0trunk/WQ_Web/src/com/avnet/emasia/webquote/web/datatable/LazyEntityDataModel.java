@@ -1,0 +1,323 @@
+package com.avnet.emasia.webquote.web.datatable;
+
+import com.avnet.emasia.webquote.commodity.util.EntityUtil;
+import com.avnet.emasia.webquote.utilities.common.BaseSB;
+import com.avnet.emasia.webquote.utilities.common.FilterMatchMode;
+import com.avnet.emasia.webquote.utilities.common.QueryBean;
+import com.avnet.emasia.webquote.web.quote.FacesUtil;
+
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.text.ParseException;
+import com.avnet.emasia.webquote.utilities.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.el.ValueExpression;
+import javax.faces.context.FacesContext;
+
+import org.eclipse.jetty.util.log.Log;
+import org.primefaces.component.api.UIColumn;
+import org.primefaces.component.datatable.DataTable;
+import org.primefaces.model.LazyDataModel;
+//import org.primefaces.model.SelectableDataModel;
+import org.primefaces.model.SortOrder;
+
+@SuppressWarnings("unchecked")
+public class LazyEntityDataModel<T> extends LazyDataModel<T> implements Serializable {
+
+	private static final Logger LOGGER = Logger.getLogger(LazyEntityDataModel.class.getName());
+	private static final long serialVersionUID = 1L;
+	private String filter;
+	private List<QueryBean> queryBeans;
+	private List<QueryBean> finalQueryBeans;
+	private final BaseSB<T> baseDao;
+	private Set<T> cachePageSelectDatas = new HashSet<>();
+	private Set<T> cacheModifyDatas = Collections.synchronizedSet (new HashSet<>());
+	private List<T> currentPageDatas = new ArrayList<>();
+	private String tableId;
+	protected static final ExecutorService exc =  Executors.newCachedThreadPool();
+	public LazyEntityDataModel(Class<T> entityClass) {
+		baseDao = null;
+	}
+
+	protected void getFinalQueryBeans() {
+		finalQueryBeans = new ArrayList<>();
+		finalQueryBeans.addAll(getQueryBeans());
+		if(tableId == null || "".equals(tableId)){
+			return;
+		}
+		FacesContext context = FacesContext.getCurrentInstance();
+		List<QueryBean> uiQueryBeans = new ArrayList<>();
+
+		Object component = context.getViewRoot().findComponent(tableId);
+
+		DataTable table = (DataTable) component;
+		Map<String,Object> filtersMap = table.getFilters();
+
+		if (filtersMap != null && !filtersMap.isEmpty()) {
+			for (UIColumn column : table.getColumns()) {
+				ValueExpression filterExpression = column.getValueExpression("filterBy");
+				if (null != filterExpression) {
+					String filterExpressionString = filterExpression.getExpressionString();
+					String filteredField = filterExpressionString.substring(filterExpressionString.indexOf('.') + 1, filterExpressionString.indexOf('}'));
+					if (filtersMap.keySet().contains(filteredField)) {
+						// evaluating filtered field id
+						FilterMatchMode matchMode = FilterMatchMode.fromUiParam(column.getFilterMatchMode());
+						Object value = filtersMap.get(filteredField);
+						Object filteredFieldDataType = getPropertyType(baseDao.getEntityClass(), filteredField.substring(filteredField.indexOf(".")+1,filteredField.length()));
+							if(filteredFieldDataType != null && (filteredFieldDataType.equals(Boolean.class) || filteredFieldDataType.equals(boolean.class))){
+								value = Boolean.valueOf(value.toString());
+							}else{
+								if(value != null){
+									value = value.toString().toUpperCase();
+								}
+							}
+							
+						Object filterType = column.getFilterOptions();
+
+						if (filterType != null && filterType instanceof String) {
+							if ("date".equals(filterType.toString())) {
+								try {
+									uiQueryBeans.addAll(getDateCondition(filteredField, value, filterType.toString(), matchMode));
+								} catch (Exception e) {
+									LOGGER.log(Level.SEVERE, "filter of column: " + column.getHeaderText() + " get wrong data format: [" + value
+											+ "], please checking.", e);
+									if (column.getHeaderText() == null) {
+										LOGGER.log(Level.SEVERE, "HeaderText is empty: " + column.getClientId());
+									}
+									FacesUtil.showWarnMessage("error", "filter of column: " + column.getHeaderText() + " get wrong data format: [" + value
+											+ "], please checking.");
+									return;
+								}
+							} else {
+								uiQueryBeans.add(new QueryBean(matchMode, value,filteredField, filterType.toString()));
+							}
+						} else {
+							uiQueryBeans.add(new QueryBean(matchMode, filteredField,value));
+						}
+					}
+				}
+			}
+			finalQueryBeans.addAll(uiQueryBeans);
+		}
+
+	}
+	 private Object getPropertyType(Class<?> cls, String propertyName) {
+	        Object retvalue = null;
+	        try {
+	            if (propertyName.contains(".")) {
+	                String[] type = propertyName.split("\\.");
+
+	                for (int i = 0; i < type.length - 1; i++) {
+	                    cls = cls.getDeclaredField(type[i]).getType();
+	                }
+
+	                propertyName = type[type.length - 1];
+	            }
+	            Field field = cls.getDeclaredField(propertyName);
+	            // field.setAccessible(true);
+	            retvalue = field.getType();
+	        } catch (Exception e) {
+	            try {
+	            	LOGGER.log(Level.SEVERE, "Exception in getting property type for property name : "+propertyName+", Exception message: "+e.getMessage(), e);
+	                Field field = cls.getSuperclass().getDeclaredField(propertyName);
+	                retvalue = field.getType();
+	            } catch (Exception ex) {
+	            	LOGGER.log(Level.SEVERE, "Exception in getting property type for property name : "+propertyName+", Exception message: "+ex.getMessage(), ex);
+	            }
+	        }
+	        return retvalue;
+	    }
+
+	public LazyEntityDataModel(String filter, BaseSB<T> baseDao) {
+		this.filter = filter;
+		this.baseDao = baseDao;
+	}
+
+	public List<QueryBean> getQueryBeans() {
+		if (queryBeans == null) {
+			queryBeans = new ArrayList<>();
+		}
+		return queryBeans;
+	}
+
+	public LazyEntityDataModel(String filter, BaseSB<T> baseDao, String dataTableId) {
+		this.filter = filter;
+		this.baseDao = baseDao;
+		this.tableId = dataTableId;
+	}
+
+	public LazyEntityDataModel(String filter, BaseSB<T> baseDao, List<QueryBean> queryBeans) {
+		this.filter = filter;
+		this.baseDao = baseDao;
+		this.queryBeans = queryBeans;
+	}
+
+	public LazyEntityDataModel(String filter, BaseSB<T> baseDao, List<QueryBean> queryBeans, String dataTableId) {
+		this.filter = filter;
+		this.baseDao = baseDao;
+		this.queryBeans = queryBeans;
+		this.tableId = dataTableId;
+	}
+
+	public LazyEntityDataModel(BaseSB<T> baseDao, List<QueryBean> queryBeans) {
+		this.baseDao = baseDao;
+		this.queryBeans = queryBeans;
+	}
+
+	public LazyEntityDataModel(BaseSB<T> baseDao) {
+		this.baseDao = baseDao;
+	}
+
+	@Override
+	public T getRowData(String rowKey) {
+		List<T> list = (List<T>) getWrappedData();
+		if (!list.isEmpty()) {
+			for (T t : list) {
+				if (EntityUtil.getId(t).toString().equals(rowKey)) {
+					return t;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	@Override
+	public synchronized List<T> load(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String,Object> filters) {
+		if (baseDao == null) {
+			return new ArrayList<>();
+		}
+		long c = System.currentTimeMillis();
+		if (first == 1) {
+			first = 0;
+		}
+//		LOGGER.log(Level.SEVERE, " [call load] first: " + first + " size: " + pageSize);
+		//o.quoteItem.id
+		String sort = sortOrder.equals(SortOrder.ASCENDING) ? " ASC" : " DESC";
+		getFinalQueryBeans();
+		int f = first;
+		Future<List<T>> futureDatas = exc.submit(() -> baseDao.findLazyData(f, pageSize, sortField, sort, filter, finalQueryBeans));
+		int count = baseDao.findLazyDataCount(filter, finalQueryBeans);
+		LOGGER.info("find count : " + count);
+		LOGGER.info("count take time " + (System.currentTimeMillis()-c));
+		setRowCount(count);
+		List<T> outcome = new ArrayList<T>();
+		try {
+			outcome = futureDatas.get();
+			//LOGGER.info("find data take : " + (System.currentTimeMillis()-c));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		}
+		//List<T> outcome = count == 0 ? new ArrayList<T>() : baseDao.findLazyData(first, pageSize, sortField, sort, filter, finalQueryBeans);
+		currentPageDatas = replaceCacheDatas(outcome, getCacheModifyDatas());
+		LOGGER.info("load take time " +(System.currentTimeMillis()-c));
+		return currentPageDatas;
+	}
+
+	@Override
+	public Object getRowKey(T object) {
+		return EntityUtil.getId(object);
+	}
+	
+	@Override
+	public void setRowIndex(int rowIndex) {
+		// if (rowIndex == -1 || getPageSize() == 0) {
+		// super.setRowIndex(-1);
+		// } else {
+		// super.setRowIndex(rowIndex % getPageSize());
+		// }
+		super.setRowIndex(rowIndex);
+	}
+
+	public void setCacheModifyData(String rowKey) {
+		T t = getRowData(rowKey);
+		if (t != null) {
+			getCacheModifyDatas().add(t);
+			if(getCachePageSelectDatas().contains(t)){
+				getCachePageSelectDatas().remove(t);
+				getCachePageSelectDatas().add(t);
+			}
+		}
+	}
+
+	public Set<T> getCachePageSelectDatas() {
+		if (cachePageSelectDatas == null) {
+			cachePageSelectDatas = new HashSet<>();
+		}
+		return cachePageSelectDatas;
+	}
+
+	public Set<T> getCacheModifyDatas() {
+		if (cacheModifyDatas == null) {
+			cacheModifyDatas = new HashSet<>();
+		}
+		return cacheModifyDatas;
+	}
+
+	public void clearCacheModifyDatas() {
+		getCacheModifyDatas().clear();
+	}
+
+	public void clearCachePageSelectDatas() {
+		getCachePageSelectDatas().clear();
+	}
+
+	/**
+	 * @important object must override equals and hashCode
+	 * @param outcome
+	 * @param cacheDatas
+	 * @return
+	 */
+	private List<T> replaceCacheDatas(List<T> outcome, Set<T> cacheDatas) {
+		for (T t : cacheDatas) {
+			int index = outcome.indexOf(t);
+			if (index != -1) {
+				outcome.remove(index);
+				outcome.add(index, t);
+			}
+		}
+		return outcome;
+	}
+
+	public List<T> getCurrentPageDatas() {
+		return currentPageDatas;
+	}
+
+	/**
+	 * 
+	 * @param value
+	 * @param dataType
+	 *            date or datetime
+	 * @param matchMode
+	 * @return
+	 * @throws ParseException
+	 */
+	private List<QueryBean> getDateCondition(String key, Object value, String dataType, FilterMatchMode matchMode) throws ParseException {
+		List<QueryBean> qbs = new ArrayList<>();
+		String dateValue = value.toString().trim();
+
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
+		if (dataType.equalsIgnoreCase("datetime")) {
+			qbs.add(new QueryBean(FilterMatchMode.GT_EQ, key,sdf.parse(dateValue + "00:00:00")));
+			qbs.add(new QueryBean(FilterMatchMode.LT_EQ, key,sdf.parse(dateValue + "23:59:59")));
+		} else {
+			qbs.add(new QueryBean(FilterMatchMode.EXACT, key,sdf.parse(dateValue)));
+		}
+
+		return qbs;
+	}
+}

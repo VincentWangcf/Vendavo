@@ -1,0 +1,176 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.persistence.*;
+
+import com.avnet.emasia.webquote.vo.PricerInfo;
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+
+/**
+ * The persistent class for the MANUFACTURER_DETAIL database table.
+ * 
+ */
+@Entity
+@Table(name="MANUFACTURER_DETAIL")
+public class ManufacturerDetail implements Serializable {
+	private static final Logger logger =  Logger.getLogger(ManufacturerDetail.class.getName());
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	@SequenceGenerator(name="MANUFACTURER_DETAIL_ID_GENERATOR", sequenceName="WQ_SEQ",allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="MANUFACTURER_DETAIL_ID_GENERATOR")
+	@Column(unique=true, nullable=false, precision=18)
+	private long id;
+
+	@Column(name="CANCELLATION_WINDOW", precision=5)
+	private Integer cancellationWindow;
+
+	@Column(name="CHARS_TRUNCATED", precision=5)
+	private Integer charsTruncated;
+
+	@Column(name="MULTI_USAGE", nullable=false, precision=1)
+	private Boolean multiUsage;
+
+	@Column(name="QUANTITY_INDICATOR", length=10)
+	private String quantityIndicator;
+
+	@Column(name="RESALE_INDICATOR", length=10)
+	private String resaleIndicator;
+
+	@Column(name="RESCHEDULING_WINDOW", precision=5)
+	private Integer reschedulingWindow;
+
+	//uni-directional many-to-one association to Manufacturer
+	@ManyToOne
+	@JoinColumn(name="MANUFACTURER_ID", nullable=false)
+	private Manufacturer manufacturer;
+
+	//uni-directional many-to-one association to ProductCategory
+	@ManyToOne
+	@JoinColumn(name="PRODUCT_CATEGORY_ID")
+	private ProductCategory productCategory;
+
+	//uni-directional many-to-one association to ProductGroup
+	@ManyToOne
+	@JoinColumn(name="PRODUCT_GROUP_ID")
+	private ProductGroup productGroup;
+
+	@ManyToOne
+	@JoinColumn(name="BIZ_UNIT")
+	private BizUnit bizUnit;
+	
+	public ManufacturerDetail() {
+	}
+
+	public long getId() {
+		return this.id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public Integer getCancellationWindow() {
+		return this.cancellationWindow;
+	}
+
+	public void setCancellationWindow(Integer cancellationWindow) {
+		this.cancellationWindow = cancellationWindow;
+	}
+
+	public Integer getCharsTruncated() {
+		return this.charsTruncated;
+	}
+
+	public void setCharsTruncated(Integer charsTruncated) {
+		this.charsTruncated = charsTruncated;
+	}
+
+	public Boolean getMultiUsage() {
+		return this.multiUsage;
+	}
+
+	public void setMultiUsage(Boolean multiUsage) {
+		this.multiUsage = multiUsage;
+	}
+
+	public String getQuantityIndicator() {
+		return this.quantityIndicator;
+	}
+
+	public void setQuantityIndicator(String quantityIndicator) {
+		this.quantityIndicator = quantityIndicator;
+	}
+
+	public String getResaleIndicator() {
+		return this.resaleIndicator;
+	}
+
+	public void setResaleIndicator(String resaleIndicator) {
+		this.resaleIndicator = resaleIndicator;
+	}
+
+	public Integer getReschedulingWindow() {
+		return this.reschedulingWindow;
+	}
+
+	public void setReschedulingWindow(Integer reschedulingWindow) {
+		this.reschedulingWindow = reschedulingWindow;
+	}
+
+	public Manufacturer getManufacturer() {
+		return this.manufacturer;
+	}
+
+	public void setManufacturer(Manufacturer manufacturer) {
+		this.manufacturer = manufacturer;
+	}
+
+	public ProductCategory getProductCategory() {
+		return this.productCategory;
+	}
+
+	public void setProductCategory(ProductCategory productCategory) {
+		this.productCategory = productCategory;
+	}
+
+	public ProductGroup getProductGroup() {
+		return this.productGroup;
+	}
+
+	public void setProductGroup(ProductGroup productGroup) {
+		this.productGroup = productGroup;
+	}
+
+	public BizUnit getBizUnit() {
+		return bizUnit;
+	}
+
+	public void setBizUnit(BizUnit bizUnit) {
+		this.bizUnit = bizUnit;
+	}
+	
+	void fillIn(RfqItemVO rfqItem) {
+		logger.log(Level.INFO, "ManufacturerDetail[" + id + "] is used");
+		rfqItem.setCancellationWindow(cancellationWindow);
+		rfqItem.setMultiUsage(multiUsage);
+		//no need below line for AQ,
+		//change again, set qtyIndicator here and change it in rfqItem.calAfterFillin
+		rfqItem.setQtyIndicator(quantityIndicator);
+		rfqItem.setQtyIndicatorFromMfrDetail(true);
+		rfqItem.setReschedulingWindow(reschedulingWindow);
+		rfqItem.setResaleIndicator(resaleIndicator);
+	}
+	
+	void fillIn(PricerInfo pricerInfo) {
+		logger.log(Level.INFO, "ManufacturerDetail[" + id + "] is used");
+		pricerInfo.setCancellationWindow(cancellationWindow);
+		pricerInfo.setMultiUsageFlag(multiUsage);
+		pricerInfo.setQtyIndicator(quantityIndicator);
+		pricerInfo.setReschedulingWindow(reschedulingWindow);
+		pricerInfo.setResaleIndicator(resaleIndicator);
+	}
+}

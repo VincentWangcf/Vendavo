@@ -1,0 +1,5 @@
+package com.avnet.emasia.webquote.columndata;
+
+public @interface Transient {
+
+}

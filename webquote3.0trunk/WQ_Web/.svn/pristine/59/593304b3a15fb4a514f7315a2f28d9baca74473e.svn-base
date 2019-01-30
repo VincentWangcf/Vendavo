@@ -1,0 +1,877 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="style-005.css" />
+	<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+		<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+		<h:form id="form">
+			<p:accordionPanel>
+				<p:tab title="#{dbResource['wq.label.auditLogRepSearCri']}">
+					
+					
+				<h:panelGrid cellpadding="0"  columns="2" style="height:120px;">
+				
+				<h:outputText value="#{dbResource['wq.label.avnetQuote']} #:" />
+				<p:inputTextarea id="criteriaQuoteNumber" style="height:80px;width:180px;"  size="18" value="#{auditLogReportMB.criteria.sQuoteNumber}" autoResize="false" />
+				<p:watermark for="criteriaQuoteNumber" value="#{dbResource['wq.label.example']}:                                     
+				WR0123456                                WR0123457     " escape="false"/>
+					
+			</h:panelGrid>
+					
+					<h:panelGrid columns="3" cellpadding="0" >
+						<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search" actionListener="#{auditLogReportMB.search}" update="@form"/>
+						<p:commandButton value="#{dbResource['wq.label.reset']}"  icon="ui-icon-triangle-1-w" actionListener="#{auditLogReportMB.reset}" update="@form" />
+				        <p:commandButton value="#{dbResource['wq.button.download']}" ajax="false">  
+				        	<p:dataExporter type="xls" target=":form:auditlogReport_dataTable" fileName="Audit_Report" postProcessor="#{auditLogReportMB.postProcessXLS}"/>  	        
+				        </p:commandButton>						
+					</h:panelGrid>
+				</p:tab>
+			</p:accordionPanel>
+			
+			
+			<p:panel header="#{dbResource['wq.label.quoteItemHis']}" id="quote_item_his"> 
+			 <p:dataTable	var="vo"
+	    				value="#{auditLogReportMB.auditQuoteItems}" 
+	    				rowKey="#{rowIndex}" 
+	    				paginator="true" 
+	    				rowIndexVar="rowIndex" 
+	    				rows="10" 
+    					rowsPerPageTemplate="10,20,50"
+	                 	filteredValue="#{auditLogReportMB.filteredAuditQuoteItemHis}"
+	                 	id="auditlogReport_dataTable" 
+	                 	paginatorPosition="top"
+	                 	scrollable="true"
+	                 	scrollHeight="250"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+	                 	
+				<p:column  sortBy="#{vo.id.startDate}"  filterBy="#{vo.id.startDate}"  filterMatchMode="contains" style="width:120px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lstartDate']} &amp; #{dbResource['wq.label.time']}"/> 
+					</f:facet>                                         
+					<h:outputText value="#{vo.id.startDate}" style="color:#{vo.highLightMap['startDate'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" />					
+					</h:outputText>
+				</p:column>
+				
+				<p:column  sortBy="#{vo.endDate}" filterBy="#{vo.endDate}"  filterMatchMode="contains" style="width:120px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.endDate']} &amp; #{dbResource['wq.label.time']}"/> 
+					</f:facet>                                      
+					<h:outputText value="#{vo.endDate}" style="color:#{vo.highLightMap['endDate'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" />					
+					</h:outputText>
+				</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.used']}" sortBy="#{vo.usedFlag? 'Yes':'No'}" filterBy="#{vo.usedFlag? 'Yes':'No'}" filterMatchMode="contains" styleClass="column_quoteNumber" >
+			<h:outputText value="#{vo.usedFlag? 'Yes':'No'}" style="color:#{vo.highLightMap['usedFlag'] ? 'red':''}"  />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quote']}#"  sortBy="#{vo.quoteNumber}" filterBy="#{vo.quoteNumber}" filterMatchMode="contains" styleClass="column_quoteNumber" >
+			<h:outputText value="#{vo.quoteNumber}" style="color:#{vo.highLightMap['quoteNumber'] ? 'red':''}"/>                                                          
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.quoteStage']}" sortBy="#{vo.stage}"  filterBy="#{vo.stage}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.stage}" style="color:#{vo.highLightMap['stage'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.rfq']}&lt;br/&gt;#{dbResource['wq.label.status']}"  sortBy="#{vo.status}" filterBy="#{vo.status}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.status == 'DQ' ? '': vo.status}" style="color:#{vo.highLightMap['status'] ? 'red':''}"/>                          
+			</p:column>
+			
+			
+			
+			
+			
+			
+			
+			<p:column headerText="#{dbResource['wq.label.allocFlag']}" sortBy="#{vo.allocationFlag ? 'Yes':'No'}" filterBy="#{vo.allocationFlag ? 'Yes':'No'}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.allocationFlag ? 'Yes':'No'}" style="color:#{vo.highLightMap['allocationFlag'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.alternateQuoNum']}" sortBy="#{vo.alternativeQuoteNumber}" filterBy="#{vo.alternativeQuoteNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.alternativeQuoteNumber}" style="color:#{vo.highLightMap['alternativeQuoteNumber'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.app']}" sortBy="#{vo.application}" filterBy="#{vo.application}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.application}" style="color:#{vo.highLightMap['application'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.aqcc']}" sortBy="#{vo.aqcc}" filterBy="#{vo.aqcc}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.aqcc}" style="color:#{vo.highLightMap['aqcc'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.ardc']}" sortBy="#{vo.ardc}" filterBy="#{vo.ardc}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.ardc}" style="color:#{vo.highLightMap['ardc'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.authorizedGP']}" sortBy="#{vo.authGp}" filterBy="#{vo.authGp}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.authGp}" style="color:#{vo.highLightMap['authGp'] ? 'red':''}"/>
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.label.authorizedGP']} &lt;br/&gt; #{dbResource['wq.label.reasonCode']}" sortBy="#{vo.authGpReasonCode}" filterBy="#{vo.authGpReasonCode}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.authGpReasonCode}" style="color:#{vo.highLightMap['authGpReasonCode'] ? 'red':''}"/>
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.label.authorizedGP']} &lt;br/&gt;#{dbResource['wq.label.reasondesc']} " sortBy="#{vo.authGpReasonDesc}" filterBy="#{vo.authGpReasonDesc}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.authGpReasonDesc}" style="color:#{vo.highLightMap['authGpReasonDesc'] ? 'red':''}"/>
+			</p:column>
+			
+			
+			
+			<p:column headerText="#{dbResource['wq.label.authorizedGP']} &lt;br/&gt;#{dbResource['wq.label.remark']} " sortBy="#{vo.authGpRemark}" filterBy="#{vo.authGpRemark}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.authGpRemark}" style="color:#{vo.highLightMap['authGpRemark'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.balUnconsume']} &lt;br/&gt; #{dbResource['wq.label.Qty']} " sortBy="#{vo.balUnconsumedQty}" filterBy="#{vo.balUnconsumedQty}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.balUnconsumedQty}" style="color:#{vo.highLightMap['balUnconsumedQty'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtChecked']}&lt;br/&gt; #{dbResource['wq.label.flag']}" sortBy="#{vo.bmtCheckedFlag ? 'Yes':'No'}" filterBy="#{vo.bmtCheckedFlag ? 'Yes':'No'}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.bmtCheckedFlag ? 'Yes':'No'}" style="color:#{vo.highLightMap['bmtCheckedFlag'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bomFlag']}" sortBy="#{vo.bomFlag ? 'Yes':'No'}" filterBy="#{vo.bomFlag ? 'Yes':'No'}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.bomFlag ? 'Yes':'No'}" style="color:#{vo.highLightMap['bomFlag'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bomNum']}" sortBy="#{vo.bomNumber}" filterBy="#{vo.bomNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.bomNumber}" style="color:#{vo.highLightMap['bomNumber'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bomRemark']}" sortBy="#{vo.bomRemarks}" filterBy="#{vo.bomRemarks}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.bomRemarks}" style="color:#{vo.highLightMap['bomRemarks'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.cancellationWindow']}" sortBy="#{vo.cancellationWindow}" filterBy="#{vo.cancellationWindow}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.cancellationWindow}" style="color:#{vo.highLightMap['cancellationWindow'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.message.comptInfo']}" sortBy="#{vo.competitorInformation}" filterBy="#{vo.competitorInformation}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.competitorInformation}" style="color:#{vo.highLightMap['competitorInformation'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.cost']}" sortBy="#{vo.cost}" filterBy="#{vo.cost}" filterMatchMode="contains" styleClass="column_cost">
+			<h:outputText value="#{vo.cost}" style="color:#{vo.highLightMap['cost'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.costIndicator']}" sortBy="#{vo.costIndicator}" filterBy="#{vo.costIndicator}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.costIndicator}" style="color:#{vo.highLightMap['costIndicator'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.currFrom']}" sortBy="#{vo.buyCurr}" filterBy="#{vo.buyCurr}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.buyCurr}" style="color:#{vo.highLightMap['currFrom'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.currTo']}" sortBy="#{vo.rfqCurr}" filterBy="#{vo.rfqCurr}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.rfqCurr}" style="color:#{vo.highLightMap['currTo'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.custmrType']}" sortBy="#{vo.customerType}" filterBy="#{vo.customerType}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.customerType}" style="color:#{vo.highLightMap['customerType'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.description']}" sortBy="#{vo.description}" filterBy="#{vo.description}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.description}" style="color:#{vo.highLightMap['description'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.designInCatHiphen']}" sortBy="#{vo.designInCat}" filterBy="#{vo.designInCat}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.designInCat}" style="color:#{vo.highLightMap['designInCat'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.designLoc']}" sortBy="#{vo.designLocation}" filterBy="#{vo.designLocation}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.designLocation}" style="color:#{vo.highLightMap['designLocation'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.designRegion']}" sortBy="#{vo.designRegion}" filterBy="#{vo.designRegion}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.designRegion}" style="color:#{vo.highLightMap['designRegion'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.drExpiryDate}"  filterBy="#{vo.drExpiryDate}"  filterMatchMode="contains"  style="width:80px;">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.DRExpiryDate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.drExpiryDate}" style="color:#{vo.highLightMap['drExpiryDate'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+				
+			<p:column headerText="#{dbResource['wq.label.drNedaId']}" sortBy="#{vo.drNedaId}" filterBy="#{vo.drNedaId}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.drNedaId}" style="color:#{vo.highLightMap['drNedaId'] ? 'red':''}"/>
+			</p:column>
+					
+		
+			<p:column headerText="#{dbResource['wq.label.neda']} &lt;br/&gt; #{dbResource['wq.label.lineNo']}" sortBy="#{vo.drNedaLineNumber}" filterBy="#{vo.drNedaLineNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.drNedaLineNumber}" style="color:#{vo.highLightMap['drNedaLineNumber'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.drmsNo']}" sortBy="#{vo.drmsNumber}" filterBy="#{vo.drmsNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.drmsNumber}" style="color:#{vo.highLightMap['drmsNumber'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.EAU']}" sortBy="#{vo.eau}" filterBy="#{vo.eau}" filterMatchMode="contains" styleClass="column_eau">
+			<h:outputText value="#{vo.eau}" style="color:#{vo.highLightMap['eau'] ? 'red':''}"/>
+			</p:column>
+	
+			
+			<p:column headerText="#{dbResource['wq.label.endCust']}" sortBy="#{vo.endCustomerName}" filterBy="#{vo.endCustomerName}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.endCustomerName}" style="color:#{vo.highLightMap['endCustomerName'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.enqrySegment']}" sortBy="#{vo.enquirySegment}" filterBy="#{vo.enquirySegment}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.enquirySegment}" style="color:#{vo.highLightMap['enquirySegment'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.exRateFrom']}" sortBy="#{vo.exRateBuy}" filterBy="#{vo.exRateBuy}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.exRateBuy}" style="color:#{vo.highLightMap['exRateFrom'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.exRateTo']}" sortBy="#{vo.exRateRfq}" filterBy="#{vo.exRateRfq}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.exRateRfq}" style="color:#{vo.highLightMap['exRateTo'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.finalQuote']} &lt;br/&gt; #{dbResource['wq.label.price']}" sortBy="#{vo.finalQuotationPrice}" filterBy="#{vo.finalQuotationPrice}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.finalQuotationPrice}" style="color:#{vo.highLightMap['finalQuotationPrice'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.lfirstRfqCode']}" sortBy="#{vo.firstRfqCode}" filterBy="#{vo.firstRfqCode}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.firstRfqCode}" style="color:#{vo.highLightMap['firstRfqCode'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.fisMth']}" sortBy="#{vo.fisMth}" filterBy="#{vo.fisMth}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.fisMth}" style="color:#{vo.highLightMap['fisMth'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.fisQtrNew']}" sortBy="#{vo.fisQtr}" filterBy="#{vo.fisQtr}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.fisQtr}" style="color:#{vo.highLightMap['fisQtr'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.fisYear']}" sortBy="#{vo.fisYear}" filterBy="#{vo.fisYear}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.fisYear}" style="color:#{vo.highLightMap['fisYear'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.handling']}" sortBy="#{vo.handling}" filterBy="#{vo.handling}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.handling}" style="color:#{vo.highLightMap['handling'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.internalComment']}" sortBy="#{vo.internalComment}" filterBy="#{vo.internalComment}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.internalComment}" style="color:#{vo.highLightMap['internalComment'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.itComment']}" sortBy="#{vo.internalTransferComment}" filterBy="#{vo.internalTransferComment}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.internalTransferComment}" style="color:#{vo.highLightMap['internalTransferComment'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.invalidMfr']}" sortBy="#{vo.invalidMfr}" filterBy="#{vo.invalidMfr}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.invalidMfr}" style="color:#{vo.highLightMap['invalidMfr'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.invalidPart']} &lt;br/&gt; #{dbResource['wq.label.number']}" sortBy="#{vo.invalidPartNumber}" filterBy="#{vo.invalidPartNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.invalidPartNumber}" style="color:#{vo.highLightMap['invalidPartNumber'] ? 'red':''}"/>
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.label.itemSeq']}" sortBy="#{vo.itemSeq}" filterBy="#{vo.itemSeq}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.itemSeq}" style="color:#{vo.highLightMap['itemSeq'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.lastBmtInDate}"  filterBy="#{vo.lastBmtInDate}"  filterMatchMode="contains" style="width:80px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lastBmtInDate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastBmtInDate}" style="color:#{vo.highLightMap['lastBmtInDate'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.lastBmtOutDate}"  filterBy="#{vo.lastBmtOutDate}"  filterMatchMode="contains" style="width:80px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lastBmtOutDate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastBmtOutDate}" style="color:#{vo.highLightMap['lastBmtOutDate'] ? 'red':''}"  >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.lastItUpdateTime}"  filterBy="#{vo.lastItUpdateTime}"  filterMatchMode="contains" style="width:80px;">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lastItUpdateTime']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastItUpdateTime}" style="color:#{vo.highLightMap['lastItUpdateTime'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.lastPmUpdatedOn}"  filterBy="#{vo.lastPmUpdatedOn}"  filterMatchMode="contains" style="width:80px;">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lastPmUpdatedOn']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastPmUpdatedOn}" style="color:#{vo.highLightMap['lastPmUpdatedOn'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.lastQcInDate}"  filterBy="#{vo.lastQcInDate}"  filterMatchMode="contains" style="width:80px;">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lastQcInDate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastQcInDate}" style="color:#{vo.highLightMap['lastQcInDate'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.lastQcOutDate}"  filterBy="#{vo.lastQcOutDate}"  filterMatchMode="contains" style="width:80px;">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lastQcOutDate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastQcOutDate}" style="color:#{vo.highLightMap['lastQcOutDate'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.lastQcUpdatedOn}"  filterBy="#{vo.lastQcUpdatedOn}"  filterMatchMode="contains" style="width:80px;">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lastQcUpdateOn']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastQcUpdatedOn}" style="color:#{vo.highLightMap['lastQcUpdatedOn'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.lastRitUpdateTime}"  filterBy="#{vo.lastRitUpdateTime}"  filterMatchMode="contains" style="width:80px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lastRitUpdateTime']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastRitUpdateTime}" style="color:#{vo.highLightMap['lastRitUpdateTime'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.lastSqInDate}"  filterBy="#{vo.lastSqInDate}"  filterMatchMode="contains" style="width:80px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lastSqInDate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastSqInDate}" style="color:#{vo.highLightMap['lastSqInDate'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			<p:column  sortBy="#{vo.lastSqOutDate}"  filterBy="#{vo.lastSqOutDate}"  filterMatchMode="contains" style="width:80px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lastSqOutDate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastSqOutDate}" style="color:#{vo.highLightMap['lastSqOutDate'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			<p:column  sortBy="#{vo.lastSqUpdateTime}"  filterBy="#{vo.lastSqUpdateTime}"  filterMatchMode="contains" style="width:80px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lastSqUpdateTime']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastSqUpdateTime}" style="color:#{vo.highLightMap['lastSqUpdateTime'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy"/>					
+					</h:outputText>
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.label.lastUpdatedBy']}" sortBy="#{vo.lastUpdatedBy}" filterBy="#{vo.lastUpdatedBy}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.lastUpdatedBy}" style="color:#{vo.highLightMap['lastUpdatedBy'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.lastUpdatedName']}" sortBy="#{vo.lastUpdatedName}" filterBy="#{vo.lastUpdatedName}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.lastUpdatedName}" style="color:#{vo.highLightMap['lastUpdatedName'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.lastUpdatedOn}"  filterBy="#{vo.lastUpdatedOn}"  filterMatchMode="contains" style="width:80px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lastUpdatedOn']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastUpdatedOn}" style="color:#{vo.highLightMap['lastUpdatedOn'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.lastUpdatedPm']}" sortBy="#{vo.lastUpdatedPm}" filterBy="#{vo.lastUpdatedPm}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.lastUpdatedPm}" style="color:#{vo.highLightMap['lastUpdatedPm'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.lastUpdated']} &lt;br/&gt; #{dbResource['wq.label.pmName']}" sortBy="#{vo.lastUpdatedPmName}" filterBy="#{vo.lastUpdatedPmName}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.lastUpdatedPmName}" style="color:#{vo.highLightMap['lastUpdatedPmName'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.lastUpdatedQc']}" sortBy="#{vo.lastUpdatedQc}" filterBy="#{vo.lastUpdatedQc}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.lastUpdatedQc}" style="color:#{vo.highLightMap['lastUpdatedQc'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.lastUpdatedQcName']}" sortBy="#{vo.lastUpdatedQcName}" filterBy="#{vo.lastUpdatedQcName}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.lastUpdatedQcName}" style="color:#{vo.highLightMap['lastUpdatedQcName'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.leadTime']}" sortBy="#{vo.leadTime}" filterBy="#{vo.leadTime}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.leadTime}" style="color:#{vo.highLightMap['leadTime'] ? 'red':''}"/>
+			</p:column>
+			
+				<p:column headerText="#{dbResource['wq.label.loaFlag']}" sortBy="#{vo.loaFlag ? 'Yes':'No'}" filterBy="#{vo.loaFlag ? 'Yes':'No'}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.loaFlag ? 'Yes':'No'}" style="color:#{vo.highLightMap['loaFlag'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.materialType']} &lt;br/&gt;#{dbResource['wq.label.ID']}" sortBy="#{vo.materialTypeId}" filterBy="#{vo.materialTypeId}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.materialTypeId}" style="color:#{vo.highLightMap['materialTypeId'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.minSellPrice']}" sortBy="#{vo.bottomPrice}" filterBy="#{vo.bottomPrice}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.bottomPrice}" style="color:#{vo.highLightMap['minSellPrice'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.mov']}" sortBy="#{vo.moq}" filterBy="#{vo.mov}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.mov}" style="color:#{vo.highLightMap['mov'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.MpSchedule']}" sortBy="#{vo.mpSchedule}" filterBy="#{vo.mpSchedule}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.mpSchedule}" style="color:#{vo.highLightMap['mpSchedule'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.MPQ']}" sortBy="#{vo.mpq}" filterBy="#{vo.mpq}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.mpq}" style="color:#{vo.highLightMap['mpq'] ? 'red':''}"/>
+			</p:column>
+			
+				<p:column headerText="#{dbResource['wq.message.multiUsage']}&lt;br/&gt; #{dbResource['wq.label.flag']}" sortBy="#{vo.multiUsageFlag ? 'Yes':'No'}" filterBy="#{vo.multiUsageFlag ? 'Yes':'No'}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.multiUsageFlag ? 'Yes':'No'}" style="color:#{vo.highLightMap['multiUsageFlag'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.newCustomer']} &lt;br/&gt;#{dbResource['wq.label.flag']}" sortBy="#{vo.newCustomerFlag ? 'Yes':'No'}" filterBy="#{vo.newCustomerFlag ? 'Yes':'No'}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.newCustomerFlag ? 'Yes':'No'}" style="color:#{vo.highLightMap['newCustomerFlag'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.normSell']}&lt;br/&gt; #{dbResource['wq.label.price']}" sortBy="#{vo.minSellPrice}" filterBy="#{vo.minSellPrice}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.minSellPrice}" style="color:#{vo.highLightMap['normSellPrice'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.orderOn']} &lt;br/&gt;#{dbResource['wq.label.handFlag']}" sortBy="#{vo.orderOnHandFlag ? 'Yes':'No'}" filterBy="#{vo.orderOnHandFlag ? 'Yes':'No'}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.orderOnHandFlag ? 'Yes':'No'}" style="color:#{vo.highLightMap['orderOnHandFlag'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.originalAuthGp']}" sortBy="#{vo.originalAuthGp}" filterBy="#{vo.originalAuthGp}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.originalAuthGp}" style="color:#{vo.highLightMap['originalAuthGp'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.PMOQ']}" sortBy="#{vo.pmoq}" filterBy="#{vo.pmoq}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.pmoq}" style="color:#{vo.highLightMap['pmoq'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.poExpiryDate}"  filterBy="#{vo.poExpiryDate}"  filterMatchMode="contains" style="width:80px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.POExpiryDate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.poExpiryDate}" style="color:#{vo.highLightMap['poExpiryDate'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.ppSchedule']}" sortBy="#{vo.ppSchedule}" filterBy="#{vo.ppSchedule}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.ppSchedule}" style="color:#{vo.highLightMap['ppSchedule'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.priceListRemarks']}1" sortBy="#{vo.priceListRemarks1}" filterBy="#{vo.priceListRemarks1}" filterMatchMode="contains" style="width:100px;">
+			<h:outputText value="#{vo.priceListRemarks1}" style="color:#{vo.highLightMap['priceListRemarks1'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.priceListRemarks']}2" sortBy="#{vo.priceListRemarks2}" filterBy="#{vo.priceListRemarks2}" filterMatchMode="contains" style="width:100px;">
+			<h:outputText value="#{vo.priceListRemarks2}" style="color:#{vo.highLightMap['priceListRemarks2'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.priceListRemarks']}3" sortBy="#{vo.priceListRemarks3}" filterBy="#{vo.priceListRemarks3}" filterMatchMode="contains" style="width:100px;">
+			<h:outputText value="#{vo.priceListRemarks3}" style="color:#{vo.highLightMap['priceListRemarks3'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.priceListRemarks']}4" sortBy="#{vo.priceListRemarks4}" filterBy="#{vo.priceListRemarks4}" filterMatchMode="contains" style="width:100px;">
+			<h:outputText value="#{vo.priceListRemarks4}" style="color:#{vo.highLightMap['priceListRemarks4'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.priceValidity']}" sortBy="#{vo.priceValidity}" filterBy="#{vo.priceValidity}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.priceValidity}" style="color:#{vo.highLightMap['priceValidity'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.productGroupCaps']}1" sortBy="#{vo.productGroup1.name}" filterBy="#{vo.productGroup1.name}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.productGroup1.name}" style="color:#{vo.highLightMap['productGroup1'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.productGroupCaps']}2" sortBy="#{vo.productGroup2.name}" filterBy="#{vo.productGroup2.name}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.productGroup2.name}" style="color:#{vo.highLightMap['productGroup2'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.productGroupCaps']}3" sortBy="#{vo.productGroup3}" filterBy="#{vo.productGroup3}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.productGroup3}" style="color:#{vo.highLightMap['productGroup3'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.productGroupCaps']}4" sortBy="#{vo.productGroup4}" filterBy="#{vo.productGroup4}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.productGroup4}" style="color:#{vo.highLightMap['productGroup4'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.proType']}" sortBy="#{vo.programType}" filterBy="#{vo.programType}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.programType}" style="color:#{vo.highLightMap['programType'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.projectName']}" sortBy="#{vo.projectName}" filterBy="#{vo.projectName}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.projectName}" style="color:#{vo.highLightMap['projectName'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.QCComment']}" sortBy="#{vo.qcComment}" filterBy="#{vo.qcComment}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.qcComment}" style="color:#{vo.highLightMap['qcComment'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.qtyIndicator']}" sortBy="#{vo.qtyIndicator}" filterBy="#{vo.qtyIndicator}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.qtyIndicator}" style="color:#{vo.highLightMap['qtyIndicator'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.quotationEffectiveDate}"  filterBy="#{vo.quotationEffectiveDate}"  filterMatchMode="contains" style="width:80px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.QuotationEffectiveDate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.quotationEffectiveDate}" style="color:#{vo.highLightMap['quotationEffectiveDate'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.quoteExpiryDate}"  filterBy="#{vo.quoteExpiryDate}"  filterMatchMode="contains" style="width:80px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.quoteExpiryDate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.quoteExpiryDate}" style="color:#{vo.highLightMap['quoteExpiryDate'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.quoteNumber']}" sortBy="#{vo.quoteNumber}" filterBy="#{vo.quoteNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.quoteNumber}" style="color:#{vo.highLightMap['quoteNumber'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.QuoteType']}" sortBy="#{vo.quoteType}" filterBy="#{vo.quoteType}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.quoteType}" style="color:#{vo.highLightMap['quoteType'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.quotedFlag']}" sortBy="#{vo.quotedFlag ? 'Yes':'No'}" filterBy="#{vo.quotedFlag ? 'Yes':'No'}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.quotedFlag ? 'Yes':'No'}" style="color:#{vo.highLightMap['quotedFlag'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.fullMfr']} &lt;br/&gt;#{dbResource['wq.label.partNumber']}" sortBy="#{vo.quotedMaterial.fullMfrPartNumber}" filterBy="#{vo.quotedMaterial.fullMfrPartNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.quotedMaterial.fullMfrPartNumber}" style="color:#{vo.highLightMap['quotedMaterial'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.QuotedMFR']}" sortBy="#{vo.quotedMfr.name}" filterBy="#{vo.quotedMfr.name}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.quotedMfr.name}" style="color:#{vo.highLightMap['quotedMfr'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.quotedPart']}&lt;br/&gt; #{dbResource['wq.label.number']}" sortBy="#{vo.quotedPartNumber}" filterBy="#{vo.quotedPartNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.quotedPartNumber}" style="color:#{vo.highLightMap['quotedPartNumber'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.quotedPrice']}" sortBy="#{vo.quotedPrice}" filterBy="#{vo.quotedPrice}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.quotedPrice}" style="color:#{vo.highLightMap['quotedPrice'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.quotedQty']}" sortBy="#{vo.quotedQty}" filterBy="#{vo.quotedQty}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.quotedQty}" style="color:#{vo.highLightMap['quotedQty'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.reasonRefresh']}" sortBy="#{vo.reasonForRefresh}" filterBy="#{vo.reasonForRefresh}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.reasonForRefresh}" style="color:#{vo.highLightMap['reasonForRefresh'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.referenceMargin']}" sortBy="#{vo.referenceMargin}" filterBy="#{vo.referenceMargin}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.referenceMargin}" style="color:#{vo.highLightMap['referenceMargin'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.remarks']}" sortBy="#{vo.remarks}" filterBy="#{vo.remarks}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.remarks}" style="color:#{vo.highLightMap['remarks'] ? 'red':''}"/>
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.label.remarks']}" sortBy="#{vo.remarks}" filterBy="#{vo.remarks}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.remarks}" style="color:#{vo.highLightMap['remarks'] ? 'red':''}"/>
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.label.ReqMfr']}" sortBy="#{vo.requestedMfr.name}" filterBy="#{vo.requestedMfr.name}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.requestedMfr.name}" style="color:#{vo.highLightMap['requestedMfr'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.requestedPartNum']}" sortBy="#{vo.requestedPartNumber}" filterBy="#{vo.requestedPartNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.requestedPartNumber}" style="color:#{vo.highLightMap['requestedPartNumber'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.requestedQty']}" sortBy="#{vo.requestedQty}" filterBy="#{vo.requestedQty}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.requestedQty}" style="color:#{vo.highLightMap['requestedQty'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.resaleIndicator']}" sortBy="#{vo.resaleIndicator}" filterBy="#{vo.resaleIndicator}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.resaleIndicator}" style="color:#{vo.highLightMap['resaleIndicator'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.resaleMargin']}" sortBy="#{vo.resaleMargin}" filterBy="#{vo.resaleMargin}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.resaleMargin}" style="color:#{vo.highLightMap['resaleMargin'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.resaleMAX']}" sortBy="#{vo.resaleMax}" filterBy="#{vo.resaleMax}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.resaleMax}" style="color:#{vo.highLightMap['resaleMax'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.resaleMIN']}" sortBy="#{vo.resaleMin}" filterBy="#{vo.resaleMin}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.resaleMin}" style="color:#{vo.highLightMap['resaleMin'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.rescheduleWindow']}" sortBy="#{vo.rescheduleWindow}" filterBy="#{vo.rescheduleWindow}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.rescheduleWindow}" style="color:#{vo.highLightMap['rescheduleWindow'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.revertVersion']}" sortBy="#{vo.revertVersion}" filterBy="#{vo.revertVersion}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.revertVersion}" style="color:#{vo.highLightMap['revertVersion'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.SapPN']}" sortBy="#{vo.sapPartNumber}" filterBy="#{vo.sapPartNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.sapPartNumber}" style="color:#{vo.highLightMap['sapPartNumber'] ? 'red':''}"/>
+			</p:column>
+			
+				<p:column  sortBy="#{vo.sentOutTime}"  filterBy="#{vo.sentOutTime}"  filterMatchMode="contains" style="width:80px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.sendOutTim']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.sentOutTime}" style="color:#{vo.highLightMap['sentOutTime'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.shipToCustName']}" sortBy="#{vo.shipToCustomerName}" filterBy="#{vo.shipToCustomerName}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.shipToCustomerName}" style="color:#{vo.highLightMap['shipToCustomerName'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.shipTo']} &lt;br/&gt;#{dbResource['wq.label.custNumber']}" sortBy="#{vo.shipToCustomer.customerNumber}" filterBy="#{vo.shipToCustomer.customerNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.shipToCustomer.customerNumber}" style="color:#{vo.highLightMap['shipToCustomer'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.shipmentValidity}"  filterBy="#{vo.shipmentValidity}"  filterMatchMode="contains" style="width:80px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.shipmentVal']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.shipmentValidity}" style="color:#{vo.highLightMap['shipmentValidity'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.soldToCustName']}" sortBy="#{vo.soldToCustomerName}" filterBy="#{vo.soldToCustomerName}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.soldToCustomerName}" style="color:#{vo.highLightMap['soldToCustomerName'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.soldTo']} &lt;br/&gt;#{dbResource['wq.label.custNumber']}" sortBy="#{vo.soldToCustomer.customerNumber}" filterBy="#{vo.soldToCustomer.customerNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.soldToCustomer.customerNumber}" style="color:#{vo.highLightMap['soldToCustomer'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.sprFlag']}" sortBy="#{vo.sprFlag ? 'Yes':'No'}" filterBy="#{vo.sprFlag ? 'Yes':'No'}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.sprFlag ? 'Yes':'No'}" style="color:#{vo.highLightMap['sprFlag'] ? 'red':''}"/>
+			</p:column>
+			
+			
+			
+			<p:column  sortBy="#{vo.submissionDate}"  filterBy="#{vo.submissionDate}"  filterMatchMode="contains" style="width:80px;" >
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.header.submissionDate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.submissionDate}" style="color:#{vo.highLightMap['submissionDate'] ? 'red':''}" >
+						<f:convertDateTime pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.message.supplierDR']}" sortBy="#{vo.supplierDrNumber}" filterBy="#{vo.supplierDrNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.supplierDrNumber}" style="color:#{vo.highLightMap['supplierDrNumber'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.targetMargin']} " sortBy="#{vo.targetMargin}" filterBy="#{vo.targetMargin}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.targetMargin}" style="color:#{vo.highLightMap['targetMargin'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.trgResale']}" sortBy="#{vo.targetResale}" filterBy="#{vo.targetResale}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.targetResale}" style="color:#{vo.highLightMap['targetResale'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.TermsAndConditions']}" sortBy="#{vo.termsAndConditions}" filterBy="#{vo.termsAndConditions}" filterMatchMode="contains" style="width:250px;">
+			<h:outputText value="#{vo.termsAndConditions}" style="color:#{vo.highLightMap['termsAndConditions'] ? 'red':''}"/>
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.label.validFlag']}" sortBy="#{vo.validFlag}" filterBy="#{vo.validFlag}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.validFlag}" style="color:#{vo.highLightMap['validFlag'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.vat']}" sortBy="#{vo.vat}" filterBy="#{vo.vat}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.vat}" style="color:#{vo.highLightMap['vat'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.vendorDebitNum']}" sortBy="#{vo.vendorDebitNumber}" filterBy="#{vo.vendorDebitNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.vendorDebitNumber}" style="color:#{vo.highLightMap['vendorDebitNumber'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.vendorQuoteNum']}" sortBy="#{vo.vendorQuoteNumber}" filterBy="#{vo.vendorQuoteNumber}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.vendorQuoteNumber}" style="color:#{vo.highLightMap['vendorQuoteNumber'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.vendorQuoteQty']}" sortBy="#{vo.vendorQuoteQty}" filterBy="#{vo.vendorQuoteQty}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.vendorQuoteQty}" style="color:#{vo.highLightMap['vendorQuoteQty'] ? 'red':''}"/>
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.label.version']}" sortBy="#{vo.version}" filterBy="#{vo.version}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.version}" style="color:#{vo.highLightMap['version'] ? 'red':''}"/>
+			</p:column>
+
+			</p:dataTable>
+			</p:panel>
+			
+			
+			<p:panel header="#{dbResource['wq.label.quoteItemDesignHis']}" id="quote_item_design_his">
+			 <p:dataTable	var="vo"
+	    				value="#{auditLogReportMB.auditQuoteItemDesigns}" 
+	    				rowKey="#{rowIndex}" 
+	    				paginator="true" 
+	    				rowIndexVar="rowIndex" 
+	    				rows="10" 
+    					rowsPerPageTemplate="10,20,50" 
+	                 	filteredValue="#{auditLogReportMB.filteredAuditQuoteItemDesignHis}"
+	                 	id="auditlogReport_dataTable2" 
+	                 	paginatorPosition="top"
+	                 	scrollable="true"
+	                 	scrollHeight="250"
+	                 	resizableColumns="true"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+	                 	
+				<p:column  sortBy="#{vo.id.startDate}" filterBy="#{vo.id.startDate}" filterMatchMode="contains" style="width:130px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lstartDate']} &amp; #{dbResource['wq.label.time']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.id.startDate}" style="color:#{vo.highLightMap['startDate'] ? 'red':''}">
+						<f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss"/>					
+					</h:outputText>
+				</p:column>
+				
+				<p:column  sortBy="#{vo.endDate}" filterBy="#{vo.endDate}" filterMatchMode="contains" style="width:130px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.endDate']} &amp; #{dbResource['wq.label.time']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.endDate}" style="color:#{vo.highLightMap['endDate'] ? 'red':''}">
+						<f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" />					
+					</h:outputText>
+				</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.quoteItem']}&lt;br/&gt;#{dbResource['wq.label.ID']}" sortBy="#{vo.id.quoteItemId}" filterBy="#{vo.id.quoteItemId}" filterMatchMode="contains" styleClass="column_quoteNumber" >
+			<h:outputText value="#{vo.id.quoteItemId}" style="color:#{vo.highLightMap['quoteItemId'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.BmtFlag']}&lt;br/&gt;#{dbResource['wq.label.code']}" sortBy="#{vo.bmtFlagCode}" filterBy="#{vo.bmtFlagCode}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.bmtFlagCode}" style="color:#{vo.highLightMap['bmtFlagCode'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.createdBy']}" sortBy="#{vo.createdBy}" filterBy="#{vo.createdBy}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.createdBy}" style="color:#{vo.highLightMap['createdBy'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.createdTime}" filterBy="#{vo.createdTime}" filterMatchMode="contains" style="width:120px;">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.createdTime']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.createdTime}" style="color:#{vo.highLightMap['createdTime'] ? 'red':''}">
+						<f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.drAlt']}  &lt;br/&gt;#{dbResource['wq.label.curr']}" sortBy="#{vo.drAltCurrency}" filterBy="#{vo.createdBy}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.drAltCurrency}" style="color:#{vo.highLightMap['drAltCurrency'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.drComment']}" sortBy="#{vo.drComments}" filterBy="#{vo.drComments}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.drComments}" style="color:#{vo.highLightMap['drComments'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.drCost']}" sortBy="#{vo.drCost}" filterBy="#{vo.drCost}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.drCost}" style="color:#{vo.highLightMap['drCost'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.drCost']} &lt;br/&gt;#{dbResource['wq.label.altCurrency']}" sortBy="#{vo.drCostAltCurrency}" filterBy="#{vo.drCostAltCurrency}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.drCostAltCurrency}" style="color:#{vo.highLightMap['drCostAltCurrency'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.drEffectiveDate}" filterBy="#{vo.drEffectiveDate}" filterMatchMode="contains" style="width:80px;">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.drEffectiveDate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.drEffectiveDate}" style="color:#{vo.highLightMap['drEffectiveDate'] ? 'red':''}">
+						<f:convertDateTime  pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.drExchange']} &lt;br/&gt;#{dbResource['wq.label.rate']}" sortBy="#{vo.drExchangeRate}" filterBy="#{vo.drExchangeRate}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.drExchangeRate}" style="color:#{vo.highLightMap['drExchangeRate'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.drExpiryDate}" filterBy="#{vo.drExpiryDate}" filterMatchMode="contains"  style="width:80px;">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.DRExpiryDate']}" />
+					</f:facet>
+					<h:outputText value="#{vo.drExpiryDate}" style="color:#{vo.highLightMap['drExpiryDate'] ? 'red':''}">
+						<f:convertDateTime  pattern="dd/MM/yyyy"  />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.drMfr']} &lt;br/&gt; #{dbResource['wq.label.NoCaps']}" sortBy="#{vo.drMfrNo}" filterBy="#{vo.drMfrNo}" filterMatchMode="contains" style="width:100px;">
+			<h:outputText value="#{vo.drMfrNo}" style="color:#{vo.highLightMap['drMfrNo'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.drMfr']} &lt;br/&gt; #{dbResource['wq.label.quoteNo']}" sortBy="#{vo.drMfrQuoteNo}" filterBy="#{vo.drMfrQuoteNo}" filterMatchMode="contains" style="width:120px;">
+			<h:outputText value="#{vo.drMfrQuoteNo}" style="color:#{vo.highLightMap['drMfrQuoteNo'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.drNo']}" sortBy="#{vo.drNo}" filterBy="#{vo.drNo}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.drNo}" style="color:#{vo.highLightMap['drNo'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.drQuote']} &lt;br/&gt; #{dbResource['wq.label.Qty']}" sortBy="#{vo.drQuoteQty}" filterBy="#{vo.drQuoteQty}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.drQuoteQty}" style="color:#{vo.highLightMap['drQuoteQty'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.drResale']}" sortBy="#{vo.drResale}" filterBy="#{vo.drResale}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.drResale}" style="color:#{vo.highLightMap['drResale'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.drResale']} &lt;br/&gt; #{dbResource['wq.label.altCurrency']}" sortBy="#{vo.drResaleAltCurrency}" filterBy="#{vo.drResaleAltCurrency}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.drResaleAltCurrency}" style="color:#{vo.highLightMap['drResaleAltCurrency'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.lastUpdatedBy']}" sortBy="#{vo.lastUpdatedBy}" filterBy="#{vo.lastUpdatedBy}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.lastUpdatedBy}" style="color:#{vo.highLightMap['lastUpdatedBy'] ? 'red':''}"/>
+			</p:column>
+			
+			<p:column  sortBy="#{vo.lastUpdatedTime}" filterBy="#{vo.lastUpdatedTime}" filterMatchMode="contains" style="width:120px;">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.lastUpdatedTime']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastUpdatedTime}" style="color:#{vo.highLightMap['lastUpdatedTime'] ? 'red':''}">
+						<f:convertDateTime  pattern="dd/MM/yyyy" />					
+					</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.version']}" sortBy="#{vo.version}" filterBy="#{vo.version}" filterMatchMode="contains" styleClass="column_quoteNumber">
+			<h:outputText value="#{vo.version}" style="color:#{vo.highLightMap['version'] ? 'red':''}"/>
+			</p:column>
+
+			</p:dataTable>
+			</p:panel>
+			<p:growl id="messages" closable="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}"/>
+		</h:form>
+	</ui:define>
+</ui:composition>

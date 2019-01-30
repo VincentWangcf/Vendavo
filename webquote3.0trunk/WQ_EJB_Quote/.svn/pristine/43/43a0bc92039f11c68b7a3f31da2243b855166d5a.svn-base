@@ -1,0 +1,93 @@
+package com.avnet.emasia.webquote.rowdata;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import javax.validation.ConstraintViolation;
+
+public class DefaultBean implements Bean{
+	@Transient
+	private int seq;
+	@Transient
+	private Map<String, String> convertErrors = new HashMap<>();
+	@Transient
+	private Set<String> validationErrors = new HashSet<>();
+	
+	@Transient
+	private Set<? super ConstraintViolation<? extends Bean>> constraintViolations;
+	
+	
+
+	@Override
+ 	public int getSeq() {
+		return seq;
+	}
+
+	@Override
+	public void setSeq(int seq) {
+		this.seq = seq;
+		
+	}
+
+
+	@Override
+	public String putConvertError(String field, String convertError) {
+		
+		return convertErrors.put(field, convertError);
+	}
+
+	@Override
+	public String getConvertError(String field) {
+		return convertErrors.get(field);
+	}
+
+	@Override
+	public String getConvertErrors() {
+		return convertErrors.toString();
+	}
+
+	@Override
+	public boolean addValidationError(String validationError) {
+		return validationErrors.add(validationError);
+	}
+
+	@Override
+	public String getValidationErrors() {
+
+		return validationErrors.toString();
+	}
+
+	@Override
+	public boolean isConvertSuccessful() {
+		return convertErrors.size() > 0 ? false : true;
+	}
+
+	@Override
+	public boolean isValid() {
+		return validationErrors.size() > 0 ? false : true;
+	}
+
+/*	@Override
+	public <T extends Bean> Set<ConstraintViolation<T>> getConstraintViolations() {
+		return null;
+	}
+
+	@Override
+	public <T extends Bean> void setConstraintViolations(Set<ConstraintViolation<T>> violations) {
+		constraintViolations = violations;
+		
+	}
+
+
+	public void setConstraintViolationssd(Set<ConstraintViolation<Bean>> violations) {
+		Set<? super ConstraintViolation<Bean>> violations2 = violations;
+		
+	}*/
+
+
+
+
+}
+ 

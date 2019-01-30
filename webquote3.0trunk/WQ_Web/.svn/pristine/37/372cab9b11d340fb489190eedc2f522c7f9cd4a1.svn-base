@@ -1,0 +1,197 @@
+package com.avnet.emasia.webquote.web.maintenance;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.primefaces.model.UploadedFile;
+
+import com.avnet.emasia.webquote.commodity.bean.PricerUploadTemplateBean;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.vo.CatalogSearchItemBean;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.DeploymentConfiguration;
+import com.avnet.emasia.webquote.utilites.web.util.POIUtils;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.bean.ExcelAliasBean;
+import com.avnet.emasia.webquote.utilities.bean.PoiCommonBean;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+
+public abstract class UploadStrategy implements Serializable {
+
+	private static final long serialVersionUID = 7139140169060895035L;
+	private static final Logger LOG =Logger.getLogger(UploadStrategy.class.getName());
+	private User user ;
+	
+	public abstract String verifyFields(List<?> beans) ;
+
+	public abstract List excel2Beans(Sheet sheet) ;
+
+	public Sheet getSheet(UploadedFile uploadFile) {
+		Sheet sheet = null;
+		if (uploadFile != null) {
+			Workbook workbook = null;
+			InputStream in = null;
+			try {
+				in = uploadFile.getInputstream();
+				workbook =  WorkbookFactory.create(in);
+				sheet = workbook.getSheetAt(0);
+			} catch (Exception e) {
+				LOG.log(Level.SEVERE, "Error while uploading file "+uploadFile.getFileName()+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+			} finally {
+				try {
+					in.close();
+					uploadFile = null;
+				} catch ( Exception ex) {
+					LOG.log(Level.SEVERE, "Error while closing file "+uploadFile.getFileName()+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(ex), ex);
+					
+				}
+			}
+		}
+		return sheet;
+	}
+
+	public Boolean isValidateFileColumn(Sheet currentUploadSheet ,int index,String templateName, int columnOfLength) {
+		if(currentUploadSheet==null) return false;
+		String filePath = DeploymentConfiguration.configPath + File.separator + templateName;
+		FileInputStream input = null;
+		try {
+			input = new FileInputStream(filePath);
+		} catch (FileNotFoundException e) {
+			LOG.log(Level.SEVERE, "File on this path " + filePath + " not found " + e.getMessage(), e);
+		}
+
+		if(input==null) return false;
+		
+		Workbook templateWb = null;
+		Boolean bool = true;
+		
+		try {
+			templateWb =WorkbookFactory.create(input);
+			Sheet templateSheet = templateWb.getSheetAt(0);
+			Row templateFristRow = templateSheet.getRow(index);
+			Row currentUploadFristRow = currentUploadSheet.getRow(index);
+			Cell templateCell = null;
+			Cell currentUploadCell = null;
+			
+			if(templateFristRow!=null&&currentUploadFristRow!=null){
+				for(int i=0;i<columnOfLength;i++){
+					templateCell = templateFristRow.getCell(i);
+					currentUploadCell = currentUploadFristRow.getCell(i);
+				
+					if(!templateCell.getStringCellValue().equalsIgnoreCase(currentUploadCell.getStringCellValue())){
+						bool =  false;
+						break;
+					}
+				}
+			}else{
+				bool = false;
+			}
+		} catch (IOException e) {
+			LOG.log(Level.SEVERE, "Error occured while validating column of uploaded sheet :"+currentUploadSheet.getSheetName()+", Reason for failure: "+e.getMessage(), e);
+		}catch (InvalidFormatException ex) {
+			LOG.log(Level.SEVERE, "Error occured while validating column of uploaded sheet :"+currentUploadSheet.getSheetName()+", Reason for failure: "+ex.getMessage(), ex);
+		}finally{
+			try {
+				input.close();
+			} catch (IOException e) {
+				LOG.log(Level.SEVERE, "Error occured while closing stream for validating column of uploaded sheet :"+currentUploadSheet.getSheetName()+", Reason for failure: "+e.getMessage(), e);
+			}
+			input = null;
+		}
+		
+		return bool;
+	}
+
+	public boolean isValidateUpload(UploadedFile uploadFile) {
+		if (uploadFile == null) {
+			return false;
+		}else{
+			return true;
+		}	
+	}
+
+	public boolean isExceedAllowMaxNum(int sheetLastRowNum,int allowMaxUploadNum){
+		if (sheetLastRowNum > allowMaxUploadNum) {
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
+	public boolean isExcelFile(UploadedFile uploadFile){
+		if(uploadFile==null) return false;
+		String fileName = uploadFile.getFileName();
+		if(fileName ==null) return false;
+		String suffixName = fileName.substring(fileName.lastIndexOf(".")+1, fileName.length());
+		if("xls".equalsIgnoreCase(suffixName)||"xlsx".equalsIgnoreCase(suffixName)){
+			return true;
+		}else{
+			return false;
+		}	
+	}
+	
+	public boolean isMoreThanMaxFileSize(long fileSize,long maxFileSize){
+		if(fileSize>maxFileSize) {
+			return true;
+		}else{
+			return false;
+		}	
+	}
+	
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+	
+	public String validateLengthOfFields(PoiCommonBean bean, List<ExcelAliasBean> excelAliasBeans){
+		Iterator<ExcelAliasBean> iterator =  excelAliasBeans.iterator();;
+		ExcelAliasBean excelAliasBean = null;
+		StringBuffer sb = new StringBuffer();
+		String fieldValue = null;
+		int fieldLength = -1;
+		while (iterator.hasNext()) {			
+			excelAliasBean = iterator.next();
+			fieldValue = POIUtils.getter(bean, excelAliasBean.getFieldName());
+			fieldLength = excelAliasBean.getFieldLength();      
+			if(fieldValue!=null&&fieldLength!=-1&&fieldValue.length() >fieldLength ){//if fieldLength =-1  this field not need to verify  
+				sb.append(ResourceMB.getText("wq.message.row")+"["+bean.getLineSeq()+"] : "+ResourceMB.getParameterizedText("wq.error.lenghtMaximumError"," "+ResourceMB.getText(excelAliasBean.getAliasName()))+" "+excelAliasBean.getFieldLength()+" "+ResourceMB.getText("wq.message.inMaximum")+", <br/>");	
+			}  
+		}
+		return sb.toString();
+	}
+	
+	public String validateMandatoryFields(PoiCommonBean bean, List<ExcelAliasBean> excelAliasBeans){
+		Iterator<ExcelAliasBean> iterator =  excelAliasBeans.iterator();
+		ExcelAliasBean excelAliasBean = null;
+		StringBuffer sb = new StringBuffer();
+		while (iterator.hasNext()) {			
+			excelAliasBean = iterator.next();
+			if ("true".equals(excelAliasBean.getMandatory()) &&
+					QuoteUtil.isEmpty(POIUtils.getter(bean, excelAliasBean.getFieldName()))) {
+				sb.append(ResourceMB.getText("wq.message.row")+"["+bean.getLineSeq()+"] :"+ResourceMB.getText("wq.error.enterMandatoryFields")+" "+ResourceMB.getText(excelAliasBean.getAliasName())+", <br/>");
+			}
+		}
+		return sb.toString();
+	}
+}

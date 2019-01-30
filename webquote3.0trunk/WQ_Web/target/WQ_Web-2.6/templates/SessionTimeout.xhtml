@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+<ui:composition>
+
+
+<h:form prependId="false">
+
+	<p:idleMonitor timeout="6600000" onidle="startIdleMonitor()" onactive="PF('timeoutDialog').hide()">
+		<p:ajax event="active" listener="#{resumeSessionMB.resumeSession}" />
+	</p:idleMonitor>
+
+	<p:dialog id="timeoutSession" header=" #{dbResource['wq.header.warning']}"
+		widgetVar="timeoutDialog" showEffect="fade" hideEffect="fade"
+		modal="true" width="400" height="110" closable="false"
+		draggable="false" resizable="false" appendToBody="true"
+		onHide="stopCount()" onShow="doTimer()">
+		<br />
+		<p>
+			<span class="ui-icon ui-icon-alert" style="float: left; margin: 8px 8px 0;" />
+			<p:panel>
+               #{dbResource['wq.label.sessionTimeOut']}
+               <span id="dialog-countdown" style="font-weight: bold"></span>
+               #{dbResource['wq.label.seconds']}
+            </p:panel>
+		</p>
+		<br />
+		<p style="font-weight: bold;">#{dbResource['wq.label.refreshSession']}.</p>
+	</p:dialog>
+
+	<p:remoteCommand name="keepAlive" actionListener="#{resumeSessionMB.resumeSession}" oncomplete="checkSessionResumed(xhr, status, args)"/>
+
+</h:form>
+
+
+<script type="text/javascript">
+
+	//show 
+      var TIME = 600; // in seconds
+      var countTimer = TIME;
+      var processTimer;
+      var timer_is_on = 0;
+      var redirectPage = "#{request.contextPath}/j_spring_security_logout";
+      
+      var countDownDiv = "dialog-countdown";
+      var txtCountDown = null;
+      if (!txtCountDown)
+      	txtCountDown = document.getElementById(countDownDiv);
+
+      //auto refresh interval
+      //setInterval("refreshSession()",7200000);
+      setInterval("refreshSession()",1800000);
+
+      function startIdleMonitor() {
+      	countTimer = TIME;
+      	txtCountDown.innerHTML = countTimer;
+      	PF('timeoutDialog').show();
+      }
+      
+      function timedCount() {
+      	txtCountDown.innerHTML = countTimer;
+      	if (countTimer == 0) {
+      		stopCount();
+      		window.location = redirectPage;
+      		return;
+      	}
+      	countTimer = countTimer - 1;
+      	processTimer = setTimeout("timedCount()", 1000);
+      }
+      
+      function doTimer() {
+      	if (!timer_is_on) {
+      		timer_is_on = 1;
+      		timedCount();
+      	}
+      }
+      
+      function stopCount() {
+      	clearTimeout(processTimer);
+      	timer_is_on = 0;
+      	keepAlive();
+      }
+	
+      function refreshSession(){
+    	  keepAlive();		
+      }
+
+      function checkSessionResumed(xhr, status, args){
+    	if(args.sessionResumed == null || args.sessionResumed != '1'){
+			window.location = "#{webSealLogoutMB.logoutURL}"
+        }
+      }
+      
+
+</script>
+
+</ui:composition>
+</html>

@@ -1,0 +1,173 @@
+/**
+ * 
+ */
+package com.avnet.emasia.webquote.rowdata;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+
+/**
+ * @author 042659
+ *
+ */
+public class DefaultRowDataConverter<T extends Bean> implements RowDataConverter<T> {
+	
+	static final Logger LOGGER= Logger.getLogger(DefaultRowDataConverter.class.getSimpleName());
+	
+	private RowDataSource columnDataSource;
+	
+	
+
+	/**
+	 * @param columnDataSource
+	 */
+	public DefaultRowDataConverter(RowDataSource columnDataSource) {
+		this.columnDataSource = columnDataSource;
+	}
+
+
+
+	/**
+	 * 
+	 */
+	public DefaultRowDataConverter() {
+		// TODO Auto-generated constructor stub
+	}
+
+
+
+	public RowDataSource getColumnDataSource() {
+		return columnDataSource;
+	}
+
+
+
+	public void setColumnDataSource(RowDataSource columnDataSource) {
+		this.columnDataSource = columnDataSource;
+	}
+
+
+
+	/* (non-Javadoc)
+	 * @see com.avnet.emasia.webquote.columndata.ColumnDataConverter#convertAndValidate(java.io.InputStream, java.lang.String, com.avnet.emasia.webquote.columndata.BeanDefinition)
+	 */
+	@Override
+	public List<T> convertAndValidate(InputStream is, FileType type, BeanDefinition<T> beanDef) {
+		// TODO Auto-generated method stub
+		List<T> beanObjList = new ArrayList<T>();
+		this.columnDataSource = RowDataSource.create(is, type, null);
+		beanDef.getBeanClass().getClass();
+		beanDef.getFieldDefinitions();
+		Class<T> beanCls = beanDef.getBeanClass();
+		while (this.columnDataSource.hasNext()) {
+			this.columnDataSource.next();
+			 T tObj = GenerateInstance(beanCls);
+			for (FieldDefinition fieldDefinition : beanDef.getFieldDefinitions()) {
+				assignValue(tObj, fieldDefinition, columnDataSource);
+			}
+			beanObjList.add(tObj);
+		}
+		return beanObjList;
+	}
+
+	
+	/**   
+	* @Description: assign the values to bean reference  
+	* @author 042659
+	* @param beanObj
+	* @param fieldDefinition       
+	 * @param cDataSource 
+	* @return void    
+	*/  
+	private void assignValue(Bean beanObj, FieldDefinition fieldDefinition, RowDataSource cDataSource) {
+		// TODO Auto-generated method stub
+	//	printForTest(fieldDefinition, cDataSource);
+/*		Object value = fieldDefinition.getConverter().convert(cDataSource.getColumnValue(fieldDefinition.getColumnName()));
+		setter(beanObj, fieldDefinition.getFieldName(), value, GenericUtil.getGenericType(fieldDefinition.getField()));
+*/
+	  fieldDefinition.getConverter().convert(cDataSource.getColumnValue(fieldDefinition.getColumnName()), beanObj, fieldDefinition.getField());
+	}
+
+	
+	  /**
+	
+	* @Description: TODO
+	* @author 042659
+	* @param fieldDefinition  
+    * @param cDataSource         
+	* @return void    
+	* @throws  
+	*/  
+	private void printForTest(FieldDefinition fieldDefinition, RowDataSource cDataSource) {
+		// TODO Auto-generated method stub
+		fieldDefinition.getColumnName();
+		fieldDefinition.getFieldName();
+		String value=cDataSource.getColumnValue(fieldDefinition.getColumnName());
+		//String fieldName=fieldDefinition.getFieldName();
+		//Class fieldClz=GenericUtil.getGenericType(fieldDefinition.getField());
+		LOGGER.info("fieldDefinition.getFieldName():["+fieldDefinition.getFieldName()+"]");
+		LOGGER.info("fieldDefinition.getColumnName():["+fieldDefinition.getColumnName()+"]");
+		
+		LOGGER.info("value:["+value.toString()+"]");
+		LOGGER.info("fieldClz:["+fieldDefinition.getField().getType()+"]");
+		
+	}
+
+
+
+	public void setter(Object obj, String att, Object value, Class<?> type) {
+	        try {
+	            Method method = obj.getClass().getMethod("set" + turnFirstCharToUpperCase(att), type);
+	            method.invoke(obj, value); 
+	        } catch (Exception e) {
+	        	e.printStackTrace();
+	        }
+	    }
+
+
+	/**   
+	* @Description: TODO
+	* @author 042659
+	* @param fieldName  such as mfr
+	* @return String    Mfr
+	*/  
+	private String turnFirstCharToUpperCase(String fieldName) {
+		// TODO Auto-generated method stub
+		return  fieldName.substring(0,1).toUpperCase() + fieldName.substring(1);
+	}
+
+
+
+	/**   
+	* @Description: TODO
+	* @author 042659
+	* @param beanCls Class
+	* @return Object    
+	* @throws  
+	*/  
+	private <T> T GenerateInstance(Class<T> beanCls) {
+		T t=null;
+		try {
+			t=beanCls.newInstance();
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return t;
+	}
+
+
+
+
+}

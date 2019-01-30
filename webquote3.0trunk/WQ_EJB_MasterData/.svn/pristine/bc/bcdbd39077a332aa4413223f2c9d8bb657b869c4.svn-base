@@ -1,0 +1,8 @@
+package com.avnet.emasia.webquote.masterData.dao;
+
+public interface MaterialRegionalDAO {
+	public void batchStartUpdate();
+
+	public void batchEndUpdate();
+	
+}

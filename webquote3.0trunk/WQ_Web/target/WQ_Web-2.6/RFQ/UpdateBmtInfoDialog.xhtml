@@ -1,0 +1,134 @@
+
+
+<ui:composition 
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	
+<p:dialog header="#{dbResource['wq.button.uploadBmtInfo']}" widgetVar="updateBmtInfo_dialog" resizable="true" width="80%" rendered="#{null!=bmtInfoMB.currentQuoteItemVo}">
+	
+		<p:panelGrid styleClass="panelGrid" style="padding:0px 0px 0px 0px;" >   
+            <p:row>    	
+				<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.region']} #{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.version}</p:column>
+				<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.designLoc']} #{bmtInfoMB.currentQuoteItemVo.quoteItem.version}</p:column>
+				<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.designRegion']}</p:column>
+				<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.avnetQuote']}#</p:column>
+				<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.avnetQPN']}</p:column>
+				<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.avnetQPrice']}</p:column>
+				<p:column styleClass="tdtag" style="width:180px !important;">#{dbResource['wq.label.cost']}</p:column>
+			</p:row>
+			<p:row>    	
+				<p:column styleClass="tdvalue readOnlyCell break-all">#{bmtInfoMB.currentQuoteItemVo.quoteItem.quote.bizUnit.name}</p:column>
+				<p:column styleClass="tdvalue readOnlyCell break-all">#{bmtInfoMB.currentQuoteItemVo.quoteItem.designLocation}</p:column>
+				<p:column styleClass="tdvalue readOnlyCell break-all">#{bmtInfoMB.currentQuoteItemVo.quoteItem.designRegion}</p:column>
+				<p:column styleClass="tdvalue readOnlyCell break-all">#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteNumber}</p:column>
+				<p:column styleClass="tdvalue readOnlyCell break-all">#{bmtInfoMB.currentQuoteItemVo.quotedPartNumber}</p:column>
+				<p:column styleClass="tdvalue readOnlyCell break-all">
+					<h:outputText value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quotedPrice}">
+						<f:convertNumber   pattern="#,##0.00000"  minFractionDigits="5"/>
+					</h:outputText>
+				</p:column>
+				<p:column styleClass="tdvalue readOnlyCell break-all">
+					<h:outputText value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.cost}">
+						<f:convertNumber  pattern="#,##0.00000" minFractionDigits="5"/>
+					</h:outputText>
+				</p:column>
+			</p:row>
+         </p:panelGrid>
+
+         <h:panelGrid cellpadding="3" style="width:100%;" columns="1">
+        	<h:panelGrid columns="4">
+				<h:outputText value="#{dbResource['wq.label.BmtFlag']}"  escape="false" />
+				<h:selectOneMenu id="updateBmt_flag" value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.bmtFlag.bmtFlagCode}" disabled="true"
+					label="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.bmtFlag.description}" style="width:80%;">
+						<f:selectItems value="#{bmtInfoMB.pageBmtFlags}" />
+				</h:selectOneMenu>
+
+				<h:outputText value="#{dbResource['wq.label.bmtMFRDR']}#"  escape="false" />
+				<p:inputText value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drMfrNo}" maxlength = "20"  />
+				
+			</h:panelGrid>
+			
+			<h:panelGrid columns="6">				
+				<h:outputText value="#{dbResource['wq.label.bmtSuggCost']}"  escape="false" />
+				<p:inputText value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drCost}"  maxlength = "10" onkeyup="checkEnterKey(event, this);PF('blk_dialog').show()" onkeypress="return isDouble(event, true);PF('blk_dialog').show()" >
+					<f:attribute name="targetQuoteItem" value="#{vo}" />
+					<p:ajax event="keyup" update="dr_margin" onstart="PF('blk_dialog').show()"  oncomplete="PF('blk_dialog').hide()"/>
+				</p:inputText>
+				
+				<h:outputText value="#{dbResource['wq.label.bmtSuggResale']}"  escape="false" />
+				<p:inputText value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drResale}" onkeyup="checkEnterKey(event, this);PF('blk_dialog').show()" maxlength = "10"  onkeypress="return isDouble(event, true);PF('blk_dialog').show()" >
+					<f:attribute name="targetQuoteItem" value="#{vo}" />
+					<p:ajax event="keyup" update="dr_margin" onstart="PF('blk_dialog').show()"  oncomplete="PF('blk_dialog').hide()"/>
+				</p:inputText>
+				
+				<h:outputText value="#{dbResource['wq.message.BMTMargin']}:"  escape="false" />
+				<h:outputText value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drMargin}" escape="false" id= "dr_margin" />
+			</h:panelGrid>
+			
+			<h:panelGrid columns="4">	
+				<h:outputText value="#{dbResource['wq.label.bmtMFRQuote']} #"  escape="false" />
+				<p:inputText value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drMfrQuoteNo}" maxlength = "20"  />
+				
+				<h:outputText value="#{dbResource['wq.label.bmtEffDate']}"  escape="false" />
+          <p:calendar value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drEffectiveDate}" showOn="button" pattern="dd/MM/yyyy" /> 
+				
+				<h:outputText value="#{dbResource['wq.label.bmtComm']}"  escape="false" />
+				<p:inputText value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drComments}" maxlength = "200" />
+				
+				<h:outputText value="#{dbResource['wq.label.bmtExpDate']}"  escape="false" />
+				<p:calendar value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drExpiryDate}" showOn="button" pattern="dd/MM/yyyy" /> 
+			</h:panelGrid>
+			<h:panelGrid columns="3">
+				<h:outputText value="#{dbResource['wq.label.bmtAtts']}"  escape="false" />
+				<p:commandLink update=":form:attachment_panel" action="#{bmtInfoMB.listAttachmentsForBMT()}" oncomplete="PF('attachment_edit_dialog').show()">
+		        		<h:graphicImage library="images" name="icon_upload.png" styleClass="iconLink"/>
+		        		<f:param name="quoteItem_id" value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.id}"/>
+	        			<f:param name="quote_id" value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quote.id}"/>
+		        		<f:param name="att_type" value="BMT Attachment"/>
+		        </p:commandLink>	
+	        	
+				
+	        	<p:commandLink actionListener="#{attachmentDownloadMB.listAttachmentsByType()}" update=":form:attachment_list_panel" oncomplete="PF('attachment_list_dialog').show()">
+	        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>	
+	        		<f:param name="quoteItem_id" value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.id}"/>
+	        		<f:param name="quote_id" value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quote.id}"/>
+	        		<f:param name="att_type" value="BMT Attachment"/>				           	
+	        	</p:commandLink> 
+	        	
+	        	
+		        	
+	        </h:panelGrid>		
+			<h:panelGrid columns="4">	
+				<h:outputText value="#{dbResource['wq.label.bmtSuggestedCostNonUSD']}"  escape="false" />
+				<p:inputText value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drCostAltCurrency}" maxlength = "10"  onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" />
+				
+				<h:outputText value="#{dbResource['wq.label.bmtSuggstResaleNUSD']}"  escape="false" />
+				<p:inputText value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drResaleAltCurrency}" maxlength = "10"  onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)"/>
+				
+				<h:outputText value="#{dbResource['wq.label.bmtCurr']}"  escape="false" />
+				<h:selectOneMenu id="updateBmt_curr" value ="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drAltCurrency}" style="width:80%;">
+						<f:selectItems value="#{bmtInfoMB.bmtCurrencyList}" />
+				</h:selectOneMenu>
+				
+				<h:outputText value="#{dbResource['wq.label.BmtExchgRateNonUSD']}" maxlength = "20"  escape="false" />
+				<p:inputText value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drExchangeRate}" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" />
+				
+				<h:outputText value="#{dbResource['wq.label.bmtQuoteQty']}"  escape="false" />
+				<p:inputText id="bmt_quote_qty" value="#{bmtInfoMB.currentQuoteItemVo.quoteItem.quoteItemDesign.drQuoteQty}" maxlength = "10"  onkeyup="checkEnterKey(event, this)" onkeypress="return isInteger(event, true)">		        																			
+				</p:inputText>		
+			</h:panelGrid>
+				
+		</h:panelGrid>
+		
+	 <p:blockUI block="form:buttonPanel" widgetVar="blk_dialog"/>
+	 <h:panelGrid columns="2" id="buttonPanel">	
+		 <p:commandButton id="submit_bmt" value="#{dbResource['wq.button.submit']}" actionListener="#{bmtInfoMB.confirmUpdateBMTInfo}" oncomplete="stop();validationUpdateBmtInfo(xhr, status, args);" update=":growl"  style="margin:0px 0px 0px 0px"/>
+		 <p:commandButton id="cancel_Rate" value="#{dbResource['wq.button.cancel']}" oncomplete="PF('updateBmtInfo_dialog').hide();" style="margin:0px 0px 0px 0px"/> 
+	 </h:panelGrid> 
+	 <ui:include src="BmtAttachmentEditDialog.xhtml" />
+
+</p:dialog>
+</ui:composition>

@@ -1,0 +1,1085 @@
+package com.avnet.emasia.webquote.utilities.util;
+
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
+import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.xml.datatype.XMLGregorianCalendar;
+
+import com.avnet.emasia.webquote.constants.BmtFlagEnum;
+import com.avnet.emasia.webquote.constants.StatusEnum;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.ManufacturerDetail;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.NormalPricer;
+import com.avnet.emasia.webquote.entity.Pricer;
+import com.avnet.emasia.webquote.entity.ProgramPricer;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+
+public class QuoteUtil {
+	static final Logger LOG = Logger.getLogger(QuoteUtil.class.getSimpleName());
+	public static final String DATE_FORMAT = "yyyy-MM-dd";
+
+	public static final String DATE_FORMAT_YM = "yyyy-MM";
+
+	public static final String TIMEF_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
+	public static final String ZHCN_TIME_FORMAT = "yyyyå¹´MMæœˆddæ—¥HHæ—¶mmåˆ†ssç§’";
+
+	public static final String TIME_STR_FORMAT = "yyyyMMddHHmmss";
+
+	public static final String TIMESSS_STR_FORMAT = "yyyyMMddHHmmssSSS";
+
+	public static final String VALIDITY_STR_FORMAT = "dd/MM/yyyy";
+
+	private static DateFormat dateTimesssStrFormat;
+
+	private static DateFormat dateFormat;
+
+	private static DateFormat dateTimeFormat;
+
+	private static DateFormat dateTimeStrFormat;
+
+	private static DateFormat zhcnDateTimeStrFormat;
+
+	private static DateFormat validityDateFormat;
+
+	private static DecimalFormat df0 = new DecimalFormat("#");
+
+	public static final double DOUBLE_ZERO = 0d;
+
+	static {
+		dateFormat = new SimpleDateFormat(DATE_FORMAT);
+		dateTimeFormat = new SimpleDateFormat(TIMEF_FORMAT);
+		dateTimeStrFormat = new SimpleDateFormat(TIME_STR_FORMAT);
+		zhcnDateTimeStrFormat = new SimpleDateFormat(ZHCN_TIME_FORMAT);
+		dateTimesssStrFormat = new SimpleDateFormat(TIMESSS_STR_FORMAT);
+		validityDateFormat = new SimpleDateFormat(VALIDITY_STR_FORMAT);
+		df0.setMaximumFractionDigits(0);
+	}
+
+	public static Date getEndOfPostQuotation(Date date) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(date);
+		// calendar.set(Calendar.HOUR_OF_DAY, 23);
+		// calendar.set(Calendar.MINUTE, 59);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MILLISECOND, 0);
+		return calendar.getTime();
+	}
+
+
+
+	private static DateFormat getDateFormat(String formatStr) {
+		if (formatStr.equalsIgnoreCase(DATE_FORMAT)) {
+			return dateFormat;
+		} else if (formatStr.equalsIgnoreCase(TIMEF_FORMAT)) {
+			return dateTimeFormat;
+		} else if (formatStr.equalsIgnoreCase(TIME_STR_FORMAT)) {
+			return dateTimeStrFormat;
+		} else if (formatStr.equalsIgnoreCase(TIMESSS_STR_FORMAT)) {
+			return dateTimesssStrFormat;
+		} else {
+			return new SimpleDateFormat(formatStr);
+		}
+	}
+
+	public static String dateToDateString(Date date, String formatStr) {
+		DateFormat df = getDateFormat(formatStr);
+		return df.format(date);
+	}
+
+	public static String dateToDateString(Date date) {
+		return dateToDateString(date, TIMEF_FORMAT);
+	}
+
+	public static String convertDateToString(Date date) {
+		return dateToDateString(date, TIME_STR_FORMAT);
+	}
+
+	public static String getDateToString(Date date) {
+		return dateToDateString(date, TIMESSS_STR_FORMAT);
+	}
+
+	public static long getMicroSec(BigDecimal hours) {
+		BigDecimal bd;
+		bd = hours.multiply(new BigDecimal(3600 * 1000));
+		return bd.longValue();
+	}
+
+	public static String getToday(String pattern) {
+		Calendar now = Calendar.getInstance(TimeZone.getDefault());
+		DateFormat sdf = getDateFormat(pattern);
+		sdf.setTimeZone(TimeZone.getDefault());
+		return (sdf.format(now.getTime()));
+	}
+
+	public static int getCurrentMinutes() {
+		Calendar now = Calendar.getInstance(TimeZone.getDefault());
+		int iMin = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
+		return iMin;
+	}
+
+	public static String getCurZhCNDateTime() {
+		return dateToDateString(new Date(), ZHCN_TIME_FORMAT);
+	}
+
+	public static String getCrtMonth() {
+		Calendar now = Calendar.getInstance();
+		int month = now.get(Calendar.MONTH) + 1;
+		String monStr = String.valueOf(month);
+
+		if (month < 10)
+			monStr = "0" + monStr;
+		return monStr;
+	}
+
+	public static boolean isTimeExpired(String expireTime) throws ParseException {
+		boolean ret = false;
+
+		Date date = new SimpleDateFormat(TIME_STR_FORMAT).parse(expireTime);
+		Calendar expire = Calendar.getInstance();
+		expire.setTime(date);
+		Calendar now = Calendar.getInstance();
+
+		now.set(Calendar.MILLISECOND, 0);
+		if (now.after(expire)) {
+			ret = true;
+		}
+		return ret;
+	}
+
+	public static String getExpireTimeByCalculate(Date startTime, int availableTime) {
+
+		Calendar expire = Calendar.getInstance();
+
+		expire.setTime(startTime);
+
+		expire.add(Calendar.SECOND, availableTime);
+
+		return new SimpleDateFormat(TIME_STR_FORMAT).format(expire.getTime());
+
+	}
+
+	public static Date convertStringToDate(String date) throws ParseException {
+		return new SimpleDateFormat(TIME_STR_FORMAT).parse(date);
+	}
+
+	public static Date convertStringToDate(String date, String fotmat) throws ParseException {
+		return new SimpleDateFormat(fotmat).parse(date);
+	}
+
+	public static Date convertSimpleStringToDate(String date) throws ParseException {
+		return new SimpleDateFormat(DATE_FORMAT).parse(date);
+	}
+
+	public synchronized static String convertStringToZhCN(String date) throws ParseException {
+		return zhcnDateTimeStrFormat.format(dateTimeStrFormat.parse(date));
+	}
+
+	public static String getYesterdayDate() {
+
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.DAY_OF_MONTH, -1);
+		Date yesterday = cal.getTime();
+		return new SimpleDateFormat(DATE_FORMAT).format(yesterday);
+	}
+
+	public static String getDateFormat(Date date) {
+		return new SimpleDateFormat(DATE_FORMAT).format(date);
+	}
+
+	// public static String getStrDate(Calendar calendar,int strDateType){
+	// String year = String.valueOf(calendar.get(Calendar.YEAR));
+	// String month = (calendar.get(Calendar.MONTH) + 1) < 10 ? "0" +
+	// (calendar.get(Calendar.MONTH) + 1) :
+	// String.valueOf((calendar.get(Calendar.MONTH) + 1));
+	// String day = calendar.get(Calendar.DAY_OF_MONTH) < 10 ? "0" +
+	// calendar.get(Calendar.DAY_OF_MONTH) :
+	// String.valueOf(calendar.get(Calendar.DAY_OF_MONTH));
+	// String strDate = "";
+	//
+	// switch (strDateType) {
+	// case 1:
+	// strDate = year + "éªžï¿½ + month + "é�ˆï¿½ + day + "é�ƒï¿½;
+	// break;
+	// case 2:
+	// strDate = month + "é�ˆï¿½ + day + "é�ƒï¿½;
+	// break;
+	// case 3:
+	// strDate = year + "éªžï¿½;
+	// break;
+	// case 4:
+	// strDate = year + "-" + month + "-" + day;
+	// break;
+	// case 5:
+	// strDate = month + "-" + day;
+	// break;
+	// case 6:
+	// strDate = year;
+	// break;
+	// default:
+	// strDate = year + "-" + month + "-" + day;
+	// break;
+	// }
+	//
+	// return strDate;
+	// }
+
+	public static Date getOffsetSimpleDate(Date protoDate, int dateOffset, int type) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(protoDate);
+		cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DAY_OF_MONTH) - dateOffset);
+		if (type == 1) {
+			cal.set(Calendar.HOUR_OF_DAY, 0);
+			cal.set(Calendar.MINUTE, 0);
+		}
+		if (type == 2) {
+			cal.set(Calendar.MINUTE, 0);
+		}
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		return cal.getTime();
+	}
+
+	public static Date getOffsetHourDate(Date protoDate, int offsetHour) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(protoDate);
+		cal.set(Calendar.HOUR_OF_DAY, cal.get(Calendar.HOUR_OF_DAY) - offsetHour);
+		return cal.getTime();
+	}
+
+	public static int getDayCountBetweenDate(Date startDate, Date endDate) {
+		Calendar startCalendar = Calendar.getInstance();
+		startCalendar.setTime(startDate);
+		Calendar endCalendar = Calendar.getInstance();
+		endCalendar.setTime(endDate);
+		int i = 0;
+		while (endCalendar.compareTo(startCalendar) >= 0) {
+			startCalendar.set(Calendar.DAY_OF_MONTH, startCalendar.get(Calendar.DAY_OF_MONTH) + 1);
+			i++;
+		}
+		return i;
+	}
+
+	public static String getHourBeforeOne() {
+		Calendar calendar = Calendar.getInstance();
+		int hour = calendar.get(Calendar.HOUR_OF_DAY);
+		hour = hour - 1;
+		String hourStr = String.valueOf(hour);
+
+		if (hour < 10)
+			hourStr = "0" + hourStr;
+
+		if (hour < 1)
+			hourStr = "23";
+
+		return hourStr;
+	}
+
+	public static int getDayOfWeek(String date, String formatStr) throws ParseException
+
+	{
+		DateFormat format = getDateFormat(formatStr);
+		Calendar c = Calendar.getInstance();
+		c.setTime(format.parse(date));
+		int dayForWeek = 0;
+		if (c.get(Calendar.DAY_OF_WEEK) == 1) {
+			dayForWeek = 7;
+		} else {
+			dayForWeek = c.get(Calendar.DAY_OF_WEEK) - 1;
+		}
+		return dayForWeek;
+	}
+
+	public static int getDayOfDate(String date, String format) throws ParseException {
+		Date simple = new SimpleDateFormat(format).parse(date);
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(simple);
+		return cal.get(Calendar.DATE);
+	}
+
+	public static int getMonthOfDate(String date, String format) throws ParseException {
+		Date simple = new SimpleDateFormat(format).parse(date);
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(simple);
+		return cal.get(Calendar.MONTH) + 1;
+	}
+
+	public static boolean interMonth(String start, String end, String format) throws ParseException {
+		SimpleDateFormat simpleDate = new SimpleDateFormat(format);
+		Date startDate = simpleDate.parse(start);
+		Date endDate = simpleDate.parse(end);
+		Calendar cal = Calendar.getInstance();
+		int startYear = 0;
+		int startMonth = 0;
+		int endYear = 0;
+		int endMonth = 0;
+		cal.setTime(startDate);
+		startYear = cal.get(Calendar.YEAR);
+		startMonth = cal.get(Calendar.MONTH) + 1;
+		cal.setTime(endDate);
+		endYear = cal.get(Calendar.YEAR);
+		endMonth = cal.get(Calendar.MONTH) + 1;
+		if (startYear != endYear) {
+			return false;
+		} else {
+			if (startMonth != endMonth) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static Date add(Date date, int dateType, int i) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		cal.add(dateType, i);
+		return cal.getTime();
+	}
+
+	public static String getTodayTime() {
+		// get the supported ids for GMT-08:00 (Pacific Standard Time)
+		String[] ids = TimeZone.getAvailableIDs(8 * 60 * 60 * 1000);
+		// if no ids were returned, something is wrong. get out.
+		if (ids.length == 0) {
+			System.exit(0);
+			// create a Pacific Standard Time time zone
+		}
+		SimpleTimeZone pdt = new SimpleTimeZone(8 * 60 * 60 * 1000, ids[0]);
+		Date trialTime = new Date();
+		// calendar.setTime(trialTime);
+		SimpleDateFormat bartDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		bartDateFormat.setTimeZone(pdt);
+		StringBuffer currentDate = new StringBuffer(bartDateFormat.format(trialTime));
+		return currentDate.toString();
+	}
+
+	public static long strToLong(String str) {
+		long currentValue = 0;
+		try {
+			if (str != null && !str.trim().equals("null") && !str.trim().equals("")) {
+				currentValue = Long.parseLong(str);
+			}
+		}
+		catch (Exception ex)
+		{
+			LOG.log(Level.WARNING, "Exception in string to long conversion : "+str+" , Exception Message : "+ex.getMessage(), "");
+		}
+		return currentValue;
+
+	}
+
+	public static int getCurrentHour() {
+		// get the supported ids for GMT-08:00 (Pacific Standard Time)
+		String[] ids = TimeZone.getAvailableIDs(8 * 60 * 60 * 1000);
+		// if no ids were returned, something is wrong. get out.
+		if (ids.length == 0) {
+			System.exit(0);
+			// create a Pacific Standard Time time zone
+		}
+		SimpleTimeZone pdt = new SimpleTimeZone(8 * 60 * 60 * 1000, ids[0]);
+		Date trialTime = new Date();
+		SimpleDateFormat bartDateFormat = new SimpleDateFormat("HH");
+		bartDateFormat.setTimeZone(pdt);
+		StringBuffer currentDate = new StringBuffer(bartDateFormat.format(trialTime));
+		return strToInt(currentDate.toString());
+	}
+
+	public static String getCurrentDate() {
+		return getTodayTime();
+	}
+
+	public static int getIntDate() {
+		// get the supported ids for GMT-08:00 (Pacific Standard Time)
+		String[] ids = TimeZone.getAvailableIDs(8 * 60 * 60 * 1000);
+		// if no ids were returned, something is wrong. get out.
+		if (ids.length == 0) {
+			System.exit(0);
+			// create a Pacific Standard Time time zone
+		}
+		SimpleTimeZone pdt = new SimpleTimeZone(8 * 60 * 60 * 1000, ids[0]);
+		Date trialTime = new Date();
+		// calendar.setTime(trialTime);
+		SimpleDateFormat bartDateFormat = new SimpleDateFormat("MMddHHmmss");
+		bartDateFormat.setTimeZone(pdt);
+		StringBuffer currentDate = new StringBuffer(bartDateFormat.format(trialTime));
+		return strToInt(currentDate.toString());
+	}
+
+	public static int getMonth() {
+		// get the supported ids for GMT-08:00 (Pacific Standard Time)
+		String[] ids = TimeZone.getAvailableIDs(8 * 60 * 60 * 1000);
+		// if no ids were returned, something is wrong. get out.
+		if (ids.length == 0) {
+			System.exit(0);
+			// create a Pacific Standard Time time zone
+		}
+		SimpleTimeZone pdt = new SimpleTimeZone(8 * 60 * 60 * 1000, ids[0]);
+		Date trialTime = new Date();
+		// SimpleDateFormat bartDateFormat = new SimpleDateFormat("yyyyMM");
+		SimpleDateFormat bartDateFormat = new SimpleDateFormat("MM");
+		bartDateFormat.setTimeZone(pdt);
+		StringBuffer currentDate = new StringBuffer(bartDateFormat.format(trialTime));
+		return strToInt(currentDate.toString());
+	}
+
+	public static int getCurrentMonth() {
+		return getMonth();
+	}
+
+	public static int getCurrentYear() {
+		// get the supported ids for GMT-08:00 (Pacific Standard Time)
+		String[] ids = TimeZone.getAvailableIDs(8 * 60 * 60 * 1000);
+		// if no ids were returned, something is wrong. get out.
+		if (ids.length == 0) {
+			System.exit(0);
+			// create a Pacific Standard Time time zone
+		}
+		SimpleTimeZone pdt = new SimpleTimeZone(8 * 60 * 60 * 1000, ids[0]);
+		Date trialTime = new Date();
+		SimpleDateFormat bartDateFormat = new SimpleDateFormat("yyyy");
+		bartDateFormat.setTimeZone(pdt);
+		StringBuffer currentDate = new StringBuffer(bartDateFormat.format(trialTime));
+		return strToInt(currentDate.toString());
+	}
+
+	public static int strToInt(String str) {
+		int currentValue = 0;
+		try {
+			if (str != null && !str.trim().equals("null") && !str.trim().equals("")) {
+				currentValue = Integer.parseInt(str);
+			}
+		}
+		catch (Exception ex)
+		{
+			LOG.log(Level.WARNING, "Exception in string to int conversion : "+str+" , Exception Message : "+ex.getMessage(), "");
+		}
+		return currentValue;
+	}
+
+	public static java.sql.Date toSqlDate(Calendar c) {
+		return new java.sql.Date(c.getTimeInMillis());
+	}
+
+	public static Calendar getFirstDayOfWeek() {
+		Calendar monday = Calendar.getInstance();
+		return getADayOfWeek(monday, Calendar.MONDAY);
+	}
+
+	public static Calendar getFirstDayOfWeek(Calendar day) {
+		Calendar monday = (Calendar) day.clone();
+		return getADayOfWeek(monday, Calendar.MONDAY);
+	}
+
+	public static Calendar getLastDayOfWeek() {
+		Calendar sunday = Calendar.getInstance();
+		return getADayOfWeek(sunday, Calendar.SUNDAY);
+	}
+
+	public static Calendar getLastDayOfWeek(Calendar day) {
+		Calendar sunday = (Calendar) day.clone();
+		return getADayOfWeek(sunday, Calendar.SUNDAY);
+	}
+
+	private static Calendar getADayOfWeek(Calendar day, int dayOfWeek) {
+		int week = day.get(Calendar.DAY_OF_WEEK);
+		if (week == dayOfWeek)
+			return day;
+		int diffDay = dayOfWeek - week;
+		if (week == Calendar.SUNDAY) {
+			diffDay -= 7;
+		} else if (dayOfWeek == Calendar.SUNDAY) {
+			diffDay += 7;
+		}
+		day.add(Calendar.DATE, diffDay);
+		return day;
+	}
+
+	public static String convertDateToStr(Date value) {
+		if (value != null) {
+			try {
+				SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+				return sdf.format(value);
+			}
+			catch (Exception ex)
+			{
+				LOG.log(Level.WARNING, "Exception in date to string conversion : "+value.toString()+" , Exception Message : "+ex.getMessage(), "");
+			}
+		}
+		return null;
+	}
+
+	public static List<String> getPastFourQuarter() {
+		List<String> quarters = new ArrayList<String>();
+		Calendar cal = Calendar.getInstance();
+		quarters.add(convertToQuarter(cal));
+		cal.add(Calendar.MONTH, -3);
+		quarters.add(convertToQuarter(cal));
+		cal.add(Calendar.MONTH, -3);
+		quarters.add(convertToQuarter(cal));
+		cal.add(Calendar.MONTH, -3);
+		quarters.add(convertToQuarter(cal));
+		return quarters;
+	}
+
+	public static String convertToQuarter(Calendar cal) {
+		String quarter = "";
+		int month = cal.get(Calendar.MONTH) + 1;
+		int year = cal.get(Calendar.YEAR);
+		if (month >= 7 && month <= 9) {
+			quarter = "Q1";
+			year++;
+		} else if (month >= 10 && month <= 12) {
+			quarter = "Q2";
+			year++;
+		} else if (month >= 1 && month <= 3)
+			quarter = "Q3";
+		else if (month >= 4 && month <= 6)
+			quarter = "Q4";
+		return "FY" + String.valueOf(year).substring(2) + quarter;
+	}
+
+	public static Calendar[] convertQuarterToCalendar(String quarter) {
+		Calendar[] cals = new Calendar[2];
+		quarter = quarter.substring(2); // remove FY
+		int year = Integer.parseInt("20" + quarter.substring(0, 2));
+		Calendar cal1 = Calendar.getInstance();
+		Calendar cal2 = Calendar.getInstance();
+		if (quarter.substring(quarter.length() - 1, quarter.length()).equals("1")) {
+			cal1.set(Calendar.MONTH, 6);
+			cal2.set(Calendar.MONTH, 8);
+			cal1.set(Calendar.YEAR, year - 1);
+			cal2.set(Calendar.YEAR, year - 1);
+		} else if (quarter.substring(quarter.length() - 1, quarter.length()).equals("2")) {
+			cal1.set(Calendar.MONTH, 9);
+			cal2.set(Calendar.MONTH, 11);
+			cal1.set(Calendar.YEAR, year - 1);
+			cal2.set(Calendar.YEAR, year - 1);
+		} else if (quarter.substring(quarter.length() - 1, quarter.length()).equals("3")) {
+			cal1.set(Calendar.MONTH, 0);
+			cal2.set(Calendar.MONTH, 2);
+			cal1.set(Calendar.YEAR, year);
+			cal2.set(Calendar.YEAR, year);
+		} else if (quarter.substring(quarter.length() - 1, quarter.length()).equals("4")) {
+			cal1.set(Calendar.MONTH, 3);
+			cal2.set(Calendar.MONTH, 5);
+			cal1.set(Calendar.YEAR, year);
+			cal2.set(Calendar.YEAR, year);
+		}
+		cal1.set(Calendar.DATE, cal1.getActualMinimum(Calendar.DATE));
+		cal2.set(Calendar.DATE, cal2.getActualMaximum(Calendar.DATE));
+		cal1.set(Calendar.HOUR_OF_DAY, cal1.getActualMinimum(Calendar.HOUR_OF_DAY));
+		cal1.set(Calendar.MINUTE, cal1.getActualMinimum(Calendar.MINUTE));
+		cal1.set(Calendar.SECOND, cal1.getActualMinimum(Calendar.SECOND));
+		cal2.set(Calendar.HOUR_OF_DAY, cal2.getActualMaximum(Calendar.HOUR_OF_DAY));
+		cal2.set(Calendar.MINUTE, cal2.getActualMaximum(Calendar.MINUTE));
+		cal2.set(Calendar.SECOND, cal2.getActualMaximum(Calendar.SECOND));
+		cals[0] = cal1;
+		cals[1] = cal2;
+		return cals;
+	}
+
+	/**
+	 * calculate the work hours between two date;
+	 * 
+	 * @param startTime
+	 * @param endTime
+	 * @return
+	 */
+	public static int getDiffInhoursNoWeekends(Date startTime, Date endTime) {
+
+		Calendar start = Calendar.getInstance();
+		start.setTime(startTime);
+		int hoursOFstart = 0;
+		if (start.get(Calendar.DAY_OF_WEEK) != Calendar.SATURDAY
+				&& start.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
+			hoursOFstart = start.get(Calendar.HOUR_OF_DAY);
+		}
+
+		Calendar end = Calendar.getInstance();
+		end.setTime(endTime);
+
+		int hoursOfEnd = 0;
+		if (end.get(Calendar.DAY_OF_WEEK) != Calendar.SATURDAY && end.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
+			hoursOfEnd = end.get(Calendar.HOUR_OF_DAY);
+		}
+		String endDay = end.get(Calendar.YEAR) + "/" + end.get(Calendar.MONTH) + "/" + end.get(Calendar.DAY_OF_MONTH);
+
+		boolean isEnd = true;
+		int totalHours = 0;
+		int dayHours = 24;
+		while (isEnd) {
+			String startDay = start.get(Calendar.YEAR) + "/" + start.get(Calendar.MONTH) + "/"
+					+ start.get(Calendar.DAY_OF_MONTH);
+			// System.out.println("startDay===-----------=>>>"+startDay);
+			if (endDay.equalsIgnoreCase(startDay)) {
+				isEnd = false;
+			} else {
+				if (start.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY
+						|| start.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+					start.set(start.get(Calendar.YEAR), start.get(Calendar.MONTH), start.get(Calendar.DAY_OF_MONTH), 0,
+							0, 0);
+				} else {
+					totalHours = totalHours + dayHours;
+				}
+				// System.out.println(start.getTime()+"===>>totalHours===-----------=>>>"+totalHours);
+				start.add(Calendar.DAY_OF_WEEK, 1);
+			}
+		}
+
+		totalHours = totalHours + hoursOfEnd - hoursOFstart;
+		if (totalHours < 0)
+			totalHours = 0;
+		return totalHours;
+	}
+
+	public static int getDay(int hours) {
+		int mod = (hours % 24) == 0 ? 0 : 1;
+		int newDay = (int) (hours / 24) + mod;
+		return newDay;
+	}
+
+	/**
+	 * calculate work day.
+	 * 
+	 * @param startTime
+	 * @param endTime
+	 * @return
+	 */
+	public static int workDays(Date startTime, Date endTime) {
+		Calendar start = Calendar.getInstance();
+		start.setTime(startTime);
+		Calendar end = Calendar.getInstance();
+		end.setTime(endTime);
+		long day = 86400000;// one day's millis.
+		long mod = (end.getTimeInMillis() - start.getTimeInMillis()) / day;
+		int holidayNum = 0;
+		do {
+			if ((start.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY)
+					|| (start.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY))
+
+			{
+				holidayNum++;
+			}
+			start.add(Calendar.DAY_OF_WEEK, 1);
+		} while (start.getTimeInMillis() < end.getTimeInMillis());
+		int workDays = (int) (mod - holidayNum);
+		return workDays;
+	}
+
+	public static boolean isEmpty(String value) {
+		return (value == null || value != null && value.trim().length() == 0);
+	}
+
+	public static boolean isValidPriceValidity(NormalPricer md, String validity) {
+		if (!isValidValidity(validity, null, 0)) {
+			return false;
+		}
+		return true;
+	}
+
+	public static boolean isValidValidity(String dateStr, Date currentDate, int day) {
+		currentDate = getCurrentDateZeroHour();
+		boolean returnB = true;
+		if (dateStr == null)
+			return false;
+		try {
+			Date validityDate = validityDateFormat.parse(dateStr);
+			Calendar validityCal = Calendar.getInstance();
+			validityCal.setTime(validityDate);
+			validityCal.add(Calendar.DATE, day);
+			validityCal.set(Calendar.HOUR_OF_DAY, 0);
+			validityCal.set(Calendar.MINUTE, 0);
+			validityCal.set(Calendar.SECOND, 0);
+			validityCal.set(Calendar.MILLISECOND, 0);
+			if (validityCal.getTime().compareTo(currentDate) < 0) {
+				returnB = false;
+			}
+		} catch (ParseException e) {
+			LOG.log(Level.WARNING, "Exception while set the calendar properties in isValidValidity method"+e.getMessage(),"");
+			returnB = true;
+		}
+		return returnB;
+	}
+
+	public static boolean isValidShipmentValidity(Date shipmentValidity, Date currentDate) {
+
+		boolean returnB = true;
+		if (shipmentValidity != null && shipmentValidity.before(currentDate)) {
+			returnB = false;
+		}
+		return returnB;
+	}
+
+	public static boolean isValidMaterialDetail(Pricer md, String validity, Date shipmentValidity,
+			Date currentDate) {
+		int day = -4;
+		if (md != null && md instanceof ProgramPricer) {
+			day = -1;
+		}
+		if (!isValidValidity(validity, currentDate, day)) {
+			return false;
+		}
+		if (!isValidShipmentValidity(shipmentValidity, currentDate)) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * get begin time of current day.
+	 * 
+	 * @return
+	 */
+	public static Date getStartTime() {
+		Calendar todayStart = Calendar.getInstance();
+		todayStart.set(Calendar.HOUR_OF_DAY, 0);
+		todayStart.set(Calendar.MINUTE, 0);
+		todayStart.set(Calendar.SECOND, 0);
+		todayStart.set(Calendar.MILLISECOND, 0);
+		return todayStart.getTime();
+	}
+
+	/**
+	 * get end time of current day.
+	 * 
+	 * @return
+	 */
+	private static Date getEndTime() {
+		Calendar todayEnd = Calendar.getInstance();
+		todayEnd.set(Calendar.HOUR_OF_DAY, 23);
+		todayEnd.set(Calendar.MINUTE, 59);
+		todayEnd.set(Calendar.SECOND, 59);
+		todayEnd.set(Calendar.MILLISECOND, 99);
+		return todayEnd.getTime();
+	}
+
+	public static String getNextSunday(int count) {
+		GregorianCalendar currentDate = new GregorianCalendar();
+		Calendar strDate = Calendar.getInstance();
+		strDate.add(strDate.DATE, count);
+		System.out.println("==" + strDate.getTime());
+		currentDate.set(strDate.get(Calendar.YEAR), strDate.get(Calendar.MONTH), strDate.get(Calendar.DATE));
+		currentDate.add(GregorianCalendar.DATE, 6);
+		Date monday = currentDate.getTime();
+		SimpleDateFormat df = new SimpleDateFormat("MMdd");
+		String preMonday = df.format(monday);
+		return preMonday;
+	}
+
+	public static Date getPreviousSunday() {
+		Calendar currentDate = Calendar.getInstance();
+		currentDate.setTime(new Date());
+		currentDate.set(Calendar.HOUR_OF_DAY, 0);
+		currentDate.set(Calendar.MINUTE, 0);
+		currentDate.set(Calendar.SECOND, 0);
+		currentDate.set(Calendar.MILLISECOND, 0);
+		currentDate.add(Calendar.WEEK_OF_YEAR, -1);
+		currentDate.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
+		Date sunday = currentDate.getTime();
+		return sunday;
+	}
+
+	public static Date getPreviousSatDay() {
+		Calendar currentDate = Calendar.getInstance();
+		currentDate.setTime(new Date());
+		long day = 86400000;// one day's millis.
+		currentDate.set(Calendar.HOUR_OF_DAY, 23);
+		currentDate.set(Calendar.MINUTE, 59);
+		currentDate.set(Calendar.SECOND, 59);
+		currentDate.set(Calendar.MILLISECOND, 99);
+		currentDate.add(Calendar.WEEK_OF_YEAR, -1);
+		currentDate.set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY);
+		Date saturday = currentDate.getTime();
+		return saturday;
+	}
+
+	public static String getPrevioussSunday() {
+		Calendar currentDate = Calendar.getInstance();
+		currentDate.setTime(new Date());
+		long day = 86400000;// one day's millis.
+		currentDate.set(Calendar.HOUR_OF_DAY, 0);
+		currentDate.set(Calendar.MINUTE, 0);
+		currentDate.set(Calendar.SECOND, 0);
+		currentDate.set(Calendar.MILLISECOND, 0);
+		currentDate.add(Calendar.WEEK_OF_YEAR, -1);
+		currentDate.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
+		DateFormat df = new SimpleDateFormat(ZHCN_TIME_FORMAT);
+		String preMonday = df.format(currentDate.getTime());
+		return preMonday;
+	}
+
+	public static String getPreviousSSatDay() {
+		Calendar currentDate = Calendar.getInstance();
+		currentDate.setTime(new Date());
+		long day = 86400000;// one day's millis.
+		currentDate.set(Calendar.HOUR_OF_DAY, 23);
+		currentDate.set(Calendar.MINUTE, 59);
+		currentDate.set(Calendar.SECOND, 59);
+		currentDate.set(Calendar.MILLISECOND, 99);
+		currentDate.add(Calendar.WEEK_OF_YEAR, -1);
+		currentDate.set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY);
+		DateFormat df = new SimpleDateFormat(ZHCN_TIME_FORMAT);
+		String preMonday = df.format(currentDate.getTime());
+		return preMonday;
+	}
+
+	public static void main(String[] args) {
+		System.out.println(getPrevioussSunday());
+		System.out.println(getPreviousSSatDay());
+	}
+
+	public static String getDrmsKey(QuoteItem item) {
+		if (item.getDrmsNumber() != null && item.getDrNedaId() != null && item.getDrNedaLineNumber() != null) {
+			String key = "DRMS" + "/" + String.valueOf(item.getDrmsNumber()) + "/"
+					+ getDRMSFieldWithLeadingZero(item.getDrNedaId()) + "/"
+					+ getDRMSFieldWithLeadingZero(item.getDrNedaLineNumber());
+			// String key = "DRMS/1004730/001/001"; //exist
+			// String key = "DRMS/1080380/001/001"; //exist, dr expiry date null
+			return key;
+		}
+		return null;
+	}
+
+	public static String getDrmsKey(long drmsNumber, long drNedaId, long drNedaLineNumber) {
+		if (drmsNumber > 0 && drNedaId > 0 && drNedaLineNumber > 0) {
+			String key = "DRMS" + "/" + String.valueOf(drmsNumber) + "/" + getDRMSFieldWithLeadingZero(drNedaId) + "/"
+					+ getDRMSFieldWithLeadingZero(drNedaLineNumber);
+			return key;
+		}
+		return null;
+	}
+
+	public static Date getDrExpiryDate(XMLGregorianCalendar date) {
+		if (date != null && !(date.getYear() == 9999 && date.getMonth() == 12 && date.getDay() == 31)) {
+			Calendar calendar = Calendar.getInstance();
+			calendar.set(Calendar.YEAR, date.getYear());
+			calendar.set(Calendar.MONTH, date.getMonth() - 1);
+			calendar.set(Calendar.DAY_OF_MONTH, date.getDay());
+			calendar.set(Calendar.HOUR_OF_DAY, 15);
+			calendar.set(Calendar.MINUTE, 0);
+			calendar.set(Calendar.SECOND, 0);
+			calendar.set(Calendar.MILLISECOND, 0);
+			return calendar.getTime();
+		}
+		return null;
+	}
+
+	private static String getDRMSFieldWithLeadingZero(long number) {
+
+		String result = String.valueOf(number);
+		while (result.length() < 3) {
+			result = "0" + result;
+		}
+
+		return result;
+	}
+
+	private static String getDRMSFieldWithLeadingZero(Integer number) {
+		if (number == null) {
+			return null;
+		}
+		String result = String.valueOf(number);
+		while (result.length() < 3) {
+			result = "0" + result;
+		}
+
+		return result;
+	}
+
+	public static int compareQGPAndAGP(Double quotedGP, Double authorizedGP) {
+		if (authorizedGP == null) {
+			return 1;
+		}
+		long qgp = Math.round(quotedGP);
+		long agp = Math.round(authorizedGP);
+		return (int) (qgp - agp);
+
+	}
+
+	public static String roundGP(Double gp) {
+		if (gp == null) {
+			return null;
+		}
+		Long qgp = Math.round(gp);
+		return df0.format(qgp);
+	}
+
+	public static Date getCurrentDateZeroHour() {
+		Calendar cal = Calendar.getInstance();
+		cal.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+
+		return cal.getTime();
+	}
+
+	public static String object2String(Object obj) {
+		return obj == null ? "" : obj.toString();
+	}
+
+
+	/*
+	 * 1. The cost > 0 2. The MPQ exist and > 0 3. If MOQ > 0 or MOV > 0 4. The
+	 * Pricer Validity >= Today 5. The Quotation Effective Date <= Today 6. The
+	 * Quotation Effective To >= Today 7. If Shipment Validity exists, Shipment
+	 * Validity >= Today 8. Min sell > 0 9. Lead Time is not empty
+	 * 
+	 */
+
+	/*
+	 * 1. The cost > 0 2. The MPQ > 0 3. The MOV > 0 4. The Program Effective
+	 * Date >= Today 5. The Program Closing Date <= Today 6. The Pricer Validity
+	 * >= Today 7. The Quotation Effective Date <= Today 8. The Quotation
+	 * Effective To >= Today 9. Quantity Break Price Price > 0 10. Lead Time is
+	 * not empty
+	 * 
+	 */
+
+
+
+	public static Double calculateResalesMargin(Double cost, Double quotedPrice) {
+		Double returnD = null;
+		if (cost != null) {
+			if (cost.doubleValue() == DOUBLE_ZERO) {
+				if (quotedPrice != null && quotedPrice.doubleValue() > DOUBLE_ZERO) {
+					returnD = 100 * quotedPrice / quotedPrice;
+				}
+			} else if (cost.doubleValue() > DOUBLE_ZERO) {
+				if (quotedPrice != null && quotedPrice.doubleValue() > DOUBLE_ZERO) {
+					returnD = 100 * (quotedPrice - cost) / quotedPrice;
+				}
+			}
+		}
+		return returnD;
+	}
+
+	public static Double calculateTargetMargin(Double cost, Double targetResale) {
+		Double returnD = null;
+		if (cost != null) {
+			if (cost.doubleValue() == DOUBLE_ZERO) {
+				if (targetResale != null && targetResale.doubleValue() > DOUBLE_ZERO) {
+					returnD = 100 * targetResale / targetResale;
+				}
+			} else if (cost.doubleValue() > DOUBLE_ZERO) {
+				if (targetResale != null && targetResale.doubleValue() > DOUBLE_ZERO) {
+					returnD = 100 * (targetResale - cost) / targetResale;
+				}
+			}
+		}
+		return returnD;
+	}
+
+	public static Class getSuperClassGenricType(Class clazz, int index) throws IndexOutOfBoundsException {
+
+		Type genType = clazz.getGenericSuperclass();
+
+		if (!(genType instanceof ParameterizedType)) {
+			return Object.class;
+		}
+
+		Type[] params = ((ParameterizedType) genType).getActualTypeArguments();
+
+		if (index >= params.length || index < 0) {
+			return Object.class;
+		}
+		if (!(params[index] instanceof Class)) {
+			return Object.class;
+		}
+		return (Class<?>) params[index];
+	}
+
+	public static String rfqStatusPendingLaw(String status) {
+		String pending = null;
+		if (!isEmpty(status)) {
+			switch (status) {
+			case "QC":
+			case "RBQ":
+			case "RBIT":
+			case "RIT":
+				pending = "QC";
+				break;
+			case "BIT":
+			case "BQ":
+				pending = "BMT";
+				break;
+			case "IT":
+				pending = "PM";
+				break;
+			case "SQ":
+				pending = "SQ";
+				break;
+			}
+		}
+
+		return pending;
+
+	}
+
+	public static List<String> pendingAtStatusLaw(String pending) {
+		List<String> statuss = null;
+		if (!isEmpty(pending)) {
+			switch (pending) {
+			case "QC":
+				statuss = new ArrayList<String>();
+				statuss.add(StatusEnum.QC.toString());
+				statuss.add(StatusEnum.RBQ.toString());
+				statuss.add(StatusEnum.RBIT.toString());
+				statuss.add(StatusEnum.RIT.toString());
+				break;
+			case "BMT":
+				statuss = new ArrayList<String>();
+				statuss.add(StatusEnum.BIT.toString());
+				statuss.add(StatusEnum.BQ.toString());
+				break;
+			case "PM":
+				statuss = new ArrayList<String>();
+				statuss.add(StatusEnum.IT.toString());
+				break;
+			case "SQ":
+				statuss = new ArrayList<String>();
+				statuss.add(StatusEnum.SQ.toString());
+				break;
+			}
+		}
+		return statuss;
+	}
+
+	public static String getflagCodeByDesc(String flagDesc) {
+		String code = "99";
+		List<BmtFlagEnum> flags = Arrays.asList(BmtFlagEnum.values());
+		for (BmtFlagEnum flag : flags) {
+			if (flagDesc.equalsIgnoreCase(flag.description())) {
+				code = flag.code();
+				break;
+			}
+
+		}
+		return code;
+	}
+	
+	public static boolean isEqual(Boolean obj1, Boolean obj2) {
+		if(null==obj1|| null==obj2) {
+			return false;
+		}
+		return obj1.equals(obj2);
+	}
+}

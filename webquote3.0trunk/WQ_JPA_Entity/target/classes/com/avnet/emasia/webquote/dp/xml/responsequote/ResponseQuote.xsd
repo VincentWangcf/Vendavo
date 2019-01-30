@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.avnet.com/schema" elementFormDefault="qualified" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:avn="http://www.avnet.com/schema">
+
+    <complexType name="AvnQuoteIdentifierType">
+    	<sequence>
+    		<element name="referenceLineId" type="string" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    		<element name="lineItemNumber" type="string" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    		<element name="quoteLineStatus" type="string" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    		<element name="lostSaleReasonCode" type="string"
+    			maxOccurs="1" minOccurs="0">
+    		</element>
+    		<element name="lostSaleReasonDescription" type="string"
+    			maxOccurs="1" minOccurs="0">
+    		</element>
+    		<element name="noBidReasonCode" type="string" maxOccurs="1"
+    			minOccurs="0">
+    		</element>
+    		<element name="noBidReasonDescription" type="string"
+    			maxOccurs="1" minOccurs="0">
+    		</element>
+    		<element name="requestedManufacturer" type="string"
+    			maxOccurs="1" minOccurs="0">
+    		</element>
+    		<element name="requestedPart" type="string" maxOccurs="1"
+    			minOccurs="0">
+    		</element>
+    		<element name="quantity" type="string" maxOccurs="1"
+    			minOccurs="0">
+    		</element>
+    		<element name="quotedResale" type="string" maxOccurs="1"
+    			minOccurs="0">
+    		</element>
+    		<element name="lineItemComments" type="string" maxOccurs="1"
+    			minOccurs="0">
+    		</element>
+    		<element name="currency" type="string" maxOccurs="1"
+    			minOccurs="0">
+    		</element>
+    		<element name="remarks" type="string" maxOccurs="1"
+    			minOccurs="0">
+    		</element>
+    		<element name="expiryDate" type="string" maxOccurs="1"
+    			minOccurs="0">
+    		</element>
+    		<element name="rejectionReason" type="string" maxOccurs="1" minOccurs="0"></element>
+    	</sequence>
+    </complexType>
+
+    <complexType name="ResponseQuoteType">
+    	<sequence>
+    		<element name="referenceId" type="string" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    		<element name="quoteId" type="string" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    		<element name="AvnQuoteIdentifier" type="avn:AvnQuoteIdentifierType" maxOccurs="unbounded" minOccurs="1"></element>
+    	</sequence>
+    </complexType>
+
+    <complexType name="ResponseQuoteAcknowledgementType">
+    	<sequence>
+    		<element name="responseCode" type="string" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    		<element name="responseDescription" type="string"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="quoteId" type="string" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    	</sequence>
+    </complexType>
+
+    <element name="ResponseQuote" type="avn:ResponseQuoteType"></element>
+
+    <element name="ResponseQuoteAcknowledgement" type="avn:ResponseQuoteAcknowledgementType"></element>
+</schema>

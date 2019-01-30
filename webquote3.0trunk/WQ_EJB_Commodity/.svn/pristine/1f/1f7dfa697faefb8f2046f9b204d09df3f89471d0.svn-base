@@ -1,0 +1,201 @@
+package com.avnet.emasia.webquote.commodity.bean;
+
+import java.io.Serializable;
+
+/**
+ * show pricer upload count.
+ * New Part Created
+ * Part Updated
+ * Part Removed
+ * Normal Pricer Added
+ * Normal Pricer Updated
+ * Normal Pricer Removed
+ * Program Pricer Added
+ * Program Pricer Updated
+ * Program Pricer Removed
+ * Contract Pricer Added
+ * Contract Pricer Updated
+ * Contract Pricer Removed
+
+ * @author 914975
+ * 
+ */
+public class ProgramItemUploadCounterBean  implements Serializable{
+
+	private static final long serialVersionUID = 8503338386966128444L;
+	private int addedPartCount;
+	private int updatedPartCount;
+	private int removedPartCount;
+	private int addedNormalCount;
+	private int updatedNormalCount;
+	private int removedNormalCount;
+	private int addedProgramCount;
+	private int updatedProgramCount;
+	private int removedProgramCount;
+	private int addedContractPriceCount;
+	private int updatedContractPriceCount;
+	private int removedContractPriceCount;
+
+
+/*	private int noOfRecipients;
+	private int noOfCommodityItems;
+	private int noOfFireSaleItems;
+	private int qtyBreakPriceAddCount;
+	private int qtyBreakPriceUpdateCount;*/
+
+	public int getAddedContractPriceCount() {
+		return addedContractPriceCount;
+	}
+
+	public void setAddedContractPriceCount(int addedContractPriceCount) {
+		this.addedContractPriceCount = addedContractPriceCount;
+	}
+
+	public int getUpdatedContractPriceCount() {
+		return updatedContractPriceCount;
+	}
+
+	public void setUpdatedContractPriceCount(int updatedContractPriceCount) {
+		this.updatedContractPriceCount = updatedContractPriceCount;
+	}
+
+	public int getAddedNormalCount() {
+		return addedNormalCount;
+	}
+
+	public void setAddedNormalCount(int addedNormalCount) {
+		this.addedNormalCount = addedNormalCount;
+	}
+
+	public int getUpdatedNormalCount() {
+		return updatedNormalCount;
+	}
+
+	public void setUpdatedNormalCount(int updatedNormalCount) {
+		this.updatedNormalCount = updatedNormalCount;
+	}
+
+	public int getAddedProgramCount() {
+		return addedProgramCount;
+	}
+
+	public void setAddedProgramCount(int addedProgramCount) {
+		this.addedProgramCount = addedProgramCount;
+	}
+
+	public int getUpdatedProgramCount() {
+		return updatedProgramCount;
+	}
+
+	public void setUpdatedProgramCount(int updatedProgramCount) {
+		this.updatedProgramCount = updatedProgramCount;
+	}
+
+	public int getNumberOfFiresalesItem() {
+		return numberOfFiresalesItem;
+	}
+
+	public void setNumberOfFiresalesItem(int numberOfFiresalesItem) {
+		this.numberOfFiresalesItem = numberOfFiresalesItem;
+	}
+
+	public int getNumberOfCommodityItem() {
+		return numberOfCommodityItem;
+	}
+
+	public void setNumberOfCommodityItem(int numberOfCommodityItem) {
+		this.numberOfCommodityItem = numberOfCommodityItem;
+	}
+
+	private int numberOfFiresalesItem;
+	private int numberOfCommodityItem;
+	
+
+/*	public int getQtyBreakPriceAddCount() {
+		return qtyBreakPriceAddCount;
+	}
+
+	public void setQtyBreakPriceAddCount(int qtyBreakPriceAddCount) {
+		this.qtyBreakPriceAddCount = qtyBreakPriceAddCount;
+	}
+
+	public int getQtyBreakPriceUpdateCount() {
+		return qtyBreakPriceUpdateCount;
+	}
+
+	public void setQtyBreakPriceUpdateCount(int qtyBreakPriceUpdateCount) {
+		this.qtyBreakPriceUpdateCount = qtyBreakPriceUpdateCount;
+	}
+
+	public int getNoOfRecipients() {
+		return noOfRecipients;
+	}
+
+	public void setNoOfRecipients(int noOfRecipients) {
+		this.noOfRecipients = noOfRecipients;
+	}
+
+	public int getNoOfCommodityItems() {
+		return noOfCommodityItems;
+	}
+
+	public void setNoOfCommodityItems(int noOfCommodityItems) {
+		this.noOfCommodityItems = noOfCommodityItems;
+	}
+
+	public int getNoOfFireSaleItems() {
+		return noOfFireSaleItems;
+	}
+
+	public void setNoOfFireSaleItems(int noOfFireSaleItems) {
+		this.noOfFireSaleItems = noOfFireSaleItems;
+	}*/
+
+	public int getRemovedContractPriceCount() {
+		return removedContractPriceCount;
+	}
+
+	public void setRemovedContractPriceCount(int removedContractPriceCount) {
+		this.removedContractPriceCount = removedContractPriceCount;
+	}
+
+	public int getRemovedNormalCount() {
+		return removedNormalCount;
+	}
+
+	public void setRemovedNormalCount(int removedNormalCount) {
+		this.removedNormalCount = removedNormalCount;
+	}
+
+	public int getAddedPartCount() {
+		return addedPartCount;
+	}
+
+	public void setAddedPartCount(int addedPartCount) {
+		this.addedPartCount = addedPartCount;
+	}
+
+	public int getUpdatedPartCount() {
+		return updatedPartCount;
+	}
+
+	public void setUpdatedPartCount(int updatedPartCount) {
+		this.updatedPartCount = updatedPartCount;
+	}
+
+	public int getRemovedPartCount() {
+		return removedPartCount;
+	}
+
+	public void setRemovedPartCount(int removedPartCount) {
+		this.removedPartCount = removedPartCount;
+	}
+
+	public int getRemovedProgramCount() {
+		return removedProgramCount;
+	}
+
+	public void setRemovedProgramCount(int removedProgramCount) {
+		this.removedProgramCount = removedProgramCount;
+	}
+}

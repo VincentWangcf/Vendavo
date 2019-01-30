@@ -1,0 +1,282 @@
+package com.avnet.emasia.webquote.quote.ejb;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.Tuple;
+import javax.persistence.TypedQuery;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.ManufacturerDetail;
+import com.avnet.emasia.webquote.entity.ManufacturerMapping;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.ProductGroup;
+import com.avnet.emasia.webquote.entity.ReferenceMarginSetting;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.webservice.zwqrmtosap.ZquoteBlklst;
+
+
+/**
+ * Session Bean implementation class ManufacturerSB
+ */
+@Stateless
+@LocalBean
+public class ManufacturerSB {
+
+	@PersistenceContext(unitName="Server_Source")
+	EntityManager em;
+
+	private static final Logger LOG =Logger.getLogger(ManufacturerSB.class.getName());
+
+	/**
+	 * Default constructor. 
+	 */
+	public ManufacturerSB() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public List<Manufacturer> findAll(){
+		List<Manufacturer> manufacturers = em.createQuery("select m from Manufacturer m where m.description != null order by m.name", Manufacturer.class).getResultList();
+		return manufacturers;
+	}
+
+	public List<User> findPM(Manufacturer manufacturer){
+		//TODO
+		List<User> users = em.createQuery("select u from User u where u.", User.class).getResultList();
+		return null;
+	}
+
+	public List<Manufacturer> findManufacturerByBizUnit(BizUnit bizUnit){
+		Query query = em.createQuery("select m from Manufacturer m join fetch m.bizUnits b where b = :bizUnit order by m.name");
+		query.setParameter("bizUnit", bizUnit);
+		return query.getResultList();
+	}
+
+	public boolean existsManufacturerByBizUnit(BizUnit bizUnit, String mfrName){
+		Query query = em.createQuery("select m.id from Manufacturer m join fetch m.bizUnits b where m.name =:mfrName and b = :bizUnit order by m.name");
+		query.setParameter("bizUnit", bizUnit);
+		query.setParameter("mfrName", mfrName.trim());
+		return !query.getResultList().isEmpty();
+	}
+	
+	public List<Manufacturer> findManufacturerByBizUnits(List<BizUnit> bizUnits){
+		List<String> bu = new ArrayList<String>();
+		for(BizUnit bizUnit : bizUnits){
+			bu.add(bizUnit.getName());
+		}
+		TypedQuery<Manufacturer> query = em.createQuery("select m from Manufacturer m join m.bizUnits b where b in :bizUnits order by m.name", Manufacturer.class);
+		query.setParameter("bizUnits", bu);
+		return query.getResultList();
+	}
+
+
+	public List<ManufacturerDetail> findAllManufacturerDetail(){
+		Query query = em.createQuery("select md from ManufacturerDetail md");
+		return query.getResultList();	
+	}
+
+
+	public List<Manufacturer> mFindManufacturerByName(String name, List<BizUnit> bizUnits){
+
+		List<String> sBizUnits = new ArrayList<String>();
+		for(BizUnit bizUnit : bizUnits){
+			sBizUnits.add(bizUnit.getName());
+		}
+
+		TypedQuery<Manufacturer> query = em.createQuery("select DISTINCT m from Manufacturer m join m.bizUnits b where UPPER(m.name) like :name and b.name in :bizUnits", Manufacturer.class);
+		query.setParameter("bizUnits", sBizUnits)
+		.setParameter("name", "%" + name.toUpperCase() + "%");
+		return query.getResultList();
+	}
+
+	public List<ManufacturerDetail> findManufacturerDetailsByNameAndProductGroup(String name, String productGroup, BizUnit bizUnit){
+
+		String bizUnitString = bizUnit.getName();
+		
+		String queryStr = "select m from ManufacturerDetail m join m.bizUnit b where b.name = :bizUnitString";
+		
+		if(name!=null && name.length()>0)
+		{
+			queryStr += " and UPPER(m.manufacturer.name) like :name";
+		}
+		
+		if(productGroup!=null && productGroup.length()>0)
+		{
+			queryStr += " and UPPER(m.productGroup.name) like :productGroup";
+		}
+		
+		TypedQuery<ManufacturerDetail> query = em.createQuery(queryStr, ManufacturerDetail.class);
+		
+		query.setParameter("bizUnitString", bizUnitString);
+		
+		if(productGroup!=null && productGroup.length()>0)
+		{
+			query.setParameter("productGroup", "%" + productGroup.toUpperCase()+ "%");
+		}
+		
+		if(name!=null && name.length()>0)
+		{
+			query.setParameter("name", "%" + name.toUpperCase() + "%");
+		}
+		
+		return query.getResultList();
+	}
+	
+	public Manufacturer findManufacturerByName(String name, BizUnit bizUnit){
+		 try{
+		Query query = em.createQuery("select m from Manufacturer m join m.bizUnits b where UPPER(m.name) = :name and b = :bizUnit", Manufacturer.class);
+		query.setParameter("bizUnit", bizUnit)
+		.setParameter("name", name.toUpperCase());
+		return (Manufacturer)query.getSingleResult();
+		 }catch(NoResultException e){
+			 LOG.log(Level.SEVERE, "Exception in finding the manufacturer by name : "+name+" , business unit"+bizUnit+" , Exception message : "+e.getMessage(),e);
+			 return null;
+		 }
+	} 
+
+	public Manufacturer findManufacturerByName(String name){
+		TypedQuery<Manufacturer> query = em.createQuery("select m from Manufacturer m where m.name = :name", Manufacturer.class);
+		query.setParameter("name", name.toUpperCase());
+		List<Manufacturer> manufacturers = query.getResultList();
+		if (manufacturers.isEmpty()) {
+			return null;
+		} else {
+			return manufacturers.get(0);
+		}
+	} 
+	
+	// Added by Tonmy on 21 Aug 2013 .
+	public List<Manufacturer> findManufacturerLIstByName(String name, BizUnit bizUnit){
+		List<Manufacturer> resultLst = null;
+		if(name!=null)
+		{
+			name= name.trim();		
+			Query query = em.createQuery("select m from Manufacturer m join m.bizUnits b where UPPER(m.name) like :name and b = :bizUnit", Manufacturer.class);
+			//Changed by Tonmy at 6 Nov. checking issue .
+			query.setParameter("bizUnit", bizUnit).setParameter("name", name.toUpperCase());
+			resultLst = (List<Manufacturer>)query.getResultList();
+		}
+		return resultLst;
+	} 
+	
+	public Manufacturer findManufacturerByExactName(String name, List<BizUnit> bizUnits){
+
+		List<String> sBizUnits = new ArrayList<String>();
+		for(BizUnit bizUnit : bizUnits){
+			sBizUnits.add(bizUnit.getName());
+		}
+		
+		try
+		{
+			Query query = em.createQuery("select m from Manufacturer m join m.bizUnits b where UPPER(m.name) = :name and b.name in :bizUnits", Manufacturer.class);
+			query.setParameter("name", "%" + name.toUpperCase() + "%");
+			query.setParameter("bizUnits", sBizUnits);
+			return (Manufacturer)query.getSingleResult();
+		}
+		catch(Exception e)
+		{
+			LOG.log(Level.SEVERE, "Exception in finding the manufacturer by exact name : "+name+" , Exception message : "+e.getMessage(),e);
+			return null;
+		}
+	} 
+	
+	public List<ManufacturerMapping> findAllManufacturerMapping(){
+		List<ManufacturerMapping> manufacturersMappings = em.createQuery("select m from ManufacturerMapping m", ManufacturerMapping.class).getResultList();
+		return manufacturersMappings;
+	}
+	
+	public List<ReferenceMarginSetting> findAllReferenceMarginSetting(){
+		List<ReferenceMarginSetting> referenceMarginSettings = em.createQuery("select r from ReferenceMarginSetting r", ReferenceMarginSetting.class).getResultList();
+		return referenceMarginSettings;
+	}
+	
+	public void saveManufacturerDetail(ManufacturerDetail manufacturerDetail) {
+		em.persist(manufacturerDetail);
+    	em.flush();
+	}
+	
+	public void editManufacturerDetail(ManufacturerDetail manufacturerDetail) {
+		em.merge(manufacturerDetail);
+    	em.flush();
+	}
+	
+	public List<ManufacturerDetail> findManufacturerDetailsByMfrAndProductGroup(Manufacturer mfr, ProductGroup productGroup, BizUnit bizUnit){
+
+		String sql = "select d from ManufacturerDetail d join d.manufacturer m join d.bizUnit b " +
+				"where b.name = :bizUnit and m.id = :mfr and d.productGroup.id = :productGroup  ";
+		
+		
+		TypedQuery<ManufacturerDetail> query = em.createQuery(sql, ManufacturerDetail.class);
+		
+		query.setParameter("bizUnit", bizUnit.getName()).
+		setParameter("mfr", mfr.getId()).
+		setParameter("productGroup", productGroup.getId());
+		 
+		return query.getResultList();
+	}	
+	
+	public ManufacturerMapping findManufacturerMappingByBizUnit(BizUnit bizUnit, String mfrName){
+		Query query = em.createQuery("select m from ManufacturerMapping m join Manufacturer mfr where mfr.id=m.manufacturerID and mfr.name=:mfrName and m.bizUnitID =:bizUnit ");
+		query.setParameter("mfrName", mfrName);
+		query.setParameter("bizUnit", bizUnit.getName());
+		List<ManufacturerMapping> returnList = (List<ManufacturerMapping>)query.getResultList();
+		if(returnList!=null && returnList.size()>0)
+		{
+			return returnList.get(0);
+		}
+		else
+			return null;
+	}
+	
+	public boolean isPricerByBizUnitAndMfr(BizUnit bizUnit, String mfrName){
+		ManufacturerMapping mm = findManufacturerMappingByBizUnit(bizUnit,mfrName);
+		if(mm==null)
+			return false;
+		else
+		{
+			if(mm.getPricer()==null)
+				return false;
+			else
+				return mm.getPricer().booleanValue();
+		}
+	}
+	
+	public List<ZquoteBlklst> findAllManufacturerMappingForWebservice(){
+		Query  query = em.createQuery("select m.bizUnitID,mfr.name from ManufacturerMapping m"
+				+ " join Manufacturer mfr where mfr.id=m.manufacturerID  ",Tuple.class);
+		 List<ZquoteBlklst> list = new  ArrayList<ZquoteBlklst>();
+		List returnList = query.getResultList();
+		for(int i=0;i<returnList.size();i++){
+			Object[] tuple = (Object[]) returnList.get(i);
+			ZquoteBlklst bean = new ZquoteBlklst();
+			bean.setZregion((String) tuple[0]);			
+			bean.setMfrnr((String) tuple[1]);
+			list.add(bean);
+		}
+		
+		return list;
+	}
+
+	public Manufacturer save(Manufacturer manufacturer) {
+/*
+		Manufacturer mfr = em.merge(manufacturer);
+		//em.flush();
+		return mfr;
+*/		
+		return em.merge(manufacturer);
+	}
+
+	public void addNew(Manufacturer manufacturer) {
+		em.persist(manufacturer);
+	}
+
+}

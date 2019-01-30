@@ -1,0 +1,3 @@
+5) Fix INC0322393 by Lenon (add a task to call procedure INIT_PRICER_TYPE_MAPPING )
+INC0322338, Tough
+DRMS 2.6 upgrade project

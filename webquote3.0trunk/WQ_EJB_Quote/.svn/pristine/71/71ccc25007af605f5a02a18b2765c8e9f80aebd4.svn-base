@@ -1,0 +1,29 @@
+package com.avnet.emasia.webquote.rowdata.converter;
+
+import java.lang.reflect.Field;
+import java.math.BigDecimal;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.rowdata.AIntConverter;
+import com.avnet.emasia.webquote.rowdata.Bean;
+
+public class BigDecimalConverter extends DefaultConverter<AIntConverter>{
+	
+
+	@Override
+	public void convert(String value, Bean bean, Field field) {
+		if (StringUtils.isEmpty(value)) {
+			return;
+		}
+		
+		try {
+			field.set(bean, new BigDecimal(value));
+		} catch (Exception e) {
+			bean.putConvertError(field.getName(), e.getMessage());
+		}
+		
+	}
+
+
+}

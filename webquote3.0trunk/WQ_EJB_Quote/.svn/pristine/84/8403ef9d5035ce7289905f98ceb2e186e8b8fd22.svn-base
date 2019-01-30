@@ -1,0 +1,91 @@
+package com.avnet.emasia.webquote.columndata;
+
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
+
+public abstract class Converter<T> {
+	
+	abstract T convert(String value);
+	
+	private static Map<Class, Converter> converters = new HashMap<>();
+	
+	static {
+		converters.put(Integer.class, new IntegerConverter());
+		converters.put(Double.class, new DoubleConverter());
+		converters.put(String.class, new StringConverter());
+		
+	}
+	
+	public static Converter get(java.lang.reflect.Field field) {
+		Class<?> clazz = GenericUtil.getGenericType(field);
+		if (clazz == null) {
+			return null;
+		}
+		
+
+		
+		Converter converter = converters.get(clazz);
+		if (converter == null) {
+			converter = create(field);
+			converters.put(clazz, converter);
+		}
+		
+		
+ 		
+		
+		return converter;
+	}
+	
+	private static Converter create(java.lang.reflect.Field field) {
+		
+		return null;
+	}
+
+	
+	public static Converter get(Class clazz) {
+		
+		Converter converter = converters.get(clazz);
+		if (converter != null) {
+			return converter;
+		}
+		
+		converters.put(clazz, converter);
+		
+		return converter;
+	}
+	
+	static class StringConverter extends Converter<String> {
+		@Override
+		String convert(String value) {
+			return value;
+		}
+	}
+	
+	static class IntegerConverter extends Converter<Integer> {
+
+		@Override
+		Integer convert(String value) {
+			try {
+				return Integer.parseInt(value);
+			} catch (Exception e) {
+				return null;
+			}
+		}
+	}
+	
+	static class DoubleConverter extends Converter<Double> {
+
+		@Override
+		Double convert(String value) {
+			try {
+				return Double.parseDouble(value);
+			} catch (Exception e) {
+				return null;
+			}
+		}
+	}
+	
+
+}

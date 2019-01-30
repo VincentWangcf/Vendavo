@@ -1,0 +1,75 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+   
+	<ui:define name="content">
+	<p:messages id="errorMessage" escape="false" closable="true" autoUpdate="true" severity="error"/>		
+	 <p:growl id="growl" for="growl" showDetail="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" severity="info, warn"/> 
+     <p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+			<h:form id="pcrEnquiryForm">	
+				
+				<p:accordionPanel>
+					<p:tab title="#{dbResource['wq.label.partMasterCriteria']}">							
+						<h:panelGrid cellpadding="0" style="width:100%;" columns="10">																		
+													
+							<h:outputText value="#{dbResource['wq.label.mfr']}:"  escape="false" />
+							<h:selectOneMenu id="mfr" value="#{partMasterEnquiryMB.criteria.mfr}"  style="width:80%;">
+								<f:selectItems value="#{partMasterEnquiryMB.mfrSelectList}" />
+							</h:selectOneMenu>
+							
+							<h:outputText value="#{dbResource['wq.label.mfrPN']}:" />
+							<p:inputText value="#{partMasterEnquiryMB.criteria.partNumber}"  minQueryLength="5" global="false" />										
+						</h:panelGrid>
+						<h:panelGrid columns="3" cellpadding="0" >
+							<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search"  actionListener="#{partMasterEnquiryMB.parterMasterSearch}" update=":pcrEnquiryForm"  />					
+						    <p:commandButton value="#{dbResource['wq.button.sendOfflineReport']}" icon="ui-icon-search"  actionListener="#{partMasterEnquiryMB.createOfflineReportRep}"  update=":growl" />
+						<p:commandButton value="#{dbResource['wq.label.reset']}"  icon="ui-icon-triangle-1-w" actionListener="#{partMasterEnquiryMB.postContruct}" update=":pcrEnquiryForm" />
+						</h:panelGrid>
+					</p:tab>
+				</p:accordionPanel>				 
+		<p:panel header="#{dbResource['wq.label.partMasterList']}" style="font-size:12pt" >		
+			<h:outputText value="#{dbResource['wq.message.SearchCriteriaPrecisely']}." rendered="#{partMasterEnquiryMB.recordsExceedMaxAllowed}" style="color:red;font-weight:bold;"/>
+			
+			<p:dataTable var="item"
+							value="#{partMasterEnquiryMB.beans}"
+							rowKey="#{item.id}" 				 		
+							rowIndexVar="rowIndex"
+							id="pricr_datatable" 
+							editable="true"
+					 		selection="#{partMasterEnquiryMB.selectedBeans}" 	
+							resizableColumns="true" 
+							scrollable="true"  
+							paginator="true" 
+							rows="10" 
+							rowsPerPageTemplate="10,20,50"
+							emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+							<ui:remove> <p:column selectionMode="multiple" styleClass="column_checkBox" exportable="false"> </p:column>	</ui:remove>
+							<p:column headerText="#{dbResource['wq.button.no']}." id="rowNumber" width="5%">
+			        			<h:outputText value="#{rowIndex+1}"/>
+		        			</p:column>
+							<p:column headerText="#{dbResource['wq.label.mfr']}" id="mfr" width="30%">
+			        			<h:outputText value="#{item.manufacturer.name}"/>
+		        			</p:column>
+		        			<p:column headerText="#{dbResource['wq.label.mfrPN']}" id="fullPart" width="65%">
+								<h:outputText value="#{item.fullMfrPartNumber}"/>
+		        			</p:column>
+		        			
+						</p:dataTable>
+						
+				</p:panel>
+			
+
+				
+				
+			</h:form>
+	</ui:define>
+</ui:composition>

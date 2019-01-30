@@ -1,0 +1,3 @@
+1)Fix Ticket ICN0671813 --Lenon 2017/03/07
+
+2)Fix Ticket INC0671019  Sold To Party: displays the name for the customer --Peter 2017/03/09

@@ -1,0 +1,21 @@
+package com.avnet.emasia.webquote.commodity.constant;
+
+public enum PRICER_TYPE {
+
+	NORMAL("NORMAL"),PROGRAM("PROGRAM"), CONTRACT("CONTRACT"),PARTMASTER("PART MASTER"), ALLPRICER("ALLPRICER")
+	,SIMPLE("SIMPLE"), SALESCOST("SALES COST");
+
+	private String name;
+
+	private PRICER_TYPE( String name) {
+		this.setName(name);
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+}

@@ -1,0 +1,130 @@
+package com.avnet.emasia.webquote.cache;
+
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+//import java.util.List;
+import java.util.TreeMap;
+import java.util.logging.Logger;
+
+import javax.cache.integration.CacheLoader;
+import javax.cache.integration.CacheLoaderException;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+
+import com.avnet.emasia.webquote.entity.DesignLocation;
+
+
+public class TreeMapCacheLoader<K, V> implements CacheLoader<K, TreeMap<K,V>> {
+	private static final Logger LOG = Logger.getLogger(TreeMapCacheLoader.class.getName());
+	private EntityManager em;
+	
+	private TreeMap<String, Map> designLocationRegionMap = new TreeMap<String, Map>();
+	private TreeMap<String, String> designRegionMap = new TreeMap<String, String>();
+
+	public EntityManager getEm() {
+		return em;
+	}
+
+	public void setEm(EntityManager em) {
+		this.em = em;
+	}
+
+	public TreeMapCacheLoader(EntityManager em){
+		this.em = em;
+	}
+
+	@Override
+	public Map loadAll(Iterable keys) throws CacheLoaderException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public TreeMap<K,V>load(K key) throws CacheLoaderException {
+		LOG.info("=========================================");
+		LOG.info("EjbMapCache - Key: " + key + " - Load data from DB...");
+		//List<Country> countries = new ArrayList<Country>();
+		List<String> states = new ArrayList<String>();
+
+		String k = (String)key;
+
+		if(k.equals(Constants.DESIGN_LOCATION)){
+
+			TypedQuery<DesignLocation> query = em.createQuery("select distinct c from DesignLocation c order by c.name", DesignLocation.class);
+			List<DesignLocation> designLocations = query.getResultList();
+
+			TreeMap designLocationTree = new TreeMap();
+			Map<String,String> designLocationMap = new TreeMap();
+			Map<String,List<String>> regionLocationMap = new HashMap<>();
+
+			for(DesignLocation designLocation : designLocations){
+				putDesignLocation(designLocation, designLocationTree, designLocationMap, regionLocationMap);
+			}
+
+			designLocationRegionMap.put("DESIGN_LOCATION_TREE", designLocationTree);
+			designLocationRegionMap.put("DESIGN_LOCATION_MAP", designLocationMap);
+			designLocationRegionMap.put("REGION_LOCATION_MAP", regionLocationMap);
+			return (TreeMap<K,V>)designLocationRegionMap;
+		}else if(k.equals(Constants.DESIGN_REGION)){
+
+			TypedQuery<String> query = em.createQuery("select distinct c.designRegion from DesignLocation c order by c.name",String.class);
+			List<String> designRegions = query.getResultList();
+
+			for(String designRegion : designRegions){
+				putDesignRegion(designRegion);
+			}
+
+			return (TreeMap<K,V>)designRegionMap;
+
+		}
+		/*
+		else if(k.equals(Constants.DRMS_VALIDATION)){
+			Query query = em.createQuery("select c from SystemCodeMaintenance c where c.category = :category");
+			query.setParameter("category", "DRMS_VALIDATION_IMPL");
+			List<SystemCodeMaintenance> configList = query.getResultList();
+
+			if(configList != null && configList.size() > 0) {
+				Map<String,String> map = new HashMap<String,String>();
+				for(SystemCodeMaintenance config : configList) {
+					String region = config.getRegion().trim();
+					String value = config.getValue().trim();
+					map.put(region, value);
+				}
+				DrmsValidationUpdateStrategyFactory.getInstance().initImplMap(map);
+
+				TreeMap<String, DrmsValidationUpdateStrategyFactory> drmsValidationMap = new TreeMap<String, DrmsValidationUpdateStrategyFactory>();
+				drmsValidationMap.put(Constants.DRMS_VALIDATION, DrmsValidationUpdateStrategyFactory.getInstance());
+				return (TreeMap<K,V>)drmsValidationMap;
+			}
+
+			return null;
+		}
+*/
+		return null;
+
+	}
+
+	public void putDesignLocation(DesignLocation designLocation, TreeMap designLocationTree, 
+			Map<String,String> designLocationMap, Map<String,List<String>> regionLocationMap) {
+
+		designLocationTree.put(designLocation.getCode(), designLocation);
+		designLocationMap.put(designLocation.getCode(), designLocation.getCode());
+
+		if(regionLocationMap.get(designLocation.getDesignRegion()) == null){
+			List<String> sis = new ArrayList<>();
+			sis.add(designLocation.getCode());
+			regionLocationMap.put(designLocation.getDesignRegion(), sis);
+		}else{
+			regionLocationMap.get(designLocation.getDesignRegion()).add(designLocation.getCode());
+		}
+	}
+
+	public void putDesignRegion(String designRegion) {
+		designRegionMap.put(designRegion, designRegion);
+	}
+
+}
+

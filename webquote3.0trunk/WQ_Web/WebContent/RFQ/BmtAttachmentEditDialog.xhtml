@@ -1,0 +1,59 @@
+
+<ui:composition 
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<p:dialog header="#{dbResource['wq.header.attchmntList']}" widgetVar="attachment_edit_dialog" resizable="true" >
+		<p:panel header=""  id="attachment_panel" style="font-size:12pt">
+		
+		<p:fileUpload fileUploadListener="#{bmtInfoMB.addAttachmentForBMT}" 
+			update=":form:datatable_attachment" 
+			allowTypes="/(\.|\/)(xls|xlsx|zip|doc|docx|msg|pdf|txt|jpg|png|ppt|pptx|7z|XLS|XLSX|ZIP|DOC|DOCX|MSG|PDF|TXT|JPG|PNG|PPT|PPTX|7Z)$/" 
+			label="#{dbResource['wq.button.choose']}" uploadLabel="#{dbResource['wq.button.upload']}" cancelLabel="#{dbResource['wq.button.cancel']}" 
+			invalidFileMessage="#{dbResource['wq.error.invalidFileType']}" invalidSizeMessage="#{dbResource['wq.message.invalidFileSize']}"/> 
+									
+		    <p:dataTable	var="attachment"
+		    				value="#{bmtInfoMB.attachments}"
+		    				rowKey="#{attachment.id}" 		
+		    				rowIndexVar="attachment_rowIndex"
+		                 	id="datatable_attachment"
+		                 	style="margin:5px 0px 0px 0px;"
+		                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">		
+            	
+		        <p:column headerText="#{dbResource['wq.label.no']}">
+			        #{attachment_rowIndex + 1}
+		        </p:column>						      				       
+						
+		        <p:column headerText="#{dbResource['wq.label.fileName']}">
+		        	<p:commandLink >
+			        	<h:outputLabel value="#{attachment.fileName}" />  
+			    	</p:commandLink>
+		        </p:column>
+		        
+				<p:column headerText="">
+		        	<p:commandButton value="#{dbResource['wq.button.download']}" ajax="false">
+		        		<p:fileDownload value="#{bmtInfoMB.getFile(attachment.fileName)}" />
+					</p:commandButton>		        
+		        </p:column>
+		        
+				<p:column headerText="">
+		        	<p:commandButton rendered = "#{attachment.newAttachment}" value="#{dbResource['wq.label.delete']}"  
+		        	oncomplete="PF('confirmation').show(); var a = document.getElementById('form:confirmDialog_modal'); a.style.width=0" actionListener="#{bmtInfoMB.setDeleteFileName(attachment.fileName)}" >
+		        	</p:commandButton>
+		        </p:column>	
+		              		        	
+		        
+		    </p:dataTable>
+		    
+		</p:panel>
+	</p:dialog> 
+	
+	<p:confirmDialog id="confirmDialog" message="#{dbResource['wq.dialog.confirmDelAttchmnt']}" header="#{dbResource['wq.label.alert']}" severity="alert" widgetVar="confirmation">
+			<p:commandButton value="#{dbResource['wq.button.yes']}" actionListener="#{bmtInfoMB.deleteAttachmentForItem()}" update=":form:datatable_attachment" oncomplete="PF('confirmation').hide()" />
+			<p:commandButton value="#{dbResource['wq.button.no']}" onclick="PF('confirmation').hide()" type="button" />
+	</p:confirmDialog>
+
+</ui:composition>

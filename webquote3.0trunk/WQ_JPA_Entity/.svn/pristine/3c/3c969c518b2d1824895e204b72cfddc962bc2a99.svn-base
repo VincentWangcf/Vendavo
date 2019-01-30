@@ -1,0 +1,518 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Version;
+
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.vo.PricerInfo;
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+
+@Entity
+@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
+@Table(name="PRICER")
+@DiscriminatorColumn(name="PRICER_TYPE")
+public abstract class Pricer {
+	
+	@Id
+	@SequenceGenerator(name = "MATERIAL_DETAIL_ID_GENERATOR", sequenceName = "WQ_SEQ", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "MATERIAL_DETAIL_ID_GENERATOR")
+	@Column(unique = true, nullable = false)
+	private long id;
+	
+	@Column(name="AVNET_QC_COMMENTS")
+	private String avnetQcComments;	
+
+	@Column(precision = 10, scale = 5)
+	private Double cost;
+	
+	@Column(name="PRICER_TYPE")
+	private String pricerType;
+	
+	@ManyToOne
+	@JoinColumn(name = "COST_INDICATOR")
+	private CostIndicator costIndicator;
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "CREATED_ON", nullable = false)
+	private Date createdOn;
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "LAST_UPDATED_ON")
+	private Date lastUpdatedOn;
+	
+	@Column(name="LEAD_TIME", length=30)
+	private String leadTime;
+
+	@Column(precision = 10, scale = 3)
+	private Integer moq;
+	
+	@Column(precision = 10, scale = 3)
+	private Integer mpq;
+
+	@Column(precision=11, scale=2)
+	private Integer mov;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "SHIPMENT_VALIDITY")
+	private Date shipmentValidity;
+	
+	@Column(name = "TERMS_AND_CONDITIONS", length = 255)
+	private String termsAndConditions;
+	
+	@Column(name = "PRICE_VALIDITY", length = 10)
+	private String priceValidity;
+	
+	@Column(name = "\"VERSION\"")
+	@Version
+	private Integer version;
+	
+	@Column(name = "LAST_UPDATED_BY", length = 10)
+	private String lastUpdatedBy;
+	
+	@Column(name = "CREATED_BY", nullable = false, length = 10)
+	private String createdBy;
+	
+	@ManyToOne
+	@JoinColumn(name = "BIZ_UNIT", nullable = false)
+	private BizUnit bizUnitBean;
+	
+	@ManyToOne
+	@JoinColumn(name = "MATERIAL_ID", nullable = false)
+	private Material material;
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "QUOTATION_EFFECTIVE_DATE")
+	private Date quotationEffectiveDate;
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "QUOTATION_EFFECTIVE_TO")
+	private Date quotationEffectiveTo;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "DISPLAY_QUOTE_EFF_DATE", length = 7)
+	private Date displayQuoteEffDate;
+	
+	
+
+	public Pricer() {
+	}
+
+	
+	public long getId() {
+		return this.id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getPricerType() {
+		return pricerType;
+	}
+
+
+	public void setPricerType(String pricerType) {
+		this.pricerType = pricerType;
+	}
+
+
+	public Double getCost() {
+		return this.cost;
+	}
+
+	public void setCost(Double cost) {
+		this.cost = cost;
+	}
+
+	public CostIndicator getCostIndicator() {
+		return costIndicator;
+	}
+
+	public void setCostIndicator(CostIndicator costIndicator) {
+		this.costIndicator = costIndicator;
+	}
+
+	public Date getCreatedOn() {
+		return this.createdOn;
+	}
+
+	public void setCreatedOn(Date createdOn) {
+		this.createdOn = createdOn;
+	}
+
+	public Date getLastUpdatedOn() {
+		return this.lastUpdatedOn;
+	}
+
+	public void setLastUpdatedOn(Date lastUpdatedOn) {
+		this.lastUpdatedOn = lastUpdatedOn;
+	}
+
+	public String getLeadTime() {
+		return this.leadTime;
+	}
+
+	public void setLeadTime(String leadTime) {
+		this.leadTime = leadTime;
+	}
+	
+	public Integer getMov() {
+		return this.mov;
+	}
+
+	public void setMov(Integer mov) {
+		this.mov = mov;
+	}
+	
+	public Integer getMoq() {
+		return this.moq;
+	}
+
+	public void setMoq(Integer moq) {
+		this.moq = moq;
+	}
+
+	public Integer getMpq() {
+		return this.mpq;
+	}
+
+	public void setMpq(Integer mpq) {
+		this.mpq = mpq;
+	}
+
+	public Date getShipmentValidity() {
+		return this.shipmentValidity;
+	}
+
+	public void setShipmentValidity(Date shipmentValidity) {
+		this.shipmentValidity = shipmentValidity;
+	}
+
+	public String getPriceValidity() {
+		return priceValidity;
+	}
+
+	public void setPriceValidity(String priceValidity) {
+		this.priceValidity = priceValidity;
+	}
+
+	public Integer getVersion() {
+		return this.version;
+	}
+
+	public void setVersion(Integer version) {
+		this.version = version;
+	}
+
+	public String getLastUpdatedBy() {
+		return lastUpdatedBy;
+	}
+
+	public void setLastUpdatedBy(String lastUpdatedBy) {
+		this.lastUpdatedBy = lastUpdatedBy;
+	}
+
+	public String getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public BizUnit getBizUnitBean() {
+		return this.bizUnitBean;
+	}
+
+	public void setBizUnitBean(BizUnit bizUnitBean) {
+		this.bizUnitBean = bizUnitBean;
+	}
+
+	public Material getMaterial() {
+		return this.material;
+	}
+
+	public void setMaterial(Material material) {
+		this.material = material;
+	}
+
+	public Date getQuotationEffectiveTo() {
+		return quotationEffectiveTo;
+	}
+
+	public void setQuotationEffectiveTo(Date quotationEffectiveTo) {
+		this.quotationEffectiveTo = quotationEffectiveTo;
+	}
+
+	public Date getDisplayQuoteEffDate() {
+		return this.displayQuoteEffDate;
+	}
+
+	public void setDisplayQuoteEffDate(Date displayQuoteEffDate) {
+		this.displayQuoteEffDate = displayQuoteEffDate;
+	}
+	
+	public String getTermsAndConditions() {
+		return termsAndConditions;
+	}
+
+	public void setTermsAndConditions(String termsAndConditions) {
+		this.termsAndConditions = termsAndConditions;
+	}
+
+	public Date getQuotationEffectiveDate() {
+		return quotationEffectiveDate;
+	}
+
+	public void setQuotationEffectiveDate(Date quotationEffectiveDate) {
+		this.quotationEffectiveDate = quotationEffectiveDate;
+	}
+	
+	public String getAvnetQcComments() {
+		return avnetQcComments;
+	}
+
+	public void setAvnetQcComments(String avnetQcComments) {
+		this.avnetQcComments = avnetQcComments;
+	}
+
+	
+	public RfqItemVO fillInPricer(RfqItemVO itemVo){
+		itemVo.setCostIndicatorType(getCostIndicatorType());
+		itemVo.setMaterial(getMaterial());
+		return itemVo;
+	}
+	
+	boolean isEffectivePricer(){
+		Date tempDate = getCurrentDateZeroHour();
+		return (this.getQuotationEffectiveDate() != null 
+				&& !this.getQuotationEffectiveDate().after(tempDate))
+				&& (this.getQuotationEffectiveTo() != null 
+				&& !this.getQuotationEffectiveTo().before(tempDate));
+	}
+	
+
+	Date getCurrentDateZeroHour() {
+		Calendar cal = Calendar.getInstance();
+		cal.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		return cal.getTime();
+	}
+
+	public static final String A_BOOK_COST = "A-Book Cost";
+
+	public boolean isABookCostPricer() {
+		return costIndicator != null && StringUtils.equalsIgnoreCase(A_BOOK_COST, costIndicator.getName()) && (this instanceof NormalPricer);
+	}
+	
+	public void fillupPricerInfo(PricerInfo pricerInfo) {
+		pricerInfo.setPricerId(id);
+		//allocationFlag, set in Prier and SubClass.
+		pricerInfo.setAllocationFlag(false);
+		pricerInfo.setQcComment(avnetQcComments);
+		//BOTTOM_PRICE, set in SubClass
+		//Cancellation window, set by ManufacturerDetail
+		pricerInfo.setCost(cost);
+		if (costIndicator != null) {
+			pricerInfo.setCostIndicator(costIndicator.getName());
+		}
+		//DESCRIPTION, only NormalPricer SubClass has description
+		pricerInfo.setLeadTime(leadTime);
+		
+		//MATERIAL_TYPE_ID, set in SubClass
+		//MIN_SELL_PRICE, set in SubClass
+		pricerInfo.setMoq(moq);
+		pricerInfo.setMov(mov);
+		pricerInfo.setMpq(mpq);
+		
+		//multiple usage flag, set by ManufacturerDetail, override by some SubClass
+
+		//pmoq, set to null for all pricer
+		//po expirty date , set after user fill priceValidity?
+		//PRICE_LIST_REMARKS_1-4, only NormalPricer has
+		pricerInfo.setPriceValidity(priceValidity);
+		
+		//below 4 set by MaterialRegional
+		//PRODUCT_GROUP2_ID
+		//PRODUCT_GROUP1_ID
+		//PRODUCT_GROUP3
+		//PRODUCT_GROUP4
+		
+		//PROGRAM_TYPE, set by SubClass
+		//qty indicator, set by ManufacturerDetail, override in SubClass
+		//quote expirty date, set after user fill PriceValidity?
+		//quoted qty, all null
+		//resale indicator, set in ManufacturerDetail and override in SubClass
+		//reschedule window, set by ManufacturerDetail
+		
+		//below 3, set in SalesCostPricer SubClass
+		//SALES_COST, 
+		//SALES_COST_TYPE
+		//SALES_COST_FLAG
+
+		pricerInfo.setShipmentValidity(shipmentValidity);
+		//SUGGESTED_RESALE, only set in SalesCostPricer 
+		pricerInfo.setTermsAndConditions(termsAndConditions);
+		
+		
+		//TO-DO pricerInfo. multiusage
+//		material.getAbookPricer(bizUnitBean.getName()).fillupPricerInfo(pricerInfo);
+		
+		pricerInfo.setQuotationEffectiveDate(quotationEffectiveDate);
+		pricerInfo.setDisplayQuoteEffDate(displayQuoteEffDate);	
+		
+		
+	}
+	
+	void applyCostIndicator(PricerInfo pricerInfo) {
+		NormalPricer aBookCostPricer = this.getMaterial().getEffectiveOrExpiredABookCostPricer(bizUnitBean.getName());
+		costIndicator.fill(aBookCostPricer, pricerInfo);
+		
+	}
+	
+	public abstract String getCostIndicatorType();
+	
+	abstract int getPriority();
+	
+	abstract boolean allowOverride();
+	
+	abstract boolean isCustomerMatched(Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers);
+	
+	// tell if this pricer's salesCostFlag match the MaterialRegional's salesCostFlag definition 
+	abstract boolean isSalesCostTypeMatched();
+	
+	// tell if this pricer's salesCostFlag match the input parameter  
+	abstract boolean isSalesCostTypeMatched(boolean salesCostType);
+	
+	boolean isRegionMatched(String region) {
+		return bizUnitBean.getName().equalsIgnoreCase(region);
+//		return bizUnitBean.getSelfAndAllSubBizUnits().contains(region);
+		
+	}
+	
+	boolean isRegionCustomerTypeMatched(String region, Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers) {
+		return isRegionMatched(region) && isCustomerMatched(soldToCustomer, endCustomer, allowedCustomers) && isSalesCostTypeMatched();
+	}
+	
+	boolean isRegionCustomerTypeMatched(String region, Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers, boolean salesCostFlag) {
+		return isRegionMatched(region) && isCustomerMatched(soldToCustomer, endCustomer, allowedCustomers) && isSalesCostTypeMatched(salesCostFlag);
+	}
+
+	boolean isRegionCustomerTypeMatched(PricerInfo pricerInfo) {
+		return isRegionCustomerTypeMatched(pricerInfo.getBizUnit(), pricerInfo.getSoldToCustomer(), 
+				pricerInfo.getEndCustomer(), pricerInfo.getAllowedCustomers(), pricerInfo.isSalesCostFlag());
+	}
+
+	
+	boolean isValidPriceValidity(){
+		return true;
+	}
+	
+	boolean isValidShipmentValidity(){
+		return true;
+	}
+	
+/*	boolean matchAQCondition(RfqItemVO rfqItemVo) {
+		if (mpq == null || mpq.intValue() == 0) {
+			return false;
+		}
+		
+		if((moq == null || moq.intValue()== 0) && (mov == null || mov.intValue()==0)) {
+			return false;
+		}
+			
+		if(leadTime == null) {
+			return false;
+		}
+		
+		return true;
+	}*/
+	
+	public static final String RFQ_COST_INDICATOR_TYPE_N = "N";
+	public static final String RFQ_COST_INDICATOR_TYPE_C = "C";
+	public static final String RFQ_COST_INDICATOR_TYPE_P = "P";
+
+
+
+	public static final String EMPTY = "";
+
+
+	public void fillupPricerWithSalesCostInfo(PricerInfo pricerInfo, String region) {
+		
+		MaterialRegional materialRegional = getMaterialRegionalByMaterialandRegion(this.getMaterial(),region);
+		pricerInfo.setSalesCostPart("No");
+	}
+
+
+	private MaterialRegional getMaterialRegionalByMaterialandRegion(Material material2, String region) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	boolean matchAQCondtions(Double targetResale, int requestedQty) {
+		if (mpq == null || mpq == 0) {
+			return false;
+		}
+		/*
+		if((moq == null || moq== 0) && (mov == null || mov == 0)) {
+			return false;
+		}
+		
+		
+		if (StringUtils.isEmpty(leadTime)) {
+			return false;
+		}
+		*/
+		
+		if (cost == null || cost <= 0) {
+			return false;
+		}
+		
+		if (costIndicator == null || StringUtils.isEmpty(costIndicator.getName())) {
+			return false;
+		}
+		
+		if (StringUtils.isAllLowerCase(priceValidity)) {
+			return false;
+		}
+		
+		return true;
+	}
+	
+	Date getPriceValidityAsDate() {
+		if (StringUtils.isEmpty(priceValidity)) {
+			return null;
+		}
+		if(priceValidity.matches("[0-9]{1,}")) {
+			int i = Integer.parseInt(priceValidity);
+	
+		}
+		return null;
+	}
+	
+}

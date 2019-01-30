@@ -1,0 +1,7 @@
+1)Fix Incident- INC0569256��june.guo 2015-10-24
+2)Fix Incident -INC0573693 to make the hide column keep same among offline report, screen and exported function June Guo 2016-11-08
+3)Fix Ticket INC0588498 - Lenon
+4)Fix Ticket INC0586568 - Lenon
+5)One china project -- remove hard code  -- Lenon
+6)GTS project ----demon chen
+7)SR  Mass upload final price -----demon chen

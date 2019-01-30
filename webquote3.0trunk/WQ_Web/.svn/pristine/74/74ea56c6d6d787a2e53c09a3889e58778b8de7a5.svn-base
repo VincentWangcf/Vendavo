@@ -1,0 +1,20 @@
+package com.avnet.emasia.webquote.cluster.dispatcher;
+import java.util.logging.Logger;
+
+import org.wildfly.clustering.dispatcher.Command;
+import org.wildfly.clustering.group.Node;
+
+import com.avnet.emasia.webquote.audit.web.AuditMB;
+ 
+public class CacheSynchronizationCommand implements Command<String, Node> {
+	static Logger logger = Logger.getLogger(AuditMB.class.getName());
+    @Override
+    public String execute(Node node) {
+        //do it here 
+       //System.gc();
+    	logger.info(node.getName() + " done.");
+    	return node.getName();
+    }
+  
+}
+

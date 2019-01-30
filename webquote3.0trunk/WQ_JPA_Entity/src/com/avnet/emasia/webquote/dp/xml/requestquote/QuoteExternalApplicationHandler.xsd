@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="http://remoting.qrt.avnet.com" xmlns:mstns="http://remoting.qrt.avnet.com"
+	xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+	attributeFormDefault="qualified" elementFormDefault="qualified">
+	<xsd:element name="WebRequestObject">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element minOccurs="0" name="contactEmailAddress"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="contactName"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="contactPhoneNo"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="customerOnDockDate"
+					nillable="true" type="xsd:date" />
+				<xsd:element minOccurs="0" name="customerQuote"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="dateDuetoCustomer"
+					nillable="true" type="xsd:date" />
+				<xsd:element minOccurs="0" name="dateDuetoSales"
+					nillable="true" type="xsd:date" />
+				<xsd:element minOccurs="0" name="endCustomerAccountNo"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="endUserAccountNo"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="headerStatusCode"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="headerStatusDesc"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="inputMethod"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="operation"
+					nillable="true">
+					<xsd:simpleType>
+						<xsd:restriction base="xsd:string">
+							<xsd:enumeration value="Create Quote" />
+							<xsd:enumeration value="Closure Request" />
+						</xsd:restriction>
+					</xsd:simpleType>
+				</xsd:element>
+				<xsd:element minOccurs="0" name="quoteId"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0"
+					name="quoteProjectOrBoardName" nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="quoteStatus"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="referenceID"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="salesOffice"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="salesOrganization"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="shipToAccountNo"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="shipToAddress1stLine"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="shipToAddress2ndLine"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="shipToAddress3rdLine"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="shipToAddressCity"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="shipToAddressCountry"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="shipToAddressState"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="shipToAddresszipCode"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="shipToAttention"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="shipToCustomerName"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="soldToAddress1stLine"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="soldToAddress2ndLine"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="soldToAddress3rdLine"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="soldToAddressCity"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="soldToAddressCountry"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="soldToAddressState"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="soldToAddresszipCode"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="soldToAttention"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0"
+					name="soldToCustomerAccountNo" nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="soldToCustomerName"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="source" nillable="true"
+					type="xsd:string" />
+				<xsd:element maxOccurs="unbounded" minOccurs="0"
+					name="webQuoteLineRequest" nillable="true"
+					type="mstns:WebQuoteLineRequest" />
+				<xsd:element name="customerType" type="xsd:string"
+					maxOccurs="1" minOccurs="0">
+				</xsd:element>
+				<xsd:element name="segment" type="xsd:string"
+					maxOccurs="1" minOccurs="0">
+				</xsd:element>
+				<xsd:element name="salesPersonId" type="xsd:string"
+					maxOccurs="1" minOccurs="0">
+				</xsd:element>
+				<xsd:element name="quoteType" type="xsd:string"
+					maxOccurs="1" minOccurs="0">
+				</xsd:element>
+				<xsd:element name="rfqCreationTimestamp" type="xsd:string" maxOccurs="1" minOccurs="0"></xsd:element>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:complexType name="WebQuoteLineRequest">
+		<xsd:sequence>
+			<xsd:element minOccurs="0" name="comments" nillable="true"
+				type="xsd:string" />
+			<xsd:element minOccurs="0" name="lineStatusCode"
+				nillable="true" type="xsd:string" />
+			<xsd:element minOccurs="0" name="lineStatusDesc"
+				nillable="true" type="xsd:string" />
+			<xsd:element minOccurs="0" name="quantity1" nillable="true"
+				type="xsd:string" />
+			<xsd:element minOccurs="0" name="quantity2" nillable="true"
+				type="xsd:string" />
+			<xsd:element minOccurs="0" name="quantity3" nillable="true"
+				type="xsd:string" />
+			<xsd:element minOccurs="0" name="referenceLineID"
+				nillable="true" type="xsd:string" />
+			<xsd:element minOccurs="0" name="requestedDescription"
+				nillable="true" type="xsd:string" />
+			<xsd:element minOccurs="0" name="requestedManufacturer"
+				nillable="true" type="xsd:string" />
+			<xsd:element minOccurs="0" name="requestedPart"
+				nillable="true" type="xsd:string" />
+			<xsd:element minOccurs="0" name="requestedTLA"
+				nillable="true" type="xsd:string" />
+			<xsd:element minOccurs="0" name="targetResale"
+				nillable="true" type="xsd:string" />
+			<xsd:element name="currency" type="xsd:string" maxOccurs="1" minOccurs="0"></xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:element name="WebResponseObject">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element minOccurs="0" name="headerErrorCode"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="headerErrorDesc"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="lineErrorCode"
+					nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="lineErrorDesc"
+					nillable="true" type="xsd:string" />
+				<xsd:element maxOccurs="unbounded" minOccurs="0"
+					name="lineItemNum" nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="operation" nillable="true"
+					type="xsd:string" />
+				<xsd:element minOccurs="0" name="quoteId" nillable="true"
+					type="xsd:string" />
+				<xsd:element minOccurs="0" name="referenceId" nillable="true"
+					type="xsd:string" />
+				<xsd:element maxOccurs="unbounded" minOccurs="0"
+					name="referenceLineId" nillable="true" type="xsd:string" />
+				<xsd:element minOccurs="0" name="responseCode" nillable="true"
+					type="xsd:string" />
+				<xsd:element minOccurs="0" name="responseDesc" nillable="true"
+					type="xsd:string" />
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+</xsd:schema>

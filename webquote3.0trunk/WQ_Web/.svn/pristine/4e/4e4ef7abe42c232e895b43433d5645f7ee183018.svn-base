@@ -1,0 +1,266 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core">
+	
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+
+	<ui:define name="content">	
+		<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();" />
+
+		<h:form id="form" acceptcharset="UTF-8">
+		<p:growl id="vendorQMainGrowl" for="workingPlatformKey" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" showDetail="true"/> 
+			<p:accordionPanel>
+				<p:tab title="#{dbResource['wq.label.sendVendorQuotation']}">
+
+					<h:panelGrid cellpadding="0" style="width:100%;" columns="8">
+
+						<h:outputText value="#{dbResource['wq.label.avnetQuote']}#:" escape="false" />
+						<p:inputText   value="#{sendVendorQuotationMB.criteria.rfqCode}" />
+
+						<h:outputText value="#{dbResource['wq.label.mfr']}:" />
+						<p:inputText  value="#{sendVendorQuotationMB.criteria.mfr[0]}" readonly="true"/>
+
+
+						<h:outputText value="#{dbResource['wq.label.mfrPN']}:" />
+						<p:inputText  value="#{sendVendorQuotationMB.criteria.quotedPartNumber}" />						
+
+						<h:outputText value="#{dbResource['wq.label.bpmCode']}:" /> 
+						<p:inputText  value="#{sendVendorQuotationMB.criteria.bpmCode}" />
+
+					</h:panelGrid>
+
+					<h:panelGrid columns="3" cellpadding="0">
+						<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search" actionListener="#{sendVendorQuotationMB.sendSearch}" update="@form" />
+						<p:commandButton value="#{dbResource['wq.label.reset']}"  icon="ui-icon-triangle-1-w" actionListener="#{sendVendorQuotationMB.postContruct}" update="@form"/>
+					</h:panelGrid>				
+				</p:tab>		
+			</p:accordionPanel>
+		
+			<p:panel header="#{dbResource['wq.label.sendVendorQuotationList']}" style="font-size:12pt">
+				<p:growl id="messages" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}"  closable="true" />
+				<h:outputText
+					value="#{dbResource['wq.message.SearchCriteriaPrecisely']}."
+					rendered="#{sendVendorQuotationMB.recordsExceedMaxAllowed}"
+					style="color:red;font-weight:bold;" />
+					
+			<h:panelGrid columns="18" cellpadding="0" >
+	      		<p:commandButton value="#{dbResource['wq.button.sendSADAQuote']}" update="@form" action="#{sendVendorQuotationMB.goToSendQuotePage('SADA')}" /> 
+	      		<p:commandButton value="#{dbResource['wq.button.sendSGAQuote']}" update="@form" action="#{sendVendorQuotationMB.goToSendQuotePage('SGA')}" /> 
+			</h:panelGrid>
+			<p:dataTable 
+					var="vo" 
+					value="#{sendVendorQuotationMB.sendQuoteVos}"
+					rowKey="#{vo.seq}" 
+					paginator="true" 
+					rowIndexVar="rowIndex"
+					rows="10" 
+					rowsPerPageTemplate="10,20,50"
+					selection="#{sendVendorQuotationMB.selectedVos}"
+					filteredValue="#{sendVendorQuotationMB.filteredVos}"
+					id="datatable_sendlist"
+					paginatorPosition="top"
+					scrollable="true"
+					scrollHeight="350"
+					emptyMessage="#{dbResource['wq.message.noRecordFound']}."
+					> 
+					<p:ajax event="rowSelect" listener="#{sendVendorQuotationMB.updateSelectedQuoteItem}"/>
+					<p:ajax event="rowSelectCheckbox" listener="#{sendVendorQuotationMB.updateSelectedQuoteItem}"/>	
+					
+					<p:column selectionMode="multiple" styleClass="column_icon" exportable="false" ></p:column>
+
+					<p:column headerText="#{dbResource['wq.label.no']}" sortBy="#{vo.seq}" filterBy="#{vo.seq}" filterMatchMode="contains" styleClass="column_seq" exportable="false">
+						<h:outputText value="#{vo.seq}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.rfqCode']}"	sortBy="#{vo.rfqCode}" filterBy="#{vo.rfqCode}" filterMatchMode="contains" styleClass="column_mfr ">
+						<h:outputText value="#{vo.rfqCode}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.mfr']}"
+						sortBy="#{vo.mfr}"
+						filterBy="#{vo.mfr}"
+						filterMatchMode="contains" styleClass="column_mfr ">
+						<h:outputText value="#{vo.mfr}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.mfrPN']}"
+						sortBy="#{vo.fullMPN}"
+						filterBy="#{vo.fullMPN}"
+						filterMatchMode="contains" styleClass="column_fullMfrPart ">
+						<h:outputText value="#{vo.fullMPN}" />
+					</p:column> 
+					<p:column headerText="#{dbResource['wq.label.bBStatus']}"
+						sortBy="#{vo.b2bStatus}"
+						filterBy="#{vo.b2bStatus}"
+						filterMatchMode="contains" styleClass="column_mfr ">
+						<h:outputText value="#{vo.b2bStatus}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.sendOutTime']}"
+						sortBy="#{vo.sentOutTime}"
+						filterBy="#{vo.sentOutTime}"
+						filterMatchMode="contains" styleClass="column_uploadTime ">
+						<h:outputText value="#{vo.sentOutTime}" >
+							<f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" />
+						</h:outputText>
+					</p:column>					
+					<p:column headerText="#{dbResource['wq.label.stage']}"
+						sortBy="#{vo.quoteItem.stage}" filterBy="#{vo.quoteItem.stage}"
+						filterMatchMode="contains" styleClass="column_stage ">
+						<h:outputText value="#{vo.quoteItem.stage}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.rfqStatus']}"
+						sortBy="#{vo.quoteItem.status}" filterBy="#{vo.quoteItem.status}"
+						filterMatchMode="contains" styleClass="column_mfr ">
+						<h:outputText
+							value="#{vo.quoteItem.status == 'DQ' ? '': vo.quoteItem.status}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bBRequiredQty']}"
+						sortBy="#{vo.reqQty}"
+						filterBy="#{vo.reqQty}" filterMatchMode="contains"
+						styleClass="column_mfr align_righ t">
+						<h:outputText value="#{vo.reqQty}">
+							<f:convertNumber   pattern="#,###"  />
+						</h:outputText>
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.SoldToCode']}"
+						sortBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}"
+						filterBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}"
+						filterMatchMode="contains"
+						styleClass="column_mfr ">
+						<h:outputText
+							value="#{vo.quoteItem.quote.soldToCustomer.customerNumber}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.custNameSP']}"
+						sortBy="#{vo.quoteItem.quote.soldToCustomerName}"
+						filterBy="#{vo.quoteItem.quote.soldToCustomerName}"
+						filterMatchMode="contains" styleClass="column_soldToCustomerName ">
+						<h:outputText value="#{vo.quoteItem.quote.soldToCustomerName}" />
+					</p:column> 
+						<p:column headerText="#{dbResource['wq.label.ShipToParty']}"
+						sortBy="#{vo.quoteItem.shipToCustomerFullName}"
+						filterBy="#{vo.quoteItem.shipToCustomerFullName}"
+						filterMatchMode="contains" styleClass="column_shipToCustomerName ">
+						<h:outputText
+							 value="#{vo.quoteItem.shipToCustomerFullName}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.endCust']}"
+						sortBy="#{vo.quoteItem.endCustomerFullName}"
+						filterBy="#{vo.quoteItem.endCustomerFullName}"
+						filterMatchMode="contains" styleClass="column_endCustomerName ">
+						<h:outputText
+						 value="#{vo.quoteItem.endCustomerFullName}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bpmCode']}"	sortBy="#{vo.bpmCode}" filterBy="#{vo.bpmCode}" filterMatchMode="contains" styleClass="column_fullMfrPart">
+						<h:outputText value="#{vo.bpmCode}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bpmNam']}"	sortBy="#{vo.bpmName}" filterBy="#{vo.bpmName}" filterMatchMode="contains" styleClass="column_fullMfrPart">
+						<h:outputText value="#{vo.bpmName}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bpmContCode']}"	sortBy="#{vo.bpmCntCode}" filterBy="#{vo.bpmCntCode}" filterMatchMode="contains" styleClass="column_fullMfrPart">
+						<h:outputText value="#{vo.bpmCntCode}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.ec']}"	sortBy="#{vo.ecBpmCode}" filterBy="#{vo.ecBpmCode}" filterMatchMode="contains" styleClass="column_fullMfrPart">
+						<h:outputText value="#{vo.ecBpmCode}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.ecBPMName']}"	sortBy="#{vo.ecBPMName}" filterBy="#{vo.ecBPMName}" filterMatchMode="contains" styleClass="column_fullMfrPart">
+						<h:outputText value="#{vo.ecBPMName}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.ecCountry']}"	sortBy="#{vo.ecBPMCntCode}" filterBy="#{vo.ecBPMCntCode}" filterMatchMode="contains" styleClass="column_fullMfrPart">
+						<h:outputText value="#{vo.ecBPMCntCode}" />
+					</p:column>
+	
+					<p:column headerText="#{dbResource['wq.label.vendorShip']}"	sortBy="#{vo.shipToCode}" filterBy="#{vo.shipToCode}" filterMatchMode="contains" styleClass="column_fullMfrPart">
+						<h:outputText value="#{vo.shipToCode}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.target']}&lt;br/&gt;#{dbResource['wq.label.resale']}(USD)"
+						sortBy="#{vo.tgtResale}"
+						filterBy="#{vo.tgtResale}" filterMatchMode="contains"
+						styleClass="column_targetResale align_right">
+						<h:outputText style="width:100%;" value="#{vo.tgtResale}">
+							<f:convertNumber   pattern="#,##0.00000"  minFractionDigits="5" />
+						</h:outputText>
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.project']}&lt;br/&gt;#{dbResource['wq.label.name']}"
+						sortBy="#{vo.project}"
+						filterBy="#{vo.project}"
+						filterMatchMode="contains" styleClass="column_projectName">
+						<h:outputText style="width:100%;"
+							value="#{vo.project}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.app']}"
+						sortBy="#{vo.application}"
+						filterBy="#{vo.application}"
+						filterMatchMode="contains" styleClass="column_application">
+						<h:outputText style="width:100%;"
+							value="#{vo.application}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.EAU']}" sortBy="#{vo.eau}"
+						filterBy="#{vo.eau}" filterMatchMode="contains"
+						styleClass="column_eau align_right">
+						<h:outputText style="width:100%;" value="#{vo.eau}">
+						</h:outputText>
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.pp']}&lt;br/&gt;#{dbResource['wq.label.schedule']}"
+						sortBy="#{vo.quoteItem.ppSchedule}"
+						filterBy="#{vo.quoteItem.ppSchedule}"
+						filterMatchMode="contains" styleClass="column_ppSchedule">
+						<h:outputText style="width:100%;"
+							value="#{vo.quoteItem.ppSchedule}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.mp']}&lt;br/&gt;#{dbResource['wq.label.schedule']}"
+						sortBy="#{vo.quoteItem.mpSchedule}"
+						filterBy="#{vo.quoteItem.mpSchedule}"
+						filterMatchMode="contains" styleClass="column_mpSchedule">
+						<h:outputText style="width:100%;"
+							value="#{vo.quoteItem.mpSchedule}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.bqNum']}"	sortBy="#{vo.bqNumber}" filterBy="#{vo.bqNumber}" filterMatchMode="contains" styleClass="column_mfr">
+						<h:outputText value="#{vo.bqNumber}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.projectRegNum']}"	sortBy="#{vo.projectRegistrationNumber}" filterBy="#{vo.projectRegistrationNumber}" filterMatchMode="contains" styleClass="column_fullMfrPart">
+						<h:outputText value="#{vo.projectRegistrationNumber}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.headerRemarks']}"
+						sortBy="#{vo.headRemark}"
+						filterBy="#{vo.headRemark}"
+						filterMatchMode="contains" styleClass="column_application">
+						<h:outputText value="#{vo.headRemark}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.remarks']}"
+						sortBy="#{vo.quoteItem.quote.remarks}"
+						filterBy="#{vo.quoteItem.quote.remarks}"
+						filterMatchMode="contains" styleClass="column_remarks">
+						<h:outputText value="#{vo.quoteItem.quote.remarks}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.priceListRemarks']}1"
+						sortBy="#{vo.quoteItem.priceListRemarks1}" filterBy="#{vo.quoteItem.priceListRemarks1}"
+						filterMatchMode="contains"  styleClass="column_priceListRemark ">
+						<h:outputText value="#{vo.quoteItem.priceListRemarks1}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.priceListRemarks']}2"
+						sortBy="#{vo.quoteItem.priceListRemarks2}" filterBy="#{vo.quoteItem.priceListRemarks2}"
+						filterMatchMode="contains"  styleClass="column_priceListRemark ">
+						<h:outputText value="#{vo.quoteItem.priceListRemarks2}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.priceListRemarks']}3"
+						sortBy="#{vo.quoteItem.priceListRemarks3}" filterBy="#{vo.quoteItem.priceListRemarks3}"
+						filterMatchMode="contains"  styleClass="column_priceListRemark ">
+						<h:outputText value="#{vo.quoteItem.priceListRemarks3}" />
+					</p:column>
+					<p:column headerText="#{dbResource['wq.label.priceListRemarks']} 4"
+						sortBy="#{vo.quoteItem.priceListRemarks4}" filterBy="#{vo.quoteItem.priceListRemarks4}"
+						filterMatchMode="contains"  styleClass="column_priceListRemark ">
+						<h:outputText value="#{vo.quoteItem.priceListRemarks4}" />
+					</p:column>
+					</p:dataTable>
+				</p:panel>
+			</h:form>
+<ui:include src="/stm/StmQuotationHistoryList.xhtml" />
+	</ui:define>
+</ui:composition>

@@ -1,0 +1,235 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+
+import javax.persistence.*;
+
+import com.avnet.emasia.webquote.entity.util.ExchangeRateListener;
+
+import java.math.BigDecimal;
+import java.util.Date;
+
+
+/**
+ * The persistent class for the EXCHANGE_RATE database table.
+ * 
+ */
+@Entity
+@Table(name="EXCHANGE_RATE")
+@EntityListeners(ExchangeRateListener.class)
+public class ExchangeRate implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	@SequenceGenerator(name="EXCHANGE_RATE_ID_GENERATOR", sequenceName="WQ_SEQ",allocationSize=1 )
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="EXCHANGE_RATE_ID_GENERATOR")
+	@Column(unique=true, nullable=false)
+	private long id;
+
+	@Column(name="BIZ_UNIT", nullable=false, length=10)
+	private String bizUnit;
+
+	@Column(name="CURR_FROM", nullable=false, length=20)
+	private String currFrom;
+
+	@Column(name="CURR_TO", nullable=false, length=20)
+	private String currTo;
+
+	@Column(name="EX_RATE_FROM")
+	private BigDecimal exRateFrom;
+
+	@Column(name="EX_RATE_TO")
+	private BigDecimal exRateTo;
+
+	@Column(name="HANDLING")
+	private BigDecimal handling;
+
+	@Column(name="SOLD_TO_CODE", length=20)
+	private String soldToCode;
+
+	@Temporal(TemporalType.DATE)
+	@Column(name="VALID_FROM")
+	private Date validFrom;
+	
+	@Temporal(TemporalType.DATE)
+	@Column(name="VALID_TO")
+	private Date validTo;
+
+	@Column(name="VAT")
+	private BigDecimal vat;
+	
+	@Column(name="LAST_UPDATED_BY")
+	private String lastUpdatedBy;
+	
+	@Column(name="DELETE_FLAG")
+	private Boolean deleteFlag;
+	
+	@Column(name="SCALE")
+	private int scale;
+	
+	@Column(name="ROUND_TYPE")
+	private int roundType;
+	
+	@Column(name="REMARKS")
+	private String remarks;
+	
+	
+	public ExchangeRate() {
+	}
+	
+	public String getKey(){
+		String key = this.getBizUnit() + "|" + this.getCurrFrom() + "|" + this.getCurrTo() + "|";
+		
+		String soldToCode = this.getSoldToCode();
+		if(soldToCode != null &&  ! soldToCode.equals("")){
+			key = key + soldToCode;
+		}
+		
+		return key;
+	}	
+	
+	@Override
+	public String toString() {
+		return "ExchangeRate [id=" + id + ", bizUnit=" + bizUnit
+				+ ", currFrom=" + currFrom + ", currTo=" + currTo
+				+ ", exRateFrom=" + exRateFrom + ", exRateTo=" + exRateTo
+				+ ", handling=" + handling + ",  soldToCode="
+				+ soldToCode + ", validFrom=" + validFrom + ", vat=" + vat
+				+ "]";
+	}
+	
+	
+
+	public long getId() {
+		return this.id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getBizUnit() {
+		return this.bizUnit;
+	}
+
+	public void setBizUnit(String bizUnit) {
+		this.bizUnit = bizUnit;
+	}
+
+	public String getCurrFrom() {
+		return this.currFrom;
+	}
+
+	public void setCurrFrom(String currFrom) {
+		this.currFrom = currFrom;
+	}
+
+	public String getCurrTo() {
+		return this.currTo;
+	}
+
+	public void setCurrTo(String currTo) {
+		this.currTo = currTo;
+	}
+
+	public BigDecimal getExRateFrom() {
+		return this.exRateFrom;
+	}
+
+	public void setExRateFrom(BigDecimal exRateFrom) {
+		this.exRateFrom = exRateFrom;
+	}
+
+	public BigDecimal getExRateTo() {
+		return this.exRateTo;
+	}
+
+	public void setExRateTo(BigDecimal exRateTo) {
+		this.exRateTo = exRateTo;
+	}
+
+	public BigDecimal getHandling() {
+		return this.handling;
+	}
+
+	public void setHandling(BigDecimal handling) {
+		this.handling = handling;
+	}
+
+	public String getSoldToCode() {
+		return this.soldToCode;
+	}
+
+	public void setSoldToCode(String soldToCode) {
+		this.soldToCode = soldToCode;
+	}
+
+	public Date getValidFrom() {
+		return this.validFrom;
+	}
+
+	public void setValidFrom(Date validFrom) {
+		this.validFrom = validFrom;
+	}
+	
+	public Date getValidTo() {
+		return validTo;
+	}
+
+	public void setValidTo(Date validTo) {
+		this.validTo = validTo;
+	}
+
+	public BigDecimal getVat() {
+		return this.vat;
+	}
+
+	public void setVat(BigDecimal vat) {
+		this.vat = vat;
+	}
+
+	public String getLastUpdatedBy() {
+		return lastUpdatedBy;
+	}
+
+	public void setLastUpdatedBy(String lastUpdatedBy) {
+		this.lastUpdatedBy = lastUpdatedBy;
+	}
+
+	public Boolean getDeleteFlag() {
+		return deleteFlag;
+	}
+
+	public void setDeleteFlag(Boolean deleteFlag) {
+		this.deleteFlag = deleteFlag;
+	}
+
+	public int getScale() {
+		return scale;
+	}
+
+	public void setScale(int scale) {
+		this.scale = scale;
+	}
+
+	public int getRoundType() {
+		return roundType;
+	}
+
+	public void setRoundType(int roundType) {
+		this.roundType = roundType;
+	}
+
+	public String getRemarks() {
+		return remarks;
+	}
+
+	public void setRemarks(String remarks) {
+		this.remarks = remarks;
+	}
+
+	public BigDecimal getRateInTotal() {
+		return getExRateTo().multiply(getVat()).multiply(getHandling());
+	}
+
+}

@@ -1,0 +1,2 @@
+delete from app_property where prop_key = 'RFQ_SUBMISSION_DRMS_VALIDATION'; 
+INSERT into APP_PROPERTY (PROP_KEY,PROP_DESC,PROP_VALUE,PROP_RESERVED) values ('RFQ_SUBMISSION_DRMS_VALIDATION','Webquote Asia need to validate DRMS,Webquote Japan not','true','1');

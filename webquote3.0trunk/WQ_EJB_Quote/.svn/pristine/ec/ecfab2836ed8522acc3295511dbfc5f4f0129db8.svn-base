@@ -1,0 +1,26 @@
+package com.avnet.emasia.webquote.columndata;
+
+import java.lang.reflect.Field;
+
+public class StringConverter implements Converter<AStringConverter>{
+	
+	public StringConverter() {
+		
+	}
+	
+	@Override
+	public void initialize(AStringConverter a) {
+		
+	}
+
+	@Override
+	public void convert(String value, Bean bean, Field field) {
+		try {
+			field.set(bean, value);
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			bean.putConvertError(field.getName(), e.getMessage());
+		}
+	}
+
+
+}

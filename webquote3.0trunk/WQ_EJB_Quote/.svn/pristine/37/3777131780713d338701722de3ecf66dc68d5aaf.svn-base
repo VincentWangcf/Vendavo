@@ -1,0 +1,466 @@
+package com.avnet.emasia.webquote.quote.ejb;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.mail.MessagingException;
+import javax.naming.NamingException;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.cache.CacheUtil;
+import com.avnet.emasia.webquote.constants.ActionEnum;
+import com.avnet.emasia.webquote.entity.Attachment;
+import com.avnet.emasia.webquote.entity.DataAccess;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.Material;
+import com.avnet.emasia.webquote.entity.ProductGroup;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.Role;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.exception.AppException;
+import com.avnet.emasia.webquote.exception.WebQuoteRuntimeException;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.quote.strategy.factory.DrmsValidationUpdateStrategyFactory;
+import com.avnet.emasia.webquote.quote.strategy.interfaces.DrmsValidationUpdateStrategy;
+import com.avnet.emasia.webquote.quote.vo.QuoteItemVo;
+import com.avnet.emasia.webquote.user.ejb.MaterialTypeSB;
+import com.avnet.emasia.webquote.user.ejb.ProgramTypeSB;
+import com.avnet.emasia.webquote.user.ejb.RoleSB;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+import com.avnet.webquote.quote.ejb.utility.EJBQuoteUtility;
+
+/**
+ * Session Bean implementation class QuoteSB
+ */
+@Stateless
+@LocalBean
+public class ResponseInternalTransferSB {
+	
+	@PersistenceContext(unitName="Server_Source")
+	EntityManager em;
+	
+	@EJB
+	MailUtilsSB mailUtilsSB;
+
+	
+	@EJB
+	UserSB userSB;
+	
+	@EJB
+	RoleSB roleSB;
+	
+	@EJB
+	AttachmentSB attachmentSB;
+	
+	@EJB
+	MaterialSB materialSB;
+	
+	@EJB
+	QuoteSB quoteSB;
+	
+	@EJB
+	SAPWebServiceSB sapWebServiceSB;
+	
+	@EJB
+	MaterialTypeSB materialTypeSB;
+	
+	@EJB
+	ProgramTypeSB programTypeSB;
+	
+	@EJB
+	CacheUtil cacheUtil;
+	
+	private static final Logger LOG =Logger.getLogger(ResponseInternalTransferSB.class.getName());
+	
+    
+    public void saveQuoteItemsInInternalTransfer(List<QuoteItemVo> quoteItemVos, List<Attachment> removedAttachments, User user){
+    	createMaterial(quoteItemVos, user);
+    	Date date = new Date();
+    	for(QuoteItemVo vo : quoteItemVos){
+    		QuoteItem item = vo.getQuoteItem();
+    		if(item.getQuotedMaterial() != null){
+    			item.setQuotedMfr(item.getQuotedMaterial().getManufacturer());
+    			item.setQuotedPartNumber(item.getQuotedMaterial().getFullMfrPartNumber());
+    		}
+    		item.setLastPmUpdatedOn(date);
+    		//andy modify 2.2
+    		item.setLastUpdatedBy(user.getEmployeeId());
+    		item.setLastUpdatedName(user.getName());
+    		item.setLastUpdatedPm(user.getEmployeeId());
+    		item.setLastUpdatedPmName(user.getName());
+    		item.setLastUpdatedOn(date);
+    		if("-SELECT-".equalsIgnoreCase(item.getCostIndicator())){
+    			item.setCostIndicator(null);
+    		}
+//    		item.setTermsAndConditions(vo.getTermsAndConditionsStr());
+//    		item.setInternalTransferComment(vo.getAqccStr());
+    		item.setAction(ActionEnum.RIT_SAVE.name());
+    		em.merge(item);
+    	}
+    	attachmentSB.removeAttachment(removedAttachments);
+    	LOG.info("Save finished");
+    }
+    
+    public void invalidQuoteItems(List<QuoteItemVo> quoteItemVos, List<Attachment> removedAttachments, User user){
+		
+    	Date date = new Date();
+    	
+    	for(QuoteItemVo vo : quoteItemVos){
+    		
+    		QuoteItem item = vo.getQuoteItem();
+    		
+    		item.setLastPmUpdatedOn(date);
+    		//andy modify 2.2
+    		item.setLastUpdatedBy(user.getEmployeeId());
+    		item.setLastUpdatedName(user.getName());
+    		item.setLastUpdatedPm(user.getEmployeeId());
+    		item.setLastUpdatedPmName(user.getName());
+  
+    		item.setLastUpdatedOn(date);
+    		item.setValidFlag(false);
+    		
+//    		item.setTermsAndConditions(vo.getTermsAndConditionsStr());
+    		
+//    		item.setInternalTransferComment(vo.getAqccStr());
+    		
+    		item.setStatus(QuoteSBConstant.RFQ_STATUS_RIT);
+    		item.setLastRitUpdateTime(date);
+    		if(item.getCostIndicator().equalsIgnoreCase("-SELECT-")){
+    			item.setCostIndicator(null);
+    		}
+    		 		
+    		item.setAction(ActionEnum.RIT_INVALIDATE_QUOTE.name());
+    		em.merge(item);
+    	}
+    	attachmentSB.removeAttachment(removedAttachments);
+    	
+    	
+    	List<User> receivers = findReceivers(quoteItemVos);
+    	
+    	//send email
+    	
+    	for(User receiver : receivers){
+    		
+    		StringBuffer sb = new StringBuffer("");
+    		MailInfoBean mail = new MailInfoBean();
+    		
+    		mail.setMailSubject("WebQuote Alert: Invalid Internal Transfer Response from PM");
+    		mail.setMailFrom(user.getEmailAddress());
+    		List<String> to = new ArrayList<String>();
+    		to.add(receiver.getEmailAddress());
+    		mail.setMailTo(to);
+    		int count = 1;
+    		
+    		LOG.info("Sending email 'WebQuote Alert: Invalid Internal Transfer from PM' to " + receiver.getName() + " " + receiver.getEmailAddress());
+    		
+    		sb.append("Dear , " );
+    		sb.append("\n\n\t\t");
+    		sb.append("The following quote has been invalided by PM in WebQuote.  Please check.");
+            sb.append("\n\n\t\t");
+            sb.append("Record       WR#              MFR           Full Part No.                        Employee Name                Customer                                                          PM Comment"+ "\n");
+    		
+    			
+item:    	for(QuoteItemVo vo : quoteItemVos){
+				
+				QuoteItem item = vo.getQuoteItem();
+    			
+    			for(DataAccess dataAccess : receiver.getDataAccesses()){
+    				//andy modify 2.2
+    				if((dataAccess.getManufacturer() == null || dataAccess.getManufacturer().getId() == item.getRequestedMfr().getId()) &&
+    	    				(dataAccess.getProductGroup() == null || item.getProductGroup2() == null ||dataAccess.getProductGroup().getId() == item.getProductGroup2().getId()) &&
+    	    				(dataAccess.getMaterialType() == null || item.getMaterialTypeId() == null ||dataAccess.getMaterialType().getName().equals(item.getMaterialTypeId())) &&
+    	    				(dataAccess.getProgramType() == null || item.getProgramType() == null || dataAccess.getProgramType().getName() == item.getProgramType()) &&
+    	    				(dataAccess.getTeam() == null || item.getQuote().getTeam() == null ||dataAccess.getTeam().getName().equals(item.getQuote().getTeam().getName())) && 
+    	    				receiver.getBizUnits().contains(item.getQuote().getBizUnit())){	
+    					sb.append("\t\t");
+	                    sb.append(count++ +"       "+item.getQuoteNumber()+"              "+ item.getRequestedMfr().getName()+"           "+ item.getRequestedPartNumber()
+	                            + "                        " + item.getQuote().getSales().getName()
+	                            + "                " + item.getSoldToCustomer().getName() + "                                                "  + item.getInternalTransferComment() + "\n");
+    					
+    					//append one record to email
+	                    continue item;
+    				}
+    			}
+    		}
+            
+            sendTextEmail(user, sb, mail, to); 
+    	} 	
+    }
+        
+    public void sendInternalTransferToQC(List<QuoteItemVo> quoteItemVos,  List<Attachment> removedAttachments, User user){
+    	Date date = new Date();
+    	createMaterial(quoteItemVos, user);
+    	Map<Long, Double> map = new HashMap<Long, Double>();
+    	//save
+    	for(QuoteItemVo vo : quoteItemVos){
+    		QuoteItem item = vo.getQuoteItem();
+    		//item.setTermsAndConditions(vo.getTermsAndConditionsStr());
+    		if(item.getQuotedMaterial() != null){
+    			item.setQuotedMfr(item.getQuotedMaterial().getManufacturer());
+    			item.setQuotedPartNumber(item.getQuotedMaterial().getFullMfrPartNumber());
+    		}
+    		item.setLastPmUpdatedOn(date);
+     		//andy modify 2.2
+    		item.setLastUpdatedBy(user.getEmployeeId());
+    		item.setLastUpdatedName(user.getName());
+    		item.setLastUpdatedPm(user.getEmployeeId());
+    		item.setLastUpdatedPmName(user.getName());
+    		item.setLastUpdatedOn(date);    		
+    		item.setStatus(QuoteSBConstant.RFQ_STATUS_RIT);
+    		item.setLastRitUpdateTime(date);
+    		item.setValidFlag(true);
+    		if(item.getCostIndicator().equalsIgnoreCase("-SELECT-")){
+    			item.setCostIndicator(null);
+    		}
+//    		item.setTermsAndConditions(vo.getTermsAndConditionsStr());
+//    		item.setInternalTransferComment(vo.getAqccStr());
+    		if(QuoteUtil.getDrmsKey(item) != null){
+    			map.put(item.getId(), item.getAuthGp());
+    		}
+    		item.setAction(ActionEnum.RIT_SEND_TO_QC.name());
+    		item = em.merge(item);
+    	}
+    	attachmentSB.removeAttachment(removedAttachments);
+    	try {
+			updateAGPInSAP(quoteItemVos, user);
+			
+		} catch (AppException e) {
+	    	for(QuoteItemVo vo : quoteItemVos){
+	    		
+	    		QuoteItem item = vo.getQuoteItem();
+	    		
+	    		if(QuoteUtil.getDrmsKey(item) != null){
+	    			item.setAuthGp(map.get(item.getId()));
+	    		}	    		
+	    	}
+	    	throw new WebQuoteRuntimeException("Exception Occured while updating cost indicator in sendInternalTransferToQC Method : "+e.getMessage(),new RuntimeException());
+			//throw new RuntimeException(e.getMessage());
+		}
+    		
+    	List<User> receivers = findReceivers(quoteItemVos);
+    	
+    	//send email
+    	
+    	for(User receiver : receivers){
+    		
+    		StringBuffer sb = new StringBuffer("");
+    		MailInfoBean mail = new MailInfoBean();
+    		
+    		mail.setMailSubject("WebQuote Alert: Internal Transfer Response from PM");
+    		mail.setMailFrom(user.getEmailAddress());
+    		List<String> to = new ArrayList<String>();
+    		to.add(receiver.getEmailAddress());
+    		mail.setMailTo(to);
+    		int count = 1;
+    		
+    		LOG.info("Sending email 'WebQuote Alert: Internal Transfer Response from PM' from " + user.getName() + " " + user.getEmailAddress());
+    		
+    		sb.append("Dear , " );
+    		sb.append("\n\n\t\t");
+    		sb.append("The following quote from PM has been updated in WebQuote.  Please check.");
+            sb.append("\n\n\t\t");
+            sb.append("Record       WR#              MFR           Full Part No.                        Employee Name                        Customer            "+ "\n");
+    		
+            	
+            
+item:    	for(QuoteItemVo vo : quoteItemVos){
+				
+				QuoteItem item = vo.getQuoteItem();
+				
+    			for(DataAccess dataAccess : receiver.getDataAccesses()){
+    				//andy modify 2.2
+    				if((dataAccess.getManufacturer() == null || dataAccess.getManufacturer().getId() == item.getRequestedMfr().getId()) &&
+    	    				(dataAccess.getProductGroup() == null || item.getProductGroup2() == null ||dataAccess.getProductGroup().getId() == item.getProductGroup2().getId()) &&
+    	    				(dataAccess.getMaterialType() == null || item.getMaterialTypeId() == null ||dataAccess.getMaterialType().getName().equals(item.getMaterialTypeId())) &&
+    	    				(dataAccess.getProgramType() == null || item.getProgramType() == null || dataAccess.getProgramType().getName() == item.getProgramType()) &&
+    	    				(dataAccess.getTeam() == null || item.getQuote().getTeam() == null ||dataAccess.getTeam().getName().equals(item.getQuote().getTeam().getName())) && 
+    	    				receiver.getBizUnits().contains(item.getQuote().getBizUnit())){		
+    					sb.append("\t\t");
+	                    sb.append(count++ +"       "+item.getQuoteNumber()+"              "+ item.getRequestedMfr().getName()+"           "+ item.getRequestedPartNumber()
+	                            + "                        " + item.getQuote().getSales().getName()
+	                            + "                        " + item.getSoldToCustomer().getCustomerFullName() + "\n");
+    					
+    					LOG.info("Quote Number: " + item.getQuoteNumber());
+    					//append one record to email
+    					continue item;
+    				}
+    			}
+    		}
+            sendTextEmail(user, sb, mail, to); 
+    	}  	
+    }
+
+	private void sendTextEmail(final User user,final StringBuffer sb,final MailInfoBean mail, final List<String> to) {
+		sb.append("\n");
+		sb.append("Best Regards" + "\n");
+		sb.append(user.getName() + "\n");
+		mail.setMailContent(sb.toString());
+		try {
+			mailUtilsSB.sendTextMail(mail);
+		} catch (Exception e) {
+			LOG.log(Level.SEVERE, "Error occured when sending email to " + to, e );
+		}
+	}
+    
+	private List<User> findReceivers(List<QuoteItemVo> vos){
+    	List<Object[]> dataAccessAndBizUnits = new ArrayList<Object[]>();
+    	for(QuoteItemVo vo : vos){
+    		QuoteItem item = vo.getQuoteItem();
+    		EJBQuoteUtility.findReceiver(dataAccessAndBizUnits, item, materialTypeSB, programTypeSB);
+    	}
+    	List<Role> roles = new ArrayList<Role>();
+    	Role role = roleSB.findByName("ROLE_QC_PRICING");
+    	roles.add(role);
+    	Role role1 = roleSB.findByName("ROLE_QCP_MANAGER");
+    	roles.add(role1);
+    	List<User> receivers = userSB.findByDataAccess(dataAccessAndBizUnits, roles);
+    	return receivers;
+    }
+
+	private void findReceiver(final List<Object[]> dataAccessAndBizUnits, final QuoteItemVo vo) {
+		Object[] dataAccessAndBizUnit = new Object[2]; 
+		QuoteItem item = vo.getQuoteItem();
+		DataAccess dataAccess = new DataAccess();
+		dataAccess.setManufacturer(item.getRequestedMfr());
+		dataAccess.setProductGroup(item.getProductGroup2());
+		//andy modify 2.2
+		if(item.getMaterialTypeId()!=null){
+			dataAccess.setMaterialType(materialTypeSB.findByPK(item.getMaterialTypeId()));
+		}
+		if(item.getProgramType()!=null){
+			dataAccess.setProgramType(programTypeSB.findByName(item.getProgramType()));
+		}
+		dataAccess.setTeam(item.getQuote().getTeam());
+		dataAccessAndBizUnit[0] = dataAccess;
+		dataAccessAndBizUnit[1] = item.getQuote().getBizUnit();
+		dataAccessAndBizUnits.add(dataAccessAndBizUnit);
+	}
+    
+	private void createMaterial(List<QuoteItemVo> quoteItemVos, User user){
+		
+		List<String[]> mfrAndPartNumbers = new ArrayList<String[]>();
+		for(QuoteItemVo vo : quoteItemVos){
+			QuoteItem item = vo.getQuoteItem();
+			String[] mfrAndPartNumber = new String[2];
+			mfrAndPartNumber[0] = item.getRequestedMfr().getName();
+			mfrAndPartNumber[1] = vo.getQuotedPartNumber();
+			mfrAndPartNumbers.add(mfrAndPartNumber);
+		}		
+
+		List<Material> materials = materialSB.batchFindMaterialbyMfrAndPartNumber(mfrAndPartNumbers);
+		materials = new ArrayList<Material>(materials);
+		for(QuoteItemVo vo : quoteItemVos){
+			QuoteItem item = vo.getQuoteItem();
+			boolean found = false;
+			for(Material material : materials){
+				if(item.getRequestedMfr().getName().equals(material.getManufacturer().getName()) && 
+						vo.getQuotedPartNumber().equals(material.getFullMfrPartNumber())){
+					item.setQuotedMaterial(material);
+					found = true;
+					break;
+				}
+			}
+			if(found == false){
+						
+				Material newMaterial = new Material();
+				//andy modify 2.2
+				newMaterial.setCreatedBy(user.getEmployeeId());
+				//newMaterial.setCreatedBy(user);
+				newMaterial.setCreatedOn(new Date());
+				newMaterial.setFullMfrPartNumber(vo.getQuotedPartNumber());
+				Manufacturer mfr = item.getRequestedMfr();
+				newMaterial.setManufacturer(mfr);
+				newMaterial.setValid(true);
+				/*
+				TypedQuery<ProductGroup> query = em.createQuery("select p from ProductGroup p where UPPER(p.name) = 'NORMAL'", ProductGroup.class);
+				List<ProductGroup> productGroups = query.getResultList();
+				if(productGroups.size() != 0 ){
+					newMaterial.setProductGroup2(productGroups.get(0));
+					item.setProductGroup2(productGroups.get(0));
+				}
+				*/
+				Material createdMaterial = materialSB.createMaterial(newMaterial);
+				item.setQuotedMaterial(createdMaterial);	
+				materials.add(createdMaterial);
+			}
+		}				
+	}
+	
+	private void updateAGPInSAP(List<QuoteItemVo> quoteItemVos, User user) throws AppException {
+		
+		List<QuoteItem> changedQuoteItems = new ArrayList<QuoteItem>();
+		
+		for(QuoteItemVo vo : quoteItemVos){
+			
+			QuoteItem item = vo.getQuoteItem();
+			
+			if(QuoteUtil.getDrmsKey(item) == null){
+				continue;
+			}
+			
+			if(item.getResaleMargin() != null && item.getResaleMargin() < 0){
+				continue;
+			}
+			
+			boolean agpChanged = false;
+			
+			if(item.getAuthGp() == null){
+				agpChanged = true;
+			}else{
+				
+				if( QuoteUtil.compareQGPAndAGP(item.getResaleMargin(), item.getAuthGp()) != 0){
+					agpChanged = true;
+				}
+			}
+
+			if (agpChanged){
+				item.setAuthGp(item.getResaleMargin());
+				//Bryan Start
+				//Added by Lenon(043044) 2016/11/30
+				DrmsValidationUpdateStrategy drmsValidationUpdateStrategy = 
+						DrmsValidationUpdateStrategyFactory.getInstance()
+						.getDrmsValidationUpdateStrategy(user.getDefaultBizUnit().getName());
+//				DrmsValidationUpdateStrategy drmsValidationUpdateStrategy = 
+//						cacheUtil.getDrmsValidationUpdateStrategy(user.getDefaultBizUnit().getName());
+				//Bryan End
+				String comment = drmsValidationUpdateStrategy.getInternalComment(item);
+				if(StringUtils.isNotBlank(comment)) {
+					item.setInternalComment(comment);
+				}
+				changedQuoteItems.add(item);
+				item = em.merge(item);
+			}
+			
+		}
+		
+		sapWebServiceSB.updateSAPAGP(changedQuoteItems, user.getEmployeeId());
+		
+		StringBuffer sb = new StringBuffer();
+		for(QuoteItem item : changedQuoteItems){
+			if(item.getDrmsUpdated() == false){
+				sb.append("Update SAP A.GP falied for: " + item.getQuoteNumber() + " " + QuoteUtil.getDrmsKey(item) + " " + (item.getDrmsUpdateFailedDesc() == null ? "" : item.getDrmsUpdateFailedDesc()) + "<br/>") ;
+			}
+		}
+		
+		if(sb.length() != 0){
+			throw new AppException(sb.toString());
+		}
+		
+	}
+	
+}

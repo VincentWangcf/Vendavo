@@ -1,0 +1,146 @@
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	
+			<p:panel header="#{dbResource['wq.label.viewUsrInfo']}"	style="width:auto;height:auto;overflow:hidden">
+
+				<p:fieldset legend="#{dbResource['wq.label.basicInfo']}">
+
+					<h:panelGrid id="display" columns="10" cellpadding="5" cellspacing="0" style="margin:0 auto;vertical-align:left;margin-left:0;margin-top:0" scrollable="false">
+
+						<h:outputText value="#{dbResource['wq.label.EmpID']}: " />
+						<p:inputText value="#{userMB.user.employeeId}" readonly="true"/>
+
+						<h:outputText value="#{dbResource['wq.label.name']}:" />
+						<p:inputText value="#{userMB.user.name}" readonly="true"/>
+						
+						<h:outputText value="#{dbResource['wq.label.superName']}:" />
+						<p:inputText id="reportToName" value="#{empty(userMB.user.reportTo) ? null :userMB.user.reportTo.name}"  readonly="true"/>
+						
+						<h:outputText value="#{dbResource['wq.label.supervisorID']}: " />
+						<p:inputText id="reportTo" value="#{empty(userMB.user.reportTo) ? null :userMB.user.reportTo.employeeId}"  readonly="true"/>
+						
+						<h:outputText value="#{dbResource['wq.label.salesCostPart']}: " />
+						<p:selectOneMenu value="#{userMB.salsCostAccessStr}" disabled="true">
+						<f:selectItem itemLabel="No" itemValue="No"/>
+						<f:selectItem itemLabel="Yes" itemValue="Yes"/>
+						<f:selectItem itemLabel="ALL" itemValue="ALL"/>
+						
+						</p:selectOneMenu>
+						<h:outputText value="#{dbResource['wq.label.dataSuper']}: " />
+						<p:selectBooleanCheckbox value="#{userMB.user.dataSupervisor}" disabled="true"/>
+
+			 			<h:outputText value="#{dbResource['wq.label.email']}: " />
+						<p:inputText value="#{userMB.user.emailAddress}" readonly="true"/>
+
+			 			<h:outputText value="#{dbResource['wq.label.phone']}: " />
+						<p:inputText value="#{userMB.user.phoneNumber}" readonly="true"/>
+
+						<h:outputText value="#{dbResource['wq.label.isActive']}: " />
+						<p:selectBooleanCheckbox value="#{userMB.user.active}" disabled="true"/>
+						
+					</h:panelGrid>
+				</p:fieldset>
+
+				<p:panel header="#{dbResource['wq.label.roles']}" toggleable="true" >
+				
+				<h:panelGrid columns="4" style="width:100%"  columnClasses="column1,column2">
+					
+					<h:outputText value="#{dbResource['wq.label.roles']}" />
+					<h:outputText value="#{dbResource['wq.label.regions']}" />
+					<h:outputText value="#{dbResource['wq.label.groups']}" />
+					<h:outputText value="#{dbResource['wq.label.subordinates']}" />
+	
+					<p:fieldset>		
+					<h:outputText value="#{userMB.roles}" />
+					</p:fieldset>
+					
+					<p:dataList value="#{userMB.user.bizUnits}" var="bizUnit" itemType="disc" emptyMessage="N/A">  
+   							 #{bizUnit.name}  
+					</p:dataList>
+					
+					<p:dataList value="#{userMB.user.groups}" var="group" itemType="disc" emptyMessage="N/A">  
+	  					#{group.name}  
+					</p:dataList>
+					
+					<p:dataList var="sub" value="#{userMB.user.subordinates}" emptyMessage="N/A">
+						<h:outputText value="#{sub.employeeId} - #{sub.name}" />
+					</p:dataList>
+					
+					</h:panelGrid>
+				</p:panel>
+			
+			<p:panel header="#{dbResource['wq.label.dataAccessMap']}" toggleable="true">
+					
+				<p:dataTable id="dataAccess_id" 
+					var="dataAccessView" 
+					value="#{userMB.dataAccessVos}"
+					filteredValue="#{userMB.filteredDataAccessVos}"				
+					widgetVar="carsTablett"
+					rowKey="#{dataAccessView.id}"
+					paginator="true" 	    			
+    				rowsPerPageTemplate="10,20,50"
+    				rows="10"
+	               	scrollable="true"
+	                scrollHeight="160"
+					style="width:100%"
+					emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+					
+					<p:column headerText="#{dbResource['wq.label.mfr']}" style="width:15%" sortBy="#{dataAccessView.manufacturer}" filterBy="#{dataAccessView.manufacturer}" filterMatchMode="contains" >
+						<h:outputText value="#{dataAccessView.manufacturer}" />
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.proGroup']}" style="width:20%" sortBy="#{dataAccessView.productGroup}" filterBy="#{dataAccessView.productGroup}" filterMatchMode="contains" >
+						<h:outputText value="#{dataAccessView.productGroup}" />
+					</p:column>									
+
+					<p:column headerText="#{dbResource['wq.label.team']}" style="width:20%" sortBy="#{dataAccessView.team}" filterBy="#{dataAccessView.team}" filterMatchMode="contains" >
+						<h:outputText value="#{dataAccessView.team}" />
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.materialType']}" style="width:20%" sortBy="#{dataAccessView.materialType}" filterBy="#{dataAccessView.materialType}" filterMatchMode="contains" >
+						<h:outputText value="#{dataAccessView.materialType}" />
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.proType']}" style="width:20%" sortBy="#{dataAccessView.programType}" filterBy="#{dataAccessView.programType}" filterMatchMode="contains" >
+						<h:outputText value="#{dataAccessView.programType}" />
+					</p:column>					
+
+				</p:dataTable>
+					
+			</p:panel>
+	
+			<p:panel header="#{dbResource['wq.label.dMappingS']} " toggleable="true">
+				<h:panelGrid columns="3" style="width:100%" >
+
+				<h:outputText value="#{dbResource['wq.label.salesCSMap']}" />
+				<h:outputText value="#{dbResource['wq.label.mapWithCustomer']}" />
+				<h:outputText value="#{dbResource['wq.label.team']}" />
+				
+				
+				<p:dataList value="#{userMB.user.csForSales}" var="cs" itemType="disc" emptyMessage="N/A">
+					#{cs.employeeId} #{cs.name}
+				</p:dataList>
+				
+				<p:dataList value="#{userMB.user.customers}" var="customer" itemType="disc" emptyMessage="N/A">
+					#{customer.customerNumber} #{customer.customerFullName}
+				</p:dataList>
+
+				<h:outputText value="#{userMB.user.team.name}" />
+										
+				</h:panelGrid>
+				
+			</p:panel>
+						
+			<p:panel header="#{dbResource['wq.label.dMappingCS']} " toggleable="true" >
+				<h:outputText value="#{dbResource['wq.label.salesCSMap']}"/>
+				<p:dataGrid var="sales" value="#{userMB.user.salesForCs}" columns="8"  emptyMessage="#{dbResource['wq.message.noRecordFound']}">  
+					<h:outputText value="[#{sales.employeeId} #{sales.name}]" />  
+				</p:dataGrid>
+			</p:panel>			
+					
+		</p:panel>
+
+</html>

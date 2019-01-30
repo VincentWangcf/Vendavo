@@ -1,0 +1,241 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+			xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="style-005.css" />
+	<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+		<p:messages id="errorMessage" escape="false" closable="true" autoUpdate="true"/>
+
+		<h:form id="quoteHitRateForm">
+			<p:accordionPanel id = "accordionPannel1">
+				<p:tab title="#{dbResource['wq.label.quoteHitRateSearch']}">
+				
+				<h:panelGrid id="display1" columns="2" >
+					
+					<h:panelGrid id="display2"   >
+						<h:panelGrid id="display2_0" columns="6" cellpadding="0" cellspacing="9">
+							<h:outputText value="#{dbResource['wq.label.periodType']}:"  escape="false" />
+							<h:selectOneMenu id="quoteHitRateReportMB_periodType" value="#{quoteHitRateReportMB.criteria.searchQuoteType}" style="width:80%;">
+									<f:selectItems value="#{quoteHitRateReportMB.quotePeriodSelectList}" />
+							</h:selectOneMenu>
+
+							<h:outputText value="&#160;#{dbResource['wq.label.cust']}:"  escape="false"  />
+							<p:inputText value="#{quoteHitRateReportMB.criteria.customer}" style="width:80%"/>	
+
+							<h:selectOneRadio id="searchCustomerType" value="#{quoteHitRateReportMB.criteria.searchCustomerType}"  >  
+								  		<f:selectItem itemLabel="#{dbResource['wq.label.SoldToCode']}" itemValue="0" />  
+								  		<f:selectItem itemLabel="#{dbResource['wq.label.SoldToParty']}" itemValue="1" />  
+							</h:selectOneRadio> 
+							<h:panelGrid></h:panelGrid>
+							<h:outputText value="#{dbResource['wq.label.BURegion']}:"  escape="false" />
+							<h:selectOneMenu id="quoteHitRateReportMB_bizUnit" value="#{quoteHitRateReportMB.criteria.bizUnit}" style="width:80%;">
+									<f:selectItems value="#{quoteHitRateReportMB.bizUnitSelectList}" />
+									 <p:ajax event="change" listener="#{quoteHitRateReportMB.changeBizUnit}" update=":quoteHitRateForm:accordionPannel1:display1"/>  
+							</h:selectOneMenu>
+	
+							<h:outputText value="#{dbResource['wq.label.salesMgr']}:"  escape="false" />
+							<h:selectOneMenu id="quoteHitRateReportMB_salesMgr" value="#{quoteHitRateReportMB.criteria.salesMgr}" style="width:80%;">
+									<f:selectItems value="#{quoteHitRateReportMB.salesMgrSelectList}" />
+							</h:selectOneMenu>
+	
+					 		<h:outputText value="#{dbResource['wq.label.salesTeam']}:"  escape="false" />
+							<h:selectOneMenu id="quoteHitRateReportMB_salesTeam" value="#{quoteHitRateReportMB.criteria.salesTeam}" style="width:80%;">
+									<f:selectItems value="#{quoteHitRateReportMB.salesTeamSelectList}" />
+									<p:ajax event="change" listener="#{quoteHitRateReportMB.changeTeam}" update=":quoteHitRateForm:accordionPannel1:quoteHitRateReportMB_salesUser"/> 
+							</h:selectOneMenu>
+	
+							<h:outputText value="#{dbResource['wq.label.sales']}:"  escape="false" />
+							<h:selectOneMenu id="quoteHitRateReportMB_salesUser" value="#{quoteHitRateReportMB.criteria.salesUser}" style="width:80%;">
+									<f:selectItems value="#{quoteHitRateReportMB.salesUserSelectList}" />
+							</h:selectOneMenu>
+	
+							<h:outputText value="#{dbResource['wq.label.mfr']}:"  escape="false" />
+							<h:selectOneMenu id="quoteHitRateReportMB_mfr" value="#{quoteHitRateReportMB.criteria.mfr}" style="width:80%;">
+									<f:selectItems value="#{quoteHitRateReportMB.mfrSelectList}" />
+							</h:selectOneMenu>
+							
+							
+							<h:outputText value="#{dbResource['wq.label.proGroup']}1:"  escape="false" />
+							<p:inputText value="#{quoteHitRateReportMB.criteria.productGrp1}" style="width:80%;"/>	
+							
+							
+							<h:outputText value="#{dbResource['wq.label.proGroup']}2:"  escape="false" />
+							<p:inputText value="#{quoteHitRateReportMB.criteria.productGrp2}" style="width:80%;"/>	
+							
+						
+							<h:outputText value="#{dbResource['wq.label.proGroup']}3:"  escape="false" />
+							<p:inputText value="#{quoteHitRateReportMB.criteria.productGrp3}" style="width:80%;"/>	
+							
+							
+							<h:outputText value="#{dbResource['wq.label.proGroup']}4:"  escape="false" />
+							<p:inputText value="#{quoteHitRateReportMB.criteria.productGrp4}" style="width:80%;"/>
+							
+							
+							<h:outputText value="#{dbResource['wq.label.quoteHandler']}:"  escape="false" />
+							<h:selectOneMenu id="quoteHitRateReportMB_quoteHandler" value="#{quoteHitRateReportMB.criteria.quoteHandler}" style="width:80%;">
+									<f:selectItems value="#{quoteHitRateReportMB.quoteHandlerSelectList}" />
+							</h:selectOneMenu>
+							
+							<h:outputText value="#{dbResource['wq.label.quotedPN']}:"  escape="false" />
+							<p:inputText value="#{quoteHitRateReportMB.criteria.quotedPartNumber}" style="width:80%;"/>	
+							<h:panelGrid id="display201" columns="4" cellpadding="0"  >	</h:panelGrid>
+							<h:panelGrid id="display202" columns="4" cellpadding="0"  >	</h:panelGrid>
+							
+						</h:panelGrid>
+					
+						<h:selectOneRadio id="searchResultType" value="#{quoteHitRateReportMB.criteria.searchResultType}" layout="lineDirection" >  
+							  		<f:selectItem itemLabel="#{dbResource['wq.label.hitOrder']}" itemValue="0" />  
+							  		<f:selectItem itemLabel="#{dbResource['wq.label.hitOrderAmount']}" itemValue="1" />  
+							</h:selectOneRadio> 
+					</h:panelGrid>	 
+						
+					<h:panelGrid id="display3" columns="1" cellpadding="1" cellspacing="0" scrollable="false" >
+							  <h:outputText value="#{dbResource['wq.label.groupby']}"  escape="false" />
+							  <p:pickList value="#{quoteHitRateReportMB.groupCols}" var="grp"
+                                                        itemLabel="#{grp.groupByName}" itemValue="#{grp}" style="height:80%;"
+                                                        showTargetControls="true" 
+                                                        addLabel="#{dbResource['wq.button.add']}" addAllLabel="#{dbResource['wq.button.addAll']}" removeLabel="#{dbResource['wq.button.remove']}" removeAllLabel="#{dbResource['wq.button.removeAll']}"
+                                                        moveUpLabel="#{dbResource['wq.label.moveUP']}" moveDownLabel="#{dbResource['wq.label.moveDown']}" moveTopLabel="#{dbResource['wq.label.moveTop']}" moveBottomLabel="#{dbResource['wq.label.moveBottom']}"
+                                                        >
+                                                
+                                                <f:converter converterId="webquote.commodity.PickListConverter" />
+                                                <f:facet name="add">
+                                                        <h:commandButton value="#{dbResource['wq.button.add']}" styleClass="pickListControl"/>
+                                                </f:facet>
+                                                <f:facet name="addAll">
+                                                        <h:commandButton value="#{dbResource['wq.button.addAll']}" styleClass="pickListControl"/>
+                                                </f:facet>
+                                                <f:facet name="remove">
+                                                        <h:commandButton value="#{dbResource['wq.button.remove']}" styleClass="pickListControl"/>
+                                                </f:facet>
+                                                <f:facet name="removeAll">
+                                                        <h:commandButton value="#{dbResource['wq.button.removeAll']}" styleClass="pickListControl"/>
+                                                </f:facet>
+													<p:ajax event="transfer" listener="#{quoteHitRateReportMB.onTransfer}" update=":errorMessage"/> 
+                                        </p:pickList>
+						</h:panelGrid>
+					</h:panelGrid>
+					<h:panelGrid columns="4" cellpadding="0" >
+						<p:commandButton value="#{dbResource['wq.button.searchSend']}" icon="ui-icon-search" actionListener="#{quoteHitRateReportMB.sendReport}" update=":errorMessage"/>
+						<ui:remove>
+							<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search" actionListener="#{quoteHitRateReportMB.search}" update=":errorMessage,:quoteHitRateForm:quotehitRateReport_dataTable"/>
+						</ui:remove>
+						<p:commandButton value="#{dbResource['wq.label.reset']}"  icon="ui-icon-triangle-1-w" actionListener="#{quoteHitRateReportMB.reset}" update=":quoteHitRateForm:accordionPannel1" />
+				        
+					</h:panelGrid>
+				</p:tab>
+			</p:accordionPanel>
+<ui:remove>
+		<p:dataTable id="quotehitRateReport_dataTable" 
+   			var="vo" 
+   			value="#{quoteHitRateReportMB.quoteHitRateReportVos}" 
+   			widgetVar="voTable" 
+   			filteredValue="#{quoteHitRateReportMB.filteredQuoteHitRateReportVos}"
+   			editable="true"
+          	paginatorPosition="top"
+			rowKey="#{rowIndex}" 
+			paginator="true" 
+			rowIndexVar="rowIndex"
+			rows="10"
+			rowsPerPageTemplate="10,20,50"
+			emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+                 
+	       <p:column headerText="#{dbResource['wq.label.no']}"  >
+				<f:facet name="header">
+					<h:outputText value="#{dbResource['wq.label.no']}"/>
+				</f:facet>
+				<h:outputText value="#{rowIndex+1}" />
+			</p:column>
+	        <p:columns value="#{quoteHitRateReportMB.columns}" var="column" columnIndexVar="colIndex" sortBy="#{vo[column.property]}" filterBy="#{vo[column.property]}">
+	            <f:facet name="header">
+	                <h:outputText value="#{column.header}" />
+	            </f:facet>
+	            
+	            <h:outputText value="#{vo[column.property]}" rendered="#{column.header!='Hit Order Rate' and quoteHitRateReportMB.criteria.searchResultType=='0'}" >            	
+	           		<f:convertNumber pattern="###,##0" minFractionDigits="0"  />
+	            </h:outputText>
+	             <h:outputText value="#{vo[column.property]}" rendered="#{column.header=='Hit Order Rate' or quoteHitRateReportMB.criteria.searchResultType=='1'}" >
+	           		<f:convertNumber pattern="###,##0.00" minFractionDigits="2" />
+	            </h:outputText>
+	        </p:columns>
+ 
+        <p:columnGroup type="footer">
+            <p:row >
+	            <p:column  colspan="#{quoteHitRateReportMB.grandColspanSize}" style="text-align:right" footerText="#{dbResource['wq.label.grandTotal']}:" />
+					<p:column  rendered = "#{quoteHitRateReportMB.criteria.searchResultType=='0'}" >
+						<f:facet name="footer">
+							<h:outputText value="#{quoteHitRateReportMB.grandTotal.quotedCnt}">
+								<f:convertNumber pattern="###,##0"  />
+							</h:outputText>
+						</f:facet>
+					</p:column>
+					
+					<p:column  rendered = "#{quoteHitRateReportMB.criteria.searchResultType=='0'}" >
+						<f:facet name="footer">
+							<h:outputText value="#{quoteHitRateReportMB.grandTotal.hitOrderCnt}">
+								<f:convertNumber pattern="###,##0" />
+							</h:outputText>
+						</f:facet>
+					</p:column>
+					
+					<p:column  rendered = "#{quoteHitRateReportMB.criteria.searchResultType=='0'}" >
+						<f:facet name="footer">
+							<h:outputText value="#{quoteHitRateReportMB.grandTotal.hitOrderRate}">
+								<f:convertNumber pattern="###,##0.00" />
+							</h:outputText>
+						</f:facet>
+					</p:column>
+					<p:column  rendered = "#{quoteHitRateReportMB.criteria.searchResultType=='0'}" >
+						<f:facet name="footer">
+							<h:outputText value="#{quoteHitRateReportMB.grandTotal.metTpHitItemCnt}">
+								<f:convertNumber pattern="###,##0" />
+							</h:outputText>
+						</f:facet>
+					</p:column>
+	            	
+	            	
+	            	<p:column  rendered = "#{quoteHitRateReportMB.criteria.searchResultType=='1'}" >
+						<f:facet name="footer">
+							<h:outputText value="#{quoteHitRateReportMB.grandTotal.quotedAmt}">
+								<f:convertNumber pattern="###,##0.00" />
+							</h:outputText>
+						</f:facet>
+					</p:column>
+					
+					<p:column  rendered = "#{quoteHitRateReportMB.criteria.searchResultType=='1'}" >
+						<f:facet name="footer">
+							<h:outputText value="#{quoteHitRateReportMB.grandTotal.hitOrderAmt}">
+								<f:convertNumber pattern="###,##0.00" />
+							</h:outputText>
+						</f:facet>
+					</p:column>
+					
+					<p:column  rendered = "#{quoteHitRateReportMB.criteria.searchResultType=='1'}" >
+						<f:facet name="footer">
+							<h:outputText value="#{quoteHitRateReportMB.grandTotal.hitOrderRate}">
+								<f:convertNumber pattern="###,##0.00" />
+							</h:outputText>
+						</f:facet>
+					</p:column>
+
+					
+				
+            </p:row>
+        </p:columnGroup>
+ 
+      
+    </p:dataTable>
+ </ui:remove>
+
+ 	</h:form>
+        	
+	</ui:define>
+	</ui:composition>

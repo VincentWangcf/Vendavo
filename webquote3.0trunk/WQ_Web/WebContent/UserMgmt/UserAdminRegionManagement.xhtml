@@ -1,0 +1,66 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="content">
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+	<!-- <p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	 disabled="true"
+	 -->
+	<h:form id="form1">
+		
+	<p:accordionPanel  >
+		<p:tab title="#{dbResource['wq.label.maintainAdminProfile']}">
+		
+			<p:messages id="messages" escape="false" closable="true"/>
+			<h:panelGrid cellpadding="0" style="width:500px;" columns="6">
+				
+				<h:outputText value="#{dbResource['wq.label.EmpID']}:"  escape="false" />
+				<p:inputText value="#{userAdminRegionMB.employeeId}" />
+				
+				<h:outputText value="#{dbResource['wq.label.empName']}: #{userAdminRegionMB.employeeName}"/>
+<!-- 				
+				<p:inputText value="#{userAdminRegionMB.employeeName}" /> 
+ -->				
+			</h:panelGrid>
+
+			<h:panelGrid columns="2" cellpadding="0" >
+				
+				<p:commandButton value="#{dbResource['wq.button.search']}"  icon="ui-icon-search" action="#{userAdminRegionMB.search}"  update="@form" />
+				<p:commandButton value="#{dbResource['wq.label.reset']}" icon="ui-icon-triangle-1-w" actionListener="#{userAdminRegionMB.initialize}" update="@form"/>
+				
+			</h:panelGrid>
+			
+		</p:tab>
+
+	</p:accordionPanel>
+		
+		<p:panel header="#{dbResource['wq.label.regions']}" style="width:500px;" >
+		
+			<h:outputText value="#{dbResource['wq.label.region']}"  />
+			<p:selectManyCheckbox value="#{userAdminRegionMB.buSelected}" layout="pageDirection">
+				<f:selectItems value="#{userAdminRegionMB.bizUnitAll}"  var = "item" itemLabel = "#{item.getName()}" itemValue = "#{item.getName()}"/>
+			</p:selectManyCheckbox>
+
+		</p:panel>
+
+		<h:panelGrid columns="3">
+		<f:facet name="footer">
+			<p:commandButton value="#{dbResource['wq.header.save']}" action="#{userAdminRegionMB.save}"  update="@form" >
+				<f:attribute name="button" value="#{dbResource['wq.header.save']}" />
+			</p:commandButton>
+		</f:facet>
+		</h:panelGrid>
+			
+			
+		</h:form>
+
+	</ui:define>
+</ui:composition>
+
+
+

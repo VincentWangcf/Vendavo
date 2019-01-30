@@ -1,0 +1,235 @@
+	
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.exception.WebQuoteRuntimeException;
+import com.avnet.emasia.webquote.vo.PricerInfo;
+import com.avnet.emasia.webquote.vo.ProgramMaterialQtyRange;
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+
+
+/**
+ * The persistent class for the PROGRAM_MATERIAL database table.
+ * Normal
+ */
+@Entity
+public class ProgramPricer extends QtyBreakPricer implements Serializable{
+	private static final long serialVersionUID = -5432324616099393430L;
+	private final static String INDICATOR_LIMIT = "Limit";
+	private final static String INDICATOR_EXACT = "Exact";
+	private final static String INDICATOR_MOQ = "MOQ";
+	private final static String INDICATOR_MPQ =  "MPQ";
+	private final static String INDICATOR_PERSENT = "%";
+	private final static String INDICATOR_PLUS = "+";
+	private final static String INDICATOR_SUBSTR = "-";
+
+		@Column(name="FULL_MFR_PART_NUMBER", length=40)
+		private String fullMfrPartNumber;
+
+		//Added by tonmy on 15 Oct 2013
+		@Column(name="AVAILABLE_TO_SELL_MORE_FLAG", length=1)
+		private boolean availableToSellMoreFlag;
+
+		@Column(name="PROGRAM_CALL_FOR_QUOTE", length=1)
+		private boolean programCallForQuote;
+
+		@Temporal(TemporalType.TIMESTAMP)
+		@Column(name="PROGRAM_CLOSING_DATE")
+		private Date programClosingDate;
+
+		@Temporal(TemporalType.TIMESTAMP)
+		@Column(name="PROGRAM_EFFECTIVE_DATE")
+		private Date programEffectiveDate;
+
+		@Column(name="PROGRAM_MINIMUM_COST", precision=9, scale=5)
+		private Double programMinimumCost;
+
+		@Column(name="RESALE_INDICATOR")
+		private String resaleIndicator;
+		
+		
+		public ProgramPricer() {
+		}
+
+		public boolean getProgramCallForQuote() {
+			return this.programCallForQuote;
+		}
+
+		public void setProgramCallForQuote(boolean programCallForQuote) {
+			this.programCallForQuote = programCallForQuote;
+		}
+
+		public Date getProgramClosingDate() {
+			return this.programClosingDate;
+		}
+
+		public void setProgramClosingDate(Date programClosingDate) {
+			this.programClosingDate = programClosingDate;
+		}
+
+		public Date getProgramEffectiveDate() {
+			return this.programEffectiveDate;
+		}
+
+		public void setProgramEffectiveDate(Date programEffectiveDate) {
+			this.programEffectiveDate = programEffectiveDate;
+		}
+
+		public Double getProgramMinimumCost() {
+			return this.programMinimumCost;
+		}
+
+		public void setProgramMinimumCost(Double programMinimumCost) {
+			this.programMinimumCost = programMinimumCost;
+		}
+
+		public String getResaleIndicator() {
+			return resaleIndicator;
+		}
+
+		public void setResaleIndicator(String resaleIndicator) {
+			this.resaleIndicator = resaleIndicator;
+		}
+
+		public static long getSerialversionuid() {
+			return serialVersionUID;
+		}
+
+		public String getFullMfrPartNumber() {
+			return this.fullMfrPartNumber;
+		}
+
+		public void setFullMfrPartNumber(String fullMfrPartNumber) {
+			this.fullMfrPartNumber = fullMfrPartNumber;
+		}
+
+		/*public Double getNormalSell() {
+			return this.normalSell;
+		}
+
+		public void setNormalSell(Double normalSell) {
+			this.normalSell = normalSell;
+		}*/
+
+		public String getQtyIndicator() {
+			return this.qtyIndicator;
+		}
+
+		public void setQtyIndicator(String qtyIndicator) {
+			this.qtyIndicator = qtyIndicator;
+		}
+
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		public List<QuantityBreakPrice> getQuantityBreakPrices() {
+			List<QuantityBreakPrice> sorted = new ArrayList<QuantityBreakPrice>(qtyBreakPrices);
+			Collections.sort(sorted,
+					new Comparator(){
+						 @Override
+						 public int compare(Object o1, Object o2) 
+						 {
+							 int sortByAgeFlag=((QuantityBreakPrice)o1).getQuantityBreak().compareTo(((QuantityBreakPrice)o2).getQuantityBreak());
+							 return sortByAgeFlag;
+						 }
+					}
+		    );
+			return sorted;
+		}
+
+
+		@Override
+		public String toString() {
+			return "MaterialDetail [costIndicator=" + getCostIndicator()
+					+ ", fullMfrPartNumber=" + fullMfrPartNumber + ", bizUnitBean=" + 
+				getBizUnitBean() + ", material=" + getMaterial() + "]";
+		}
+
+		public boolean getAvailableToSellMoreFlag()
+		{
+			return availableToSellMoreFlag;
+		}
+
+		public void setAvailableToSellMoreFlag(boolean availableToSellMoreFlag)
+		{
+			this.availableToSellMoreFlag = availableToSellMoreFlag;
+		}
+		
+
+	@Override
+	int getPriority() {
+		return 2;
+	}
+	
+	
+	@Override
+	void fillInPricer(RfqItemVO rfqItem) {
+
+		super.fillInPricer(rfqItem);
+		rfqItem.setResaleIndicator(resaleIndicator);
+		
+//		rfqItem.calAfterFillin();
+		
+		//to do to remove
+		rfqItem.setRequestedProgramMaterialForProgram(this);
+
+	}
+	
+	
+	@Override
+	public void fillupPricerInfo(PricerInfo pricerInfo) {
+
+		super.fillupPricerInfo(pricerInfo);
+		pricerInfo.setPricerType("Program");
+		pricerInfo.setResaleIndicator(resaleIndicator);
+		
+		
+//		super.applyCostIndicator(pricerInfo);
+//		pricerInfo.calQty();
+		
+	}
+	
+
+	@Override
+	public boolean isEffectivePricer() {
+		Date date = new Date();
+		return super.isEffectivePricer() &&
+				((programEffectiveDate != null && ! programEffectiveDate.after(date))
+				&& (programClosingDate) != null && ! programClosingDate.before(date));
+	
+	}
+
+
+	/*
+	@Override
+	boolean isSalesCostTypeMatched() {
+		MaterialRegional materialRegional = getMaterial().getMaterialRegaional(getBizUnitBean().getName());
+		if (materialRegional != null) {
+			return ! materialRegional.isSalesCostFlag(); 
+		}
+		return false;
+	}
+	*/
+	
+	@Override
+	boolean isSalesCostTypeMatched(boolean salesCostType) {
+		return ! salesCostType;
+	}
+
+
+	@Override
+	Object calPrice(QuantityBreakPrice quantityBreakPrice) {
+		return quantityBreakPrice.getQuantityBreakPrice();
+	}
+
+}

@@ -1,0 +1,560 @@
+package com.avnet.emasia.webquote.utilites.web.common;
+
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import javax.cache.Caching;
+import javax.cache.configuration.Factory;
+import javax.cache.configuration.FactoryBuilder;
+import javax.cache.configuration.MutableConfiguration;
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
+import javax.cache.integration.CacheLoader;
+import javax.cache.spi.CachingProvider;
+import javax.ejb.DependsOn;
+import javax.ejb.EJB;
+import javax.ejb.Local;
+import javax.ejb.LocalBean;
+import javax.ejb.Schedule;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.ejb.Stateless;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+
+import com.avnet.emasia.webquote.entity.AppProperty;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.City;
+import com.avnet.emasia.webquote.entity.CostIndicator;
+import com.avnet.emasia.webquote.entity.Country;
+import com.avnet.emasia.webquote.entity.DesignLocation;
+import com.avnet.emasia.webquote.entity.LocaleMaster;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.ManufacturerDetail;
+import com.avnet.emasia.webquote.entity.Plant;
+import com.avnet.emasia.webquote.entity.Role;
+import com.avnet.emasia.webquote.entity.SalesOrg;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.ejb.CountrySB;
+import com.avnet.emasia.webquote.quote.ejb.RfqItemValidatorSB;
+import com.avnet.emasia.webquote.quote.strategy.factory.DrmsValidationUpdateStrategyFactory;
+import com.avnet.emasia.webquote.quote.strategy.interfaces.DrmsValidationUpdateStrategy;
+import com.avnet.emasia.webquote.user.ejb.LocaleMessagesSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilities.DBControl;
+import com.avnet.emasia.webquote.utilities.DBResourceBundleReloadEvent;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.web.quote.vo.AvnetQuoteCentreCommentVO;
+import com.avnet.emasia.webquote.web.quote.vo.TermsAndConditionsVO;
+import com.avnet.emasia.webquote.web.quote.vo.ValidationRuleVO;
+import com.avnet.emasia.webquote.web.security.WebSealUsernamePasswordAuthenticationFilter;
+import com.itextpdf.text.log.SysoLogger;
+
+@Startup
+@Singleton
+@Local
+public class CacheUtil {
+	private static final Logger LOG = Logger.getLogger(CacheUtil.class.getName());
+	
+	@PersistenceContext(unitName="Server_Source")
+	EntityManager em;
+	
+	@EJB
+	private SysConfigSB sysConfigSB;
+	
+	@Inject
+	private Event<DBResourceBundleReloadEvent> event;
+	
+	private Cache<String, List<?>> cache;
+	private Cache<String, Map<?,?>> mapCache;
+	
+	
+	public CacheUtil() {
+		
+
+	}
+	
+
+	@PostConstruct
+	public void init(){
+
+		CachingProvider cachingProvider = Caching.getCachingProvider();
+		CacheManager cacheManager = cachingProvider.getCacheManager();
+		
+		MutableConfiguration<String, List<?>> config
+		= new MutableConfiguration<String, List<?>>()
+		.setReadThrough(true)
+		.setCacheLoaderFactory(
+		        new FactoryBuilder.SingletonFactory<CacheLoader<String, List<?>>>(
+		            new CommonCacheLoader(em)
+		        ));
+//		.setCacheLoaderFactory((Factory<? extends CacheLoader<String, List<?>>>) new FactoryBuilder.SingletonFactory<>(
+//				new CommonCacheLoader(em)));
+		config.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, getCacheExpiryTime())));
+
+		if(cacheManager.getCache("CommonCache") != null) {
+			LOG.info("CommonCache is not null");
+			this.cache = cacheManager.getCache("CommonCache");
+		}else {
+			LOG.info("CommonCache is null");
+			this.cache = cacheManager.createCache("CommonCache", config);
+		}
+		
+		//==================
+		MutableConfiguration<String, Map<?,?>> configMapCache
+		= new MutableConfiguration<String, Map<?,?>>()
+		.setReadThrough(true)
+		.setCacheLoaderFactory(
+		        new FactoryBuilder.SingletonFactory<CacheLoader<String, Map<?,?>>>(
+		            new TreeMapCacheLoader(em)
+		        ));
+//		.setCacheLoaderFactory((Factory<? extends CacheLoader<String, Map<?,?>>>) new FactoryBuilder.SingletonFactory<>(
+//				new TreeMapCacheLoader(em)));
+		configMapCache.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, getCacheExpiryTime())));
+
+		if(cacheManager.getCache("MapCache") != null) {
+			LOG.info("MapCache is not null");
+			this.mapCache = cacheManager.getCache("MapCache");
+		}else {
+			LOG.info("MapCache is null");
+			this.mapCache = cacheManager.createCache("MapCache", configMapCache);
+		}
+		
+		initSystemConfig();
+	}
+	
+	@Schedule(minute="*/120", hour="*")
+	public void initSystemConfig(){
+		LOG.info("initSystemConfig...");
+		AppProperty appProperty = new AppProperty();
+		try{
+			appProperty.setPropKey(DBControl.LOCALE_RELOAD);
+			appProperty.setPropValue("true");
+			sysConfigSB.updateProperty(appProperty);
+			appProperty.setPropKey(DBControl.LOCALE_RELOAD+"_"+Locale.ENGLISH.getLanguage());
+			appProperty.setPropValue("true");
+			sysConfigSB.updateProperty(appProperty);
+			appProperty.setPropKey(DBControl.LOCALE_RELOAD+"_"+Locale.JAPANESE.getLanguage());
+			appProperty.setPropValue("true");
+			sysConfigSB.updateProperty(appProperty);
+			//Fire event to clear the resource bundle cache  
+			event.fire(new DBResourceBundleReloadEvent(WebSealUsernamePasswordAuthenticationFilter.getApplicationAssociate()));
+		}catch (Exception e) {
+			//LOGGER.warning("Failed to clear cache due to :"+e);
+		}
+	}
+	
+	private int getCacheExpiryTime(){
+		Query query = em
+				.createQuery("select c.propValue from AppProperty c where c.propKey='CACHE_EXPIRY_POLICY_MINUTE'");
+		List<String> list = query.getResultList();
+		
+		if(list.size() > 0){
+			try{
+				LOG.info("Expiry time drom db: " +list.get(0));
+				return Integer.parseInt(list.get(0));
+			}catch(NumberFormatException e){
+				
+			}
+		}
+		LOG.info("DEFAULT Expiry time: " +list.get(0));
+		return Constants.EXPIRY_TIME;
+	}
+	
+//	@Schedule(minute="*/1", hour="*")
+//	public void resetExpiryTime(){
+//		System.out.println("Reset expiry time...");
+//		config.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.SECONDS, 10)));
+//		this.cache = cacheManager.createCache("CommonCache", config);
+//	}
+	
+	
+	//For Account Group
+	public String getAccountGroup(String accountGroup) {
+		TreeMap<String, String> map = (TreeMap<String, String>)this.mapCache.get(Constants.ACCOUNT_GROUP);
+        return (String) map.get(accountGroup);
+    }
+	
+	//For Country
+	public List<Country> getCountries(){
+		return (List<Country>)this.cache.get(Constants.COUNTRY);
+	}
+	
+	public Country getCountry(String code) {
+		
+		List<Country> countryList = (List<Country>)this.cache.get(Constants.COUNTRY);
+		if(countryList != null){
+	    	for(Country country : countryList){
+	    		if(country.getId().equals(code)){
+	    			return country;
+	    		}
+	    	}
+    	}
+
+		return null;
+	}
+	
+	
+	//For City
+	public List<City> getCitiesByCountry(String countryId) {
+		TreeMap<String, List<City>> map = (TreeMap<String, List<City>>)this.mapCache.get(Constants.CITY);
+		return (List<City>) map.get(countryId);
+	}
+	
+	//For Biz Unit
+	public BizUnit getBizUnit(String bizUnit) {
+		TreeMap<String, BizUnit> map = (TreeMap<String, BizUnit>)this.mapCache.get(Constants.BIZ_UNIT);
+        return (BizUnit) map.get(bizUnit);
+    }
+	
+	public List<String> getBizUnitList(){
+		TreeMap<String, BizUnit> map = (TreeMap<String, BizUnit>)this.mapCache.get(Constants.BIZ_UNIT);
+    	Set<String> keys = map.keySet();
+    	List<String> suggested = new ArrayList<String>();
+    	  
+    	for (String key : keys) {
+   			suggested.add(key);
+    	}    	
+    	return suggested;
+    }
+	
+	//For Role
+	public List<String> getRoleList(){
+		TreeMap<String, Role> roles = (TreeMap<String, Role>)this.mapCache.get(Constants.ROLE);
+		
+    	Set<String> keys =  roles.keySet();
+    	List<String> suggested = new ArrayList<String>();
+    	  
+    	for (String key : keys) {
+   			suggested.add(key);
+    	}    	
+    	return suggested;
+    }
+	
+	public Role getRole(String role) {
+		TreeMap<String, Role> roles = (TreeMap<String, Role>)this.mapCache.get(Constants.ROLE);
+        return (Role) roles.get(role);
+    }
+	
+	public List<Role>  findAllForUserAdmin(){
+		TreeMap<String, Role> roles = (TreeMap<String, Role>)this.mapCache.get(Constants.ROLE);
+		
+     	List<Role> sRoles = new ArrayList<Role>();
+    	Role role = null;  
+    	Set<String> keys =  roles.keySet();
+    	for (String key : keys) {
+    		role = roles.get(key);
+    		if(!"ROLE_SYS_ADMIN".equals(key)&&role.getActive()){
+    			sRoles.add(role);	
+    		}
+    	}  
+    	return sRoles;
+    }
+	
+	//For Sales Org
+	public List<SalesOrg> getSalesOrgByBizUnit(String bizUnitCode) {
+		TreeMap<String, List<SalesOrg>> salesOrg = (TreeMap<String, List<SalesOrg>>)this.mapCache.get(Constants.SALESORG);
+        return (List<SalesOrg>) salesOrg.get(bizUnitCode);
+    }
+	
+	public List<String> getSalesOrgCodesByBizUnit(String bizUnitCode){
+    	List<SalesOrg> salesOrgs = getSalesOrgByBizUnit(bizUnitCode);
+    	List<String> suggested = new ArrayList<String>();
+    	if(salesOrgs != null){  
+	    	for (SalesOrg salesOrg : salesOrgs) {
+	   			suggested.add(salesOrg.getName());
+	    	}
+    	}
+    	return suggested;
+    }
+	
+	//For Plant
+	public List<Plant> getPlantByBizUnit(String bizUnitCode) {
+		TreeMap<String, List<Plant>> salesOrg = (TreeMap<String, List<Plant>>)this.mapCache.get(Constants.PLANT);
+        return (List<Plant>) salesOrg.get(bizUnitCode);
+    }
+	
+	public List<String> getPlantCodesByBizUnit(String bizUnitCode){
+    	List<Plant> plants = getPlantByBizUnit(bizUnitCode);
+    	List<String> suggested = new ArrayList<String>();
+    	if(plants != null){  
+	    	for (Plant plant : plants) {
+	   			suggested.add(plant.getName());
+	    	}
+    	}
+    	return suggested;
+    }
+	
+	//For Cost Indicator
+	public CostIndicator getCostIndicator(String costIndicator) {
+		TreeMap<String, CostIndicator> costIndicators = (TreeMap<String, CostIndicator>)this.mapCache.get(Constants.COST_INDICATOR);
+        return (CostIndicator) costIndicators.get(costIndicator);
+    }
+	
+	public List<String> getCostIndicator(){  
+		TreeMap<String, CostIndicator> costIndicators = (TreeMap<String, CostIndicator>)this.mapCache.get(Constants.COST_INDICATOR);
+    	Set<String> keys =  costIndicators.keySet();
+    	List<String> suggested = new ArrayList<String>();    	  
+    	for (String key : keys) {
+    		CostIndicator costIndicator = (CostIndicator) costIndicators.get(key);
+    		suggested.add(costIndicator.getName());
+    	}    	
+    	return suggested;
+    }
+	
+	//For Quantity Indicator
+	public String getQtyIndicator(String qtyIndicator) {
+		TreeMap<String, String> costIndicators = (TreeMap<String, String>)this.mapCache.get(Constants.QUANTITY_INDICATOR);
+        return (String) costIndicators.get(qtyIndicator);
+    }
+	
+	public List<String> getQtyIndicatorList(){
+		TreeMap<String, String> qtyIndicators = (TreeMap<String, String>)this.mapCache.get(Constants.QUANTITY_INDICATOR);
+		
+    	Set<String> keys =  qtyIndicators.keySet();
+    	List<String> suggested = new ArrayList<String>();
+    	  
+    	for (String key : keys) {
+   			suggested.add((String) qtyIndicators.get(key));
+    	}    	
+    	return suggested;
+    }
+	
+	//For Avnet Quote Centre Comment
+	public AvnetQuoteCentreCommentVO getAvnetQuoteCentreComment(String avnetQuoteCentreComment) {
+		TreeMap<String, AvnetQuoteCentreCommentVO> qtyIndicators = (TreeMap<String, AvnetQuoteCentreCommentVO>)this.mapCache.get(Constants.QUOTE_CENTRE_COMMENT);
+        return (AvnetQuoteCentreCommentVO) qtyIndicators.get(avnetQuoteCentreComment);
+    }
+	
+	public List<AvnetQuoteCentreCommentVO> getAvnetQuoteCentreCommentList(){
+		TreeMap<String, AvnetQuoteCentreCommentVO> qtyIndicators = (TreeMap<String, AvnetQuoteCentreCommentVO>)this.mapCache.get(Constants.QUOTE_CENTRE_COMMENT);
+		
+    	Set<String> keys =  qtyIndicators.keySet();
+    	List<AvnetQuoteCentreCommentVO> suggested = new ArrayList<AvnetQuoteCentreCommentVO>();
+    	  
+    	for (String key : keys) {
+   			suggested.add((AvnetQuoteCentreCommentVO) qtyIndicators.get(key));
+    	}    	
+    	return suggested;
+    }
+
+	//For Term and Condition
+	public TermsAndConditionsVO getTermsAndConditions(String termsAndConditions) {
+		TreeMap<String, TermsAndConditionsVO> map = (TreeMap<String, TermsAndConditionsVO>)this.mapCache.get(Constants.TERM_AND_CONDITION);
+        return (TermsAndConditionsVO) map.get(termsAndConditions);
+    }
+	
+	public List<TermsAndConditionsVO> getTermsAndConditionsList(){
+		TreeMap<String, TermsAndConditionsVO> map = (TreeMap<String, TermsAndConditionsVO>)this.mapCache.get(Constants.TERM_AND_CONDITION);
+    	
+		Set<String> keys =  map.keySet();
+    	List<TermsAndConditionsVO> suggested = new ArrayList<TermsAndConditionsVO>();
+    	  
+    	for (String key : keys) {
+   			suggested.add((TermsAndConditionsVO) map.get(key));
+    	}    	
+    	return suggested;
+    }
+	
+	//For Application
+	public String getApplication(String application) {
+		TreeMap<String, String> map = (TreeMap<String, String>)this.mapCache.get(Constants.APPLICATION);
+        return (String) map.get(application);
+    }
+	
+	public List<String> getApplicationList(){
+		TreeMap<String, String> map = (TreeMap<String, String>)this.mapCache.get(Constants.APPLICATION);
+    	Set<String> keys =  map.keySet();
+    	List<String> suggested = new ArrayList<String>();
+    	  
+    	for (String key : keys) {
+   			suggested.add(key);
+    	}    	
+    	return suggested;
+    }
+	
+	//For Enquiry Segment
+	public String getEnquirySegment(String enquirySegment) {
+		TreeMap<String, String> map = (TreeMap<String, String>)this.mapCache.get(Constants.ENQUIRY_SEGMENT);
+        return (String) map.get(enquirySegment);
+    }
+	
+	public List<String> getEnquirySegmentList(){
+		TreeMap<String, String> map = (TreeMap<String, String>)this.mapCache.get(Constants.ENQUIRY_SEGMENT);
+    	Set<String> keys =  map.keySet();
+    	List<String> suggested = new ArrayList<String>();
+    	  
+    	for (String key : keys) {
+   			suggested.add(key);
+    	}    	
+    	return suggested;
+    }
+	
+	//For Design Location
+	public DesignLocation getDesignLocation(String designLocation) {
+		TreeMap<String, Map> map = (TreeMap<String, Map>)this.mapCache.get(Constants.DESIGN_LOCATION);
+		
+        return (DesignLocation) map.get("DESIGN_LOCATION_TREE").get(designLocation);
+    }
+	
+	public List<String> getLocationByRegion(String region) {
+		TreeMap<String, Map> map = (TreeMap<String, Map>)this.mapCache.get(Constants.DESIGN_LOCATION);
+		
+    	if(region == null || "".equals(region)){
+    		
+    		return new ArrayList<>(map.get("DESIGN_LOCATION_MAP").keySet());
+    	}
+    	ArrayList<String> designLocation = new ArrayList<String>();
+//    	designLocation.add("-select-"); 
+    	List<String> cacheRegionLocation = (List<String>)map.get("REGION_LOCATION_MAP").get(region);
+    	if(cacheRegionLocation != null && !cacheRegionLocation.isEmpty()){
+    		designLocation.addAll((List<String>)map.get("REGION_LOCATION_MAP").get(region));
+    	}
+		return designLocation;
+	}
+	
+	public List<DesignLocation> getDesignLocationList(){
+		TreeMap<String, Map> map = (TreeMap<String, Map>)this.mapCache.get(Constants.DESIGN_LOCATION);
+		
+    	Set<DesignLocation> entrySet =  map.get("DESIGN_LOCATION_TREE").entrySet();
+    	List<DesignLocation> suggested = new ArrayList<DesignLocation>();
+    	  
+    	Iterator it=entrySet.iterator();
+    	while(it.hasNext()){
+    		Entry e= (Entry) it.next();
+    		suggested.add((DesignLocation) e.getValue());
+    	
+    	}
+    	
+    	return suggested;
+    }
+	
+	public Map<String,String> getDesignLocationMap(){ 
+		TreeMap<String, Map> map = (TreeMap<String, Map>)this.mapCache.get(Constants.DESIGN_LOCATION);
+    	return map.get("DESIGN_LOCATION_MAP");
+    }
+	
+	//For Design Region
+	public String getDesignRegion(String designRegion){
+		TreeMap<String, String> map = (TreeMap<String, String>)this.mapCache.get(Constants.DESIGN_REGION);
+		return  (String) map.get(designRegion);
+	}
+	
+	public List<String> getDesignRegionList(){
+		TreeMap<String, String> map = (TreeMap<String, String>)this.mapCache.get(Constants.DESIGN_REGION);
+
+		Set<String> keys=map.keySet();
+		List<String> regionList =new ArrayList<String>();
+		for(String  key:keys){
+			regionList.add(key);
+		}
+
+		return regionList;
+	}
+	
+	//For Manufacturer
+	public List<Manufacturer> getMfrListByBizUnit(String bizUnit) {
+		TreeMap<String, List<Manufacturer>> map = (TreeMap<String, List<Manufacturer>>)this.mapCache.get(Constants.MANUFACTURER);
+        return (List<Manufacturer>) map.get(bizUnit);
+    }
+	
+	public Manufacturer getMfrByBizUnit(String manufacturer, String bizUnit) {
+		
+		List<Manufacturer> mfrs = getMfrListByBizUnit(bizUnit);
+		for(Manufacturer mfr : mfrs){
+			if(mfr.getName().equals(manufacturer))
+				return mfr;
+		}
+		return null;
+	}
+	
+	//For Manufacturer detail
+	public ManufacturerDetail getMfrDetail(long manufacturerId, long productGroupId, long productCategoryId, String bizUnit) {
+		TreeMap<String, ManufacturerDetail> map = (TreeMap<String, ManufacturerDetail>)this.mapCache.get(Constants.MANUFACTURER_DETAIL);
+		return (ManufacturerDetail) map.get(manufacturerId+"_"+productGroupId+"_"+productCategoryId+"_"+bizUnit);
+    }
+	
+	public TreeMap getAllMfrDetail(){
+		TreeMap<String, ManufacturerDetail> map = (TreeMap<String, ManufacturerDetail>)this.mapCache.get(Constants.MANUFACTURER_DETAIL);
+    	return map;
+    }
+	
+	//For Design In Cat
+	public String getDesignInCat(String designInCat) {
+		TreeMap<String, String> map = (TreeMap<String, String>)this.mapCache.get(Constants.DESIGN_IN_CAT);
+        return (String) map.get(designInCat);
+    }
+	
+	public List<String> getDesignInCatList(){
+		TreeMap<String, String> map = (TreeMap<String, String>)this.mapCache.get(Constants.DESIGN_IN_CAT);
+		Set<String> keys =  map.keySet();
+		List<String> suggested = new ArrayList<String>();
+
+		for (String key : keys) {
+			suggested.add(key);
+		}    	
+		return suggested;
+	}
+	
+	//For Quote type
+	public  String getQuoteType(String quoteType) {
+		TreeMap<String, String> map = (TreeMap<String, String>)this.mapCache.get(Constants.QUOTE_TYPE);
+        return (String) map.get(quoteType);
+    }
+	
+	public List<String> getQuoteTypeList(){
+		TreeMap<String, String> map = (TreeMap<String, String>)this.mapCache.get(Constants.QUOTE_TYPE);
+		
+    	Set<String> keys =  map.keySet();
+    	List<String> suggested = new ArrayList<String>();
+    	  
+    	for (String key : keys) {
+   			suggested.add(key);
+    	}    	
+    	return suggested;
+    }
+	
+	//For Validation rule
+	public ValidationRuleVO getValidationRule(String region, String mfr) {
+		TreeMap<String, ValidationRuleVO> map = (TreeMap<String, ValidationRuleVO>)this.mapCache.get(Constants.VALIDATION_RULE);
+        return (ValidationRuleVO) map.get(region+"_"+mfr);
+    }
+	
+	//For Email Address
+	public List<User> getEmailAddress(BizUnit bizUnit) {
+		TreeMap<String, List<User>> map = (TreeMap<String, List<User>>)this.mapCache.get(Constants.EMAIL_ADDRESS);
+    	return (List<User>) map.get(bizUnit.getName());
+    }
+	
+	//For DRMS Validation
+	public DrmsValidationUpdateStrategy getDrmsValidationUpdateStrategy(String region) {
+		TreeMap<String,DrmsValidationUpdateStrategyFactory> map = (TreeMap<String,DrmsValidationUpdateStrategyFactory>)this.mapCache.get(Constants.DRMS_VALIDATION);
+	
+		return map.get(Constants.DRMS_VALIDATION).getDrmsValidationUpdateStrategy(region);
+	}
+	
+	//For Locale Master
+	public List<LocaleMaster> getLocaleMasterList() {
+		List<LocaleMaster> list = (List<LocaleMaster>)this.cache.get(Constants.LOCALE_MASTER);
+
+		return list;
+	}
+	
+}
+

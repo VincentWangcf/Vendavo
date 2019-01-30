@@ -1,0 +1,231 @@
+package com.avnet.emasia.webquote.stm.ejb;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeSet;
+
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.DataAccess;
+import com.avnet.emasia.webquote.entity.Manufacturer;
+import com.avnet.emasia.webquote.entity.MfrRequestInfo;
+import com.avnet.emasia.webquote.entity.ProductGroup;
+import com.avnet.emasia.webquote.entity.Quote;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.ShipToCodeMapping;
+import com.avnet.emasia.webquote.entity.Team;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.stm.constant.StmConstant;
+import com.avnet.emasia.webquote.stm.dto.OutBoundVo;
+import com.avnet.emasia.webquote.stm.dto.StmConfigInfo;
+import com.avnet.emasia.webquote.stm.dto.VendorQuoteSearch;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+import com.avnet.webquote.quote.ejb.utility.EJBQuoteUtility;
+
+@Stateless
+@LocalBean
+public class VendorQuotationSB {
+	@PersistenceContext(unitName = "Server_Source")
+	EntityManager em;
+
+	@EJB
+	private SystemCodeMaintenanceSB systemCodeMaintenanceSB;
+	
+	public List<QuoteItem> sendSearch(VendorQuoteSearch criteria) {
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<QuoteItem> c = cb.createQuery(QuoteItem.class);
+
+		Root<QuoteItem> quoteItem = c.from(QuoteItem.class);
+		Join<QuoteItem, Manufacturer> manufacturer = quoteItem.join("requestedMfr", JoinType.LEFT);
+		Join<QuoteItem, ProductGroup> productGroup = quoteItem.join("productGroup2", JoinType.LEFT);
+		Join<QuoteItem, Quote> quote = quoteItem.join("quote");
+
+		Join<Quote, Team> team = quote.join("team", JoinType.LEFT);
+		Join<Quote, BizUnit> bizUnit  = quote.join("bizUnit", JoinType.LEFT);
+		c.orderBy(cb.desc(quoteItem.get("quoteNumber")));
+		
+		populateCriteria(c,criteria,quoteItem,productGroup,quote,team,manufacturer, bizUnit) ;
+		
+		TypedQuery<QuoteItem> q = em.createQuery(c);
+		
+		q.setFirstResult(0);
+		q.setMaxResults(StmConstant.SEARCH_MAX_RESULT);
+		List<QuoteItem> searchResult = q.getResultList();
+		return searchResult;
+	}
+
+	private void populateCriteria(CriteriaQuery c, VendorQuoteSearch criteria,	  
+			 Root<QuoteItem> quoteItem ,Join<QuoteItem, ProductGroup> productGroup,
+			Join<QuoteItem, Quote> quote, Join<Quote, Team> team,
+			Join<QuoteItem, Manufacturer> manufacturer, Join<Quote, BizUnit> bizUnit) {
+
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+
+		List<Predicate> criterias = new ArrayList<Predicate>();
+		if (criteria.getMfr() != null && criteria.getMfr().size() !=0) {
+			
+			List<Predicate> predicates = new ArrayList<Predicate>();
+			
+			for(String mfr : criteria.getMfr()){
+				Predicate predicate = cb.equal(manufacturer.<String>get("name"), mfr.toUpperCase() );
+				predicates.add(predicate);
+			}
+			criterias.add(cb.or(predicates.toArray(new Predicate[0])));
+			
+		}	
+		
+		if (criteria.getStage() != null) {
+			
+			Predicate predicate = cb.equal(quoteItem.<String>get("stage"), criteria.getStage() );
+			criterias.add(predicate);
+		}else{
+			Predicate predicate = cb.like(quoteItem.<String>get("stage"), "" );
+			criterias.add(predicate);
+		}
+		
+		if (!QuoteUtil.isEmpty(criteria.getRfqCode())) {
+			Predicate p1 = cb.like(quoteItem.<String> get("quoteNumber"), criteria.getRfqCode().toUpperCase()+"%");
+			criterias.add(p1);
+		}
+		if(!QuoteUtil.isEmpty(criteria.getQuotedPartNumber())){			
+			Predicate predicate = cb.like(quoteItem.<String>get("quotedPartNumber"), criteria.getQuotedPartNumber().toUpperCase() + "%" );					
+			criterias.add(predicate);	
+		}
+		criterias = EJBQuoteUtility.genericQuery(criteria.getDataAccesses(), quoteItem, productGroup, team, manufacturer, cb, criterias);
+		EJBQuoteUtility.getQuery( c, criteria.getBizUnits(), bizUnit, cb, criterias );
+	}
+
+
+	/**
+	 *Vendor Ship To: This value should be auto assigned when STM RFQ is submitted sent,
+	 * based on a mapping table between, type, Avnet sales team and defined ship to name 
+	 * ( System only knows which ship to code to be assigned when user defines the type)
+
+	 */
+	public ShipToCodeMapping findShipToCodeMapping(String type,String teamName ){
+		if(!QuoteUtil.isEmpty(type)&&!QuoteUtil.isEmpty(teamName)) {
+		TypedQuery<ShipToCodeMapping> query = em.createQuery("select m from ShipToCodeMapping m join m.team b where"
+	    		+ " m.type=:type and m.team.name =:teamName", ShipToCodeMapping.class);
+	    	query.setFirstResult(0).setMaxResults(1)
+	    	.setParameter("type", type)
+	    	.setParameter("teamName", teamName);
+	    	List<ShipToCodeMapping> list = query.getResultList();
+	    	if(list.size()>0){
+	    		return list.get(0);
+	    	}
+		}
+		return null;
+		
+	}
+
+	public void autoGetShipToCode(String quoteType, OutBoundVo vo) {
+		if (vo.getQuoteItem() != null) {
+			Quote quote = vo.getQuoteItem().getQuote();
+			if (quote != null && quote.getTeam() != null) {
+				ShipToCodeMapping mapping = findShipToCodeMapping(quoteType,quote.getTeam().getName());
+				if (mapping != null) {
+					vo.setShipToCode(mapping.getShipToCode());
+				}
+			}
+		}
+	}
+
+	public StmConfigInfo getStmSystemCode(){
+		StmConfigInfo temp = new StmConfigInfo();
+		temp.setEdiReceivePath(systemCodeMaintenanceSB.getEDIReceivePath());
+		temp.setStmediftpconfig(systemCodeMaintenanceSB.getStmEdiFtpConfig());
+		temp.setStmoutBoundpath(systemCodeMaintenanceSB.getStmSendPath());
+		temp.setStmfilebackuppath(systemCodeMaintenanceSB.getStmFileBackupPath());
+		temp.setContactName(systemCodeMaintenanceSB.getStmContactName());
+		temp.setContactChannel(systemCodeMaintenanceSB.getStmContactChannel());
+		return temp;
+	}
+
+	public List<MfrRequestInfo> searchMfrRequestInfo(VendorQuoteSearch criteria) {
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<MfrRequestInfo> c = cb.createQuery(MfrRequestInfo.class);
+
+		Root<MfrRequestInfo> mfrRequestInfo = c.from(MfrRequestInfo.class);
+		Join<MfrRequestInfo, QuoteItem> quoteItem  = mfrRequestInfo.join("quoteItem", JoinType.LEFT);
+		Join<QuoteItem, Manufacturer> manufacturer = quoteItem.join("requestedMfr", JoinType.LEFT);
+		Join<QuoteItem, ProductGroup> productGroup = quoteItem.join("productGroup2", JoinType.LEFT);
+		Join<QuoteItem, Quote> quote = quoteItem.join("quote");
+		Join<Quote, BizUnit> bizUnit  = quote.join("bizUnit", JoinType.LEFT);
+		Join<Quote, Team> team = quote.join("team", JoinType.LEFT);
+		
+		List<Predicate> criterias = new ArrayList<Predicate>();
+		if (!QuoteUtil.isEmpty(criteria.getRfqCode())) {
+			Predicate p1 = cb.like(quoteItem.<String> get("quoteNumber"), criteria.getRfqCode().toUpperCase()+"%");
+			criterias.add(p1);
+		}
+		if(!QuoteUtil.isEmpty(criteria.getQuotedPartNumber())){			
+			Predicate predicate = cb.like(quoteItem.<String>get("quotedPartNumber"), criteria.getQuotedPartNumber().toUpperCase() + "%" );					
+			criterias.add(predicate);	
+		}
+		if (!QuoteUtil.isEmpty(criteria.getBpmCode())) {
+
+			Predicate p1 = cb.like(mfrRequestInfo.<String> get("bpmCode"), criteria.getBpmCode()+"%");
+			criterias.add(p1);
+		}
+		if( criteria.getDataAccesses() != null && criteria.getDataAccesses().size() != 0){
+			
+			List<Predicate> p0 = new ArrayList<Predicate>();
+			
+			for(DataAccess dataAccess : criteria.getDataAccesses()){
+				
+				List<Predicate> p1 = new ArrayList<Predicate>();
+				final Path<String> materialTypeId=quoteItem.<String>get("materialTypeId");
+				final Path<String> programType=quoteItem.<String>get("programType");
+				p1 = EJBQuoteUtility.addPredicates(cb, materialTypeId,programType, manufacturer, productGroup, dataAccess, p1);
+				if(dataAccess.getTeam() !=	null){
+					Predicate predicate = cb.equal(team.<String>get("name"), dataAccess.getTeam().getName());
+					p1.add(predicate);
+				}				//in case p1.size() is 0 (all dataAccess member is null), add below fake expression to make
+				//p1 has one element, otherwise p0 will not have p1 element
+				if(p1.size() ==0){
+					Predicate predicate = cb.equal(quoteItem.<Long>get("id"), quoteItem.<Long>get("id"));
+					p1.add(predicate);
+				}
+				
+				p0.add(cb.and(p1.toArray(new Predicate[0])));
+
+			}
+			criterias.add(cb.or(p0.toArray(new Predicate[0])));
+		}else{
+			Predicate predicate = cb.notEqual(manufacturer.<Long>get("id"), manufacturer.<Long>get("id"));
+			criterias.add(predicate);
+		}
+		EJBQuoteUtility.getQuery( c, criteria.getBizUnits(), bizUnit, cb, criterias );
+		TypedQuery<MfrRequestInfo> q = em.createQuery(c);
+		
+		q.setFirstResult(0);
+		q.setMaxResults(StmConstant.SEARCH_MAX_RESULT);
+		List<MfrRequestInfo> searchResult = q.getResultList();
+		return searchResult;
+	}
+
+	
+	public List<MfrRequestInfo> searchMfrRequestInfoByRfq(String rfqCode) {
+		String sql = "select m from MfrRequestInfo m where m.quoteItem.quoteNumber = ?1 ";
+		TypedQuery<MfrRequestInfo>  query = em.createQuery(sql, MfrRequestInfo.class);
+		
+    	query.setParameter(1, rfqCode); 
+ 
+    	List<MfrRequestInfo> list = query.getResultList();
+    	return list;
+		
+	}
+}

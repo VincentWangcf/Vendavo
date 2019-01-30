@@ -1,0 +1,473 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/> 
+	
+	<h:form id="f">
+		<p:growl id="growl" for="growl" showDetail="true" escape="#{growlPropertyMB.escape}" showSummary="#{growlPropertyMB.showSummary}"  sticky="#{growlPropertyMB.sticky}" />
+		<p:accordionPanel>
+			<p:tab title="#{dbResource['wq.label.quotesearchCriteria']}">			
+				<h:panelGrid cellpadding="0" style="width:100%;" columns="10">					
+					<h:outputText value="#{dbResource['wq.label.avnetQuote']} #&lt;br/&gt; #{dbResource['wq.label.supportMul']}"  escape="false" />
+					<p:inputTextarea id="tttttest" size="8" value="#{dataMaintenanceMB.criteria.sQuoteNumber}" autoResize="false" />
+					
+					<h:outputText value="#{dbResource['wq.header.firstRFQCode']} &lt;br/&gt; #{dbResource['wq.label.supportMul']}"  escape="false" />
+					<p:inputTextarea id="criteria_sFirstRFQCode_id" size="8" value="#{dataMaintenanceMB.criteria.sFirstRFQCode}" autoResize="false" />
+	
+					<h:outputText value="#{dbResource['wq.label.mfr']}:"/>
+					<p:autoComplete value="#{dataMaintenanceMB.criteria.sMfr}" completeMethod="#{dataMaintenanceMB.autoCompleteForManufacturer}" minQueryLength="1" style="width:80%;">
+					   <p:ajax event="query" global="false"/>
+				    </p:autoComplete> 
+									
+					<h:outputText value="#{dbResource['wq.label.avnetQPN']}:"  />
+					<p:autoComplete value="#{dataMaintenanceMB.criteria.sQuotedPartNumber}" completeMethod="#{dataMaintenanceMB.autoCompleteForPartNumber}" minQueryLength="5" >
+					   <p:ajax event="query" global="false"/>
+				    </p:autoComplete>
+				    
+					
+					
+					<h:outputText value="#{dbResource['wq.label.SoldToParty']}:" />
+					<p:inputTextarea  size="8" value="#{dataMaintenanceMB.criteria.soleToCustomerName}" completeMethod="#{dataMaintenanceMB.autoCompleteForCustomer}" minQueryLength="4"/>
+					
+					<h:outputText value="#{dbResource['wq.label.empName']}:" />
+					<p:autoComplete value="#{dataMaintenanceMB.criteria.sSalesName}" completeMethod="#{dataMaintenanceMB.autoCompleteForEmployeeName}" minQueryLength="4" >
+					   <p:ajax event="query" global="false"/>
+				    </p:autoComplete>
+	
+					<h:outputText value="#{dbResource['wq.label.SoldToCode']}:" />
+					<p:inputText value="#{dataMaintenanceMB.criteria.sSoldToCode}"  />
+					
+					<h:outputText value="#{dbResource['wq.label.sentOutTime']}:" />
+					<p:calendar value="#{dataMaintenanceMB.criteria.pageSentOutDateFrom}" showOn="button" pattern="dd/MM/yyyy"/>  
+					<h:outputText value="#{dbResource['wq.header.To']}:"/>
+					<p:calendar value="#{dataMaintenanceMB.criteria.pageSentOutDateTo}" showOn="button" pattern="dd/MM/yyyy"/>
+					<h:outputText value="" style="width:20px;"/>
+				</h:panelGrid>
+				
+				<h:panelGrid cellpadding="0" columns="14" style="width:100%" >
+					
+			<h:outputText value="#{dbResource['wq.label.salesCostPart']}:" />
+			<p:spacer width="10" height="10" /> 
+				<h:selectOneMenu id="salesCostPartSelectedDownList" value="#{dataMaintenanceMB.criteria.selectedSalesCostPart}">	
+					 <f:selectItem itemLabel="*ALL" itemValue="*ALL" />						
+                     <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			         <f:selectItem itemLabel="No" itemValue="No" />  
+				</h:selectOneMenu>
+				<h:outputText value="" style="width:100px;"/>
+				<p:spacer width="55" height="10" /> 
+				
+					<h:outputText value="#{dbResource['wq.label.status']}:" />
+					<p:selectManyCheckbox  value="#{dataMaintenanceMB.criteria.status}" label="status">
+						<f:selectItems itemValue="#{status}" itemLabel="#{status}"  value="#{dataMaintenanceMB.criteria.pageStatus}" var="status"/>
+					</p:selectManyCheckbox>
+					<p:spacer width="10" height="10" /> 
+					<!-- <h:outputText value="" style="width:60px;"/> -->
+					
+					<h:outputText value="#{dbResource['wq.label.quoteStage']}:" />
+					<p:selectManyCheckbox value="#{dataMaintenanceMB.criteria.stage}" label="stage">
+						<f:selectItems itemValue="#{stage}" itemLabel="#{stage}"  value="#{dataMaintenanceMB.criteria.pageStage}" var="stage" />
+					</p:selectManyCheckbox>	
+					
+				</h:panelGrid>
+							
+				 <p:separator />
+								
+				<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search" actionListener="#{dataMaintenanceMB.qcOperationSearch}"  update=":f"/>
+			</p:tab>			
+		</p:accordionPanel>
+		<p:panel header="#{dbResource['wq.label.quoteList']}" style="font-size:12pt" >	
+			<p:messages id="messages" escape="false" closable="true"/>
+				
+			<h:outputText value="#{dbResource['wq.message.SearchCriteriaPrecisely']}"  
+			rendered="#{dataMaintenanceMB.recordsExceedMaxAllowed}" 
+			style="color:red;font-weight:bold;"/>
+			<h:panelGrid columns="13" cellpadding="0" >                                                                                                                   
+		        <p:commandButton value="#{dbResource['wq.button.invalidateQuote']}" update=":f:quote_datatable, :f:growl, :invalidateFinishedQuoteForm:dialogInvalidateFinishedQuote" action="#{dataMaintenanceMB.checkSelectedQuoteItemVosInvalidateFinishedQuote}"></p:commandButton>
+		        | <p:commandButton value="#{dbResource['wq.message.batchInvalidateQuote']}" update=":f:quote_datatable, :f:growl, :batchInvalidateQuoteForm:dialogBatchInvalidateQuote" action="#{dataMaintenanceMB.checkSelectedQuoteItemVosBatchInvalidateQuote}"></p:commandButton>
+		        |<p:commandButton value="#{dbResource['wq.button.uploadInfo']}" update=":f:quote_datatable, :f:growl, :updateInformationForm:dialogUpdateInformation" action="#{dataMaintenanceMB.checkSelectedQuoteItemVosUpdateInformation}"></p:commandButton>
+		        |<p:commandButton value="#{dbResource['wq.button.uploadVal']}" update=":f:quote_datatable, :f:growl, :updateValidityForm:dialogUpdateValidity" action="#{dataMaintenanceMB.checkSelectedQuoteItemVosUpdateValidity}"></p:commandButton>
+		        |<p:commandButton value="#{dbResource['wq.button.reassignSales']}" update=":f:quote_datatable, :f:growl, :reassignSalesForm:dialogReassignSales" action="#{dataMaintenanceMB.checkSelectedQuoteItemVosReassignSales}"></p:commandButton>
+			</h:panelGrid>
+			
+		    <p:dataTable	var="vo" 
+		    				rowKey="#{vo.quoteItem.id}"
+		    				value="#{dataMaintenanceMB.quoteItemVos}"  
+		    				lazy="true"
+		    				paginator="true" 
+		    				rowIndexVar="rowIndex" 
+		    				rows="10" 
+	    					rowsPerPageTemplate="10,20,50"
+		                 	selection="#{dataMaintenanceMB.quoteItemVos.selectionItems}"  
+		                 	id="quote_datatable" 
+		                  	editable="true" 
+		                 	paginatorPosition="top" 
+		                 	scrollable="true"
+		                 	disabledSelection="false" 
+		                 	scrollHeight="100%" 
+		                 	rowStyleClass="#{vo.errRow ? 'errorRow' : null}"
+		                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+	   
+	   			<p:ajax event="rowSelect"
+                           listener="#{dataMaintenanceMB.quoteItemVos.onRowSelect}">
+                           
+                </p:ajax>
+                <p:ajax event="rowUnselect" listener="#{dataMaintenanceMB.quoteItemVos.onRowUnselect}" />
+                
+				<p:ajax event="rowSelectCheckbox"
+                           listener="#{dataMaintenanceMB.quoteItemVos.onRowSelectCheckbox}">
+                </p:ajax>
+                <p:ajax event="rowUnselectCheckbox"
+                           listener="#{dataMaintenanceMB.quoteItemVos.onRowUnselectCheckbox}">
+                </p:ajax>
+                <p:ajax event="toggleSelect" listener="#{dataMaintenanceMB.quoteItemVos.onToggleSelect}" />
+                
+                        
+				<!-- <p:column id="quote_selection" selectionMode="multiple" styleClass="column_icon" onclick="updateNumberOfSelectedCheckBoxes()"/> -->
+				<p:column styleClass="column_icon" selectionMode="multiple" exportable="false" /> 
+                 
+                <p:column headerText="#{dbResource['wq.button.no']}" styleClass="column_seq" exportable="false" >
+					
+					<h:outputText value="#{rowIndex+1}" />
+				</p:column> 
+				     
+				  <p:column headerText="#{dbResource['wq.label.salesCostPart']}" sortBy="#{vo.quoteItem.salesCostFlag}" filterBy="#{vo.quoteItem.salesCostFlag}" filterMatchMode="contains" styleClass="column_seq" >
+			<h:outputText value="#{vo.quoteItem.salesCostFlag? 'Yes':'No'}" />
+			</p:column>
+				<p:column headerText="#{dbResource['wq.label.avnetQuote']}#" sortBy="#{vo.quoteItem.quoteNumber}" filterBy="#{vo.quoteItem.quoteNumber}" filterMatchMode="contains" styleClass="column_quoteNumber" >
+					<h:outputText value="#{vo.quoteItem.quoteNumber}" />
+				</p:column>
+		<p:column headerText="#{dbResource['wq.header.firstRFQCode']}" sortBy="#{vo.quoteItem.firstRfqCode}" filterBy="#{vo.quoteItem.firstRfqCode}" filterMatchMode="contains" styleClass="column_quoteNumber" >
+					<h:outputText value="#{vo.quoteItem.firstRfqCode}" />
+		</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.quote']}&lt;br/&gt;#{dbResource['wq.label.stage']}" sortBy="#{vo.quoteItem.stage}" filterBy="#{vo.quoteItem.stage}" filterMatchMode="contains" styleClass="column_stage">
+					<h:outputText value="#{vo.quoteItem.stage}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.rfq']}&lt;br/&gt;#{dbResource['wq.label.status']}" sortBy="#{vo.quoteItem.status}" filterBy="#{vo.quoteItem.status}" filterMatchMode="contains" styleClass="column_rfqStatus">
+					<h:outputText value="#{vo.quoteItem.status == 'DQ' ? '': vo.quoteItem.status}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{vo.quoteItem.manufacturer.name}" filterBy="#{vo.quoteItem.manufacturer.name}" filterMatchMode="contains" styleClass="column_mfr">
+					<h:outputText value="#{vo.quoteItem.requestedMfr.name}"/>
+				</p:column>
+			
+				<p:column headerText="#{dbResource['wq.label.custNameSP']}" sortBy="#{vo.quoteItem.quote.soldToCustomerName}" filterBy="#{vo.quoteItem.quote.soldToCustomerName}" filterMatchMode="contains" styleClass="column_soldToCustomerName">
+					<h:outputText value="#{vo.quoteItem.quote.soldToCustomerName}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.soldTo']}&lt;br/&gt;#{dbResource['wq.label.code']}" sortBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}" filterBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}" filterMatchMode="contains" styleClass="column_soldToCustomerNumber">
+					<h:outputText value="#{vo.quoteItem.quote.soldToCustomer.customerNumber}"/>
+				</p:column>
+			
+				<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quotedPN']}" sortBy="#{vo.quoteItem.quotedPartNumber}" filterBy="#{vo.quoteItem.quotedPartNumber}" filterMatchMode="contains" styleClass="column_fullMfrPart">
+				<h:outputText value="#{vo.quoteItem.quotedPartNumber}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.buyCurrency']}" sortBy="#{vo.quoteItem.buyCurr}" filterBy="#{vo.quoteItem.buyCurr}" filterMatchMode="contains" styleClass="column_fullMfrPart">
+				<h:outputText value="#{vo.quoteItem.buyCurr}"/>
+				</p:column>
+				
+	
+				<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quotedPrice']}(Buy CUR)" sortBy="#{vo.quoteItem.quotedPrice}" filterBy="#{vo.quoteItem.quotedPrice}" filterMatchMode="contains" styleClass="column_quotedPrice align_right">
+				<h:outputText value="#{vo.quoteItem.quotedPrice}">
+					<f:convertNumber   pattern="#,##0.00000" minFractionDigits="5"/>
+				</h:outputText>
+				</p:column>			
+			 <p:column headerText="#{dbResource['wq.label.salesCost']}" sortBy="#{vo.quoteItem.salesCost}" filterBy="#{vo.quoteItem.salesCost}" filterMatchMode="contains" styleClass="column_quotedPrice align_right">
+			<h:outputText value="#{vo.quoteItem.salesCost}">
+				<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5"/>
+			</h:outputText>
+			</p:column>
+			
+				<p:column headerText="#{dbResource['wq.label.cost']}" sortBy="#{vo.quoteItem.cost}" filterBy="#{vo.quoteItem.cost}" filterMatchMode="contains" styleClass="column_cost align_right">
+				<h:outputText value="#{vo.quoteItem.cost}">
+					<f:convertNumber   pattern="#,##0.00000" minFractionDigits="5"/>
+				</h:outputText>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.quote']} &lt;br/&gt;#{dbResource['wq.label.margin']}" sortBy="#{vo.quoteItem.resaleMargin}" filterBy="#{vo.quoteItem.resaleMargin}" filterMatchMode="contains" styleClass="column_targetResale align_right">
+					<h:outputText value="#{vo.quoteItem.resaleMargin}">
+						<f:convertNumber  pattern="#0.00" minFractionDigits="2"/>
+					</h:outputText>
+					<h:outputText value="%" rendered="#{!empty(vo.quoteItem.resaleMargin)}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.cost']}&lt;br/&gt;#{dbResource['wq.label.indicator']}" sortBy="#{vo.quoteItem.costIndicator}" filterBy="#{vo.quoteItem.costIndicator}" filterMatchMode="contains" styleClass="column_costIndicator align_right" >
+				<h:outputText value="#{vo.quoteItem.costIndicator}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.price']}&lt;br/&gt;#{dbResource['wq.label.validity']}" sortBy="#{vo.quoteItem.priceValidity}" filterBy="#{vo.quoteItem.priceValidity}" filterMatchMode="contains" styleClass="column_shipmentValidity">
+					<h:outputText value="#{vo.quoteItem.priceValidity}">
+						<f:convertDateTime pattern="dd/MM/yyyy"    />
+					</h:outputText>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.QCComment']}&lt;br/&gt;(#{dbResource['wq.label.avnetInternalOnly']})" sortBy="#{vo.quoteItem.internalComment}" filterBy="#{vo.quoteItem.internalComment}" filterMatchMode="contains" styleClass="column_qcInternalComment">
+					<h:outputText value="#{vo.quoteItem.internalComment}"/>
+				</p:column>
+			
+				<p:column headerText="#{dbResource['wq.label.mfrQoute']}#" sortBy="#{vo.quoteItem.vendorQuoteNumber}" filterBy="#{vo.quoteItem.vendorQuoteNumber}" filterMatchMode="contains" styleClass="column_vendorQuoteNumber">
+					<h:outputText value="#{vo.quoteItem.vendorQuoteNumber}"/>
+				</p:column>
+				
+				<p:column headerText=" #{dbResource['wq.header.rfqSubmission']}&lt;br/&gt;#{dbResource['wq.label.date']}" sortBy="#{vo.quoteItem.submissionDate}" filterBy="#{vo.quoteItem.submissionDate}" filterMatchMode="contains" styleClass="column_uploadTime">
+					<h:outputText value="#{vo.quoteItem.submissionDate}">
+						<f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss"   />
+					</h:outputText>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.quoteRelease']}&lt;br/&gt;#{dbResource['wq.label.date']}" sortBy="#{vo.quoteItem.sentOutTime}" filterBy="#{vo.quoteItem.sentOutTime}" filterMatchMode="contains" styleClass="column_sentOutTime">
+					<h:outputText value="#{vo.quoteItem.sentOutTime}">
+						<f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss"   />
+					</h:outputText>
+				</p:column>
+	    </p:dataTable>
+    </p:panel>
+	</h:form>
+	
+	<h:form id ="batchInvalidateQuoteForm">	
+		<p:dialog id="dialogBatchInvalidateQuote" header="#{dbResource['wq.message.batchInvalidateQuote']}" widgetVar="dialogBatchInvalidateQuoteWidget"  
+		                showEffect="fade" hideEffect="fade">
+			
+			<h:panelGrid columns="1" cellpadding="4">
+				    <h:outputText value="#{resourceMB.getParameterizedText('wq.message.QInvalid' ,dataMaintenanceMB.batchQuoteNumStr)}"/>
+				    <h:outputText value="#{dbResource['wq.message.userNotified']}: #{dataMaintenanceMB.batchSales}#{dataMaintenanceMB.batchCs}#{dataMaintenanceMB.batchCreator}"/>
+			</h:panelGrid>
+			
+			<h:panelGrid columns="2" cellpadding="4">
+		    	<h:outputText value="#{dbResource['wq.message.emailRemark']}:"/>
+		        <p:inputTextarea size="8" value="#{dataMaintenanceMB.emailInfo}" autoResize="false" />
+		    </h:panelGrid>
+			    
+		     <h:panelGrid columns="2" cellpadding="4">
+	  				<p:commandButton value="#{dbResource['wq.button.submit']}" actionListener="#{dataMaintenanceMB.batchInvalidateQuote}" onclick="PF('dialogBatchInvalidateQuoteWidget').hide();" onstart="start();" oncomplete="stop();" update=":f:quote_datatable, :f:growl"></p:commandButton>
+	  				<p:commandButton value="#{dbResource['wq.button.cancel']}" actionListener="#{dataMaintenanceMB.cancelSave}" onstart="PF('dialogBatchInvalidateQuoteWidget').hide();" oncomplete=":f:quote_datatable:quote_selection.clearSelection()"></p:commandButton>
+			</h:panelGrid>	
+		</p:dialog>
+	</h:form>
+	
+	<h:form id ="invalidateFinishedQuoteForm">	
+		<p:dialog id="dialogInvalidateFinishedQuote" header="#{dbResource['wq.message.invalidQuote']}" widgetVar="dialogInvalidateFinishedQuoteWidget"  
+		                showEffect="fade" hideEffect="fade">
+			
+			<h:panelGrid columns="1" cellpadding="4">
+				    <h:outputText value="#{resourceMB.getParameterizedText('wq.message.QInvalid' ,dataMaintenanceMB.batchQuoteNumStr)}"/>
+ <h:outputText value="#{dbResource['wq.message.userNotified']} #{dataMaintenanceMB.batchSales}#{dataMaintenanceMB.batchCs}#{dataMaintenanceMB.batchCreator}"/>
+				   
+			</h:panelGrid>
+			
+			<h:panelGrid columns="2" cellpadding="4">
+		    	<h:outputText value="#{dbResource['wq.message.emailRemark']}:"/>
+		        <p:inputTextarea size="8" value="#{dataMaintenanceMB.emailInfo}" autoResize="false" />
+		    </h:panelGrid>
+		    
+		    <h:selectOneRadio id="invalidateRadio" value="#{dataMaintenanceMB.invalidate}" layout="pageDirection">  
+			  		<f:selectItem itemLabel="#{dbResource['wq.message.invalidPend']}" itemValue="invalidateAndGenerate" itemDisabled="#{dataMaintenanceMB.enable}" />  
+			  		<f:selectItem itemLabel="#{dbResource['wq.message.invalidQuoteOnly']}" itemValue="invalidateOnly" />  
+			</h:selectOneRadio> 
+			    
+		     <h:panelGrid columns="2" cellpadding="4">
+	  				<p:commandButton value="#{dbResource['wq.button.submit']}" actionListener="#{dataMaintenanceMB.invalidateFinishedQuote}" onclick="PF('dialogInvalidateFinishedQuoteWidget').hide();" update=":f:quote_datatable, :f:growl"></p:commandButton>
+	  				<p:commandButton value="#{dbResource['wq.button.cancel']}" actionListener="#{dataMaintenanceMB.cancelSave}" onstart="PF('dialogInvalidateFinishedQuoteWidget').hide();" oncomplete=":f:quote_datatable:quote_selection.clearSelection()"></p:commandButton>
+			</h:panelGrid>	
+		</p:dialog>
+	</h:form>
+	
+	<h:form id ="updateInformationForm">	
+		<p:dialog id="dialogUpdateInformation" header="#{dbResource['wq.button.uploadInfo']}" widgetVar="dialogUpdateInformationWidget"  
+		                showEffect="fade" hideEffect="fade">
+	       <h:panelGrid columns="6" cellpadding="4">
+	  				<h:outputText size="20" value="#{dbResource['wq.label.avnetQuote']}#:" />
+		            <h:outputText size="20" rendered="#{dataMaintenanceMB.quoteNumStr != null}" value="#{dataMaintenanceMB.quoteNumStr}" autoResize="false"/>
+		            <h:outputText size="20" value="#{dbResource['wq.label.avnetQPN']}:" />
+		            <h:outputText size="20" rendered="#{dataMaintenanceMB.selectedQuoteItemVo  != null}" value="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem.quotedPartNumber}" autoResize="false"/>
+		            <h:outputText size="20" value="#{dbResource['wq.label.cost']}:" />
+		            <p:inputText size="20" rendered="#{dataMaintenanceMB.selectedQuoteItemVo  != null}" value="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem.cost}" autoResize="false" />
+		            <h:outputText size="20" value="#{dbResource['wq.label.internalComment']}:" />
+		            <p:inputText size="20" rendered="#{dataMaintenanceMB.selectedQuoteItemVo  != null}" value="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem.internalComment}" autoResize="false" />
+		   			<h:outputText size="20" value="#{dbResource['wq.label.costIndicator']}:" />
+					<h:selectOneMenu id="costIndicatorSelect" rendered="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem  != null}" value="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem.costIndicator}" style="width:130px">							
+				    	<f:selectItems value="#{dataMaintenanceMB.costIndicators}" />
+					</h:selectOneMenu>	
+					<h:outputText size="20" value="#{dbResource['wq.label.resaleIndicator']}:" />
+					<p:inputText size="20" rendered="#{dataMaintenanceMB.selectedQuoteItemVo  != null}" value="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem.resaleIndicator}" autoResize="false" />
+					<h:outputText size="20" value="#{dbResource['wq.label.resaleMax']}:" />
+					<p:inputText size="20" rendered="#{dataMaintenanceMB.selectedQuoteItemVo  != null}" value="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem.resaleMax}" autoResize="false" />
+		            <h:outputText size="20" value="#{dbResource['wq.label.resaleMin']}:" />
+					<p:inputText size="20" rendered="#{dataMaintenanceMB.selectedQuoteItemVo  != null}" value="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem.resaleMin}" autoResize="false" />
+					<h:outputText size="20" value="#{dbResource['wq.label.mfrQoute']}#:" />
+		            <p:inputText size="20" rendered="#{dataMaintenanceMB.selectedQuoteItemVo  != null}" value="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem.vendorQuoteNumber}" autoResize="false" />
+					<h:outputText size="20" value="#{dbResource['wq.label.mfrDebit']}#:" />
+					<p:inputText size="20" rendered="#{dataMaintenanceMB.selectedQuoteItemVo  != null}" value="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem.vendorDebitNumber}" autoResize="false" />
+					<h:outputText size="20" value="#{dbResource['wq.label.vendorQuoteQty']}:" />
+					<p:inputText size="20" rendered="#{dataMaintenanceMB.selectedQuoteItemVo  != null}" value="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem.vendorQuoteQty}" autoResize="false" />
+					<h:outputText size="20" value="#{dbResource['wq.label.allocFlag']}:" />
+		            <p:selectBooleanCheckbox rendered="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem  != null}" value="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem.allocationFlag}" />
+		            <h:outputText size="20" value="#{dbResource['wq.message.multiUsage']}:" />
+		            <p:selectBooleanCheckbox rendered="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem  != null}" value="#{dataMaintenanceMB.selectedQuoteItemVo.quoteItem.multiUsageFlag}" />
+					
+					 
+			</h:panelGrid>
+		    <p:dataTable	rendered="#{dataMaintenanceMB.selectedQuoteItemVo  != null}"
+		    				var="vo" 
+			    			value="#{dataMaintenanceMB.selectedQuoteItemVo}"  
+			    			rowKey="#{vo.quotedPartNumber}"
+			    			rowIndexVar="rowIndex" 
+			    			rows="1" 
+			                id="update_origin_datatable"
+			                resizableColumns="true"
+			                emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+					
+					<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quote']}#" styleClass="myquote_column_quoteNumber" >
+						<h:outputText value="#{vo.quoteItem.quoteNumber}" />
+					</p:column>
+		
+					<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quotedPN']}" styleClass="myquote_column_quotedPartNumber">
+					<h:outputText value="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}"/>
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quotedPrice']}" styleClass="myquote_column_quotedPrice align_right">
+					<h:outputText value="#{vo.quoteItem.quotedPrice}">
+						<f:convertNumber   pattern="#,##0.00000" minFractionDigits="5"/>
+					</h:outputText>
+					</p:column>			
+					
+					<p:column headerText="#{dbResource['wq.label.cost']}" sortBy="#{vo.quoteItem.cost}" styleClass="myquote_column_cost align_right">
+					<h:outputText value="#{vo.quoteItem.cost}">
+						<f:convertNumber   pattern="#,##0.00000" minFractionDigits="5"/>
+					</h:outputText>
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.label.cost']}&lt;br/&gt;#{dbResource['wq.label.indicator']}" styleClass="myquote_column_costIndicator align_right" >
+					<h:outputText value="#{vo.quoteItem.costIndicator}"/>
+					</p:column>
+		   	 	</p:dataTable>
+		   	 	    
+			<h:panelGrid columns="2" cellpadding="4">
+			  <p:commandButton value="#{dbResource['wq.button.submit']}" actionListener="#{dataMaintenanceMB.updateInformation}"  update=":f:quote_datatable, :f:growl"></p:commandButton>
+			  <p:commandButton value="#{dbResource['wq.button.cancel']}" immediate="true" action="#{dataMaintenanceMB.cancelSaveUpdateInformation}"  oncomplete=":f:quote_datatable:quote_selection.clearSelection()" onstart="PF('dialogUpdateInformationWidget').hide();"></p:commandButton>
+			</h:panelGrid>
+		</p:dialog>
+	</h:form>
+		                
+	<h:form id ="updateValidityForm">	
+		<p:dialog id="dialogUpdateValidity" header="#{dbResource['wq.button.uploadVal']}" widgetVar="dialogUpdateValidityWidget"  
+		                showEffect="fade" hideEffect="fade">
+			
+	        <h:panelGrid columns="2" cellpadding="4">
+	  		
+	  				<h:outputText value="#{dbResource['wq.label.newPriceVal']}:" />
+		            <p:inputText size="8" value="#{dataMaintenanceMB.priceValidity}" autoResize="false"/>
+		            <h:outputText size="20" value="#{dbResource['wq.label.removeShipmentValidity']}:" />
+		            <p:selectBooleanCheckbox value="#{dataMaintenanceMB.removeShipmentValidity}" 
+		            	onclick="(this.checked ? PF('shipmentValidityPanel').show() : PF('shipmentValidityPanel').hide())">
+		            	<p:ajax event="change" execute="@this" update="shipmentValidityInputPanelGroup" />
+		            </p:selectBooleanCheckbox>
+		            	
+		            <h:panelGroup id="shipmentValidityLabelPanelGroup">
+		            	<h:outputText value="#{dbResource['wq.label.newShipmentValidity']}:"/>
+		            </h:panelGroup>
+		            <h:panelGroup id="shipmentValidityInputPanelGroup">
+		            	<p:inputText size="8" value="#{dataMaintenanceMB.shipmentValidity}" rendered="#{dataMaintenanceMB.removeShipmentValidity == false}" autoResize="false"/>
+		            </h:panelGroup>
+		            
+
+	  				<h:outputText value="#{dbResource['wq.label.POExpiryDate']}:" />
+	            	<p:inputText size="8" value="#{dataMaintenanceMB.sPoExpiryDate}" autoResize="false"/>
+	
+	  				<h:outputText value="#{dbResource['wq.label.quoteExpiryDate']}:" />
+	            	<p:inputText size="8" value="#{dataMaintenanceMB.sQuoteExpiryDate}" autoResize="false"/>
+
+		            <h:outputText value="#{dbResource['wq.label.appendInternalComments']}:" />
+		            <p:inputTextarea size="8" value="#{dataMaintenanceMB.internalComment}" autoResize="false" />
+		        
+		    </h:panelGrid>
+		         
+			<h:panelGrid columns="2" cellpadding="4">
+			  <p:commandButton value="#{dbResource['wq.button.submit']}" actionListener="#{dataMaintenanceMB.updateValidity}" onclick="PF('dialogUpdateValidityWidget').hide();" update=":f:quote_datatable, :f:growl"></p:commandButton>
+			  <p:commandButton value="#{dbResource['wq.button.cancel']}" actionListener="#{dataMaintenanceMB.cancelSave}" oncomplete=":f:quote_datatable:quote_selection.clearSelection()" onstart="PF('dialogUpdateValidityWidget').hide();"></p:commandButton>
+			  </h:panelGrid>
+		</p:dialog>
+	</h:form>
+	
+	<h:form id ="reassignSalesForm">	
+		<p:dialog id="dialogReassignSales" header="#{dbResource['wq.label.reassignSalesman']}" widgetVar="dialogReassignSalesWidget"  
+		                showEffect="fade" hideEffect="fade">
+		    <h:panelGrid columns="1" cellpadding="4">
+	       		<h:outputText value="#{resourceMB.getParameterizedText('wq.message.salesmanSelectedRecord' ,dataMaintenanceMB.salesMen)}"/>	
+	        </h:panelGrid>
+	  		
+	  		<h:panelGrid columns="2" cellpadding="4">
+	  				<h:outputText value="#{dbResource['wq.label.reassignToSalesman']}:" />
+		            <p:inputText size="8" value="#{dataMaintenanceMB.salesMan}" autoResize="false"/>
+		            <h:outputText value="#{dbResource['wq.label.appendInternalComments']}:" />
+		            <p:inputTextarea size="8" value="#{dataMaintenanceMB.internalComment}" autoResize="false" />
+		    </h:panelGrid>
+		    
+		    <h:selectOneRadio id="invalidateRadio" value="#{dataMaintenanceMB.reassignSalesSelection}" layout="pageDirection">  
+			  		<f:selectItem itemLabel="#{dbResource['wq.message.selForm']}" itemValue="selectedRecordsOnly" />  
+			  		<f:selectItem itemLabel="#{dbResource['wq.message.applyRFQ']}" itemValue="allRecords" />  
+			</h:selectOneRadio> 
+	        
+			<h:panelGrid columns="2" cellpadding="4">
+			  <p:commandButton value="#{dbResource['wq.button.submit']}" actionListener="#{dataMaintenanceMB.reassignSales}" onclick="PF('dialogReassignSalesWidget').hide();" update=":f:quote_datatable, :f:growl"></p:commandButton>
+			  <p:commandButton value="#{dbResource['wq.button.cancel']}" actionListener="#{dataMaintenanceMB.cancelSave}" oncomplete=":f:quote_datatable:quote_selection.clearSelection()" onstart="PF('dialogReassignSalesWidget').hide();"></p:commandButton>
+		    </h:panelGrid>
+			
+		</p:dialog>
+	</h:form>
+	
+	<p:dialog id="batchInvalidateQuoteConfirmationDialog" header="#{dbResource['wq.label.message']}" widgetVar="batchInvalidateQuoteConfirmationWidget"  
+		                showEffect="fade" hideEffect="fade">
+ 		<h:panelGrid columns="1" cellpadding="4">	  
+ 			<h:outputText rendered="#{dataMaintenanceMB.updateSuccess == false}" value="#{resourceMB.getParameterizedText('wq.message.invalidatingQuoteFailed' ,dataMaintenanceMB.errorMessage)}" />	
+            <h:outputText rendered="#{dataMaintenanceMB.updateSuccess}" value="#{dbResource['wq.message.updatedToInvalid']}" />	
+	    </h:panelGrid>
+	</p:dialog>
+	
+	<p:dialog id="invalidateFinishedQuoteConfirmationDialog" header="#{dbResource['wq.label.message']}" widgetVar="invalidateFinishedQuoteConfirmationWidget"  
+		                showEffect="fade" hideEffect="fade">
+ 		<h:panelGrid columns="1" cellpadding="4">	  
+ 			<h:outputText rendered="#{dataMaintenanceMB.updateSuccess == false}" value="#{resourceMB.getParameterizedText('wq.message.invalidatingQuoteFailed' ,dataMaintenanceMB.errorMessage)}" />	
+            <h:outputText rendered="#{dataMaintenanceMB.updateSuccess}" value="#{dbResource['wq.message.updatedToInvalid']}" />	
+            <h:outputText rendered="#{dataMaintenanceMB.invalidate == 'invalidateAndGenerate' and dataMaintenanceMB.updateSuccess}" value="#{resourceMB.getParameterizedText('wq.message.newRFQGenerated' ,dataMaintenanceMB.newQuoteNoStr)}"/>
+	    </h:panelGrid>
+	</p:dialog>
+	
+	<p:dialog id="updateInformationConfirmationDialog" header="#{dbResource['wq.label.message']}" widgetVar="updateInformationConfirmationWidget"  
+		                showEffect="fade" hideEffect="fade">
+ 		<h:panelGrid columns="1" cellpadding="4">	  
+ 			<h:outputText rendered="#{dataMaintenanceMB.updateSuccess == false}" value="#{resourceMB.getParameterizedText('wq.message.updateInfoFailed' ,dataMaintenanceMB.errorMessage)}" />	
+            <h:outputText rendered="#{dataMaintenanceMB.updateSuccess}" value="#{dbResource['wq.message.quoteUpdatedSuccess']}" />	
+        </h:panelGrid>
+	</p:dialog>
+	
+	<p:dialog id="updateValidityConfirmationDialog" header="#{dbResource['wq.label.message']}" widgetVar="updateValidityConfirmationWidget"  
+		                showEffect="fade" hideEffect="fade">
+ 		<h:panelGrid columns="1" cellpadding="4">	  
+ 			<h:outputText rendered="#{dataMaintenanceMB.updateSuccess == false}" value="#{resourceMB.getParameterizedText('wq.message.updateValidityFailed' ,dataMaintenanceMB.errorMessage)}" />	
+            <h:outputText rendered="#{dataMaintenanceMB.updateSuccess}" value="#{dbResource['wq.message.quoteValidityUpdated']}" />	
+        </h:panelGrid>
+	</p:dialog>
+	
+	<p:dialog id="reassignSalesConfirmationDialog" header="#{dbResource['wq.label.message']}" widgetVar="reassignSalesConfirmationWidget"  
+		                showEffect="fade" hideEffect="fade">
+ 		<h:panelGrid columns="1" cellpadding="4">	  
+ 			<h:outputText rendered="#{dataMaintenanceMB.updateSuccess == false}" value="#{resourceMB.getParameterizedText('wq.message.reassignFailed' ,dataMaintenanceMB.errorMessage)}" />	
+            <h:outputText rendered="#{dataMaintenanceMB.updateSuccess}" value="#{dbResource['wq.message.quoteReass']}" />	
+        </h:panelGrid>
+	</p:dialog>
+
+</ui:define>
+</ui:composition>

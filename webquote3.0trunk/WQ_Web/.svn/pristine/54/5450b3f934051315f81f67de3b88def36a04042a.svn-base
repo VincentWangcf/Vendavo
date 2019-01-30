@@ -1,0 +1,36 @@
+package com.avnet.emasia.webquote.component.show.config;
+
+import java.util.List;
+import java.util.function.Predicate;
+
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+
+@DiscriminatorValue("CONNECTOR")
+public class ConnectorConfig extends Config {
+	@Column(name = "LOGIC", length = 10, nullable = false)
+	@Enumerated(EnumType.STRING)
+	private LogicConnector logicConnector;
+	
+	@ManyToOne()
+	private Config parent;
+
+	@OneToMany(mappedBy="parent")
+	@JoinColumn(name = "PARENT_ID")
+	private List<Config> list;
+	
+	@Override
+	protected Predicate<Boolean> isMatch(List<String> regions, List<String> roles) {
+		return (Boolean b) -> {
+			boolean firstMatch = logicConnector.test(list.get(0).isMatch(regions, roles),
+					list.get(1).isMatch(regions, roles));
+			return this.logicResultReverse ? !firstMatch : firstMatch;
+		};
+	}
+	
+}

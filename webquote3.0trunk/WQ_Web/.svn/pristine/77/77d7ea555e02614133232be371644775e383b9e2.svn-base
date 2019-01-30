@@ -1,0 +1,282 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.Resource;
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
+import javax.mail.MessagingException;
+import javax.naming.NamingException;
+import javax.transaction.UserTransaction;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.entity.Currency;
+import com.avnet.emasia.webquote.entity.ExcCurrencyDefault;
+import com.avnet.emasia.webquote.entity.ExchangeRate;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.exception.AppException;
+import com.avnet.emasia.webquote.quote.ejb.ExchangeRateSB;
+import com.avnet.emasia.webquote.quote.ejb.MyQuoteSearchSB;
+import com.avnet.emasia.webquote.quote.ejb.QuoteSB;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.quote.vo.MyQuoteSearchCriteria;
+import com.avnet.emasia.webquote.quote.vo.QuoteItemVo;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+
+@Stateless
+@LocalBean
+@TransactionManagement(TransactionManagementType.BEAN)
+public class AsyncQuoteRateRequestSB{
+
+	private static final Logger LOGGER = Logger.getLogger(AsyncQuoteRateRequestSB.class.getName());
+	
+	@EJB
+	MyQuoteSearchSB myQuoteSearchSB;
+	
+	@EJB
+	ExchangeRateSB exchangeRateSB;
+	
+	@EJB 
+	QuoteSB quoteSB;
+	
+	@EJB
+    MailUtilsSB mailUtilsSB;
+	
+	@Resource
+	public UserTransaction ut;
+	
+	@Asynchronous
+	public void processQuoteRateRequest(Map<String,String> quoteMap,MyQuoteSearchCriteria criteria,User currentUser){
+	  	LOGGER.info("async process quote rate start ");
+		try {
+			
+			Map<String,String> failedQuoteNumbers  = new HashMap<String, String>();
+			List<String> quoteNumberList = new ArrayList<String>();
+			for(Iterator<String> it = quoteMap.keySet().iterator();it.hasNext();) {
+				String quoteNumber = it.next();
+				quoteNumberList.add(quoteNumber);
+			}
+			int searchCount = quoteNumberList.size() / QuoteSBConstant.QUOTE_RATE_COUNT + (quoteNumberList.size() % QuoteSBConstant.QUOTE_RATE_COUNT == 0 ? 0 : 1);
+			List<String> searchList = null;
+			int succeedSize = 0;
+			Map<String,String> currencyMap = new HashMap<String,String>();
+			List<String> currencyLst = exchangeRateSB.findAllExCurrencyByBu(currentUser.getDefaultBizUnit().getName());
+			if(currencyLst != null && currencyLst.size() > 0) {
+				for(String currency : currencyLst) {
+					currencyMap.put(currency, currency);
+				}
+			}
+			for(int i = 0; i < searchCount; i++) {
+				ut.setTransactionTimeout(10 * 60  *1000);
+				ut.begin();
+				searchList = new ArrayList<String>();
+				for( int j = i * QuoteSBConstant.QUOTE_RATE_COUNT; j < (i +1) * QuoteSBConstant.QUOTE_RATE_COUNT; j++) {
+					if(j == quoteNumberList.size()) {
+						break;
+					}
+					searchList.add(quoteNumberList.get(j));
+				}
+				criteria.setQuoteNumber(searchList);
+				//Bryan Start
+				//List<QuoteItemVo> quoteItemVos = myQuoteSearchSB.search(criteria,new ResourceMB().getResourceLocale());
+				List<QuoteItemVo> quoteItemVos = myQuoteSearchSB.search(criteria, ResourceMB.getLocale());
+				//Bryan End
+				List<QuoteItemVo> proceedQuoteItemVos = null ;
+				List<QuoteItemVo> finishedQuoteItemVos = new ArrayList<QuoteItemVo>() ;
+				
+				for(String quoteNumber : searchList) {
+					boolean	isExist = false;
+					for(QuoteItemVo quoteItemVo : quoteItemVos) {
+						String number = quoteItemVo.getQuoteItem().getQuoteNumber();
+						if(StringUtils.equals(quoteNumber, number)) {
+							isExist = true;
+						}
+					}
+					if(!isExist) {
+						failedQuoteNumbers.put(quoteNumber, " The quote does not exist or you do not have access to it ");
+
+					}
+				}
+				for(QuoteItemVo quoteItemVo : quoteItemVos) {
+					String exCurrency = quoteMap.get(quoteItemVo.getQuoteItem().getQuoteNumber());
+					if(StringUtils.isBlank(exCurrency) || !currencyMap.containsKey(exCurrency)) {
+						failedQuoteNumbers.put(quoteItemVo.getQuoteItem().getQuoteNumber(), " The Exchange Currency is blank or invalid ");
+						continue;
+					}
+					quoteItemVo.getQuoteItem().setRfqCurr(Currency.getByCurrencyName(exCurrency));
+					if(StringUtils.equals(QuoteSBConstant.QUOTE_STAGE_FINISH, quoteItemVo.getQuoteItem().getStage())) {
+						finishedQuoteItemVos.add(quoteItemVo);
+					} else {
+						failedQuoteNumbers.put(quoteItemVo.getQuoteItem().getQuoteNumber(), " The stage of the quote is not finished");
+					}
+				}
+				proceedQuoteItemVos = generateProceedQuoteItems(finishedQuoteItemVos);
+				List<QuoteItemVo> newProceedQuoteItemVos = new ArrayList<QuoteItemVo>();
+				for (Iterator<QuoteItemVo> it = proceedQuoteItemVos.iterator();it.hasNext();) {
+					QuoteItemVo vo = it.next();
+					boolean isValid = checkExchangeRate(vo);
+					if(!isValid) {
+						failedQuoteNumbers.put(vo.getQuoteItem().getQuoteNumber(), "the quote don't have exchange Rate");
+					} else {
+						newProceedQuoteItemVos.add(vo);
+					}
+				}
+				
+				boolean hasError = false;
+				if(newProceedQuoteItemVos.size() > 0) {
+					try {
+						quoteSB.quoteRateRequest(newProceedQuoteItemVos, currentUser);
+					} catch (Exception e) {
+						hasError = true;
+						LOGGER.log(Level.SEVERE, "async process quote rate failed for mfr"+criteria.getMfr()+", Error message"+e.getMessage(), e);
+					}finally {
+						if(hasError) {
+							ut.rollback();
+							succeedSize += 0;
+							for(QuoteItemVo errorVO : newProceedQuoteItemVos) {
+								failedQuoteNumbers.put(errorVO.getQuoteItem().getQuoteNumber(), "the quote process has error");
+							}
+						} else {
+							succeedSize += newProceedQuoteItemVos.size();
+							ut.commit();
+						}
+						
+					}
+					
+				}
+				
+				Thread.sleep(2000);
+				
+			}
+			
+			sendEmails(succeedSize, failedQuoteNumbers,currentUser);
+			
+		} catch (Exception e) 
+		{
+			LOGGER.log(Level.SEVERE, "async process quote rate failed for mfr"+criteria.getMfr()+", Error message"+e.getMessage(), e);
+		}	
+		
+		LOGGER.info("async process quote rate finish ");
+	}
+	
+	private void sendEmails(int succeedSize,Map<String,String> failedQuoteNumbers,User currentUser) {
+		MailInfoBean mailInfoBean = new MailInfoBean();
+		mailInfoBean.setMailSubject("Mass Quote Rate Request Result");
+		mailInfoBean.setMailFrom(currentUser.getEmailAddress());
+		mailInfoBean.setMailFromInName(currentUser.getName());
+		List<String> emails = new ArrayList<String>();
+		emails.add(currentUser.getEmailAddress());
+		mailInfoBean.setMailTo(emails);
+			
+		String content = "Dear " + currentUser.getName() + ",<br/><br/>";
+		StringBuffer emailContent = new StringBuffer(content);
+		emailContent.append("The following are the mass quote rate request's results:<br/><br/>");
+		emailContent.append("No. of succeed: ").append(succeedSize).append("<br/><br/>");
+		emailContent.append("No. of failed: ").append(failedQuoteNumbers.size()).append("<br/><br/>");
+		if(failedQuoteNumbers !=null && failedQuoteNumbers.size() > 0) {
+			emailContent.append("Below are the quotes that failed in quote rate request:<br/><br/>");
+			String tableString = getTableString(failedQuoteNumbers);
+			emailContent.append(tableString);
+		}
+		emailContent.append("<br/><br/>");
+		emailContent.append("Best Regards,<br/>");
+		emailContent.append(currentUser.getName()).append("<br/>");
+		mailInfoBean.setMailContent(emailContent.toString());
+		
+		try {
+			mailUtilsSB.sendHtmlMail(mailInfoBean);
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Exception occurred for sender: "+mailInfoBean.getMailFromInName()+", Email Sending Error : " + e.getMessage());
+		}
+	}
+	
+	private String getTableString(Map<String,String> failedQuoteNumbers) {
+		String talbe = 
+				"<table style=\"border-top:1px black solid;border-right:0 ;border-bottom:0 ;border-left:1px black solid;\"  "
+				+ "width=\"600\" cellpadding=\"0\" cellspacing=\"0\">"
+				+ "<tr>"
+				+ " <td style=\"border-top:0;border-right: 1px black solid ;border-bottom:1px black solid ;border-left:0;font-weight:bold;\">No.</td>"
+				+ " <td style=\"border-top:0;border-right: 1px black solid ;border-bottom:1px black solid ;border-left:0;font-weight:bold;\">WR#:</td>"
+				+ "<td style=\"border-top:0;border-right: 1px black solid ;border-bottom:1px black solid ;border-left:0;font-weight:bold;\">Fail Reason</td>"
+				+ "</tr>";
+		StringBuffer buffer = new StringBuffer(talbe);
+		int no = 1;
+		for(Iterator<String> it = failedQuoteNumbers.keySet().iterator();it.hasNext();) {
+			String quoteNumber = it.next();
+			String reason = failedQuoteNumbers.get(quoteNumber);
+			buffer.append("<tr>");
+			buffer.append("<td style=\"border-top:0;border-right: 1px black solid ;border-bottom:1px black solid ;border-left:0;\">");
+			buffer.append(no);
+			buffer.append("</td>");
+			buffer.append("<td style=\"border-top:0;border-right: 1px black solid ;border-bottom:1px black solid ;border-left:0;\">");
+			buffer.append(quoteNumber);
+			buffer.append("</td>");
+			buffer.append("<td style=\"border-top:0;border-right: 1px black solid ;border-bottom:1px black solid ;border-left:0;\">");
+			buffer.append(reason);
+			buffer.append("</td>");
+			buffer.append("</tr>");
+			no++;
+		}
+		buffer.append("</table>");
+		return buffer.toString();
+	}
+	
+	
+	private boolean checkExchangeRate(QuoteItemVo vo) {
+		boolean isValid = true;
+		if(vo.getExChangeRate() != null) {
+			if (vo.getExChangeRate().getExRateTo() == null|| vo.getExChangeRate().getExRateTo().equals(new BigDecimal(0))) {
+				vo.setErrRow(true);
+				isValid = false;
+			}
+		} else {
+			vo.setErrRow(true);
+			isValid = false;
+		}
+		
+		return isValid;
+	}
+	
+	
+	private List<QuoteItemVo> generateProceedQuoteItems(
+			List<QuoteItemVo> vos) {
+		List<QuoteItemVo> returnLst = new ArrayList<QuoteItemVo>();
+		ExchangeRate latestRate = null;
+		for(QuoteItemVo vo : vos){
+			QuoteItem qi = vo.getQuoteItem();
+			if(StringUtils.isEmpty(qi.getRfqCurr().name())){
+				ExcCurrencyDefault ecd = exchangeRateSB.findDefaultCurrencyByBu(qi.getQuote().getBizUnit().getName());
+				if(ecd != null){
+					qi.setRfqCurr(Currency.getByCurrencyName(ecd.getCurrency()));
+					qi.setBuyCurr(Currency.USD);
+				}
+			}			
+			latestRate = quoteSB.findLatestExchangeRate(qi);
+			if(null!=latestRate) {
+				vo.setExChangeRate(latestRate);
+				//BigDecimal calculateRate = latestRate.getExRateTo().multiply(latestRate.getHandling()).multiply(latestRate.getVat()).setScale(5,BigDecimal.ROUND_HALF_UP);
+				//vo.setExRateTo(calculateRate);
+			}
+			returnLst.add(vo);
+			
+		}
+		return returnLst;
+	}
+	
+}
+	

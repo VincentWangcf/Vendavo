@@ -1,0 +1,414 @@
+package com.avnet.emasia.webquote.web.user;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.DataAccess;
+import com.avnet.emasia.webquote.entity.Group;
+import com.avnet.emasia.webquote.entity.Role;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.user.ejb.GroupSB;
+import com.avnet.emasia.webquote.user.ejb.RoleSB;
+import com.avnet.emasia.webquote.user.ejb.UserSB;
+import com.avnet.emasia.webquote.user.vo.DataAccessVo;
+import com.avnet.emasia.webquote.user.vo.UserSearchCriteria;
+import com.avnet.emasia.webquote.web.quote.cache.RoleCacheManager;
+
+@ManagedBean
+@SessionScoped
+public class UserMB implements Serializable {
+
+	private static final long serialVersionUID = -1551862600324442649L;
+
+	private static final Logger LOG = Logger.getLogger(UserMB.class.getName());
+
+	@EJB
+	private UserSB userSB;
+
+	@EJB
+	private GroupSB groupSB;
+
+	@EJB
+	private RoleSB roleSB;
+
+	private List<User> users;
+	private List<User> filterUsers;	
+	
+	private User user;
+	
+	
+	private String roles;
+
+	private LazyUserDataModel lazyModel;
+	//salsCost
+	private String salsCostAccessStr;
+	
+	public String getSalsCostAccessStr() {
+		return user.getSalsCostAccessStr();
+	}
+
+	public void setSalsCostAccessStr(String salsCostAccessStr) {
+//		this.salsCostAccessStr = salsCostAccessStr;
+		if(salsCostAccessStr.equals("Yes")){
+			user.setSalsCostAccessFlag(true);
+		}if(salsCostAccessStr.equals("No")){
+			user.setSalsCostAccessFlag(false);
+		}if(salsCostAccessStr.equals("ALL")){
+			user.setSalsCostAccessFlag(null);
+		}
+	}
+
+	//Search Criteria
+	private UserSearchCriteria criteria;
+
+	//Used for Primefaces selectManyCheckbox	
+	private Map<String, Long> groupsMap = new HashMap<String, Long>();
+
+	private Map<String, String> bizUnitsMap = new HashMap<String, String>();
+
+	private Map<String, String> rolesMap = new HashMap<String, String>();
+
+	private String selectedRole;
+
+	private String selectedGroup;
+	
+	private String selectedRegion;
+	
+	private List<DataAccessVo> dataAccessVos;
+
+	private List<DataAccessVo> filteredDataAccessVos;
+	
+	public List<User> getFilterUsers()
+	{
+		return filterUsers;
+	}
+
+	public void setFilterUsers(List<User> filterUsers)
+	{
+		this.filterUsers = filterUsers;
+	}
+	
+	public List<DataAccessVo> getDataAccessVos()
+	{
+		return dataAccessVos;
+	}
+
+	public void setDataAccessVos(List<DataAccessVo> dataAccessVos)
+	{
+		this.dataAccessVos = dataAccessVos;
+	}
+	
+	public List<DataAccessVo> getFilteredDataAccessVos()
+	{
+		return filteredDataAccessVos;
+	}
+
+	public void setFilteredDataAccessVos(List<DataAccessVo> filteredDataAccessVos)
+	{
+		this.filteredDataAccessVos = filteredDataAccessVos;
+	}
+
+	@PostConstruct
+	public void initialize() {
+		user = userSB.findByEmployeeIdWithAllRelation(UserInfo.getUser().getEmployeeId());
+
+		dataAccessVos = new ArrayList<DataAccessVo>();		
+		
+		criteria = new UserSearchCriteria();
+		List<Group> groups = groupSB.findAll();
+
+		for (Group group : groups) {
+			groupsMap.put(group.getName(), group.getId());
+		}
+
+//		for(BizUnit bizUnit : user.getBizUnits()){
+//			bizUnitsMap.put(bizUnit.getName(), bizUnit.getName()); 
+//		}
+		//show userAdmin region
+		for(BizUnit bizUnit : user.getAdminBizUnits()){
+			bizUnitsMap.put(bizUnit.getName(), bizUnit.getName()); 
+		}
+
+		//List<Role> roles = roleSB.findAllForUserAdmin();
+		List<Role> roles = RoleCacheManager.findAllForUserAdmin();//get data from cache andy modify 2.2
+		List<String> sRoles = new ArrayList<String>();
+
+		for(Role role : roles){
+			rolesMap.put(role.getName(), role.getName());
+			sRoles.add(role.getName());	
+		}
+
+		rolesMap = sortByComparator(rolesMap);
+
+		criteria.setRoles(sRoles);
+		criteria.getBizUnits().add(user.getCurrenBizUnit().getName());
+
+		selectRoleCheckbox();
+		selectGroupCheckbox();
+		selectRegionCheckbox();
+		dataAcessVos();
+	}
+
+	private void dataAcessVos() {
+		//fix first login viewProfile file can't retrieve roles and dataaccess.
+		dataAccessVos.clear();
+		if (user != null)
+		{
+			List<DataAccess> daLst = user.getDataAccesses();
+			if (daLst != null)
+			{
+				for (DataAccess d : daLst)
+				{
+					dataAccessVos.add(new DataAccessVo(d));
+				}
+			}
+			
+			List<Role> rLst = user.getRoles();
+			if (rLst != null)
+			{
+				List<String> str = new ArrayList<String>();
+				for (Role r : rLst)
+				{
+					str.add(r.getName());
+				}
+				setRoles(str.toString());
+			}
+		}
+	}
+
+	public static Map<String, String> sortByComparator(Map unsortMap) {
+
+		List list = new LinkedList(unsortMap.entrySet());
+
+		java.util.Collections.sort(list, new Comparator() {
+			public int compare(Object o1, Object o2) {
+				return ((Comparable) ((Map.Entry) (o1)).getValue())
+						.compareTo(((Map.Entry) (o2)).getValue());
+			}
+		});
+
+		Map sortedMap = new LinkedHashMap();
+		for (Iterator it = list.iterator(); it.hasNext();) {
+			Map.Entry entry = (Map.Entry) it.next();
+			sortedMap.put(entry.getKey(), entry.getValue());
+		}
+		return sortedMap;
+	}
+
+	public void search(){
+		users = userSB.findByUserSearchCriteria(criteria);
+	}
+
+	public String viewMyProfile(){
+		user = userSB.findByEmployeeIdWithAllRelation(UserInfo.getUser().getEmployeeId());
+		dataAcessVos();
+		return "/UserMgmt/ViewMyProfile.xhtml";
+	}
+
+	public void setDefaultUser(){
+		user = UserInfo.getUser();
+	}
+
+	public void postProcessXLS(Object document){
+		String[] columns = {"Employee Id","Employee Name","Email","Phone","Supervisor", "Role", "Team","Active"};
+
+		HSSFWorkbook wb = (HSSFWorkbook) document;
+		HSSFSheet sheet = wb.getSheetAt(0);
+		HSSFRow header = sheet.getRow(0);
+		int i = 0;
+		for(String column : columns){
+			header.getCell(i++).setCellValue(column);
+		}
+	}
+
+	public void selectAllRoleCheckbox()
+	{
+
+		if(criteria.getRoles().size()==rolesMap.size())
+		{
+			selectedRole = "No role selected";
+		}
+		else
+		{
+			selectedRole = "More than 1 role selected";
+		}
+	}
+	
+	public void selectRoleCheckbox()
+	{
+		if(criteria.getRoles().size()==1)
+		{
+			selectedRole = criteria.getRoles().get(0);
+		}
+		else if(criteria.getRoles().size()==0)
+		{
+			selectedRole = "No role selected";
+		}
+		else if(criteria.getRoles().size()>1)
+		{
+			selectedRole = "More than 1 role selected";
+		}
+	}
+	
+	public void selectRegionCheckbox()
+	{
+		if(criteria.getBizUnits().size()==1)
+		{
+			selectedRegion = criteria.getBizUnits().get(0);
+		}
+		else if(criteria.getBizUnits().size()==0)
+		{
+			selectedRegion = "No region selected";
+		}
+		else if(criteria.getBizUnits().size()>1)
+		{ 
+			selectedRegion = "More than 1 region selected";
+		}
+	}
+
+	public void selectGroupCheckbox()
+	{
+		if(criteria.getGroups().size()==1)
+		{
+			selectedGroup = criteria.getGroups().get(0);
+		}
+		else if(criteria.getGroups().size()==0)
+		{
+			selectedGroup = "No group selected";
+		}
+		else if(criteria.getGroups().size()>1)
+		{
+			selectedGroup = "More than 1 group selected";
+		}
+	}
+
+	// Getters, Setters
+	public List<User> getUsers() {
+		return users;
+	}
+
+	public void setUsers(List<User> users) {
+		this.users = users;
+	}
+
+	public LazyUserDataModel getLazyModel() {
+		return lazyModel;
+	}
+
+	public void setLazyModel(LazyUserDataModel lazyModel) {
+		this.lazyModel = lazyModel;
+	}
+
+
+	public Map<String, Long> getGroupsMap() {
+		return groupsMap;
+	}
+
+	public void setGroupsMap(Map<String, Long> groupsMap) {
+		this.groupsMap = groupsMap;
+	}
+
+
+	public Map<String, String> getBizUnitsMap() {
+		return bizUnitsMap;
+	}
+
+	public void setBizUnitsMap(Map<String, String> bizUnitsMap) {
+		this.bizUnitsMap = bizUnitsMap;
+	}
+
+
+	public UserSearchCriteria getCriteria() {
+		return criteria;
+	}
+
+	public void setCriteria(UserSearchCriteria criteria) {
+		this.criteria = criteria;
+	}
+
+	public User getUser() {	
+		return user;
+	}
+
+	public void setUser(User user) {
+		dataAccessVos.clear();
+		if (user != null && user.getDataAccesses() != null)
+		{
+			for (DataAccess d : user.getDataAccesses())
+			{
+				dataAccessVos.add(new DataAccessVo(d));
+			}
+			filteredDataAccessVos = dataAccessVos;
+			List<String> str = new ArrayList<String>();
+			for (Role r : user.getRoles())
+			{
+				str.add(r.getName());
+				
+			}
+			setRoles(str.toString());
+		}
+		this.user = user;
+	}
+
+	public Map<String, String> getRolesMap() {
+		return rolesMap;
+	}
+
+	public void setRolesMap(Map<String, String> rolesMap) {
+		this.rolesMap = rolesMap;
+	}
+
+	public String getSelectedRole() {
+		return selectedRole;
+	}
+
+	public void setSelectedRole(String selectedRole) {
+		this.selectedRole = selectedRole;
+	}
+
+	public String getSelectedGroup() {
+		return selectedGroup;
+	}
+
+	public void setSelectedGroup(String selectedGroup) {
+		this.selectedGroup = selectedGroup;
+	}
+	
+	public String getRoles()
+	{
+		return roles;
+	}
+	
+	public void setRoles(String roles)
+	{
+		this.roles = roles;
+	}
+
+	public String getSelectedRegion() {
+		return selectedRegion;
+	}
+
+	public void setSelectedRegion(String selectedRegion) {
+		this.selectedRegion = selectedRegion;
+	}
+	
+	
+}

@@ -1,0 +1,19 @@
+package com.avnet.emasia.webquote.strategy;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Currency;
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.ExchangeRate;
+
+public class MoneyConvertStrategyWithoutCustomer extends MoneyConvertStrategy{
+	@Override
+	public ExchangeRate[] findExchangeRate(Currency fromCurrency, Currency toCurrency, BizUnit bizUnit, 
+			Customer soldToCustomer, Date date, List<ExchangeRate> exchangeRates) {
+		return super.findExchangeRate(fromCurrency, toCurrency, bizUnit, null, date, exchangeRates);
+		
+	}
+}

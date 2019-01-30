@@ -1,0 +1,23 @@
+1) defect 265 (fixed by Jason 20160725)
+2)Fix defect 270 about the attachment missed issue that Mike Szeto raised in same time (fixed by June 20160725)
+3) change to notify the default region user admin for the user whose email address is failed to deliver -- Lenon 20160726
+4) defect 217 (fixed by Jason 20160726)
+5) changed design region data from quote item in update spr function (fixed by Jason 20160726)
+6) defect 273 (fixed by Jason 20160726)
+7) defect 267 (fixed by Jason 20160726)
+8) defect 262  update the RFQ template file for all different region, please allow free text on Design Location and Application column by Demon Chen 20160726
+9) fix merging to quote item  when continue submit DRAFT quote item for BMT case by Damon Chen 20160726
+10) defect 272 (fixed by Jason 20160727)
+11) defect 286 (fixed by Jason 20160727)
+12) defect 281 (fixed by Jason 20160727)
+13) defect 284 (fixed by Jason 20160727)
+14)defect 26 for japan -- fixed by Lenon
+15)defect 24 for japan -- fixed by Lenon
+16)datatable date type filter issue -- fixed By Lenon
+17)apply logic of ROLE_CS to ROLE_CS_MANAGER on selecting sales --fixed By Lenon
+18)webquote japan display create customer button at Rfq submission and WebPromo --fixed By Lenon
+19)Add WorkPlatform Template header name validation --fixed By Lenon
+20)INC0499001 --fixed By Lenon
+21) defect 279 (fixed by Jason 20160728)
+22) defect 278 (fixed by Jason 20160729)
+23) Fix offline report missed DR MFR # missed issue (Fixed by June 20160729)

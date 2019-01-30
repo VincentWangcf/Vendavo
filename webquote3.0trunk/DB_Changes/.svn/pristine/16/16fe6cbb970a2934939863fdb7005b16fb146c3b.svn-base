@@ -1,0 +1,9 @@
+001.sql- Table creation/updating script for Internationalization. 
+002.sql- LOCALE_MASTER table changes as on 29_Aug_2017
+003.sql- Insert query for APP_LABEL data as on 29_Aug_2017
+004.sql- Insert query for APP_MESSAGES data as on 29_Aug_2017
+005.sql- Insert query for changes in APP_PROPERTY table related to Internationalization as on 29_Aug_2017
+008.sql- Create pricer table
+009.sql- Move cost indicator rule to cost indicator
+010.sql- rename min_sell to bottom_sell, norm_sell to min_sell
+011.sql - create Send Off Line Report Template Table

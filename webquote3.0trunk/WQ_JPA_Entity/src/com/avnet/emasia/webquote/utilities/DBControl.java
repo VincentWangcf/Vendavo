@@ -1,0 +1,192 @@
+package com.avnet.emasia.webquote.utilities;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListResourceBundle;
+import java.util.Locale;
+import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.logging.Logger;
+
+import com.avnet.emasia.webquote.constants.Constants;
+import com.avnet.emasia.webquote.entity.AppLabel;
+import com.avnet.emasia.webquote.entity.AppMessages;
+import com.avnet.emasia.webquote.entity.AppProperty;
+import com.avnet.emasia.webquote.entity.LocaleMaster;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+
+public class DBControl extends ResourceBundle.Control{
+	
+	public static final String LOCALE_RELOAD = "LOCALE_RELOAD";
+	public static final String LOCALE_RELOAD_TIME = "LOCALE_RELOAD_TIME";
+	private static final long TIME_TO_LIVE = 360000;//change to 0.1 h 360 000
+	
+	private static Logger LOG = Logger.getLogger(DBControl.class.getSimpleName());
+
+
+	/* (non-Javadoc)
+	 * @see java.util.ResourceBundle.Control#getFormats(java.lang.String)
+	 */
+	@Override
+	public List<String> getFormats(String baseName) {
+		 if (baseName == null) {
+		      throw new NullPointerException();
+		    }
+		 return Arrays.asList("db");
+	}
+
+	/* (non-Javadoc)
+	 * @see java.util.ResourceBundle.Control#newBundle(java.lang.String, java.util.Locale, java.lang.String, java.lang.ClassLoader, boolean)
+	 */
+	@Override
+	public ResourceBundle newBundle(String baseName, Locale locale, String format, ClassLoader loader, boolean reload)
+			throws IllegalAccessException, InstantiationException, IOException {
+		if ((baseName == null) || (locale == null) || (format == null) || (loader == null)) {
+			throw new NullPointerException();
+		}
+		ResourceBundle bundle = null;
+		if (format.equals("db")) {
+			bundle = new WebQuoteListResourceBundle(locale);
+		}
+		return bundle;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.util.ResourceBundle.Control#needsReload(java.lang.String, java.util.Locale, java.lang.String, 
+	 * java.lang.ClassLoader, java.util.ResourceBundle, long)
+	 */
+	@Override
+	public boolean needsReload(String baseName, Locale locale, String format, ClassLoader loader, ResourceBundle bundle,
+			long loadTime) {
+		/*boolean needsReload = false;
+		String language = locale.getLanguage();
+		if(!language.isEmpty()){
+			language = "_"+language;
+		}
+		try {
+			needsReload = LocaleMessageServices.getInstance().needsReload(LOCALE_RELOAD+language);
+		} catch (WebQuoteException e) {
+			LOG.warning("Falied to load value from data base for "+LOCALE_RELOAD+e);
+		}
+		updateRealoadStatus(false,locale);
+		return needsReload;*/
+		return false;
+	}
+	
+	/*private void updateRealoadStatus(boolean status,Locale locale){
+		AppProperty appProperty = new AppProperty();
+		String language = locale.getLanguage();
+		if(!language.isEmpty()){
+			language = "_"+language;
+		}
+		appProperty.setPropKey(DBControl.LOCALE_RELOAD+language);
+		appProperty.setPropValue(String.valueOf(status));
+		try {
+			LocaleMessageServices.getInstance().updateProperty(appProperty);
+		} catch (Exception e) {
+			LOG.warning("Falied to update value to data base for "+LOCALE_RELOAD+e);
+		}
+	}*/
+
+	/* (non-Javadoc)
+	 * @see java.util.ResourceBundle.Control#getTimeToLive(java.lang.String, java.util.Locale)
+	 */
+	@Override
+	public long getTimeToLive(String baseName, Locale locale) {
+		return TIME_TO_LIVE;
+	}
+
+
+
+	/* (non-Javadoc)
+	 * @see java.util.ResourceBundle.Control#getCandidateLocales(java.lang.String, java.util.Locale)
+	 */
+	@Override
+	public List<Locale> getCandidateLocales(String baseName, Locale locale) {
+		List<Locale> candidateLocales = new ArrayList<>();
+		if(locale.getLanguage().equals(Locale.ENGLISH.getLanguage())){
+			candidateLocales.add(new Locale("en", ""));
+			candidateLocales.add(new Locale("en"));
+		}else if(locale.getLanguage().equals(Locale.JAPANESE.getLanguage())){
+			candidateLocales.add(new Locale("ja", ""));
+			candidateLocales.add(new Locale("ja"));
+		}else if(locale.getLanguage().equals(Locale.KOREA.getLanguage())){
+			candidateLocales.add(new Locale("ko", ""));
+			candidateLocales.add(new Locale("ko"));
+		}else if(locale.getLanguage().equals(Locale.CHINESE.getLanguage())){
+			candidateLocales.add(new Locale("zh", ""));
+			candidateLocales.add(new Locale("zh"));
+		}
+		candidateLocales.add(Locale.ROOT);
+		return candidateLocales;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.util.ResourceBundle.Control#toBundleName(java.lang.String, java.util.Locale)
+	 */
+	@Override
+	public String toBundleName(String baseName, Locale locale) {
+		return super.toBundleName(baseName, locale);
+	}
+
+
+
+	public class WebQuoteListResourceBundle extends ListResourceBundle{
+
+		private Locale locale = Locale.getDefault();
+		private LocaleMessageServices localeMessageServices;
+		private Map<String, Map<String,String>> localeValue = new HashMap<>();
+
+		public WebQuoteListResourceBundle(Locale locale) {
+			if(null!=locale&&locale.getLanguage().length()>0){
+				this.locale = locale;
+			}
+			this.localeMessageServices = LocaleMessageServices.getInstance();
+		}
+
+		
+		@Override
+		protected Object[][] getContents() {
+			localeValue.clear();
+			List<LocaleMaster> localeMasterList;
+			try {
+				localeMasterList = this.localeMessageServices.findAll();
+				for (LocaleMaster localeMaster : localeMasterList) {
+					Map<String, String> localeMessage = new HashMap<>();
+					// AppMessages only to read the message
+					for (AppMessages appMassage : localeMaster.getMessageList()) {
+						localeMessage.put(appMassage.getMessageCode(), appMassage.getMessage());
+					}
+					// AppLabel only to read the labels
+					for (AppLabel appMassageLabel : localeMaster.getMessageLabelList()) {
+						localeMessage.put(appMassageLabel.getMessageCode(), appMassageLabel.getMessage());
+					}
+					localeValue.put(localeMaster.getLocalId(), localeMessage);
+				}
+			} catch (WebQuoteException e) {
+				LOG.warning("Failed to load locale data from database"+e);
+			}
+			Map<String, String> map = null;
+			if((map = localeValue.get(locale.getLanguage())) == null) {
+				LOG.info("Can not find language:::" + locale.getLanguage() + " now use en language.");
+				map = localeValue.get(new Locale(Constants.ENGLISH_LOCALE_STRING).getLanguage());
+				if(map == null) throw new RuntimeException("No config English language.");
+			}
+			
+			Object[][] object = new Object[map.size()][2];
+			Set<String> keys = map.keySet();
+			int i = 0;
+			for (Iterator<String> iterator = keys.iterator(); iterator.hasNext();) {
+				String string =  iterator.next();
+				object[i] = new Object[]{string,map.get(string)};
+				i++;
+			}
+			return object;
+		}
+	}
+}

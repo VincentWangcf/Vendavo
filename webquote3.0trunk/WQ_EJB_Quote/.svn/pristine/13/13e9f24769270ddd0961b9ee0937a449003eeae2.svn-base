@@ -1,0 +1,373 @@
+package com.avnet.emasia.webquote.quote.ejb;
+
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.logging.Level;
+//import java.util.logging.Logger;
+import java.util.logging.Logger;
+
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Selection;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.entity.ExcCurrencyDefault;
+import com.avnet.emasia.webquote.entity.ExchangeRate;
+import com.avnet.emasia.webquote.quote.vo.ExchangeRateVo;
+import com.avnet.emasia.webquote.utilities.DBResourceBundle;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+
+
+@Stateless
+@LocalBean
+public class ExchangeRateSB {
+  
+	@PersistenceContext(unitName="Server_Source")
+	EntityManager em;
+
+		
+	private static final Logger LOG =Logger.getLogger(ExchangeRateSB.class.getName());
+
+	/**
+	 * get the exchange currency by distinct 
+	 * @author 916138
+	 * @return
+	 */
+	 public List<String> findAllExCurrencyByBu(String buName) {
+			CriteriaBuilder cb = em.getCriteriaBuilder();
+
+			CriteriaQuery<String> c = cb.createQuery(String.class);
+			Root<ExchangeRate> rate = c.from(ExchangeRate.class);
+			
+			
+			List<Predicate> criterias = new ArrayList<Predicate>();
+			criterias.add(cb.equal(rate.get("bizUnit"), buName));
+
+			//query columns 
+			List<Selection<?>> selectionList = new ArrayList<Selection<?>>();
+
+			Selection<String> expCurTo = rate.get("currTo");
+			selectionList.add(expCurTo);
+			c.multiselect(selectionList).distinct(true);
+			c.where(criterias.toArray(new Predicate[]{}));
+			
+			TypedQuery<String> q = em.createQuery(c);
+			List<String> curLst = q.getResultList();
+			return curLst;
+			
+			
+		}
+	
+	/**
+	 * get exchange Rate accordingly
+	 * @author 916138
+	 * @param currFrom
+	 * @param currTo
+	 * @param mfr
+	 * @param soldToCode
+	 * @param buName
+	 * @return
+	 */
+	public ExchangeRate findExchangeRate(String currFrom, String currTo,String soldToCode, String buName) {
+		// add by Lenon,Yang 2016/3/15 the curr_from is null the set default "USD"
+		if(StringUtils.isBlank(currFrom)) {
+			currFrom = "USD";
+		}
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+
+		CriteriaQuery<ExchangeRate> c = cb.createQuery(ExchangeRate.class);
+		Root<ExchangeRate> rate = c.from(ExchangeRate.class);
+		
+		
+		List<Predicate> criterias = new ArrayList<Predicate>();
+		criterias.add(cb.equal(rate.get("currFrom"), currFrom));
+		criterias.add(cb.equal(rate.get("currTo"), currTo));
+		criterias.add(cb.equal(rate.get("bizUnit"), buName));
+		//if(null!=soldToCode) {
+		criterias.add(cb.equal(rate.get("soldToCode"), soldToCode));
+		//}else {
+			
+		//}
+		//if(null!=mfr) {
+	//	criterias.add(cb.equal(rate.get("mfr"), mfr));
+		//}
+		
+		criterias.add(cb.equal(rate.get("deleteFlag"), false ));
+		
+		c.where(criterias.toArray(new Predicate[]{}));
+		
+		TypedQuery<ExchangeRate> q = em.createQuery(c);
+		List<ExchangeRate> rateLst = q.getResultList();
+		if(null!=rateLst && rateLst.size()>0) {
+			return rateLst.get(0);
+		}else {
+			return null;
+		}
+		
+	}    
+
+	public String validateExchangeRate(List<ExchangeRateVo> exchangeRateVos, String bizUnit, Locale locale){
+		
+		ResourceBundle bundle = ResourceBundle.getBundle(DBResourceBundle.class.getName(),locale);
+		StringBuffer sb = new StringBuffer();
+		
+		if(exchangeRateVos == null || exchangeRateVos.size() == 0){
+			return bundle.getString("wq.message.noRecordToUpload");
+		}
+		
+		int row = 1;
+		
+		List<String> foundCustomers = new ArrayList<String>();
+		
+		for(ExchangeRateVo vo : exchangeRateVos){
+		
+			StringBuffer sb1 = new StringBuffer();
+			
+			if(vo.getCurrencyFrom() == null || vo.getCurrencyFrom().equals("")){
+				sb1.append(bundle.getString("wq.message.currencyFromEmpty")+"; ");
+			}
+			
+			if(vo.getCurrencyTo() == null || vo.getCurrencyTo().equals("")){
+				sb1.append(bundle.getString("wq.message.currencyToEmpty")+"; ");
+			}
+			
+			if(vo.getExchangeRateFrom() == null || vo.getExchangeRateFrom().equals("")){
+				sb1.append(bundle.getString("wq.message.exchangeFromEmpty")+"; ");
+			}else{
+				try{
+					new BigDecimal(vo.getExchangeRateFrom());
+				}catch(Exception e){
+					LOG.log(Level.WARNING, "Exception occured in validating Exchange rate(Exchange Rate To incorrect) for biz unit: "+bizUnit+", "
+							+ "Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e));
+					sb1.append(bundle.getString("wq.message.exchangeFromIncorrect")+"; ");
+				}
+			}
+
+			if(vo.getExchangeRateTo() == null || vo.getExchangeRateTo().equals("")){
+				sb1.append(bundle.getString("wq.message.exchangeToEmpty")+"; ");
+			}else{
+				try{
+					new BigDecimal(vo.getExchangeRateTo());
+				}catch(Exception e){
+					LOG.log(Level.WARNING, "Exception occured in validating Exchange rate(Exchange Rate From incorrect) for biz unit: "+bizUnit+", "
+							+ "Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e));
+					sb1.append(bundle.getString("wq.message.exchangeToIncorrect")+"; ");
+				}
+			}
+			
+			if(vo.getVat() == null || vo.getVat().equals("")){
+				sb1.append(bundle.getString("wq.message.emptyVAT")+"; ");
+			}else{
+				try{
+					new BigDecimal(vo.getVat());
+				}catch(Exception e){
+					LOG.log(Level.WARNING, "Exception occured in validating Exchange rate(VAT incorrect) for biz unit: "+bizUnit+", "
+							+ "Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e));
+					sb1.append(bundle.getString("wq.message.incorrectVAT")+"; ");
+				}
+			}
+
+			if(vo.getHandling() == null || vo.getHandling().equals("")){
+				sb1.append(bundle.getString("wq.message.emptyHandling")+"; ");
+			}else{
+				try{
+					new BigDecimal(vo.getHandling());
+				}catch(Exception e){
+					LOG.log(Level.WARNING, "Exception occured in validating Exchange rate(Handling incorrect) for biz unit: "+bizUnit+", "
+							+ "Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e));
+					sb1.append(bundle.getString("wq.message.incorrectHandling")+"; ");
+				}
+			}
+			
+			String soldToCode = vo.getSoldToCode();
+			
+			if(soldToCode != null && !soldToCode.equals("")){
+				if(! foundCustomers.contains(soldToCode)){
+					TypedQuery<Long> query = em.createQuery("select count(c) from CustomerSale cs join cs.customer c join cs.salesOrgBean org " +
+							"join cs.salesOrgBean.bizUnits b where c.customerNumber = :customerNumber and b.name = :bizUnit", Long.class);
+					query.setParameter("customerNumber", soldToCode);
+					query.setParameter("bizUnit", bizUnit);
+					long count = query.getResultList().get(0);
+					if(count >= 1L){
+						foundCustomers.add(soldToCode);
+					}else{
+						sb1.append(bundle.getString("wq.message.soldtocode")+ " "+ soldToCode+" "+bundle.getString("wq.message.invalid"));
+					}
+				}
+			}
+			
+			if(!sb1.toString().equals("")){
+				sb.append(bundle.getString("wq.message.row")+" " + row + ": " + sb1.toString() + "<br/>");
+			}			
+			row++;
+		}
+
+		List<Integer> duplicateRecords = new ArrayList<Integer>();
+		for(int i = 0; i < exchangeRateVos.size(); i++){
+			if(duplicateRecords.contains(i)){
+				continue;
+			}
+			ExchangeRateVo vo1 = exchangeRateVos.get(i);
+			StringBuffer sb1 = new StringBuffer();
+			for(int j= i+ 1; j < exchangeRateVos.size(); j++){
+				ExchangeRateVo vo2 = exchangeRateVos.get(j);
+				if(vo1.getKey().equals(vo2.getKey())){
+					duplicateRecords.add(j);
+					sb1.append(" " + (j+1));
+				}
+			}
+			if(! sb1.toString().equals("")){
+				sb.append(bundle.getString("wq.message.row")+" " + (i+1) + sb1.toString() +" "+ bundle.getString("wq.message.areDuplicateRecords")+" <br/>");
+			}
+			
+		}
+		
+		if(sb.length() !=0){
+			return sb.toString();
+		}
+		
+		Set<String> fromTos = new HashSet<String>();
+		for(ExchangeRateVo vo : exchangeRateVos){
+			fromTos.add(vo.getCurrencyFrom() + "|" + vo.getCurrencyTo());
+		}
+		
+		for(String fromTo : fromTos){
+			boolean check = false;
+			String from = fromTo.substring(0, fromTo.indexOf("|"));
+			String to = fromTo.substring(fromTo.indexOf("|")+1);
+			for(ExchangeRateVo vo : exchangeRateVos){
+				if(vo.getCurrencyFrom().equals(from) && vo.getCurrencyTo().equals(to)){
+					if(vo.getSoldToCode()==null || vo.getSoldToCode().equals("")){
+						check = true;
+						break;
+					}
+				}
+			}
+			if(check == false){
+				sb.append(bundle.getString("wq.message.noExchangeRateFound")+ from + " "+bundle.getString("wq.message.to")+" " + to);
+			}
+		}
+		
+		return sb.toString();
+	}
+	
+	public int[] updateExchangeRate(List<ExchangeRate> exchangeRates, String bizUnit){
+		
+		List<ExchangeRate> oldExchangeRates = findExchangeRateByBizUnit(bizUnit);
+		
+		int add = 0, update=0, delete =0;
+		
+		//Have to use the complex method to add/update/delete as the audit log report is based on Exchange_Rate table's trigger.
+		List<ExchangeRate> addExchangeRates = new ArrayList<ExchangeRate>();
+		List<ExchangeRate> updateExchangeRates = new ArrayList<ExchangeRate>();
+		List<ExchangeRate> deleteExchangeRates = new ArrayList<ExchangeRate>();
+
+		//Iterate the new and old list to fill up the addExchangeRates and updateExchangeRates
+		for(ExchangeRate exchangeRate : exchangeRates){
+			boolean found = false;
+			for(ExchangeRate oldExchangeRate : oldExchangeRates){
+				if(exchangeRate.getKey().equals(oldExchangeRate.getKey())){
+					found = true;
+					updateExchangeRates.add(oldExchangeRate);
+					if(oldExchangeRate.getDeleteFlag()){
+						add++;
+					}else{
+						update++;
+					}
+					break;
+				}
+			}
+			if(found == false){
+				add++;
+				addExchangeRates.add(exchangeRate);
+			}
+		}
+		
+		for(ExchangeRate updateExchangeRate : updateExchangeRates){
+			for(ExchangeRate exchangeRate : exchangeRates){
+				if(updateExchangeRate.getKey().equals(exchangeRate.getKey())){
+					updateExchangeRate.setExRateFrom(exchangeRate.getExRateFrom());
+					updateExchangeRate.setExRateTo(exchangeRate.getExRateTo());
+					updateExchangeRate.setHandling(exchangeRate.getHandling());
+					updateExchangeRate.setVat(exchangeRate.getVat());
+					updateExchangeRate.setValidFrom(exchangeRate.getValidFrom());
+					updateExchangeRate.setLastUpdatedBy(exchangeRate.getLastUpdatedBy());
+					updateExchangeRate.setDeleteFlag(false);
+					break;
+				}
+			}
+		}
+		
+		//Iterate the old and new list to fill up the deleteExchangeRates
+		for(ExchangeRate oldExchangeRate : oldExchangeRates){
+			boolean found = false;
+			for(ExchangeRate exchangeRate : exchangeRates){
+				if(oldExchangeRate.getKey().equals(exchangeRate.getKey())){
+					found = true;
+					break;
+				}
+			}
+			if(found == false){
+				delete++;
+				oldExchangeRate.setDeleteFlag(true);
+				deleteExchangeRates.add(oldExchangeRate);
+			}
+		}
+		
+		for(ExchangeRate exchangeRate : deleteExchangeRates){
+			em.merge(exchangeRate);
+		}
+		
+		for(ExchangeRate exchangeRate : addExchangeRates){
+			em.merge(exchangeRate);
+		}
+		
+		for(ExchangeRate exchangeRate : updateExchangeRates){
+			em.merge(exchangeRate);
+		}
+		
+		int[] results = {add, update, delete};
+		
+		return results;
+		
+	}
+	
+	public List<ExchangeRate> findExchangeRateByBizUnit(String bizUnit){
+		TypedQuery<ExchangeRate> query = em.createQuery("select e from ExchangeRate e where e.bizUnit = :bizUnit", ExchangeRate.class);
+		query.setParameter("bizUnit", bizUnit);
+		List<ExchangeRate> exchangeRates = query.getResultList();
+		return exchangeRates;
+
+	}
+
+	public ExcCurrencyDefault findDefaultCurrencyByBu(String bizUnit) {
+		TypedQuery<ExcCurrencyDefault> query = em.createQuery("select e from ExcCurrencyDefault e where e.bizUnit = :bizUnit", ExcCurrencyDefault.class);
+		query.setParameter("bizUnit", bizUnit);
+		List<ExcCurrencyDefault> list = query.getResultList();
+		if (list == null || list.size() == 0) {
+		    return null;
+		}
+		 return list.get(0);
+	}
+
+	public void updateDefaultCurrency(ExcCurrencyDefault defaultCurrency) {
+		em.merge(defaultCurrency);
+		em.flush();
+		
+	}
+
+}

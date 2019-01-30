@@ -1,0 +1,212 @@
+package com.avnet.emasia.webquote.vo;
+
+import java.io.Serializable;
+
+public class CatalogMainVO implements Serializable{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	
+	private String rowNO;
+	
+	private String id;
+	
+	private String mfr;
+	
+	private String fullPartNumber;
+	
+	private String salesCostPart;
+	
+	private String productGroup;
+	
+	private String program;
+	
+	private String orderQty;
+	
+	private String normalSellPrice;
+	
+	private String salesCost;
+	
+	private String suggestedResale;
+	
+	private String availableSellQty;
+	
+	private Integer mpq;
+	
+	private Integer moq;
+	
+	private String priceValidity;
+	
+	private String leadTime;
+	
+	private String allocation;
+	
+	private String termsAndConditions;
+	
+	public CatalogMainVO() {
+	}
+	
+	
+
+	public String getRowNO() {
+		return rowNO;
+	}
+
+
+
+	public void setRowNO(String rowNO) {
+		this.rowNO = rowNO;
+	}
+
+
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getMfr() {
+		return mfr;
+	}
+
+	public void setMfr(String mfr) {
+		this.mfr = mfr;
+	}
+
+	public String getFullPartNumber() {
+		return fullPartNumber;
+	}
+
+	public void setFullPartNumber(String fullPartNumber) {
+		this.fullPartNumber = fullPartNumber;
+	}
+
+	public String getSalesCostPart() {
+		return salesCostPart;
+	}
+
+	public void setSalesCostPart(String salesCostPart) {
+		this.salesCostPart = salesCostPart;
+	}
+
+	public String getProductGroup() {
+		return productGroup;
+	}
+
+	public void setProductGroup(String productGroup) {
+		this.productGroup = productGroup;
+	}
+
+	public String getProgram() {
+		return program;
+	}
+
+	public void setProgram(String program) {
+		this.program = program;
+	}
+
+	public String getOrderQty() {
+		return orderQty;
+	}
+
+	public void setOrderQty(String orderQty) {
+		this.orderQty = orderQty;
+	}
+
+	public String getNormalSellPrice() {
+		return normalSellPrice;
+	}
+
+	public void setNormalSellPrice(String normalSellPrice) {
+		this.normalSellPrice = normalSellPrice;
+	}
+
+	public String getSalesCost() {
+		return salesCost;
+	}
+
+	public void setSalesCost(String salesCost) {
+		this.salesCost = salesCost;
+	}
+
+	public String getSuggestedResale() {
+		return suggestedResale;
+	}
+
+	public void setSuggestedResale(String suggestedResale) {
+		this.suggestedResale = suggestedResale;
+	}
+
+	public String getAvailableSellQty() {
+		return availableSellQty;
+	}
+
+	public void setAvailableSellQty(String availableSellQty) {
+		this.availableSellQty = availableSellQty;
+	}
+
+	
+
+	public Integer getMpq() {
+		return mpq;
+	}
+
+
+
+	public void setMpq(Integer mpq) {
+		this.mpq = mpq;
+	}
+
+
+
+	public Integer getMoq() {
+		return moq;
+	}
+
+
+
+	public void setMoq(Integer moq) {
+		this.moq = moq;
+	}
+
+
+
+	public String getPriceValidity() {
+		return priceValidity;
+	}
+
+	public void setPriceValidity(String priceValidity) {
+		this.priceValidity = priceValidity;
+	}
+
+	public String getLeadTime() {
+		return leadTime;
+	}
+
+	public void setLeadTime(String leadTime) {
+		this.leadTime = leadTime;
+	}
+
+	public String getAllocation() {
+		return allocation;
+	}
+
+	public void setAllocation(String allocation) {
+		this.allocation = allocation;
+	}
+
+	public String getTermsAndConditions() {
+		return termsAndConditions;
+	}
+
+	public void setTermsAndConditions(String termsAndConditions) {
+		this.termsAndConditions = termsAndConditions;
+	}
+
+}

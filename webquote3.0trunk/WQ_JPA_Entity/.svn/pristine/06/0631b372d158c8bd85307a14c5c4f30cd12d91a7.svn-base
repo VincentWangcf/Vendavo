@@ -1,0 +1,235 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.cache.ICacheUtil;
+
+public class Money implements Comparable<Money> {
+	
+	private static final int SCALE = 5;
+
+	private Currency currency;
+
+	private BigDecimal amount;
+	
+	private static ICacheUtil cacheUtil;
+
+
+	private Money() {
+		try {
+			Context context = new InitialContext();
+			setCacheUtil((ICacheUtil) context.lookup("java:global/WebQuoteEar/WQ_JPA_Entity/CacheUtil!com.avnet.emasia.webquote.cache.CacheUtil"));
+		} catch (Exception e) {
+//			e.printStackTrace();
+		}			
+		
+	}
+
+	private Money(BigDecimal amount, Currency curr) {
+		new Money();
+		this.amount = amount;
+		this.currency = curr;
+	}
+
+	public static Money of(String amount, String curr) {
+		if (StringUtils.isEmpty(amount) || StringUtils.isEmpty(curr)) {
+			return null;
+		}
+		try {
+			return new Money(new BigDecimal(amount), Currency.valueOf(curr));
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	public static Money of(BigDecimal amount, Currency curr) {
+		if (amount == null || curr == null) {
+			return null;
+		}
+		return new Money(amount, curr);
+	}
+
+	public static Money of(Double amount, Currency curr) {
+		if (amount == null || curr == null) {
+			return null;
+		}
+		try {
+			return new Money(new BigDecimal(amount), curr);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	public static Money of(Double amount, String curr) {
+		if (amount == null || StringUtils.isEmpty(curr)) {
+			return null;
+		}
+		try {
+			return new Money(new BigDecimal(amount), Currency.valueOf(curr));
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	public Currency getCurrency() {
+		return currency;
+	}
+
+	public BigDecimal getAmount() {
+		return amount;
+	}
+
+	static void setCacheUtil(ICacheUtil cacheUtil) {
+		Money.cacheUtil = cacheUtil;
+	}
+
+	
+	
+	// no setters allowed
+
+	
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((amount == null) ? 0 : amount.hashCode());
+		result = prime * result + ((currency == null) ? 0 : currency.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Money other = (Money) obj;
+		if (amount == null) {
+			if (other.amount != null)
+				return false;
+		} else if (!amount.equals(other.amount))
+			return false;
+		if (currency != other.currency)
+			return false;
+		return true;
+	}
+	
+	
+
+	@Override
+	public String toString() {
+		return "Money [currency=" + currency.name() + ", amount=" + amount + "]";
+	}
+
+	public	Money convertTo(Currency toCurrency, BizUnit bizUnit, Customer soldToCustomer, Date date) {
+		
+		if (toCurrency == null || bizUnit == null || soldToCustomer == null || date == null) {
+			throw new IllegalArgumentException();
+		}
+
+		if (toCurrency == this.currency) {
+			return this;
+		}
+		
+		List<ExchangeRate> exchangeRates = cacheUtil.getExchangeRates();
+
+		BigDecimal exchRateFrom = null;
+		BigDecimal exchRateTo = null;
+		List<ExchangeRate> fromRates = null;
+		List<ExchangeRate> toRates = null;
+
+		if (this.currency == Currency.USD) {
+			exchRateFrom = BigDecimal.ONE;
+		} else {
+			fromRates = findExchangeRate(getCurrency(), bizUnit, soldToCustomer, date, exchangeRates);
+		}
+
+		if (toCurrency == Currency.USD) {
+			exchRateTo = BigDecimal.ONE;
+		} else {
+			toRates = findExchangeRate(toCurrency, bizUnit, soldToCustomer, date, exchangeRates);
+		}
+		
+		if (exchRateFrom == null ^ exchRateTo == null) {
+			if (exchRateFrom == null && ! fromRates.isEmpty()) {
+				exchRateFrom =  fromRates.get(0).getExRateTo();
+			}
+			if (exchRateTo == null && ! toRates.isEmpty()) {
+				exchRateTo =  toRates.get(0).getRateInTotal();
+			}
+			
+		}  else { //
+			for(ExchangeRate fromRate : fromRates) {
+				boolean customerRate =  StringUtils.isNotEmpty(fromRate.getSoldToCode());
+				for(ExchangeRate toRate : toRates) {
+					if (customerRate ==  StringUtils.isNotEmpty(toRate.getSoldToCode())) {
+						exchRateFrom = fromRate.getExRateTo();
+						exchRateTo = toRate.getRateInTotal();
+					}
+				}
+			}
+		}
+		
+		if (exchRateFrom != null && exchRateTo != null) {
+			return Money.of(getAmount().multiply(exchRateTo).divide(exchRateFrom, SCALE, BigDecimal.ROUND_HALF_UP), toCurrency);
+		}
+
+		return null;
+	}
+
+	private List<ExchangeRate> findExchangeRate(Currency toCurrency, BizUnit bizUnit, Customer soldToCustomer, Date date, List<ExchangeRate> exchangeRates) {
+		
+		List<ExchangeRate> rates1 = exchangeRates.stream().filter(
+				rate -> rate.getCurrFrom().equals(Currency.USD.name())
+				&& rate.getCurrTo().equals(toCurrency.name()) 
+				&& rate.getBizUnit().equals(bizUnit.getName())
+				&& (StringUtils.isNotEmpty(rate.getSoldToCode()) && rate.getSoldToCode().equals(soldToCustomer.getCustomerNumber()))
+				&& rate.getValidFrom().before(date)
+				&& rate.getValidTo().after(date)).
+		collect(Collectors.toList());
+
+		List<ExchangeRate> rates2 = exchangeRates.stream().filter(rate -> 
+			rate.getCurrFrom().equals(Currency.USD.name())
+			&& rate.getCurrTo().equals(toCurrency.name()) 
+			&& rate.getBizUnit().equals(bizUnit.getName())
+			&& rate.getValidFrom().before(date) 
+			&& rate.getValidTo().after(date)
+			&& StringUtils.isEmpty(rate.getSoldToCode()))
+		.collect(Collectors.toList());
+
+		rates1.addAll(rates2);
+		return rates1;
+	}
+	
+	public void print() {
+		cacheUtil.getExchangeRates().stream().forEach(System.out::println);
+	
+	}
+
+	@Override
+	public int compareTo(Money obj) {
+		// only has the same currency then can compare ;
+		if(this.currency != obj.currency) {
+			throw new IllegalArgumentException(); 
+		}
+		return this.amount.compareTo(obj.amount);
+	}
+	
+	public static BigDecimal getExchangeRate(Currency fromCurr, Currency toCurr, BizUnit bizUnit, Customer soldToCustomer, Date date) {
+		return null;
+	}
+	
+}

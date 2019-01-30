@@ -1,0 +1,239 @@
+/**
+ * 
+ */
+package com.avnet.emasia.webquote.rowdata;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Logger;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
+
+import com.avnet.emasia.webquote.rowdata.datasource.ResolveInfo;
+
+
+
+/**
+ * @author 042659
+ *
+ */
+public class DefaultRowDataConverter<T extends Bean> implements RowDataConverter<T> {
+	
+	static final Logger LOGGER= Logger.getLogger(DefaultRowDataConverter.class.getSimpleName());
+
+//	private RowDataSource columnDataSource;
+//	
+//	private Validator validator;
+//	
+//	
+//
+//
+//
+//	/**
+//	 * 
+//	 */
+//	public DefaultRowDataConverter() {
+//		// TODO Auto-generated constructor stub
+//		initValidator();
+//	}
+//
+//
+//
+//	/**   
+//	* @Description: init Validator
+//	* @author 042659       
+//	* @return void    
+//	* @throws  
+//	*/  
+//	private void initValidator() {
+//		// TODO Auto-generated method stub
+//		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+//		 validator = factory.getValidator();
+//		
+//	}
+//
+//
+//
+//	public RowDataSource getColumnDataSource() {
+//		return columnDataSource;
+//	}
+//
+//
+//
+//	public void setColumnDataSource(RowDataSource columnDataSource) {
+//		this.columnDataSource = columnDataSource;
+//	}
+//
+//
+//
+//	/* (non-Javadoc)
+//	 * @see com.avnet.emasia.webquote.columndata.ColumnDataConverter#convertAndValidate(java.io.InputStream, java.lang.String, com.avnet.emasia.webquote.columndata.BeanDefinition)
+//	 */
+//	@Override
+//	public List<T> convertAndValidate(InputStream is, FileType type, BeanDefinition<T> beanDef) {
+//		// TODO Auto-generated method stub
+//		List<T> beanObjList = new ArrayList<T>();
+//		this.columnDataSource = RowDataSource.create(is, type, null);
+//		Class<T> beanCls = beanDef.getBeanClass();
+//		while (this.columnDataSource.hasNext()) {
+//			this.columnDataSource.next();
+//			T tObj = GenerateInstance(beanCls);
+//			for (FieldDefinition fieldDefinition : beanDef.getFieldDefinitions()) {
+//				assignValue(tObj, fieldDefinition, columnDataSource);
+//			}
+//			validateBean(tObj);
+//			beanObjList.add(tObj);
+//		}
+//		return beanObjList;
+//	}
+///**   
+//	* @Description: validate bean and put error msg to validationErrors
+//	* @author 042659
+//	* @param tObj     extends DefaultBean  
+//	* @return void    
+//	* @throws  
+//	*/  
+//	private void validateBean(T tObj) {
+//		StringBuilder sb = new StringBuilder();
+//		if (validator == null) {
+//			initValidator();
+//		}
+//		for (ConstraintViolation<T> constraintVioloation : validator.validate(tObj)) {
+//			sb.append(constraintVioloation.getMessage());
+//		}
+//		tObj.addValidationError(sb.toString());
+//
+//	}
+//
+//	
+//	/**   
+//	* @Description: assign the values to bean reference  
+//	* @author 042659
+//	* @param beanObj
+//	* @param fieldDefinition       
+//	 * @param cDataSource 
+//	* @return void    
+//	*/  
+//	private void assignValue(Bean beanObj, FieldDefinition fieldDefinition, RowDataSource cDataSource) {
+//		// TODO Auto-generated method stub
+//	//	printForTest(fieldDefinition, cDataSource);
+///*		Object value = fieldDefinition.getConverter().convert(cDataSource.getColumnValue(fieldDefinition.getColumnName()));
+//		setter(beanObj, fieldDefinition.getFieldName(), value, GenericUtil.getGenericType(fieldDefinition.getField()));
+//*/
+//		fieldDefinition.getConverter().convert(cDataSource.getColumnValue(fieldDefinition.getColumnName()), beanObj, fieldDefinition.getField());
+//	}
+//
+//
+//	public void setter(Object obj, String att, Object value, Class<?> type) {
+//		try {
+//			Method method = obj.getClass().getMethod("set" + turnFirstCharToUpperCase(att), type);
+//			method.invoke(obj, value);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//	}
+//
+//
+//	/**   
+//	* @Description: TODO
+//	* @author 042659
+//	* @param fieldName  such as mfr
+//	* @return String    Mfr
+//	*/  
+//	private String turnFirstCharToUpperCase(String fieldName) {
+//		// TODO Auto-generated method stub
+//		return fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+//	}
+//
+//
+//
+//	/**   
+//	* @Description: TODO
+//	* @author 042659
+//	* @param beanCls Class
+//	* @return Object    
+//	* @throws  
+//	*/  
+//	private <T> T GenerateInstance(Class<T> beanCls) {
+//		T t = null;
+//		try {
+//			t = beanCls.newInstance();
+//		} catch (InstantiationException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (IllegalAccessException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		return t;
+//	}
+//
+//	public List<T> convertAndValidate2(RowDataSource source, FileType type, BeanDefinition<T> beanDef) {
+//		// TODO Auto-generated method stub
+//		List<T> beanObjList = new ArrayList<T>();
+//		this.columnDataSource = source;
+//		beanDef.getBeanClass().getClass();
+//		beanDef.getFieldDefinitions();
+//		Class<T> beanCls = beanDef.getBeanClass();
+//		while (this.columnDataSource.hasNext()) {
+//			this.columnDataSource.next();
+//			 T tObj = GenerateInstance(beanCls);
+//			for (FieldDefinition fieldDefinition : beanDef.getFieldDefinitions()) {
+//				assignValue(tObj, fieldDefinition, columnDataSource);
+//			}
+//			beanObjList.add(tObj);
+//		}
+//		return beanObjList;
+//	}
+
+	
+	public List<T> convertAndValidate(InputStream is, FileType type, BeanDefinition<T> beanDef) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	public List<T> convertAndValidate(InputStream is, FileType type, ResolveInfo resolveInfo, Class<T> clazz) {
+		
+		BeanDefinition<T> beanDefinition = BeanDefinition.create(clazz);
+		RowDataSource source = RowDataSource.create(is, type, resolveInfo);
+		List<T> beans = new ArrayList<>();
+		while(source.hasNext()) {
+			source.next();
+			try {
+				T bean =  clazz.newInstance();
+				beans.add(bean);
+				for (FieldDefinition fd : beanDefinition.getFieldDefinitions()) {
+					fd.getConverter().convert(source.getColumnValue(fd.getColumnName()), bean, fd.field);
+				}
+			} catch (InstantiationException | IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		/*
+		ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
+		Validator validator = validatorFactory.getValidator();
+		for(T bean : beans) {
+			Set<ConstraintViolation<T>> violations = validator.validate(bean, clazz);
+			
+			for(ConstraintViolation<T> violation : violations) {
+				bean.addValidationError(violation.getMessage());
+			}
+			
+		}
+		
+		*/
+		return beans;
+	}
+}

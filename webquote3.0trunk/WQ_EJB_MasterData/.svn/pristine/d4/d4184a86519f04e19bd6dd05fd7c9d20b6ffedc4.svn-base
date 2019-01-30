@@ -1,0 +1,107 @@
+/**
+ * @Package: com.avnet.emasia.webquote.masterData.ejb.scheduleJob 
+ * @author: 042659   
+ * @date: Aug 29, 2017 9:45:09 AM 
+ */
+package com.avnet.emasia.webquote.masterData.ejb.scheduleJob;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Timer;
+
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.masterData.ejb.StandardJob;
+import com.avnet.emasia.webquote.masterData.exception.CheckedException;
+import com.avnet.emasia.webquote.masterData.util.Constants;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+
+/**
+ * @author 042659
+ *
+ */
+public class ClearOfflineReportfilesScheduleJob extends StandardJob {
+
+	@EJB
+	private SysConfigSB sysConfigSB;
+
+	private static Logger logger = Logger.getLogger(ClearOfflineReportfilesScheduleJob.class.getName());
+
+	private static final String OFFLINE_REPORT_PATH = "OFFLINE_REPORT_PATH";
+
+	private static final long currentTime = System.currentTimeMillis();
+	private static final int days = 7;
+
+	private static final String CLEAR_FILE_ERROR_EMAIL_SUBJECT = "Clear Offline Reportfiles error notification";
+
+	@Asynchronous
+	@TransactionTimeout(value = 30000, unit = TimeUnit.SECONDS)
+	public void executeTask(Timer timer) {
+		try {
+			run();
+		} catch (Exception e) {
+			String msg = MessageFormatorUtil.getParameterizedStringFromException(e);
+			logger.log(Level.SEVERE, "Exception occured in ClearOfflineReportfilesScheduleJob#executeTask for Timer: "
+					+ timer.getInfo() + ", Task: " + this.getType() + ", Reason for failure: " + msg, e);
+		}
+	}
+
+	@Override
+	public void loadingAction() throws CheckedException {
+		logger.info("Beging to run ClearOfflineReportfilesScheduleJob");
+		try {
+			String offlineReportPath = sysConfigSB.getProperyValue(OFFLINE_REPORT_PATH);
+			List<File> fileList = new ArrayList<File>();
+			fileList = getFiles(offlineReportPath, fileList);
+			removeFiles(fileList, days);
+		} catch (Exception e) {
+			throw new CheckedException(e.getMessage());
+		}
+	}
+
+	public List<File> getFiles(String path, List<File> files) {
+		logger.info("Beging to call function getFiles,path is [" + path + "]");
+		File realFile = new File(path);
+		if (realFile.isDirectory()) {
+			File[] subfiles = realFile.listFiles();
+			for (File file : subfiles) {
+				if (!file.isDirectory()) {
+					files.add(file);
+				}
+			}
+		}
+		logger.info(files.size() + " files will be return");
+		return files;
+	}
+
+	public void removeFiles(List<File> files, int days) {
+		logger.info("Beging to call function removeFiles");
+
+		if (files == null || files.isEmpty()) {
+			return;
+		}
+		long interval = 0L;
+		for (File file : files) {
+			interval = currentTime - file.lastModified();
+			if (interval > days * 24 * 3600 * 1000L) {
+				file.delete();
+			}
+		}
+		logger.info(files.size() + " files will be deleted successfully");
+	}
+
+	@Override
+	public void sendErrorEmail(String errorMsg, String subjectStr) {
+		super.sendErrorEmail(errorMsg, CLEAR_FILE_ERROR_EMAIL_SUBJECT);
+	}
+
+}

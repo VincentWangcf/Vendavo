@@ -1,0 +1,390 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:func="http://emasia.avnet.com/functions">
+
+	<ui:define name="css">
+		<h:outputStylesheet library="css" name="style-005.css" />
+		<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+
+	<ui:define name="content">
+
+		<p:ajaxStatus onstart="start();" onsuccess="stop();"
+			onerror="stopWithError();" />
+		<p:growl id="growl" showDetail="true"
+			sticky="#{growlPropertyMB.sticky}" autoUpdate="true"
+			showSummary="#{growlPropertyMB.showSummary}"
+			escape="#{growlPropertyMB.escape}" />
+		<h:form id="form" enctype="multipart/form-data" acceptcharset="UTF-8">
+			<p:accordionPanel>
+				<p:tab title="#{dbResource['wq.header.costExtractSearchCritria']}">
+					<table border="0" style="width:80%;padding:3px 3px 3px 3px">
+					<tr style="padding:3px 3px 3px 3px">
+					<td><h:outputText value="#{dbResource['wq.label.region']} "  />
+					<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px" />
+					<h:outputText value=":"  /></td>
+					<td>
+						<p:selectCheckboxMenu widgetVar="regionSelectCheckboxMenuWidget" id="regionMenu" value="#{costExtractMB.costExtractSearchCriterial.selectedRegions}" label="#{costExtractMB.selectedRegionLabel}"
+                              filter="true" filterMatchMode="startsWith" panelStyle="width:250px" style="min-width:120px">
+           					 <f:selectItems value="#{costExtractMB.regionList}" />
+           					 <p:ajax update="regionMenu" listener="#{costExtractMB.selectRegionCheckbox}" oncomplete="PF('regionSelectCheckboxMenuWidget').show()"/>
+       					 	 <p:ajax event="toggleSelect" update="regionMenu" listener="#{costExtractMB.selectRegionCheckbox}" oncomplete="PF('regionSelectCheckboxMenuWidget').show()"/>
+       					</p:selectCheckboxMenu>
+       				</td>
+       				
+       				<td><h:outputText value="#{dbResource['wq.label.costsource']} "  />
+						<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px" />
+						<h:outputText value=":"  /></td>
+       				<td><p:selectCheckboxMenu widgetVar="costSourceSelectCheckboxMenuWidget" id="costSourceMenu" value="#{costExtractMB.costExtractSearchCriterial.selectedCostSoures}" label="#{costExtractMB.selectedCostSourceLabel}"
+                              filter="true" filterMatchMode="startsWith" panelStyle="width:250px" style="min-width:120px">
+           					 <f:selectItems value="#{costExtractMB.costSourceList}" />
+           					 <p:ajax update="costSourceMenu" listener="#{costExtractMB.selectCostSourceCheckbox}" oncomplete="PF('costSourceSelectCheckboxMenuWidget').show()"/>
+           					 <p:ajax event="toggleSelect" update="costSourceMenu" listener="#{costExtractMB.selectCostSourceCheckbox}" oncomplete="PF('costSourceSelectCheckboxMenuWidget').show()"/>
+       					 </p:selectCheckboxMenu></td>
+       					 
+       				<td><h:outputText value="#{dbResource['wq.label.proGroup']}1:" /></td>
+       				<td><p:inputText value="#{costExtractMB.costExtractSearchCriterial.productGroup1}" /></td>
+
+					<td><h:outputText value="#{dbResource['wq.label.proGroup']}2:" /></td>
+					<td><p:inputText value="#{costExtractMB.costExtractSearchCriterial.productGroup2}" /></td>
+					</tr>
+					
+					<tr>
+					<td><h:outputText value="#{dbResource['wq.label.mfr']} " escape="false" />
+						<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px" />
+						<h:outputText value=":" style="padding:0px 3px 0px 0px" /></td>
+					<td><p:selectCheckboxMenu widgetVar="mfrSelectCheckboxMenuWidget" id="mfrMenu" value="#{costExtractMB.costExtractSearchCriterial.selectedMfrs}" label="#{costExtractMB.selectedMfrLabel}"
+                              filter="true" filterMatchMode="startsWith" panelStyle="width:250px" style="min-width:120px">
+           					 <f:selectItems value="#{costExtractMB.mfrList}" />
+           					 <p:ajax update="mfrMenu" listener="#{costExtractMB.selectMfrCheckbox}" oncomplete="PF('mfrSelectCheckboxMenuWidget').show()"/>
+           					 <p:ajax event="toggleSelect" update="mfrMenu" listener="#{costExtractMB.selectMfrCheckbox}" oncomplete="PF('mfrSelectCheckboxMenuWidget').show()"/>
+       					</p:selectCheckboxMenu></td>
+       					
+       				<td><h:outputText value="#{dbResource['wq.label.mfrPN']}" />
+       					<h:outputText value=":" style="padding:0px 3px 0px 0px" /></td>
+       				<td><p:inputText value="#{costExtractMB.costExtractSearchCriterial.partNumber}" minQueryLength="5" global="false" /></td>
+					
+					<td><h:outputText value="#{dbResource['wq.label.proGroup']}3:" /></td>
+					<td><p:inputText value="#{costExtractMB.costExtractSearchCriterial.productGroup3}" /></td>
+					
+					<td><h:outputText value="#{dbResource['wq.label.proGroup']}4:" /></td>
+					<td><p:inputText value="#{costExtractMB.costExtractSearchCriterial.productGroup4}" /></td>
+					</tr>
+					
+					<tr>
+					<td><h:outputText value="#{dbResource['wq.label.costIndicator']}:" escape="false" /></td>
+					<td><p:selectCheckboxMenu widgetVar="costIndSelectCheckboxMenuWidget" id="costIndicatorMenu" value="#{costExtractMB.costExtractSearchCriterial.selectedCostIndicators}" label="#{costExtractMB.selectedCostIndLabel}"
+                              filter="true" filterMatchMode="startsWith" panelStyle="width:250px" style="min-width:120px">
+           					 <f:selectItems value="#{costExtractMB.costIndicatorList}" />
+           					 <p:ajax update="costIndicatorMenu" listener="#{costExtractMB.selectCostIndCheckbox}" oncomplete="PF('costIndSelectCheckboxMenuWidget').show()"/>
+           					 <p:ajax event="toggleSelect" update="costIndicatorMenu" listener="#{costExtractMB.selectCostIndCheckbox}" oncomplete="PF('costIndSelectCheckboxMenuWidget').show()"/>
+       					 </p:selectCheckboxMenu></td>
+					
+					<td><h:outputText value="#{dbResource['wq.label.salesCostPart']}:" /></td>
+					<td><h:selectOneMenu id="saleCostPart"
+							value="#{costExtractMB.costExtractSearchCriterial.saleCostPart}"
+							style="min-width:120px">
+							<f:selectItems
+								value="#{costExtractMB.salesCostPartList}" />
+						</h:selectOneMenu></td>
+					<td><h:outputText value="#{dbResource['wq.message.quoteEffDate']}" escape="false" />
+       					<h:outputText value=":" style="padding:0px 3px 0px 0px" /></td>
+					<td colspan="3"><p:calendar value="#{costExtractMB.costExtractSearchCriterial.quoteEffectiveDateFrom}" showOn="button" pattern="dd/MM/yyyy" />
+						<h:outputText value="&#160;&#160;&#160;" style="padding:0px 3px 0px 0px" />
+						<h:outputText value="#{dbResource['wq.header.To']}" escape="false" />
+						<h:outputText value="&#160;&#160;&#160;" style="padding:0px 3px 0px 0px" />
+						<p:calendar value="#{costExtractMB.costExtractSearchCriterial.quoteEffectiveDateTo}" showOn="button" pattern="dd/MM/yyyy" />
+					</td>
+					</tr>
+					</table>
+					
+
+
+					<h:panelGrid columns="2" cellpadding="0">
+						<p:commandButton value="#{dbResource['wq.button.search']}"
+							icon="ui-icon-search"
+							actionListener="#{costExtractMB.search}"
+							update="@form" />
+						<p:commandButton value="#{dbResource['wq.label.reset']}"
+							icon="ui-icon-triangle-1-w"
+							actionListener="#{costExtractMB.reset}" update="@form" />
+					</h:panelGrid>
+				</p:tab>
+			</p:accordionPanel>
+
+			<p:tabView>
+				<p:tab title="#{dbResource['wq.header.costInformation']}">
+
+
+					<h:outputText
+						value="#{dbResource['wq.message.SearchCriteriaPrecisely']}."
+						rendered="#{myQuoteSearchMB.recordsExceedMaxAllowed}"
+						style="color:red;font-weight:bold;" />
+
+					<h:panelGrid columns="18" cellpadding="0" style="width:82%;margin-bottom:10px">
+						<p:commandButton
+							value="#{dbResource['wq.button.sendOfflineReport']}"
+							actionListener="#{costExtractMB.sendCostInfoReport}"
+							update=":growl" />
+
+					</h:panelGrid>
+
+
+
+					<p:dataTable var="vo" value="#{costExtractMB.beans}"
+						paginator="true" lazy="true"
+						rowIndexVar="rowIndex" rows="10"
+						paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+						rowsPerPageTemplate="10,20,50"
+						id="datatable_costinformation" editable="true" paginatorPosition="top"
+						scrollable="true" scrollHeight="350"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+
+						<p:column headerText="#{dbResource['wq.label.region']}" width="50" >
+							<h:outputText value="#{vo.region}" />
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.salesCostPart']}" width="30">
+							<h:outputText value="#{vo.saleCostPart}"/>
+						</p:column>
+
+						<p:column
+							headerText="#{dbResource['wq.label.mfr']}" width="70">
+							<h:outputText value="#{vo.mfr}"/>
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.mfrPN']}" width="100">
+							<h:outputText value="#{vo.partNumber}"/>
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.cost']}" width="70">
+							<h:outputText value="#{vo.cost}" >
+								<f:convertNumber  pattern="#,##0.00000"  minFractionDigits="5"/>
+							</h:outputText>
+						</p:column>
+
+
+
+						<p:column headerText="#{dbResource['wq.label.costsource']}" width="100">
+							<h:outputText value="#{vo.costSource}"/>
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.costIndicator']}" width="70">
+							<h:outputText value="#{vo.costIndicator}"/>
+						</p:column>
+
+						<p:column
+							headerText="#{dbResource['wq.label.priceValidity']}" width="70">
+							<h:outputText value="#{vo.quoteEffectiveDate}">
+								<f:convertDateTime pattern="dd-MM-yyyy" />
+							</h:outputText>
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.MPQ']}" width="70">
+							<h:outputText value="#{vo.mpq}"/>
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.moq']}" width="70">
+							<h:outputText value="#{vo.moq}"/>
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.proGroup']}1" width="100" >
+							<h:outputText value="#{vo.productGroup1}"/>
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.proGroup']}2" width="100" >
+							<h:outputText value="#{vo.productGroup2}"/>
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.proGroup']}3" width="100" >
+							<h:outputText value="#{vo.productGroup3}"/>
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.proGroup']}4" width="100" >
+							<h:outputText value="#{vo.productGroup4}"/>
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.SoldToCode']}" width="100" >
+							<h:outputText value="#{vo.soldToCode}"/>
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.soldToName']}" width="100" >
+							<h:outputText value="#{vo.soldToName}"/>
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.Qty']}" width="100" >
+							<h:outputText value="#{vo.quotedQty}"/>
+						</p:column>
+
+					</p:dataTable>
+
+				</p:tab>
+				<p:tab title="#{dbResource['wq.header.costComparision']}">
+					<h:outputText
+						value="#{dbResource['wq.message.SearchCriteriaPrecisely']}."
+						rendered="#{myQuoteSearchMB.recordsExceedMaxAllowed}"
+						style="color:red;font-weight:bold;" />
+
+					<h:panelGrid columns="18" cellpadding="0" style="width:82%;margin-bottom:10px">
+						<p:commandButton
+							value="#{dbResource['wq.button.sendOfflineReport']}"
+							actionListener="#{costExtractMB.sendCostCompareReport}"
+							update=":growl" />
+
+					</h:panelGrid>
+
+
+
+					<p:dataTable var="vo" value="#{costExtractMB.costComparisonbean}"
+						paginator="true" lazy="true"
+						rowIndexVar="rowIndex" rows="10"
+						paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+						rowsPerPageTemplate="10,20,50"						
+						id="datatable_costcomparision" editable="true" paginatorPosition="top"
+						scrollable="true" scrollHeight="350"
+						emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+						
+
+						<p:column headerText="#{dbResource['wq.label.mfr']}" width="70">						
+							<h:outputText value="#{vo.mfr}"/>
+						</p:column>
+
+						<p:column headerText="#{dbResource['wq.label.mfrPN']}" width="100">
+							<h:outputText value="#{vo.partNo}"/>
+						</p:column>
+						
+						<p:column headerText="#{dbResource['wq.label.1stLowestCost']}" width="70">
+							<h:outputText value="#{vo.firstLowestCost}"/>
+						</p:column>
+						
+						<p:column headerText="#{dbResource['wq.label.costsource']} 1" width="100">
+							<h:outputText value="#{vo.firstCostSource}"/>
+						</p:column>
+						
+						<p:column headerText="#{dbResource['wq.label.costIndicator']} 1" width="100">
+							<h:outputText value="#{vo.firstCostIndicator}"/>
+						</p:column>
+						
+						<p:column headerText="#{dbResource['wq.label.region']} 1" width="70">
+							<h:outputText value="#{vo.firstRegion}"/>
+						</p:column>
+						
+						<p:column headerText="#{dbResource['wq.label.QuotationEffectiveDate']} 1" width="80">
+			        		<h:outputText value="#{vo.firstQuoteEffectiveDate}">
+			        			<f:convertDateTime pattern="dd-MM-yyyy" />
+			        		</h:outputText>
+		        		</p:column>
+		        		
+		        		<p:column headerText="#{dbResource['wq.label.2stLowestCost']}" width="70">
+							<h:outputText value="#{vo.secondLowestCost}"/>
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.costsource']} 2" width="70">
+							<h:outputText value="#{vo.secondCostSource}"/>
+						</p:column>
+						
+						<p:column headerText="#{dbResource['wq.label.costIndicator']} 2" width="100">
+							<h:outputText value="#{vo.secondCostIndicator}"/>
+						</p:column>
+						
+						<p:column headerText="#{dbResource['wq.label.region']} 2" width="70">
+							<h:outputText value="#{vo.secondRegion}"/>
+						</p:column>
+						
+						<p:column headerText="#{dbResource['wq.label.QuotationEffectiveDate']} 2" width="80">
+			        		<h:outputText value="#{vo.secondQuoteEffectiveDate}">
+			        			<f:convertDateTime pattern="dd-MM-yyyy" />
+			        		</h:outputText>
+		        		</p:column>
+		        		
+						<p:column headerText="#{dbResource['wq.label.deltaof1and2LowestCost']}" width="70">
+							<h:outputText value="#{vo.deltaOf1stAnd2ndLowestCost}"/>
+						</p:column>
+		        		
+		        		<p:column headerText="#{dbResource['wq.label.3stLowestCost']}" width="70">
+							<h:outputText value="#{vo.thirdLowestCost}"/>
+						</p:column>
+						<p:column headerText="#{dbResource['wq.label.costsource']} 3" width="70">
+							<h:outputText value="#{vo.thirdCostSource}"/>
+						</p:column>
+						
+						<p:column headerText="#{dbResource['wq.label.costIndicator']} 3" width="100">
+							<h:outputText value="#{vo.thirdCostIndicator}"/>
+						</p:column>
+						
+						<p:column headerText="#{dbResource['wq.label.region']} 3" width="70">
+							<h:outputText value="#{vo.thirdRegion}"/>
+						</p:column>
+						
+						<p:column headerText="#{dbResource['wq.label.QuotationEffectiveDate']} 3" width="80">
+			        		<h:outputText value="#{vo.thirdQuoteEffectiveDate}">
+			        			<f:convertDateTime pattern="dd-MM-yyyy" />
+			        		</h:outputText>
+		        		</p:column>
+		        		
+		        		<p:column headerText="#{dbResource['wq.label.deltaof1and3LowestCost']}" width="70">
+			        		<h:outputText value=""/>
+		        		</p:column>
+		        		
+		        		
+		        		
+		        		<p:column headerText="#{dbResource['wq.label.lowestCostPast3']}" width="70">
+			        		<h:outputText value="#{vo.lowestCostPast3Mths}"/>
+		        		</p:column>
+		        		
+		        		<p:column headerText="#{dbResource['wq.label.region']}(3 mths)" width="70">
+			        		<h:outputText value="#{vo.lowestCostRegionPast3Mths}"/>
+		        		</p:column>
+		        		
+		        		<p:column headerText="#{dbResource['wq.label.QuotationEffectiveDate']}(3 mths)" width="70">
+			        		<h:outputText value="#{vo.lowestCostQuoteEffectiveDatePast3Mths}">
+			        			<f:convertDateTime pattern="dd-MM-yyyy" />
+			        		</h:outputText>
+		        		</p:column>
+		        		
+		        		
+		        		
+		        		<p:column headerText="#{dbResource['wq.label.lowestCostPast6']}" width="70">
+			        		<h:outputText value="#{vo.lowestCostPast6Mths}"/>
+		        		</p:column>
+		        		
+		        		<p:column headerText="#{dbResource['wq.label.region']}(6 mths)" width="70">
+			        		<h:outputText value="#{vo.lowestCostRegionPast6Mths}"/>
+		        		</p:column>
+		        		
+		        		<p:column headerText="#{dbResource['wq.label.QuotationEffectiveDate']}(6 mths)" width="70">
+			        		<h:outputText value="#{vo.lowestCostQuoteEffectiveDatePast6Mths}">
+			        			<f:convertDateTime pattern="dd-MM-yyyy" />
+			        		</h:outputText>
+		        		</p:column>
+		        		
+		        		
+		        		
+		        		<p:column headerText="#{dbResource['wq.label.lowestCostPast12']}" width="70">
+			        		<h:outputText value="#{vo.lowestCostPast12Mths}"/>
+		        		</p:column>
+		        		
+		        		<p:column headerText="#{dbResource['wq.label.region']}(12 mths)" width="70">
+			        		<h:outputText value="#{vo.lowestCostRegionPast12Mths}"/>
+		        		</p:column>
+		        		
+		        		<p:column headerText="#{dbResource['wq.label.QuotationEffectiveDate']}(12 mths)" width="70">
+			        		<h:outputText value="#{vo.lowestCostQuoteEffectiveDatePast12Mths}">
+			        			<f:convertDateTime pattern="dd-MM-yyyy" />
+			        		</h:outputText>
+		        		</p:column>
+
+					</p:dataTable>
+				</p:tab>
+
+			</p:tabView>
+
+
+
+			<h:outputScript library="javascript" name="disableRowSelection.js" />
+
+		</h:form>
+	</ui:define>
+
+</ui:composition>

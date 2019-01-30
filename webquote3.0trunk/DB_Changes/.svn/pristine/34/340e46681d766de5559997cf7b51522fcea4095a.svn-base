@@ -1,0 +1,7 @@
+1)Fixed INC0746793 that In RFQ Submission, at the ��Salesman Employee Code�� textbox and ��Salesman�� textbox, 
+  we will change the logic of showing Salesman to base on Salesman��s accessible region (default + non-default) ---Damon Chen 2017/06/28
+2)Fixed Ticket upload files show special character when file name is chinese of japanese --Lenon 2017/08/04
+3)Issue in Vendor BPM Customer page: can not upload file.The template file is not correct format.I changed the content of template file and some parameters about desolving the data in excel file.--David 2017/08/04
+4)When attach file beyond 20MB,user can not get any email ,then change to get email with tip message in PricerEnquiry page --David 2017/08/16
+5)Fixed webquote cannt use in IE issue --Lenon 2017/08/17
+6)Fixed BMT Workingplatform export error --Lenon 2017/08/17

@@ -1,0 +1,90 @@
+package com.avnet.emasia.webquote.quote.ejb;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.Tuple;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Selection;
+
+import com.avnet.emasia.webquote.entity.FiscalMapping;
+
+@Stateless
+@LocalBean
+public class FiscalMappingSB {
+	private static final Logger LOG =Logger.getLogger(FiscalMappingSB.class.getName());
+	
+	@PersistenceContext(unitName="Server_Source")
+	EntityManager em;
+
+	public String[] getPeriodByDate(String date, int range) {
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<Tuple> cq = cb.createTupleQuery();
+		
+		Root<FiscalMapping> fiscalMapping = cq.from(FiscalMapping.class);
+		//to_date function cannot be calledd by cq correctly, so change the date to numeric and to do the match
+		Expression<Integer> format1 = cb.literal(2);
+		Expression<String> format2 = cb.literal("0");
+		String aliaTo ="fisToDate";
+		String aliaFrm ="fisFrmDate";
+		
+		List<Selection<?>> selectionList = new ArrayList<Selection<?>>();
+		Expression<String> fisToyear = fiscalMapping.get("id").get("fisYearTo");
+		Expression<String> fisToMonth = cb.function("lpad", String.class,fiscalMapping.get("id").get("fisMonthTo"),format1,format2);
+		Expression<String> fisToDay = cb.function("lpad", String.class,fiscalMapping.get("id").get("fisDayTo"),format1,format2);
+		Expression<String> fisToMthDay = cb.concat(fisToMonth, fisToDay);
+		Expression<String> fisToDate = cb.concat(fisToyear, fisToMthDay);
+		
+		Expression<String> fisFrmyear = fiscalMapping.get("id").get("fisYearFrom");
+		Expression<String> fisFrmMonth = cb.function("lpad", String.class,fiscalMapping.get("id").get("fisMonthFrom"),format1,format2);
+		Expression<String> fisFrmDay = cb.function("lpad", String.class,fiscalMapping.get("id").get("fisDayFrom"),format1,format2);
+		Expression<String> fisFrmMthDay = cb.concat(fisFrmMonth, fisFrmDay);
+		Expression<String> fisFrmDate = cb.concat(fisFrmyear, fisFrmMthDay);
+		
+		selectionList.add(fisFrmDate.alias(aliaFrm));
+		selectionList.add(fisToDate.alias(aliaTo));
+		
+		cq.multiselect(selectionList);
+		
+		cq.where(cb.lessThanOrEqualTo(fisFrmDate,date));
+		//order by fis_year_from desc, fis_month_from desc
+		cq.orderBy(cb.desc(fiscalMapping.get("id").get("fisYearFrom")),cb.desc(fiscalMapping.get("id").get("fisMonthFrom")));
+		
+		Query query = em.createQuery(cq);
+		query.setHint("eclipselink.jdbc.bind-parameters", false);
+		
+		try {
+			List<Tuple> lst = query.getResultList();
+			if(lst.size()>0) {
+				Tuple obj = lst.get(1);
+				String toDate = (String) obj.get(aliaTo);
+				LOG.info("toDate==========>> "+toDate);
+				int frmFlg = range;
+				int frmPos = frmFlg<lst.size()?frmFlg:lst.size();
+				obj = lst.get(frmPos);
+				String frmDate =(String) obj.get(aliaFrm);
+				LOG.info("frmDate==========>> "+frmDate);
+				String[] returnVal = {frmDate,toDate};
+				return returnVal;
+			}
+			return null;
+		} catch (Exception ex){
+			LOG.log(Level.SEVERE,"Error Occuring While getting To Date Or From Date "+ex.getMessage(), ex);
+			return null;
+		}
+
+	}
+	
+	
+
+}

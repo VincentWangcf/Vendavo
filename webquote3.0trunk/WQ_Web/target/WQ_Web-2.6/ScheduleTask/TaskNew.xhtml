@@ -1,0 +1,63 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="windowTitle">
+		#{dbResource['wq.label.newTaskDetail']}
+	</ui:define>
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+		<h2>
+			<h:outputText value="#{dbResource['wq.label.newTaskDetail']}" />
+		</h2>
+		<h:form>
+			<p:panel>
+				<h:panelGrid columns="2" bgcolor="#eff5fa">
+					<h:outputText value="#{dbResource['wq.label.taskID']}:" />
+					<h:inputText id="taskId" value="#{TaskMB.newTask.taskId}" />
+					<h:outputText value="#{dbResource['wq.label.taskName']}:" />
+					<h:inputText id="taskName" value="#{TaskMB.newTask.taskName}" />
+					<h:outputText value="#{dbResource['wq.label.taskClassName']}:" />
+					<h:inputText id="taskClass" value="#{TaskMB.newTask.taskClassName}"
+						size="40" />
+					<h:outputText value="#{dbResource['wq.label.lstartDate']}:" />
+					<p:calendar id="startDate" value="#{TaskMB.newTask.startDate}"  />
+					<h:outputText value="#{dbResource['wq.label.endDate']}:" />
+					<p:calendar id="endDate" value="#{TaskMB.newTask.endDate}" 	navigator="true" />
+					<h:outputText value="#{dbResource['wq.label.second']}:" />
+					<h:inputText id="second" value="#{TaskMB.newTask.second}" />
+					<h:outputText value="#{dbResource['wq.label.minute']}:" />
+					<h:inputText id="minute" value="#{TaskMB.newTask.minute}" />
+					<h:outputText value="#{dbResource['wq.label.hour']}:" />
+					<h:inputText id="hour" value="#{TaskMB.newTask.hour}" />
+					<h:outputText value="#{dbResource['wq.label.dayOfMonth']}:" />
+					<h:inputText id="dayOfMonth" value="#{TaskMB.newTask.dayOfMonth}" />
+					<h:outputText value="#{dbResource['wq.label.month']}:" />
+					<h:inputText id="month" value="#{TaskMB.newTask.month}" />
+					<h:outputText value="#{dbResource['wq.label.year']}:" />
+					<h:inputText id="year" value="#{TaskMB.newTask.year}" />
+					<h:outputText value="#{dbResource['wq.label.dayOfWeek']}:" />
+					<h:inputText id="dayOfWeek" value="#{TaskMB.newTask.dayOfWeek}" />
+					<h:outputText value="#{dbResource['wq.label.taskDescription']}:" />
+					<h:inputTextarea cols="40" rows="4" id="description"
+						value="#{TaskMB.newTask.description}" />
+				</h:panelGrid>
+				<h:commandButton id="back" value="#{dbResource['wq.button.back']}"
+					action="#{TaskMB.gotoListing}" />
+				<p:spacer width="10" height="10" />
+				<h:commandButton id="create" value="#{dbResource['wq.label.create']}"
+					action="#{TaskMB.createTask}" />
+				<p:spacer width="10" height="10" />
+				<h:outputLink id="help"
+					value="http://java.sun.com/javaee/6/docs/tutorial/doc/bnboy.html"
+					target="help">#{dbResource['wq.button.help']}</h:outputLink>
+			</p:panel>
+		</h:form>
+		<p:messages showDetail="true" />
+	</ui:define>
+</ui:composition>

@@ -1,0 +1,21 @@
+package com.avnet.emasia.webquote.commodity.constant;
+
+public enum UPLOAD_ACTION {
+	ADD_UPDATE("ADD/UPDATE"),REMOVE_PRICER_ONLY("REMOVE (PRICER ONLY)"), REMOVE_PART_AND_ITS_PRICERS("REMOVE (PART AND ITS PRICERS"),
+	REMOVE_ALL_PRICER("REMOVE (ALL PRICERS)")
+	;
+
+	private String name;
+
+	private UPLOAD_ACTION( String name) {
+		this.setName(name);
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+}

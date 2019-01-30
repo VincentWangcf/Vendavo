@@ -1,0 +1,558 @@
+package com.avnet.emasia.webquote.quote.ejb;
+
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.Resource;
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.Customer;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.entity.RestrictedCustomerMapping;
+import com.avnet.emasia.webquote.entity.util.StringUtils;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+import com.avnet.emasia.webquote.quote.vo.RestrictedCustomerMappingParameter;
+import com.avnet.emasia.webquote.quote.vo.RestrictedCustomerMappingSearchCriteria;
+import com.avnet.emasia.webquote.quote.vo.RestrictedCustomerMappingVo;
+import com.avnet.emasia.webquote.utilities.DBResourceBundle;
+import com.avnet.emasia.webquote.utilities.util.QuoteUtil;
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+
+@Stateless
+@LocalBean
+@TransactionManagement(TransactionManagementType.BEAN)
+public class RestrictedCustomerMappingSB {
+	private static final Logger LOG = Logger.getLogger(RestrictedCustomerMappingSB.class.getName());
+
+	private static final int MAX_RESULT = 501;
+	
+	@Resource
+	private UserTransaction ut;
+	
+	@EJB
+	CustomerSB customerSB;
+	
+	@PersistenceContext(unitName = "Server_Source")
+	private EntityManager em;
+	
+	
+	
+	
+	/**
+	 * @param key
+	 * @return
+	 */
+	public static String getText(final String key, final Locale locale) {
+		// final Locale locale =
+		// FacesContext.getCurrentInstance().getViewRoot().getLocale();
+		ResourceBundle bundle = ResourceBundle.getBundle(DBResourceBundle.class.getName(), locale);
+		return bundle.getString(key);
+	}
+	
+	
+	
+	/**
+	 * @param key
+	 * @param parameters
+	 * @return
+	 */
+	public static String getParameterizedText(final String key, final String parameters,final Locale locale) {
+		//final Locale locale = getLocale();
+		ResourceBundle bundle = ResourceBundle.getBundle(DBResourceBundle.class.getName(),locale);
+		return MessageFormat.format(bundle.getString(key), parameters);
+	}
+
+	public List<RestrictedCustomerMapping> search(RestrictedCustomerMappingSearchCriteria criteria) {
+
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<RestrictedCustomerMapping> c = cb.createQuery(RestrictedCustomerMapping.class);
+		Root<RestrictedCustomerMapping> restrictedCustomerMapping = c.from(RestrictedCustomerMapping.class);
+		populateCriteria(c, criteria,restrictedCustomerMapping);
+		
+		TypedQuery<RestrictedCustomerMapping> q = em.createQuery(c);		
+		q.setFirstResult(0);
+		q.setMaxResults(MAX_RESULT);
+		List<RestrictedCustomerMapping> searchResult = q.getResultList();
+		return searchResult;		
+	}
+
+	private void populateCriteria(CriteriaQuery<RestrictedCustomerMapping> c,RestrictedCustomerMappingSearchCriteria criteria,
+			Root<RestrictedCustomerMapping> mapping) {
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+
+		List<Predicate> criterias = new ArrayList<Predicate>();
+		if (!QuoteUtil.isEmpty(criteria.getMfrKeyword())) {
+			Predicate predicate = cb.like(cb.upper(mapping.<String>get("mfr")), "%" + criteria.getMfrKeyword().toUpperCase()+ "%" );
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(criteria.getPartNumberKeyword())) {
+			Predicate predicate = cb.like(cb.upper(mapping.<String>get("partNumber")), "%" + criteria.getPartNumberKeyword().toUpperCase() + "%" );
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup1Keyword())) {
+			Predicate predicate = cb.like(mapping.<String>get("productGroup1"), "%" + criteria.getProductGroup1Keyword() + "%" );
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup2Keyword()) ) {
+			Predicate predicate = cb.like(mapping.<String>get("productGroup2"), "%" + criteria.getProductGroup2Keyword() + "%" );
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup3Keyword())) {
+			Predicate predicate = cb.like(mapping.<String>get("productGroup3"), "%" + criteria.getProductGroup3Keyword() + "%" );
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(criteria.getProductGroup4Keyword()) ) {
+			Predicate predicate = cb.like(mapping.<String>get("productGroup4"), "%" + criteria.getProductGroup4Keyword() + "%" );
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(criteria.getEndCustomerCodeKeyword())) {
+			Predicate predicate = cb.like(mapping.<String>get("endCustomerCode"), "%" + criteria.getEndCustomerCodeKeyword() + "%" );
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(criteria.getSoldToCodeKeyword()) ) {
+			Predicate predicate = cb.like(mapping.<String>get("soldToCode"), "%" + criteria.getSoldToCodeKeyword() + "%" );
+			criterias.add(predicate);
+		}
+		Predicate predicate = cb.equal(mapping.<String>get("bizUnit"),criteria.getBizUnit());
+		criterias.add(predicate);
+		if (criterias.size() == 0) {
+			
+		} else if (criterias.size() == 1) {
+			c.where(criterias.get(0));
+		} else {
+			c.where(cb.and(criterias.toArray(new Predicate[0])));
+		}		
+	}
+
+	public Boolean batchPersist(List<RestrictedCustomerMappingVo> beans,
+			String bizUnit) {
+		Boolean bool = false;
+
+		try {
+			ut.setTransactionTimeout(60*60);
+			ut.begin();
+		} catch (NotSupportedException e) {
+			LOG.log(Level.SEVERE, "NotSupportedException occurs for bizUnit "+bizUnit+" for TransactionTimeOut : " + e.getMessage(), e);
+		} catch (SystemException e) {
+			LOG.log(Level.SEVERE, "SystemException occurs for bizUnit "+bizUnit+" for TransactionTimeOut : " + e.getMessage(), e);
+		}
+		//fix defect 191 june guo 20150323
+		LOG.info("remove all of data the QCO region before add new one ---start");
+		Query delete = em.createQuery("DELETE FROM RestrictedCustomerMapping e where e.bizUnit=:bu");
+		delete.setParameter("bu", bizUnit);
+		delete.executeUpdate();
+		em.flush();
+		
+		LOG.info("begin bulk Persist BalUnconsumedQty to Db!");
+		RestrictedCustomerMapping beanIndataBase = null;
+
+		for(RestrictedCustomerMappingVo vo:beans){
+			//  commment on 20181221
+			//beanIndataBase = findRestrictedCustomerMapping(vo);
+			
+			//if(beanIndataBase==null){
+				beanIndataBase = new RestrictedCustomerMapping();
+				beanIndataBase.setMfr(vo.getMfr());
+				beanIndataBase.setPartNumber(vo.getPartNumber());
+				beanIndataBase.setProductGroup1(vo.getProductGroup1());
+				beanIndataBase.setProductGroup2(vo.getProductGroup2());
+				beanIndataBase.setProductGroup3(vo.getProductGroup3());
+				beanIndataBase.setProductGroup4(vo.getProductGroup4());
+				//add by vincnet 20181214
+				//beanIndataBase.setCostIndicator(vo.getCostIndicator());
+				beanIndataBase.setEndCustomerCode(vo.getEndCustomerCode());
+				beanIndataBase.setSoldToCode(vo.getSoldToCode());
+				beanIndataBase.setBizUnit(bizUnit);
+				beanIndataBase.setLastUpdatedOn(new Date());
+				beanIndataBase.setCreatedOn(new Date());
+				em.persist(beanIndataBase);
+			}
+		//}
+		try {
+			ut.commit();
+			bool = true;
+		} catch (SecurityException | IllegalStateException | RollbackException |HeuristicMixedException | HeuristicRollbackException |SystemException e) {
+			LOG.log(Level.SEVERE, "SecurityException occurs for bizUnit "+bizUnit+" on bulk Persist BalUnconsumedQty to Db : " + e.getMessage(), e);
+		} 
+	
+		LOG.info("end bulk Persist BalUnconsumedQty to Db!");
+		return bool;
+	}
+	
+	private RestrictedCustomerMapping findRestrictedCustomerMapping(RestrictedCustomerMappingVo vo){
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<RestrictedCustomerMapping> c = cb.createQuery(RestrictedCustomerMapping.class);
+		Root<RestrictedCustomerMapping> mapping = c.from(RestrictedCustomerMapping.class);
+
+		List<Predicate> criterias = new ArrayList<Predicate>();
+		if (!QuoteUtil.isEmpty(vo.getMfr())) {
+			Predicate predicate = cb.equal(cb.upper(mapping.<String>get("mfr")), vo.getMfr().toUpperCase() );
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(vo.getPartNumber())) {
+			Predicate predicate = cb.equal(cb.upper(mapping.<String>get("partNumber")),vo.getPartNumber().toUpperCase());
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(vo.getProductGroup1())) {
+			Predicate predicate = cb.equal(mapping.<String>get("productGroup1"),vo.getProductGroup1());
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(vo.getProductGroup2()) ) {
+			Predicate predicate = cb.equal(mapping.<String>get("productGroup2"), vo.getProductGroup2());
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(vo.getProductGroup3())) {
+			Predicate predicate = cb.equal(mapping.<String>get("productGroup3"), vo.getProductGroup3() );
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(vo.getProductGroup4()) ) {
+			Predicate predicate = cb.equal(mapping.<String>get("productGroup4"),vo.getProductGroup4());
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(vo.getEndCustomerCode())) {
+			Predicate predicate = cb.equal(mapping.<String>get("endCustomerCode"),vo.getEndCustomerCode());
+			criterias.add(predicate);
+		}
+		if (!QuoteUtil.isEmpty(vo.getSoldToCode()) ) {
+			Predicate predicate = cb.equal(mapping.<String>get("soldToCode"), vo.getSoldToCode());
+			criterias.add(predicate);
+		}
+
+		if (criterias.size() == 1) {
+			c.where(criterias.get(0));
+		} else {
+			c.where(cb.and(criterias.toArray(new Predicate[0])));
+		}	
+		
+		TypedQuery<RestrictedCustomerMapping> q = em.createQuery(c);		
+		q.setFirstResult(0);
+		q.setMaxResults(1);
+		List<RestrictedCustomerMapping> searchResult = q.getResultList();	
+		RestrictedCustomerMapping bean = null;
+		if(searchResult!=null&&searchResult.size()>0){
+			bean = searchResult.get(0);
+		}
+		
+		return bean;
+	}
+
+	private List<RestrictedCustomerMapping> findRestrictedCust(String mfr,
+			String partNumber, String prodGroup1, String prodGroup2,
+			String prodGroup3, String prodGroup4, String costIndicator,
+			String soldToCode, String bizUit) {
+		StringBuffer sql = new StringBuffer();
+		sql.append("select r from RestrictedCustomerMapping r where r.mfr=:mfr and r.costIndicator=:costIndicator and r.soldToCode=:soldToCode ");
+		if (StringUtils.isEmpty(prodGroup1)) {
+			sql.append(" and r.productGroup1 is null ");
+		} else {
+			sql.append(" and ( r.productGroup1=:prodGroup1 or  r.productGroup1 is null ) ");
+		}
+
+		if (StringUtils.isEmpty(prodGroup2)) {
+			sql.append(" and r.productGroup2 is null ");
+		} else {
+			sql.append(" and ( r.productGroup2=:prodGroup2 or r.productGroup2 is null ) ");
+		}
+
+		if (StringUtils.isEmpty(prodGroup3)) {
+			sql.append(" and r.productGroup3 is null ");
+		} else {
+			sql.append(" and ( r.productGroup3=:prodGroup3 or r.productGroup3 is null ) ");
+		}
+
+		if (StringUtils.isEmpty(prodGroup4)) {
+			sql.append(" and r.productGroup4 is null ");
+		} else {
+			sql.append(" and (r.productGroup4=:prodGroup4 or  r.productGroup4 is null )");
+		}
+
+		if (StringUtils.isEmpty(partNumber)) {
+			sql.append(" and r.partNumber is null ");
+		} else {
+			sql.append(" and ( r.partNumber=:partNumber or r.partNumber is null ) ");
+		}
+
+		Query query = em.createQuery(sql.toString());
+		query.setParameter("mfr", mfr);
+		query.setParameter("costIndicator", costIndicator);
+		query.setParameter("soldToCode", soldToCode);
+
+		if (!StringUtils.isEmpty(prodGroup1)) {
+			query.setParameter("prodGroup1", prodGroup1);
+		}
+
+		if (!StringUtils.isEmpty(prodGroup2)) {
+			query.setParameter("prodGroup2", prodGroup2);
+		}
+
+		if (!StringUtils.isEmpty(prodGroup3)) {
+			query.setParameter("prodGroup3", prodGroup3);
+		}
+
+		if (!StringUtils.isEmpty(prodGroup4)) {
+			query.setParameter("prodGroup4", prodGroup4);
+		}
+
+		if (!StringUtils.isEmpty(partNumber)) {
+			query.setParameter("partNumber", partNumber);
+		}
+
+		List<RestrictedCustomerMapping> resultList = (List<RestrictedCustomerMapping>) query.getResultList();
+		if (resultList != null && resultList.size() > 0) {
+			for (RestrictedCustomerMapping restrictedCustomerMapping : resultList) {
+				if (!StringUtils.isEmpty(restrictedCustomerMapping.getSoldToCode())) {
+					Customer tempCustomer = customerSB
+							.findByPK(restrictedCustomerMapping.getSoldToCode());
+					if (tempCustomer != null) {
+						restrictedCustomerMapping.setSoldToName(tempCustomer
+								.getCustomerFullName());
+					}
+
+				}
+			}
+		}
+		return resultList;
+	}
+
+
+	public List<RestrictedCustomerMapping> findRestrictedCust(
+			List<RestrictedCustomerMappingSearchCriteria> restrictedCustomerCriterias) {
+		List<RestrictedCustomerMapping> result = new ArrayList<RestrictedCustomerMapping>();
+		if (restrictedCustomerCriterias != null && restrictedCustomerCriterias.size() > 0) {
+			CriteriaBuilder cb = em.getCriteriaBuilder();
+			CriteriaQuery<RestrictedCustomerMapping> cq = cb.createQuery(RestrictedCustomerMapping.class);
+
+			Root<RestrictedCustomerMapping> restrictedCustomerMapping = cq.from(RestrictedCustomerMapping.class);
+			List<Predicate> predicates = new ArrayList<Predicate>();
+
+			Expression<String> soldToCode = restrictedCustomerMapping.get("soldToCode");
+			Expression<String> mfr = restrictedCustomerMapping.get("mfr");
+			Expression<String> bizUnit = restrictedCustomerMapping.get("bizUnit");
+
+			List<Predicate> subPredicatesWhole = new ArrayList<Predicate>();
+			for (RestrictedCustomerMappingSearchCriteria rcsc : restrictedCustomerCriterias)
+			{
+				List<Predicate> subPredicates = new ArrayList<Predicate>();
+				if (!StringUtils.isEmpty(rcsc.getMfrKeyword())) {
+					subPredicates.add(cb.equal(mfr, rcsc.getMfrKeyword()));
+				}
+				if (!StringUtils.isEmpty(rcsc.getSoldToCodeKeyword())) {
+					subPredicates.add(cb.equal(soldToCode,rcsc.getSoldToCodeKeyword()));
+				}
+				if (!StringUtils.isEmpty(rcsc.getBizUnit())) {
+					subPredicates.add(cb.equal(bizUnit, rcsc.getBizUnit()));
+				}
+				subPredicatesWhole.add(cb.and(subPredicates.toArray(new Predicate[0])));
+			}
+			predicates.add(cb.or(subPredicatesWhole.toArray(new Predicate[0])));
+			cq.select(restrictedCustomerMapping);
+			cq.where(predicates.toArray(new Predicate[] {}));
+
+			TypedQuery<RestrictedCustomerMapping> q = em.createQuery(cq);
+			
+			result = q.getResultList();
+		}
+		return result;
+	}
+	
+	public String verifySoldToCodeInDb(List<RestrictedCustomerMappingVo> beans){
+		StringBuffer sb = new StringBuffer();
+		for(RestrictedCustomerMappingVo vo :beans){
+			if(vo.getSoldToCode()!=null){
+				Customer customer = customerSB.findByPK(vo.getSoldToCode());
+				if(customer==null){
+					sb.append("Row #<"+vo.getLineSeq()+"> :Data Error - The Sold To Code does not exist in the system,<br/>");
+					
+				}
+			}
+		}
+		return sb.toString();
+	}
+	
+
+	public boolean hasMatchedRetrictedCustomer(RestrictedCustomerMappingParameter rcmp, List<RestrictedCustomerMapping> restrictedCustList)
+	{
+		boolean returnB = false;
+		for(RestrictedCustomerMapping rcm : restrictedCustList)
+		{
+			if(rcmp.getMandatoryKey()!=null && rcmp.getMandatoryKey().equalsIgnoreCase(rcm.getMandatoryKey()))
+			{
+				String prodGroup1=null, prodGroup2=null ,prodGroup3 =null,prodGroup4 = null;
+
+				prodGroup1 = rcmp.getProductGroup1Name();
+				prodGroup2 = rcmp.getProductGroup2Name();
+				prodGroup3 = rcmp.getProductGroup3Name();
+				prodGroup4 = rcmp.getProductGroup4Name();
+				
+				if(!StringUtils.isEmpty(rcm.getSoldToCode()) && !rcm.getSoldToCode().equalsIgnoreCase(rcmp.getSoldToCustomerNumber()))
+				{
+					continue;
+				}
+				if(!StringUtils.isEmpty(rcm.getPartNumber()) && !rcm.getPartNumber().equalsIgnoreCase(rcmp.getRequiredPartNumber()))
+				{
+					continue;
+				}
+				if(!StringUtils.isEmpty(rcm.getEndCustomerCode()) && !rcm.getEndCustomerCode().equalsIgnoreCase(rcmp.getEndCustomerCode()))
+				{
+					continue;
+				}
+				if(!StringUtils.isEmpty(rcm.getProductGroup1()) && !rcm.getProductGroup1().equalsIgnoreCase(prodGroup1))
+				{
+					continue;
+				}
+				if(!StringUtils.isEmpty(rcm.getProductGroup2()) && !rcm.getProductGroup2().equalsIgnoreCase(prodGroup2))
+				{
+					continue;
+				}
+				if(!StringUtils.isEmpty(rcm.getProductGroup3()) && !rcm.getProductGroup3().equalsIgnoreCase(prodGroup3))
+				{
+					continue;
+				}
+
+				if(!StringUtils.isEmpty(rcm.getProductGroup4()) && !rcm.getProductGroup4().equalsIgnoreCase(prodGroup4))
+				{
+					continue;
+				}
+				return true;
+			}
+		}
+		return returnB;
+	}
+	
+/* TODO
+	
+	public List<RestrictedCustomerMapping> getRestrictCustomerList(CostIndicatorSearchCriteria cisc)
+	{
+		List<RestrictedCustomerMapping> restrictedCustList =new ArrayList<RestrictedCustomerMapping>();
+
+
+		List<RestrictedCustomerMappingSearchCriteria> restrictedCustomerCriteriaList = new ArrayList<RestrictedCustomerMappingSearchCriteria>();
+		for(CostIndicatorSearchCriteriaItem cpsc : cisc.getItems())
+		{
+			RestrictedCustomerMappingSearchCriteria rcc = new RestrictedCustomerMappingSearchCriteria();
+			rcc.setBizUnit(cisc.getBizUnit().getName());
+			rcc.setMfrKeyword(cpsc.getMfr());
+			rcc.setSoldToCodeKeyword(cpsc.getSoldToCustomerNumber());
+			restrictedCustomerCriteriaList.add(rcc);
+		}
+		restrictedCustList = findRestrictedCust(restrictedCustomerCriteriaList);
+
+		return restrictedCustList;
+	}*/
+	
+	
+	
+	
+
+	/**
+	 * @throws WebQuoteException    
+	* @Description: TODO
+	* @author 042659
+	* @param rfqItems
+	* @param locale
+	* @param restrictedCustList       
+	* @return void    
+	* @throws  
+	*/  
+	public void validateRestrictedCustList(List<RestrictedCustomerMappingParameter> restrictedCustomerMappingParamList, Locale locale, List<RestrictedCustomerMappingSearchCriteria> restrictedCustomerCriteriaList) throws WebQuoteException {
+		
+//		LOG.log(Level.INFO, " cell validateRestrictedCustList begin");
+		
+		List<RestrictedCustomerMapping> restrictedCustList=findRestrictedCust(restrictedCustomerCriteriaList);
+		
+		StringBuffer message = new StringBuffer();
+		int rowIndex=1;
+		for (RestrictedCustomerMappingParameter rcmp : restrictedCustomerMappingParamList) {
+		
+			//wq.message.restrictedCustomerFails
+			if(hasMatchedRetrictedCustomer(rcmp, restrictedCustList)){
+				message.append(getParameterizedText("wq.message.restrictedCustomerFails",String.valueOf(rowIndex),locale)).append("; ");
+			}
+			rowIndex++;
+		
+		}
+		
+		if (message.length() != 0 && !QuoteUtil.isEmpty(message.toString())) {
+			throw this.generateWQException(" ", message.toString());
+		}
+		
+//		LOG.log(Level.INFO, " cell validateRestrictedCustList end");
+	}
+	
+	private WebQuoteException generateWQException(String mainMessage, String detailMessage) {
+		//return new WebQuoteException(messageCode, new Exception(detailMessage));
+		//WebQuoteException wqe=new WebQuoteException("",new Object[]{messageCode,detailMessage});
+		//wqe.setMessage(detailMessage);
+		return new WebQuoteException("",mainMessage,detailMessage);
+	}
+
+
+
+	/**
+	 * @throws WebQuoteException    
+	* @Description: TODO
+	* @author 042659
+	* @param quoteItems
+	* @param locale
+	* @param bizUnit       
+	* @return void    
+	* @throws  
+	*/  
+	public void validateRestrictedCustomerWithQuoteItems(List<QuoteItem> quoteItems, Locale locale, BizUnit bizUnit) throws WebQuoteException {
+		// TODO Auto-generated method stub
+
+		List<RestrictedCustomerMappingSearchCriteria> restrictedCustomerCriteriaList = new ArrayList<RestrictedCustomerMappingSearchCriteria>();
+		List<RestrictedCustomerMappingParameter> restrictedCustomerMappingParamList = new ArrayList<RestrictedCustomerMappingParameter>();
+		for (QuoteItem item : quoteItems) {
+			RestrictedCustomerMappingSearchCriteria rcc = new RestrictedCustomerMappingSearchCriteria();
+			rcc.setBizUnit(bizUnit.getName());
+			rcc.setMfrKeyword(item.getRequestedMfr() == null ? null : item.getRequestedMfr().getName());
+			//rcc.setSoldToCodeKeyword(item.getSoldToCustomer() == null ? null : item.getSoldToCustomer().getCustomerNumber());
+			restrictedCustomerCriteriaList.add(rcc);
+
+	
+
+			RestrictedCustomerMappingParameter rcp = new RestrictedCustomerMappingParameter();
+			rcp.setMfr(item.getRequestedMfr() == null ? null : item.getRequestedMfr().getName());
+			rcp.setSoldToCustomerNumber(item.getSoldToCustomer() == null ? null : item.getSoldToCustomer().getCustomerNumber());
+			if (item.getQuote() != null && item.getQuote().getBizUnit() != null) {
+				rcp.setBizUnit(item.getQuote().getBizUnit().getName());
+			}
+			rcp.setEndCustomerCode(item.getEndCustomer() == null ? null : item.getEndCustomer().getCustomerNumber());
+			rcp.setRequiredPartNumber(item.getRequestedPartNumber());
+			rcp.setProductGroup1Name(item.getProductGroup1() == null ? null : item.getProductGroup1().getName());
+			rcp.setProductGroup2Name(item.getProductGroup2() == null ? null : item.getProductGroup2().getName());
+			rcp.setProductGroup3Name(item.getProductGroup3());
+			rcp.setProductGroup4Name(item.getProductGroup4());
+			restrictedCustomerMappingParamList.add(rcp);
+
+		validateRestrictedCustList(restrictedCustomerMappingParamList, locale, restrictedCustomerCriteriaList);
+		}
+	}
+}

@@ -1,0 +1,1 @@
+1) fixed refresh quote lost end customer name when end customer is empty. Jason Chen

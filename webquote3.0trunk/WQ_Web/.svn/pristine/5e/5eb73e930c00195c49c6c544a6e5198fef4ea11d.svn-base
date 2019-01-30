@@ -1,0 +1,992 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+    <h:head>
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible"  content="IE=edge"/>
+            <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+			<meta http-equiv="Cache-Control" Content="no-cache"/>
+			<meta http-equiv="Pragma" Content="no-cache"/>
+			<meta http-equiv="Expires" Content="0"/>            
+            <title>#{dbResource['wq.label.workingPlateFormPage']}</title>
+        </f:facet>    
+    </h:head>
+		<h:body>
+	<p:accordionPanel id="ap_rfqdetailreference">
+		<p:tab title="#{dbResource['wq.label.rfqDetails']}">
+			<h:form id="form_rfqdetailreference">
+			<p:growl id="rfq_detail_workingPlatformGrowl"  for="rfqDetailKey"  showDetail="true" sticky="#{growlPropertyMB.sticky}" autoUpdate="true" showSummary="#{growlPropertyMB.showSummary}" escape="#{growlPropertyMB.escape}"/> 			
+			<p:defaultCommand target=":ap_rfqdetailreference:form_rfqdetailreference:dummyReference" />  			
+			<p:panel id="panelgrid_rfqdetailreference" header=" " style="padding:0px 0px 0px 0px;">
+				<p:growl id="workingPlatformRfqGrowl" showDetail="true" sticky="#{growlPropertyMB.sticky}" autoUpdate="true" showSummary="#{growlPropertyMB.showSummary}" escape="#{growlPropertyMB.escape}"/>		
+			     <p:panelGrid styleClass="panelGrid" style="width:100%;padding:0px 0px 0px 0px;" widgetVar="rfqDialog">   				
+
+			     	<p:row>  
+						<p:column styleClass="tdtag" style="width:78px !important;">#{dbResource['wq.header.form']}#</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" style="width:130px" colspan="3">#{workingPlatformMB.selectedQuoteItem.quoteItem.quote.formNumber}</p:column>
+						
+						<p:column styleClass="tdtag" style="width:78px !important;">#{dbResource['wq.label.avnetQuote']}#</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" style="width:78px !important;">#{workingPlatformMB.selectedQuoteItem.quoteItem.alternativeQuoteNumber}</p:column>
+									
+						<p:column styleClass="tdtag" style="width:78px !important;">#{dbResource['wq.label.custmrType']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3" style="width:169px">#{workingPlatformMB.selectedQuoteItem.quoteItem.quote.customerType}</p:column>
+						
+						<p:column styleClass="tdtag" style="width:78px !important;">#{dbResource['wq.label.mfr']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3" style="width:78px">#{workingPlatformMB.selectedQuoteItem.quoteItem.requestedMfr.name}</p:column>
+						
+						<p:column styleClass="tdtag" style="width:78px !important;">#{dbResource['wq.label.reqPN']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" style="width:143px !important;">#{workingPlatformMB.selectedQuoteItem.requestedPartNumber}</p:column>
+														
+						<p:column styleClass="tdtag" style="width:78px !important;">#{dbResource['wq.label.reqQty']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" style="width:78px !important;">#{workingPlatformMB.convertNumber(workingPlatformMB.selectedQuoteItem.quoteItem.requestedQty)}</p:column>
+													
+						<p:column styleClass="tdtag" style="width:78px !important;">#{dbResource['wq.label.EAU']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" style="width:78px !important;">#{workingPlatformMB.convertNumber(workingPlatformMB.selectedQuoteItem.quoteItem.eau)}</p:column>							
+					</p:row>
+					
+					<p:row>  			
+						<p:column styleClass="tdtag">#{dbResource['wq.label.revertVersion']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{workingPlatformMB.selectedQuoteItem.quoteItem.revertVersion}</p:column>			
+						<p:column styleClass="tdtag">#{dbResource['wq.label.team']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">#{workingPlatformMB.selectedQuoteItem.quoteItem.quote.team.name}</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.salesman']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{workingPlatformMB.selectedQuoteItem.quoteItem.quote.sales.name}</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.validRFQ']}</p:column>						
+						<p:column styleClass="tdvalue tdmandatoryvalue" style="width:20px !important;">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.validFlagStr}" />						
+							<h:selectOneMenu rendered="#{workingPlatformMB.editMode}" id="wpInput_validFlag" value="#{workingPlatformMB.selectedQuoteItem.validFlagStr}" effect="size">
+					            <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            		<f:selectItem itemLabel="No" itemValue="No" />  
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>						            									 
+							</h:selectOneMenu>					
+						</p:column>
+						<p:column styleClass="tdtag" style="width:38px !important;">#{dbResource['wq.label.rfqStatus']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" style="width:20px !important;">#{workingPlatformMB.selectedQuoteItem.quoteItem.status}</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.quotedPN']}</p:column>										
+						<p:column styleClass="tdmandatoryvalue break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.quotedPartNumber}" />
+		                	<p:inputText id="d_quotedPartNumber" rendered="#{workingPlatformMB.editMode}" styleClass="inputInRFQDetailDataNumber tdmandatoryvalue" value="#{workingPlatformMB.selectedQuoteItem.quotedPartNumber}" onkeyup="checkEnterKey(event, this)" >
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />		        	
+								<p:ajax event="change" listener="#{workingPlatformMB.changeQuotedPartNumber}"
+														update="d_sapPartNumber,
+																d_mpq,
+															    d_moq,
+															    d_mov,
+															    d_leadTime,
+															    d_cost,
+															    d_quotedMargin,
+															    d_quotedPrice,
+															    d_quotedQty,
+															    d_validity,
+															    d_shipmentValidity,
+															    d_targetMargin,
+															    d_costIndicator,
+															    d_minSell,
+															    d_normSell,
+															    d_priceListRemark1,
+															    d_priceListRemark2
+															    d_priceListRemark3,
+															    d_priceListRemark4,
+												p_ref_orderQtys_id,
+												p_ref_minSellPrice_id,
+												p_ref_salesCost_id,
+												p_ref_suggestedResale_id,
+												d_salesCostPart,
+											    d_salescosttype,
+												d_salescost,
+												d_suggestedResale,
+															    d_authGp,
+															    d_authGpReasonDesc,
+															    d_authGpRemark,
+															    d_drExpiryDate,
+															    d_cancelWindow,
+															    d_reschedulingWindow,
+															    d_quotationEffective,															    
+															    detail_quotationTc"/>
+							</p:inputText>
+							<p:commandLink rendered="#{workingPlatformMB.editMode}"
+											global="false" onstart="start();" oncomplete="stop(); PF('validation_dialog').show();" onerror="stopWithError();" 
+											actionListener="#{workingPlatformMB.searchForMaterialPopup}" update=":ap_rfqdetailreference:form_rfqdetailreference:rfq_detail_alternatePartSearch_panel">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />		        	
+								<f:attribute name="targetRowIndex" value="#{workingPlatformMB.rowIndex}" />		        	
+				        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>				        	
+				        	</p:commandLink> 
+						</p:column>											
+						<p:column styleClass="tdtag">#{dbResource['wq.label.qtyIndicator']}</p:column>
+						<p:column styleClass="tdmandatoryvalue break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.qtyIndicatorStr}" />						
+							<h:selectOneMenu rendered="#{workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.qtyIndicatorStr}" effect="size">
+								<f:selectItems value="#{workingPlatformMB.qtyIndicatorOptions}" />						 
+							</h:selectOneMenu>					
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.multiUsage']}</p:column>
+						<p:column styleClass="tdvalue tdmandatoryvalue">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.multiUsageFlagStr}" />						
+							<h:selectOneMenu rendered="#{workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.multiUsageFlagStr}" effect="size">
+					            <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            		<f:selectItem itemLabel="No" itemValue="No" />  	
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>						            							 
+							</h:selectOneMenu>					
+						</p:column>
+						
+					</p:row>					
+
+					<p:row>  			
+						<p:column styleClass="tdtag">#{dbResource['wq.label.QuoteType']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">
+                            <h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteTypeStr}" />						
+                        </p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.SoldToCode']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">#{workingPlatformMB.selectedQuoteItem.quoteItem.quote.soldToCustomer.customerNumber}</p:column>							
+						<p:column styleClass="tdtag">#{dbResource['wq.label.SoldToParty']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{workingPlatformMB.selectedQuoteItem.soldToCustomerNameStr}</p:column>															
+						<p:column styleClass="tdtag">#{dbResource['wq.label.resaleIndicator']}</p:column>
+						<p:column styleClass="tdvalue tdmandatoryvalue break-all" colspan="3">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.resaleIndicatorStr}" />						
+							<p:inputText rendered="#{workingPlatformMB.editMode}" styleClass="inputInRFQDetailDataText tdmandatoryvalue" value="#{workingPlatformMB.selectedQuoteItem.resaleIndicatorStr}" onkeyup="checkEnterKey(event, this)">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>															
+							</p:inputText>
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bottomPrice']}</p:column>	
+						<p:column styleClass="tdvalue readOnlyCell break-all">
+							<h:outputText id="d_minSell" value="#{workingPlatformMB.selectedQuoteItem.bottomPriceStr}"/>
+						</p:column>			
+						<p:column styleClass="tdtag">#{dbResource['wq.label.minSellPrice']}</p:column>	
+						<p:column styleClass="tdvalue readOnlyCell break-all">
+							<h:outputText id="d_normSell" value="#{workingPlatformMB.selectedQuoteItem.minSellPriceStr}"/>
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.quotedQty']}</p:column>
+						<p:column styleClass="editCell break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.quotedQtyStr}" />						
+							<p:inputText rendered="#{workingPlatformMB.editMode}" id="d_quotedQty" styleClass="optional_input_text inputInRFQDetailDataNumber" 
+							value="#{workingPlatformMB.selectedQuoteItem.quotedQtyStr}" onclick="checkQtyIndicator()" onkeyup="checkEnterKey(event, this)"  onkeypress="return isInteger(event)">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>								
+							</p:inputText>
+						</p:column>	
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.SoldToParty']} (#{dbResource['wq.label.chinese']})</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{workingPlatformMB.selectedQuoteItem.soldToChineseNameStr}</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.EndCustomerCode']}</p:column>
+						<p:column styleClass="tdvalue editCell break-all">
+						    <h:outputText id="out_endCustomerCode"  value="#{workingPlatformMB.selectedQuoteItem.endCustomerCodeStr}" />												
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.endCust']}</p:column>
+						<p:column styleClass="tdvalue editCell break-all" colspan="3">
+						    <h:outputText id="out_endCustomerName"  value="#{workingPlatformMB.selectedQuoteItem.endCustomerNameStr}" />				        
+			        	<p:commandLink rendered="#{workingPlatformMB.editMode}" actionListener="#{workingPlatformMB.changeToEndCustomerCodeSearch}" update=":ap_rfqdetailreference:form_endCustomerSearch:rfq_details_end_customerSearch_panel" oncomplete="PF('rfq_details_end_customer_dialog').show();stop();" global="false" onstart="start();" onerror="stopWithError();">
+				        	    <f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	        	
+				        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>			        	
+				        </p:commandLink>
+				</p:column> 
+						<p:column styleClass="tdtag">#{dbResource['wq.label.trgResale']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+					        <h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.targetResale}">
+					    		<f:convertNumber minFractionDigits="2" maxFractionDigits="5" />	
+					        </h:outputText>
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.qouteResale']}</p:column>
+						<p:column styleClass="tdmandatoryvalue break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.quotedPriceStr}" />						
+							<p:inputText rendered="#{workingPlatformMB.editMode}"  disabled ="#{workingPlatformMB.selectedQuoteItem.disableEditableForSalesCost}" id="d_quotedPrice" styleClass="inputInRFQDetailDataNumber tdmandatoryvalue" 
+							value="#{workingPlatformMB.selectedQuoteItem.quotedPriceStr}" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)">								
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.updateQuotedPrice}"
+												update="d_cost,
+													    d_quotedMargin,
+													    d_quotedPrice,
+													    d_targetMargin"/>										
+							</p:inputText>
+						</p:column>												
+						<p:column styleClass="tdtag">#{dbResource['wq.label.costIndicator']}</p:column>
+						<p:column styleClass="tdmandatoryvalue break-all">
+							<div style='width:100%'>
+								<div style='width:80%'>
+									<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.costIndicatorStr}" />								
+					    			<h:selectOneMenu rendered="#{workingPlatformMB.editMode}" id="d_costIndicator" value="#{workingPlatformMB.selectedQuoteItem.costIndicatorStr}" effect="size">
+										<f:selectItems value="#{workingPlatformMB.convertCostIndicatorToSelectItem()}" />											    			
+										<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+										<p:ajax event="change" listener="#{workingPlatformMB.switchCostIndicator}"
+														update="d_mpq,
+															    d_moq,
+															    d_mov,
+															    d_leadTime,
+															    d_cost,
+															    d_quotedMargin,
+															    d_quotedPrice,
+															    d_quotedQty,
+															    d_validity,
+															    d_shipmentValidity,
+															    d_targetMargin,
+															    d_costIndicator,
+															    d_minSell,
+															    d_normSell,
+															    d_priceListRemark1,
+															    d_priceListRemark2
+															    d_priceListRemark3,
+															    d_priceListRemark4,
+												p_ref_orderQtys_id,
+												p_ref_minSellPrice_id,
+												p_ref_salesCost_id,
+												p_ref_suggestedResale_id,
+												d_salesCostPart,
+												d_salescosttype,
+												d_salescost,
+												d_suggestedResale,
+															    d_authGp,
+															    d_authGpReasonDesc,
+															    d_authGpRemark,
+															    d_drExpiryDate,	
+															    d_quotationEffective,														    
+															    detail_quotationTc"/>
+									</h:selectOneMenu>	
+								</div>							
+								<div style='width:20%'>
+						        	<p:commandLink rendered="#{workingPlatformMB.editMode}" actionListener="#{workingPlatformMB.searchForPricerPopup}" update=":form_pendinglist_dialog:costIndicator_panel" oncomplete="PF('costIndicator_dialog').show()">
+										<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />			        	
+						        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>				        	
+						        	</p:commandLink>
+						        </div>			        	
+				        	</div> 						
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.cost']}</p:column>
+						<p:column styleClass="tdmandatoryvalue break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.costStr}" />						
+							<p:inputText rendered="#{workingPlatformMB.editMode}" id="d_cost" styleClass="inputInRFQDetailDataNumber tdmandatoryvalue" 
+							value="#{workingPlatformMB.selectedQuoteItem.costStr}" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.updateCost}"
+												update="d_cost,
+													    d_quotedMargin,
+													    d_quotedPrice,
+													    d_targetMargin"/>																
+							</p:inputText>
+						</p:column>														
+					</p:row>
+					
+					
+					<p:row>
+					    <p:column styleClass="tdtag">#{dbResource['wq.label.customerGroupID']} #</p:column>
+						<p:column styleClass="tdvalue editCell break-all" colspan="5">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.customerGroupId}" />												
+							<p:inputText rendered="#{workingPlatformMB.editMode}" styleClass="column_custoemrGroupId optional_input_text" 
+							value="#{workingPlatformMB.selectedQuoteItem.customerGroupId}" >
+															
+							</p:inputText>
+						</p:column>	
+		
+					    
+							
+				        <p:column styleClass="tdtag">#{dbResource['wq.label.salesCostPart']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+					        <h:outputText id="d_salesCostPart" value="#{workingPlatformMB.selectedQuoteItem.quoteItem.salesCostFlag =='true'?'Yes':'No'}">
+					        </h:outputText>
+						</p:column>	
+					
+					
+					   <p:column styleClass="tdtag">#{dbResource['wq.label.salesCostType']} #</p:column>
+							<p:column 
+								styleClass="column_salesCostType editCell break-all" colspan="3">
+								<div style='width: 100%'>
+									<h:outputText rendered="#{!workingPlatformMB.editMode}"
+										value="#{workingPlatformMB.selectedQuoteItem.salesCostTypeName}" />
+									<h:selectOneMenu styleClass="column_salesCostType" id="d_salescosttype" rendered="#{workingPlatformMB.editMode }"
+										disabled="#{workingPlatformMB.selectedQuoteItem.salesCostPart !='Yes'}"
+										value="#{workingPlatformMB.selectedQuoteItem.salesCostTypeName}"
+										effect="size">
+										<f:selectItem itemLabel="NonSC" itemValue="NonSC" />
+										<f:selectItem itemLabel="ZINC" itemValue="ZINC" />
+										<f:selectItem itemLabel="ZIND" itemValue="ZIND" />
+
+											<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	
+										<p:ajax event="change"
+											update="d_salescost,
+											d_suggestedResale,
+											d_quotedPrice,d_quotedMargin"
+											listener="#{workingPlatformMB.updateSalesCosteType}" />
+									</h:selectOneMenu>
+								</div>
+							</p:column>
+
+							<p:column styleClass="tdtag">#{dbResource['wq.label.salesCost']}</p:column>
+						<p:column  styleClass="tdmandatoryvalue break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.salesCostStr}" />						
+							<p:inputText id="d_salescost" rendered="#{workingPlatformMB.editMode}" disabled ="#{!workingPlatformMB.selectedQuoteItem.disableEditableForSalesCost}"  styleClass="inputInRFQDetailDataNumber tdmandatoryvalue" 
+							value="#{workingPlatformMB.selectedQuoteItem.salesCostStr}" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)">
+							</p:inputText>
+						</p:column>	
+					
+					<p:column styleClass="tdtag">#{dbResource['wq.label.suggested']} #{dbResource['wq.label.resale']}</p:column>
+					
+					  <p:column styleClass="tdvalue editCell break-all"  colspan="3">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.suggestedResaleStr}" />												
+							<p:inputText  rendered="#{workingPlatformMB.editMode}" id="d_suggestedResale"  disabled ="#{!workingPlatformMB.selectedQuoteItem.disableEditableForSalesCost}" styleClass="column_suggestedResale optional_input_text inputInRFQDetailDataNumber" 
+							value="#{workingPlatformMB.selectedQuoteItem.suggestedResaleStr}" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" >
+															
+							</p:inputText>
+						</p:column>
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.rfqSubmissionDate']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{workingPlatformMB.convertDateTimeToString(workingPlatformMB.selectedQuoteItem.quoteItem.submissionDate)}</p:column>								
+						<p:column styleClass="tdtag">#{dbResource['wq.label.ShipToCode']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">#{workingPlatformMB.selectedQuoteItem.quoteItem.shipToCustomer.customerNumber}</p:column>		
+						<p:column styleClass="tdtag">#{dbResource['wq.label.ShipToParty']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{workingPlatformMB.selectedQuoteItem.quoteItem.shipToCustomerFullName}</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.tpMargin']} %</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="1">
+							<h:outputText id="d_targetMargin" value="#{workingPlatformMB.selectedQuoteItem.targetMarginStr}">
+							</h:outputText>
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.quotedMargin']} %</p:column>
+						<p:column styleClass="tdvalue tdmandatoryvalue break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.resaleMarginStr}" />						
+							<p:inputText rendered="#{workingPlatformMB.editMode}"  disabled ="#{workingPlatformMB.selectedQuoteItem.disableEditableForSalesCost}" id="d_quotedMargin" styleClass="inputInRFQDetailDataNumber tdmandatoryvalue" 
+							value="#{workingPlatformMB.selectedQuoteItem.resaleMarginStr}" onfocus="removePercentSymbol(this);" onblur="appendPercentSymbol(this);" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)">								
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.updateQuotedMargin}"
+												update="d_cost,
+													    d_quotedMargin,
+													    d_quotedPrice,
+													    d_targetMargin"/>	
+							</p:inputText>							
+						</p:column>						
+						<p:column styleClass="tdtag">#{dbResource['wq.label.authGP']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all"  colspan="1">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.authGp}" id="d_authGp">
+								<f:convertNumber pattern="#0.00" minFractionDigits="2"/>
+							</h:outputText>
+							<h:outputText value="%" rendered="#{! empty(workingPlatformMB.selectedQuoteItem.quoteItem.authGp)}"/>
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.SapPN']}</p:column>
+						<p:column styleClass="editCell break-all" colspan="3">
+								<div style='width:100%'>
+									<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.sapPartNumberStr}" />								
+					    			<h:selectOneMenu rendered="#{workingPlatformMB.editMode}" id="d_sapPartNumber" value="#{workingPlatformMB.selectedQuoteItem.sapPartNumberStr}" effect="size">
+										<f:selectItems value="#{workingPlatformMB.convertSapPartNumberToSelectItem(workingPlatformMB.selectedQuoteItem.requestedMfr,workingPlatformMB.selectedQuoteItem.quotedPartNumber)}" />											    			
+										<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+										<p:ajax event="change" listener="#{workingPlatformMB.updateSapPartNumber}" update="d_sapPartNumber"/>
+									</h:selectOneMenu>	
+								</div>												
+						</p:column>	
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.loa']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell" colspan="3">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.loaFlagStr}" />  
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.proGroup']} 1</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">
+						       <h:outputText id="d_productGroup1" value="#{workingPlatformMB.selectedQuoteItem.productGroup1Str}"/>
+						</p:column>							
+						<p:column styleClass="tdtag">#{dbResource['wq.label.pricerRemark']} 1</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<h:outputText id="d_priceListRemark1" value="#{workingPlatformMB.selectedQuoteItem.priceListRemarks1Str}"/>
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.leadTime']}</p:column>
+						<p:column styleClass="tdmandatoryvalue break-all" colspan="3">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.leadTimeStr}" />						
+							<p:inputText rendered="#{workingPlatformMB.editMode}" id="d_leadTime" styleClass="inputInRFQDetailDataText tdmandatoryvalue" value="#{workingPlatformMB.selectedQuoteItem.leadTimeStr}" onkeyup="checkEnterKey(event, this)">							
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>																
+							</p:inputText>
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.MPQ']}</p:column>							
+						<p:column styleClass="tdmandatoryvalue break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.mpqStr}" />						
+							<p:inputText rendered="#{workingPlatformMB.editMode}" id="d_mpq" styleClass="inputInRFQDetailDataNumber tdmandatoryvalue" 
+							value="#{workingPlatformMB.selectedQuoteItem.mpqStr}" onkeyup="checkEnterKey(event, this)" onkeypress="return isInteger(event)">		
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>								
+							</p:inputText>
+						</p:column>					
+						<p:column styleClass="tdtag">#{dbResource['wq.label.moq']}</p:column>
+						<p:column styleClass="tdmandatoryvalue break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.moqStr}" />						
+							<p:inputText rendered="#{workingPlatformMB.editMode}" id="d_moq" styleClass="inputInRFQDetailDataNumber tdmandatoryvalue" 
+							value="#{workingPlatformMB.selectedQuoteItem.moqStr}" onkeyup="checkEnterKey(event, this)"  onkeypress="return isInteger(event)">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>		
+							</p:inputText>
+						</p:column>												
+						<p:column styleClass="tdtag">#{dbResource['wq.label.mov']}</p:column>
+						<p:column styleClass="tdmandatoryvalue break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.movStr}" />						
+							<p:inputText rendered="#{workingPlatformMB.editMode}" id="d_mov" styleClass="inputInRFQDetailDataNumber tdmandatoryvalue" 
+							value="#{workingPlatformMB.selectedQuoteItem.movStr}" onkeyup="checkEnterKey(event, this)"  onkeypress="return isInteger(event)">									
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>		
+							</p:inputText>
+						</p:column>							
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.formAttach']}.</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+				        	<p:commandLink actionListener="#{workingPlatformMB.updateTableFormAttachments(workingPlatformMB.selectedQuoteItem)}" update=":form_pendinglist_dialog:attachment_no_delete_panel" oncomplete="PF('attachment_list_no_delete_dialog').show()" rendered="#{workingPlatformMB.selectedQuoteItem.quoteItem.quote.formAttachmentFlag}">
+				        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>		        	
+				        	</p:commandLink> 							
+						</p:column>						
+						<p:column styleClass="tdtag">#{dbResource['wq.label.itemAttach']}.</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+				        	<p:commandLink actionListener="#{workingPlatformMB.updateTableAttachments(workingPlatformMB.selectedQuoteItem)}" update=":form_pendinglist_dialog:attachment_no_delete_panel" oncomplete="PF('attachment_list_no_delete_dialog').show()" rendered="#{workingPlatformMB.selectedQuoteItem.quoteItem.itemAttachmentFlag}">
+				        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>		        	
+				        	</p:commandLink> 							
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.proGroup']} 2</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">
+						    <h:outputText id="d_productGroup2" value="#{workingPlatformMB.selectedQuoteItem.productGroup2Str}"/></p:column>							
+						<p:column styleClass="tdtag">#{dbResource['wq.label.pricerRemark']} 2</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<h:outputText id="d_priceListRemark2" value="#{workingPlatformMB.selectedQuoteItem.priceListRemarks2Str}"/>
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.QuotationEffectiveDate']}</p:column>
+						<p:column styleClass="tdvalue editCell break-all" colspan="3">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.quotationEffectiveDateStr}" />						
+							<p:inputText rendered="#{workingPlatformMB.editMode}" id="d_quotationEffective" styleClass="optional_input_text inputInRFQDetailDataNumber" value="#{workingPlatformMB.selectedQuoteItem.quotationEffectiveDateStr}" onkeyup="checkEnterKey(event, this)">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>								
+							</p:inputText>
+						</p:column>		
+						<p:column styleClass="tdtag">#{dbResource['wq.label.priceValidity']}</p:column>
+						<p:column styleClass="tdmandatoryvalue break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.priceValidityStr}" />						
+							<p:inputText rendered="#{workingPlatformMB.editMode}" id="d_validity" styleClass="inputInRFQDetailDataNumber tdmandatoryvalue" value="#{workingPlatformMB.selectedQuoteItem.priceValidityStr}" onkeyup="checkEnterKey(event, this)">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>								
+							</p:inputText>
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.shipmentVal']}</p:column>
+						<p:column styleClass="tdvalue editCell break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.shipmentValidityStr}" />						
+							<p:inputText rendered="#{workingPlatformMB.editMode}" id="d_shipmentValidity" styleClass="optional_input_text inputInRFQDetailDataNumber" value="#{workingPlatformMB.selectedQuoteItem.shipmentValidityStr}" onkeyup="checkEnterKey(event, this)">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>								
+							</p:inputText>
+						</p:column>		
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bizProgType']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">#{workingPlatformMB.selectedQuoteItem.programType}</p:column>								
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.refreshAttach']}.</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+				        	<p:commandLink actionListener="#{workingPlatformMB.updateTableRefreshAttachments(workingPlatformMB.selectedQuoteItem)}" update=":form_pendinglist_dialog:attachment_no_delete_panel" oncomplete="PF('attachment_list_no_delete_dialog').show()" rendered="#{workingPlatformMB.selectedQuoteItem.quoteItem.refreshAttachmentFlag}">
+				        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>		        	
+				        	</p:commandLink> 							
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.pmAttach']}.</p:column>
+						<p:column styleClass="tdvalue readOnlyCell">
+				        	<p:commandLink actionListener="#{workingPlatformMB.updateTableInternalTransferAttachments(workingPlatformMB.selectedQuoteItem)}" update=":form_pendinglist_dialog:attachment_no_delete_panel" oncomplete="PF('attachment_list_no_delete_dialog').show()" rendered="#{workingPlatformMB.selectedQuoteItem.quoteItem.pmAttachmentFlag}">
+				        		<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>		        	
+				        	</p:commandLink> 							
+						</p:column>						
+						<p:column styleClass="tdtag">#{dbResource['wq.label.proGroup']} 3</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">
+								<h:outputText id="d_productGroup3" value="#{workingPlatformMB.selectedQuoteItem.productGroup3Str}"/>
+						</p:column>							
+						<p:column styleClass="tdtag">#{dbResource['wq.label.pricerRemark']} 3</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3" >
+							<h:outputText id="d_priceListRemark3" value="#{workingPlatformMB.selectedQuoteItem.priceListRemarks3Str}"/>
+						</p:column>
+						
+						<p:column styleClass="tdtag">#{dbResource['wq.label.mfrQoute']} #</p:column>	
+						<p:column styleClass="tdvalue editCell break-all" colspan="3">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.vendorQuoteNumberStr}" />												
+							<p:inputText rendered="#{workingPlatformMB.editMode}" styleClass="optional_input_text inputInRFQDetailDataNumber" 
+							value="#{workingPlatformMB.selectedQuoteItem.vendorQuoteNumberStr}" onkeyup="checkEnterKey(event, this)"  >
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>								
+							</p:inputText>
+						</p:column>																										
+						<p:column styleClass="tdtag">#{dbResource['wq.label.mfrDebit']} #</p:column>
+						<p:column styleClass="tdvalue editCell break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.vendorDebitNumberStr}" />												
+							<p:inputText rendered="#{workingPlatformMB.editMode}" styleClass="optional_input_text inputInRFQDetailDataNumber" value="#{workingPlatformMB.selectedQuoteItem.vendorDebitNumberStr}" onkeyup="checkEnterKey(event, this)">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>								
+							</p:inputText>					
+						</p:column>	
+			<!-- 			
+						<p:column styleClass="tdtag" rowspan="2">#{dbResource['wq.label.QuantityBreak']}</p:column>	
+						<p:column styleClass="tdvalue readOnlyCell" rowspan="2" colspan="3">
+							<h:outputText id="d_programItem" value="#{workingPlatformMB.selectedQuoteItem.quoteItem}" converter="webquote.commodity.OqmspInWp" escape="false"/>
+						</p:column>	 -->	
+						
+					<p:column styleClass="tdtag">#{dbResource['wq.label.remarks']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{workingPlatformMB.selectedQuoteItem.quoteItem.quote.remarks}</p:column>	
+													
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.DesignInCat']}</p:column>
+						<p:column styleClass="tdvalue tdmandatoryvalue" colspan="3">
+                            <h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.designInCatStr}" />						
+							<h:selectOneMenu rendered="#{workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.designInCatStr}" effect="size">
+								<f:selectItems value="#{workingPlatformMB.designInCatList}" />						 
+							</h:selectOneMenu>	
+                        </p:column>								
+						<p:column styleClass="tdtag">#{dbResource['wq.label.proGroup']} 4</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">
+							 <h:outputText id="d_productGroup4" value="#{workingPlatformMB.selectedQuoteItem.productGroup4Str}"/>
+						</p:column>							
+						<p:column styleClass="tdtag">#{dbResource['wq.label.pricerRemark']} 4</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<h:outputText id="d_priceListRemark4" value="#{workingPlatformMB.selectedQuoteItem.priceListRemarks4Str}"/>
+						</p:column>		
+						<p:column styleClass="tdtag">#{dbResource['wq.label.allocatnPart']}</p:column>	
+						<p:column styleClass="tdvalue editCell" colspan="3">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.allocationFlagStr}" />												
+							<h:selectOneMenu rendered="#{workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.allocationFlagStr}" effect="size">
+					            <f:selectItem itemLabel="Yes" itemValue="Yes" />  
+			            		<f:selectItem itemLabel="No" itemValue="No" />  
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>						            
+							</h:selectOneMenu>
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.mfrQuoteQty']}</p:column>	
+						<p:column styleClass="tdvalue editCell break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.vendorQuoteQtyStr}" />												
+							<p:inputText rendered="#{workingPlatformMB.editMode}" styleClass="optional_input_text inputInRFQDetailDataNumber" 
+								value="#{workingPlatformMB.selectedQuoteItem.vendorQuoteQtyStr}" onkeyup="checkEnterKey(event, this)" onkeypress="return isInteger(event)">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>									
+							</p:inputText>
+						</p:column>	
+					<p:column styleClass="tdtag">#{dbResource['wq.label.itmRemark']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{workingPlatformMB.selectedQuoteItem.quoteItem.remarks}</p:column>
+																		
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.drmsID']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{workingPlatformMB.selectedQuoteItem.quoteItem.drmsNumber}</p:column>							
+						<p:column styleClass="tdtag">#{dbResource['wq.label.competitorInfo']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">#{workingPlatformMB.selectedQuoteItem.quoteItem.competitorInformation}</p:column>							
+						<p:column styleClass="tdtag">#{dbResource['wq.label.description']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{workingPlatformMB.selectedQuoteItem.descriptionStr}</p:column>							
+						<p:column styleClass="tdtag">#{dbResource['wq.label.QCExternalComment']}</p:column>
+						<p:column styleClass="tdvalue editCell break-all" colspan="5">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.aqccStr}" />	
+							<p:inputText rendered="#{workingPlatformMB.editMode}" id="detail_qcExternalComment" styleClass="optional_input_text inputInRFQDetailDataText" style="width:350px;height:50px;margin:3px" value="#{workingPlatformMB.selectedQuoteItem.aqccStr}" onkeyup="checkEnterKey(event, this)">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>																
+							</p:inputText>
+							<p:selectCheckboxMenu rendered="#{workingPlatformMB.editMode}" label="" value="#{workingPlatformMB.selectedQuoteItem.aqccStrs}" filter="true" filterText="Filter" filterMatchMode="contains" panelStyle="width:350px" styleClass="input_text" style="height:40px">  
+								<f:selectItems value="#{workingPlatformMB.avnetQuoteCentreCommentList}" var="comment" itemLabel="#{comment.name}" itemValue="#{comment.name}" />  						
+								<p:ajax event="change" update="detail_qcExternalComment"/>						
+							</p:selectCheckboxMenu> 						
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.qcInternalComment']}</p:column>
+						<p:column styleClass="tdvalue editCell break-all" colspan="3">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.internalCommentStr}" />												
+							<p:inputText rendered="#{workingPlatformMB.editMode}" id="detail_qcInternalComment" styleClass="optional_input_text inputInRFQDetailDataText" style="width:250px;height:50px;margin:3px" value="#{workingPlatformMB.selectedQuoteItem.internalCommentStr}" onkeyup="checkEnterKey(event, this)">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>																
+							</p:inputText>
+							<p:selectCheckboxMenu rendered="#{workingPlatformMB.editMode}" label="" value="#{workingPlatformMB.selectedQuoteItem.internalCommentStrs}" filter="true" filterText="Filter" filterMatchMode="contains" panelStyle="width:350px" styleClass="input_text" style="height:40px">  
+								<f:selectItems value="#{workingPlatformMB.avnetQuoteCentreCommentList}" var="comment" itemLabel="#{comment.name}" itemValue="#{comment.name}" />  					
+								<p:ajax event="change" update="detail_qcInternalComment"/>						
+							</p:selectCheckboxMenu> 						
+						</p:column>	
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.mfrDR']}#</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{workingPlatformMB.selectedQuoteItem.quoteItem.supplierDrNumber}</p:column>							
+						<p:column styleClass="tdtag">#{dbResource['wq.label.designLoc']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">#{workingPlatformMB.selectedQuoteItem.quoteItem.designLocation}</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.ppSchedule']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" style="width:60px !important;">#{workingPlatformMB.selectedQuoteItem.quoteItem.ppSchedule}</p:column>										
+						<p:column styleClass="tdtag" style="width:40px !important;">#{dbResource['wq.label.MpSchedule']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" style="width:60px !important;">#{workingPlatformMB.selectedQuoteItem.quoteItem.mpSchedule}</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.quotation']} #{dbResource['wq.label.tc']}</p:column>
+						<p:column styleClass="tdvalue editCell break-all" colspan="5">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.termsAndConditionsStr}" />										
+							<p:inputText rendered="#{workingPlatformMB.editMode}" id="detail_quotationTc" styleClass="optional_input_text inputInRFQDetailDataText" style="width:350px;height:50px;margin:3px" value="#{workingPlatformMB.selectedQuoteItem.termsAndConditionsStr}" onkeyup="checkEnterKey(event, this)"/>
+							<p:selectCheckboxMenu rendered="#{workingPlatformMB.editMode}" label="" value="#{workingPlatformMB.selectedQuoteItem.termsAndConditionsStrs}" filter="true" filterText="Filter" filterMatchMode="contains" panelStyle="width:350px" styleClass="input_text"  style="height:40px">  
+								<f:selectItems value="#{workingPlatformMB.termsAndConditionsList}" var="comment" itemLabel="#{comment.name}" itemValue="#{comment.name}" />  					
+								<p:ajax event="change" update="detail_quotationTc"/>						
+							</p:selectCheckboxMenu> 		        							
+						</p:column>								
+						<p:column styleClass="tdtag">#{dbResource['wq.label.reschedulingWindow']}</p:column>
+						<p:column styleClass="tdvalue editCell break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.rescheduleWindowStr}" />												
+							<p:inputText id="d_reschedulingWindow" rendered="#{workingPlatformMB.editMode}" styleClass="optional_input_text inputInRFQDetailDataNumber" 
+							value="#{workingPlatformMB.selectedQuoteItem.rescheduleWindowStr}" onkeyup="checkEnterKey(event, this)"  onkeypress="return isInteger(event)">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>								
+							</p:inputText>
+						</p:column>														
+						<p:column styleClass="tdtag">#{dbResource['wq.label.cancellationWindow']}</p:column>									
+						<p:column styleClass="tdvalue editCell break-all">
+							<h:outputText rendered="#{!workingPlatformMB.editMode}" value="#{workingPlatformMB.selectedQuoteItem.cancellationWindowStr}" />												
+							<p:inputText id="d_cancelWindow" rendered="#{workingPlatformMB.editMode}" styleClass="optional_input_text inputInRFQDetailDataNumber" 
+							value="#{workingPlatformMB.selectedQuoteItem.cancellationWindowStr}" onkeyup="checkEnterKey(event, this)"  onkeypress="return isInteger(event)">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            
+								<p:ajax event="change" listener="#{workingPlatformMB.triggerChangeFromTab}"/>								
+							</p:inputText>
+						</p:column>	
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.DRExpiryDate']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.drExpiryDate}" id="d_drExpiryDate">
+								<f:convertDateTime   pattern="dd/MM/yyyy"  />
+							</h:outputText>
+						</p:column>		
+						<p:column styleClass="tdtag">#{dbResource['wq.label.app']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">#{workingPlatformMB.selectedQuoteItem.quoteItem.application}</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.projectName']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">#{workingPlatformMB.selectedQuoteItem.quoteItem.projectName}</p:column>	
+			
+			<p:column styleClass="tdtag">#{dbResource['wq.message.orderQty']}</p:column>
+			<p:column headerText="#{dbResource['wq.message.orderQty']}"  colspan="3">
+				        <h:outputText  id="p_ref_orderQtys_id"   value="#{workingPlatformMB.getOrderQties(workingPlatformMB.selectedQuoteItem.quoteItem)}"  escape="false">
+							<f:converter converterId="webquote.commodity.Oqmsp" binding="#{oqmspConverterManager.getCoverter('CVT_BREAKINT')}"/>
+						</h:outputText>
+			        </p:column>
+			        <p:column styleClass="tdtag">#{dbResource['wq.label.minSell']} #{dbResource['wq.label.price']}</p:column>
+					<p:column headerText="#{dbResource['wq.label.minSell']}&lt;br/&gt;#{dbResource['wq.label.price']}"  >
+			           <h:outputText id="p_ref_minSellPrice_id"  value="#{workingPlatformMB.getOrderQties(workingPlatformMB.selectedQuoteItem.quoteItem)}"   escape="false">
+							<f:converter converterId="webquote.commodity.Oqmsp" binding="#{oqmspConverterManager.getCoverter('CVT_NORMSELL')}"/>
+						</h:outputText>
+			        </p:column>
+			        	<p:column styleClass="tdtag">#{dbResource['wq.label.pricerSalesCost']}</p:column>	       
+						<p:column styleClass="align_right" >
+			            <h:outputText  id="p_ref_salesCost_id" value="#{workingPlatformMB.getOrderQties(workingPlatformMB.selectedQuoteItem.quoteItem)}"  escape="false">
+							<f:converter converterId="webquote.commodity.Oqmsp" binding="#{oqmspConverterManager.getCoverter('CVT_SALESCOST')}"/>
+						</h:outputText>
+			        </p:column>
+			        <p:column styleClass="tdtag">#{dbResource['wq.label.pricerSuggestedResale']}</p:column>
+			        <p:column  styleClass="align_right" >
+			           <h:outputText id="p_ref_suggestedResale_id"  value="#{workingPlatformMB.getOrderQties(workingPlatformMB.selectedQuoteItem.quoteItem)}"   escape="false">
+							<f:converter converterId="webquote.commodity.Oqmsp" binding="#{oqmspConverterManager.getCoverter('CVT_SUGGESTSALE')}"/>
+						</h:outputText>
+			        </p:column>
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.reasonsFor']} #{dbResource['wq.label.authGPChange']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.authGpReasonDesc}" id="d_authGpReasonDesc"/>												
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.remarksReason']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.authGpRemark}" id="d_authGpRemark"/>												
+						</p:column>				
+						<p:column styleClass="tdtag">#{dbResource['wq.label.BmtFlag']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.bmtFlag.description}"/>												
+						</p:column>									
+						<p:column styleClass="tdtag">#{dbResource['wq.label.pmComment']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="9">#{workingPlatformMB.selectedQuoteItem.quoteItem.internalTransferComment}</p:column>	
+							
+					</p:row>
+					<p:row>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtMFRDR']}#</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.drMfrNo}"/>												
+						</p:column>
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtSuggCost']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.drCost}"/>												
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtSuggResale']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.drResale}"/>												
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtMFRMargin']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.getDrMargin()}"/>												
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.reasonRefresh']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="5">#{workingPlatformMB.selectedQuoteItem.quoteItem.reasonForRefresh}</p:column>						
+					</p:row>
+					<p:row>						
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtMFRQuote']}#</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.drMfrQuoteNo}"/>												
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtEffDate']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.drEffectiveDate}"><f:convertDateTime   pattern="dd/MM/yyyy"  /></h:outputText>												
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtExpDate']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.drExpiryDate}"><f:convertDateTime   pattern="dd/MM/yyyy"  /></h:outputText>												
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtComm']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="9">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.drComments}"/>												
+						</p:column>	
+					</p:row>
+					<p:row>						
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtAtts']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" styleClass="query_view" rendered="#{workingPlatformMB.selectedQuoteItem.quoteItem.bmtAttachmentFlag}" 
+								   update=":form_pendinglist:attathmentsPanel:componentAttData"
+								   oncomplete="PF('attachmentDialog').show();">
+								<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>
+								<f:setPropertyActionListener target="#{viewScope.attachments}" value="#{workingPlatformMB.selectedQuoteItem.quoteItem.getAttachments('BMT Attachment')}"/>
+							</p:commandLink>											
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtSuggstCostNUSD']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.drCostAltCurrency}"/>												
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtSuggstResaleNUSD']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.drResaleAltCurrency}"/>												
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtCurr']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="9">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.drAltCurrency}"/>												
+						</p:column>	
+					</p:row>
+					<p:row>						
+						<p:column styleClass="tdtag">#{dbResource['wq.label.BmtExchgRateNonUSD']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="3">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.drExchangeRate}"/>												
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.bmtQuotedQty']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.quoteItemDesign.drQuoteQty}"/>												
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.qcAtt']}</p:column>
+						<p:column id="qcAttachmentInDetail" styleClass="tdvalue readOnlyCell break-all" colspan="3">
+<!-- 						TODO: verify -->
+				        	<h:panelGroup rendered="#{workingPlatformMB.selectedQuoteItem != null}">
+								<p:commandLink process="@this" title="#{dbResource['wq.label.uploadAttachment']}" 
+								rendered="#{workingPlatformMB.editMode}"
+								styleClass="upload_view" update=":form_pendinglist:attathmentUploadComponent:upload_atts_panel"
+									oncomplete="PF('attachmentUploadDialog').show();">
+									<f:setPropertyActionListener target="#{viewScope.currentRecordObject}" value="#{workingPlatformMB.selectedQuoteItem}" />
+									<f:setPropertyActionListener target="#{viewScope.currentRecordIndex}" value="#{rowIndex}" />
+									<h:graphicImage url="./../resources/images/icon_upload.png" styleClass="iconLink"/>
+								</p:commandLink>
+			 		
+			 					<h:panelGroup id="detailQcAttachement">
+								<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" styleClass="query_view" rendered="#{workingPlatformMB.selectedQuoteItem.quoteItem.qcAttachmentFlag}" 
+											   update=":form_pendinglist:attathmentsPanel:componentAttData"
+											   oncomplete="PF('attachmentDialog').show();">
+									<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>
+									<f:setPropertyActionListener target="#{viewScope.attachments}" value="#{workingPlatformMB.selectedQuoteItem.quoteItem.getAttachments('QC Attachment')}"/>
+								</p:commandLink>		
+			 					</h:panelGroup>
+							</h:panelGroup>													
+						</p:column>	
+						<p:column styleClass="tdtag">#{dbResource['wq.label.designRegion']}</p:column>
+						<p:column styleClass="tdvalue readOnlyCell break-all" colspan="9">
+							<h:outputText value="#{workingPlatformMB.selectedQuoteItem.quoteItem.designRegion}"/>												
+						</p:column>	
+					</p:row>
+
+				</p:panelGrid>
+		        <f:facet name="actions">  
+		        	<div style="float:right;">	
+						<h:panelGrid  columns="7" cellpadding="0" style="padding:0px 2px 0px 2px;">	   
+							<h:outputText value="#{dbResource['wq.label.editMode']}: " />       
+							<p:selectBooleanCheckbox id="isEditMode" value="#{workingPlatformMB.editMode}" onchange="javascript:blockUI(this.checked)" disabled="#{workingPlatformMB.selectedQuoteItem.quoteItem.status =='BQ' or workingPlatformMB.selectedQuoteItem.quoteItem.status =='BIT'}">
+								<p:ajax event="change" update=":ap_rfqdetailreference:form_rfqdetailreference,detail_rfq_save"/>  
+							</p:selectBooleanCheckbox>  
+							<p:commandButton id="dummyReference" value="" style="width:0px; height:0px;"></p:commandButton> 				        		
+							<p:commandLink global="false" onstart="start();" oncomplete="stop(); " onerror="stopWithError();"
+							 	rendered="#{workingPlatformMB.editMode and (workingPlatformMB.selectedQuoteItem.quoteItem.status !='BQ') and (workingPlatformMB.selectedQuoteItem.quoteItem.status !='BIT')}" id="detail_rfq_save" 
+							 	actionListener="#{workingPlatformMB.saveRfqDetailQuotation}">
+								<f:attribute name="targetQuoteItem" value="#{workingPlatformMB.selectedQuoteItem}" />	                            			        	
+				        		<h:graphicImage url="./../resources/images/icon_save.gif" styleClass="iconLink"/>		        	
+				        	</p:commandLink>
+				        	<p:remoteCommand name="updateSaveRfqDetail" update=":form_pendinglist:datatable_pendinglist, :ap_rfqdetailreference:form_rfqdetailreference" />
+				        </h:panelGrid>
+		        	</div>
+		        </f:facet> 				
+			</p:panel>	
+			
+			<p:dialog header="#{dbResource['wq.header.searchParts']}" widgetVar="rfq_detail_validation_dialog" modal="true" height="325">
+				<p:panel header="#{dbResource['wq.header.searchParts']} (#{workingPlatformMB.searchPartsCount} #{dbResource['wq.label.recordFound']})" id="rfq_detail_alternatePartSearch_panel" style="font-size:12pt">
+					<h:panelGrid columns="5" cellpadding="0" style="padding:4px 10px 4px 10px;">
+			
+						<h:outputText value="#{dbResource['wq.label.mfr']}&#042;" style="padding:0px 3px 0px 3px"/>
+						<h:selectOneMenu value="#{workingPlatformMB.validationSearchMfr}">							
+			                      <f:selectItems value="#{workingPlatformMB.mfrSelectList}" />
+						</h:selectOneMenu>
+			
+						<h:outputText value="#{dbResource['wq.label.mfr']}&#042;" style="padding:0px 3px 0px 3px"/>
+						<p:inputText value="#{workingPlatformMB.validationSearchFullMfrPartNumber}" />								 
+				
+					 	<p:commandButton id="rfq_detail_validation_expansion_SearchButton" value="#{dbResource['wq.button.search']}" update=":ap_rfqdetailreference:form_rfqdetailreference:rfq_detail_alternatePartSearch_panel,rfq_detail_workingPlatformGrowl" actionListener="#{workingPlatformMB.searchInMaterialPopup}" style="margin:0px 0px 0px 0px"/>		
+	
+					</h:panelGrid>
+					
+					<h:panelGrid columns="1" cellpadding="0" style="padding:4px 10px 4px 10px;">
+						<h:outputText value="#{dbResource['wq.label.notSelOrgReqPartNo']}" style="padding:0px 3px 0px 3px"/>
+					</h:panelGrid>
+					
+				    <p:dataTable	var="rfq_detail_search_alternate_rfq"
+				    				value="#{workingPlatformMB.pricerInfosInMaterialPopup}"
+				    				selection="#{workingPlatformMB.selectedPricerInfosInMaterialPopup}"
+				    				rowKey="#{rfq_detail_search_alternate_rfq.pricerId}" 		
+				    				rowIndexVar="rfq_detail_search_alternate_rowIndex"
+				                 	id="rfq_detail_datatable_search_alternate"
+				    				paginator="true" 
+				    				rows="10"
+				    				rowsPerPageTemplate="5,10,20"
+				                 	paginatorPosition="top"						    										                 	
+				                 	style="margin:5px 0px 0px 0px;"
+				                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">		
+			           		 		        		           		 
+				        <p:column headerText="#{dbResource['wq.label.no']}">
+					        #{rfq_detail_search_alternate_rowIndex + 1}
+				        </p:column>
+				        
+				        <p:column selectionMode="multiple" styleClass="column_icon"/>			        
+				        								
+				        <p:column headerText="#{dbResource['wq.label.mfr']}">
+					        #{rfq_detail_search_alternate_rfq.mfr}
+				        </p:column>	
+				        
+				        <p:column headerText="#{dbResource['wq.label.mfrP']}">
+					        #{rfq_detail_search_alternate_rfq.fullMfrPartNumber}
+				        </p:column>			        				        					        					        					        
+	
+				        <p:column headerText="#{dbResource['wq.label.cost']}">
+				        	<h:outputText value="#{rfq_detail_search_alternate_rfq.cost}">
+				        		<f:convertNumber minFractionDigits="2" maxFractionDigits="5" />	
+				        	</h:outputText>
+				        </p:column>
+				        			
+				        <p:column headerText="#{dbResource['wq.label.MPQ']}">
+							#{workingPlatformMB.convertNumber(rfq_detail_search_alternate_rfq.mpq)}
+				        </p:column>
+				        						        			
+				        <p:column headerText="#{dbResource['wq.label.moq']}">
+							#{workingPlatformMB.convertNumber(rfq_detail_search_alternate_rfq.moq)}
+				        </p:column>
+				        
+				        <p:column headerText="#{dbResource['wq.label.leadTime']}">
+							#{rfq_detail_search_alternate_rfq.leadTime}
+				        </p:column>
+			
+				        <p:column headerText="#{dbResource['wq.label.description']}">
+							#{rfq_detail_search_alternate_rfq.description}
+				        </p:column>			        						
+				    </p:dataTable> 																	 
+			
+			      	<p:commandButton global="false" onstart="start();" oncomplete="stop(); PF('rfq_detail_validation_dialog').hide();" onerror="stopWithError();" 
+			      					value="#{dbResource['wq.label.selectForReplace']}" actionListener="#{workingPlatformMB.replacePart}" 
+			      					update="d_quotedPartNumber,
+			      							d_mpq,
+										    d_moq,
+										    d_mov,
+										    d_leadTime,
+										    d_cost,
+										    d_quotedMargin,
+										    d_quotedPrice,
+										    d_quotedQty,
+										    d_validity,
+										    d_shipmentValidity,
+										    d_targetMargin,
+										    d_costIndicator,
+										    d_minSell,
+										    d_normSell,
+										    d_priceListRemark1,
+										    d_priceListRemark2
+										    d_priceListRemark3,
+										    d_priceListRemark4,
+										    d_authGp,
+										    d_authGpReasonDesc,
+										    d_authGpRemark,
+										    d_drExpiryDate,
+										    d_cancelWindow,
+										    d_reschedulingWindow,
+										    d_quotationEffective,										    
+										    detail_quotationTc"	      									
+			      					style="margin:0px 0px 10px 0px"/>
+			      	<p:commandButton global="false" onstart="start();" oncomplete="stop(); PF('rfq_detail_validation_dialog').hide();" onerror="stopWithError();" id="rfq_detail_search_for_alternative_SelectButton" value="#{dbResource['wq.label.selectForAltPart']}" actionListener="#{workingPlatformMB.addPart}" update=":form_pendinglist:datatable_pendinglist" style="margin:0px 0px 10px 0px"/>
+				 </p:panel>
+			</p:dialog>		
+			
+			
+		</h:form>
+		<h:form id="form_endCustomerSearch">
+		<p:dialog id="rfq_details_end_customer_dialog" header="#{dbResource['wq.header.endCustSearch']}" widgetVar="rfq_details_end_customer_dialog" height="350" modal="true" resizable="true" focus="rfq_details_end_customer_expansion_SearchButton">
+				
+				<p:panel header="#{dbResource['wq.label.searchCustomer']} (#{workingPlatformMB.searchCustomersCount} #{dbResource['wq.label.recordFound']})" id="rfq_details_end_customerSearch_panel" style="font-size:12pt">
+				<p:growl id="rfq_details_endCustomerDialogGrowl" showDetail="true" sticky="#{growlPropertyMB.sticky}" autoUpdate="true" showSummary="#{growlPropertyMB.showSummary}" escape="#{growlPropertyMB.escape}"/> 		
+					<h:panelGrid  columns="8" cellpadding="0" style="padding:4px 10px 4px 10px;">
+						<h:outputText value="#{dbResource['wq.label.custmrName']}" style="padding:0px 0px 0px 3px"/>
+						<h:outputText value="&#042;" style="color:#ff0000; padding:0px 0px 0px 0px"/>
+						<h:outputText value=":" style="padding:0px 3px 0px 0px"/>								
+						<p:inputText value="#{workingPlatformMB.customerNameSearch}" />								 
+	                    <p:spacer width="60" height="10" />
+					 	<p:commandButton id="rfq_details_end_customer_expansion_SearchButton" value="#{dbResource['wq.button.search']}" update=":ap_rfqdetailreference:form_endCustomerSearch:rfq_details_end_customerSearch_panel" actionListener="#{workingPlatformMB.searchCustomers}" style="margin:0px 0px 0px 0px"  global="false" onstart="start();" oncomplete="stop();" onerror="stopWithError();"/>
+						<p:defaultCommand target=":ap_rfqdetailreference:form_endCustomerSearch:rfq_details_end_customer_expansion_SearchButton" /> 
+					</h:panelGrid>
+				    <p:dataTable	var="search_customer"
+				    				value="#{workingPlatformMB.searchCustomers}"
+				    				selection="#{workingPlatformMB.selectedSearchCustomer}"
+				    				rowKey="#{search_customer.customerNumber}" 		
+				    				rowIndexVar="search_customer_rowIndex"
+				                 	id="datatable_search_customer"
+				    				paginator="true" 
+				    				rows="5"
+				    				rowsPerPageTemplate="5,10,20"
+				                 	paginatorPosition="top"						    										                 	
+				                 	style="margin:5px 0px 0px 0px;"
+				                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">		
+	             		 
+				        <p:column headerText="#{dbResource['wq.label.no']}">
+					        #{search_customer_rowIndex + 1}
+				        </p:column>						      				       
+								
+						<p:column selectionMode="single" styleClass="column_icon" /> 
+				        
+				        <p:column headerText="#{dbResource['wq.label.custmrName']}">
+					        #{search_customer.customerFullName}
+				        </p:column>	
+				        
+				        <p:column headerText="#{dbResource['wq.label.custmrType']}">
+					        #{search_customer.customerType}
+				        </p:column>	
+	
+				        <p:column headerText="#{dbResource['wq.label.custmrCode']}">
+					        #{search_customer.customerNumber}
+				        </p:column>	
+	
+				        <p:column headerText="#{dbResource['wq.label.salsOrg']}">
+					        #{workingPlatformMB.convertCustomerSalesToSalesOrg(search_customer.customerSales)}
+				        </p:column>							        
+	
+				        <p:column headerText="#{dbResource['wq.label.accGroup']}">
+					        #{workingPlatformMB.convertAccountGroupToName(search_customer.accountGroup)}
+				        </p:column>	
+				        
+				    </p:dataTable>
+				
+				 	<p:commandButton id="rfq_details_end_customer_submitButton" value="#{dbResource['wq.button.select']}" 
+				 	actionListener="#{workingPlatformMB.updateCustomer}" style="margin:0px 0px 10px 0px" 
+				 	oncomplete="PF('rfq_details_end_customer_dialog').hide();" 
+				 	update=":ap_rfqdetailreference:form_rfqdetailreference" />  
+				    	
+				</p:panel>
+		</p:dialog>		
+		</h:form>	
+	</p:tab>
+</p:accordionPanel>
+	<script type="text/javascript">
+		function blockUI(show) {
+			if (show) {
+				PF('bui').show();
+			} else {
+				PF('bui').hide();
+			}
+		}
+
+		function saveRFQDetail(xhr, status, args) {
+			PF('datatable_pendinglist_var').filter();
+		}
+	</script>
+</h:body>
+</html>

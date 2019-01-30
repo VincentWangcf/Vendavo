@@ -1,0 +1,10 @@
+1) Incident- INC0177039 June Guo 2015/06/29
+2) Incident- INC0174028 June Guo 2015/07/15
+3) Incident- INC0178605  June Guo 2015/07/22
+4) INC0158577, Tough
+5) INC0170886, Tough
+6) INC0173257, Tough 
+7) Incident- INC0194302 June Guo 2015/07/27
+8) Incident INC0177857 Jason Chen 2015/07/27
+9) Incident, INC0155110 Jaosn Chen2015/08/03
+10 For STM B2B project, If the Status = ¡°IT¡±, do not change the status to ¡°SQ¡± when sending quote to STM

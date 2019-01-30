@@ -1,0 +1,8 @@
+package com.avnet.emasia.webquote.columndata;
+
+import java.io.InputStream;
+import java.util.List;
+
+public interface ColumnDataConverter<T extends Bean> {
+	List<T> convertAndValidate (InputStream is, String type,  BeanDefinition<T> beanDef);
+}

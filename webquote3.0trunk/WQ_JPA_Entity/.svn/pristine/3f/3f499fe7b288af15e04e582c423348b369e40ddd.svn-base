@@ -1,0 +1,85 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
+
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+
+@Entity
+@DiscriminatorValue("CONDITION")
+public class ConditionConfig  extends Config {
+
+	@Column(name = "LOGIC_ACTION", length = 20, nullable = false)
+	@Enumerated(EnumType.STRING)
+	private LogicAction action;
+	
+	@Column(name = "CONDITION_TYPE", length = 20, nullable = false)
+	@Enumerated(EnumType.STRING)
+	private ConditionType conditionType;
+	
+	@Column(name = "CONDITION_VALUE", length = 200)
+	private String conditionValue;
+	
+	private final static Map<String, List<String>> CACHEMAP = new ConcurrentHashMap<String, List<String>>();
+	
+	private final static String SPLITOR = ",";
+	
+	@Override
+	protected Predicate<Boolean> isMatch(List<String> regions, List<String> roles) {
+		return (Boolean b) -> {
+			List<String> values = null;
+			if((values = CACHEMAP.get(conditionValue)) == null) {
+				values = Arrays.asList(conditionValue.split(SPLITOR));
+				CACHEMAP.putIfAbsent(conditionValue, values);
+			}
+			boolean firstMatch = conditionType.test(regions, roles, values, action);
+			return this.logicResultReverse ? !firstMatch : firstMatch;
+		};
+	}
+	
+	public enum ConditionType {
+		ROLE {
+			@Override
+			boolean test(List<String> regions, List<String> roles, List<String> values, LogicAction action) {
+				return action.test(roles, values);
+			}
+		},REGION {
+			@Override
+			boolean test(List<String> regions, List<String> roles, List<String> values, LogicAction action) {
+				return action.test(regions, values);
+			}
+		};
+		abstract boolean test(List<String> regions, List<String> roles, List<String> values, LogicAction action);
+	}
+	
+	public enum LogicAction {
+		ANYMATCH {
+			@Override
+			boolean test(List<String> sources, List<String> conditons) {
+				return conditons.stream().anyMatch(p -> sources.stream().anyMatch(
+						s -> (s!=null && s.equalsIgnoreCase(p))));
+			}
+		},ALLMATCH {
+			@Override
+			boolean test(List<String> sources, List<String> conditons) {
+				return conditons.stream().allMatch(p -> 
+					sources.stream().anyMatch(s -> (s!=null && s.equalsIgnoreCase(p))));
+			}
+		},NONEMATCH {
+			@Override
+			boolean test(List<String> sources, List<String> conditons) {
+				return conditons.stream().noneMatch(p -> 
+					sources.stream().anyMatch(s -> (s!=null && s.equalsIgnoreCase(p))));
+			}
+		};
+		//private final static boolean MATCH = true;
+		abstract boolean test(List<String> sources, List<String> conditons);
+	}
+}

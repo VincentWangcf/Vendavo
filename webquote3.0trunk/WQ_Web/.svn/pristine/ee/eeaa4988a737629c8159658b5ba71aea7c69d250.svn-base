@@ -1,0 +1,371 @@
+
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+ 	<f:metadata>
+		    <f:event type="preRenderView" listener="#{refreshQuoteMB.drProjectExpireChecking}" />		    
+    </f:metadata>    
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="style-005.css" />
+	<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+	<h:form id="form" onkeypress="if(window.event.keyCode==13) return false;" >
+
+	<p:panel header="#{dbResource['wq.header.refreshQuoteList']}" style="font-size:12pt">
+		<p:growl id="messages" showDetail="true" autoUpdate="true" closable="true" escape="false" sticky="true"/>
+	    <p:dataTable	var="vo"
+	    				value="#{refreshQuoteMB.quoteItemVos}" 
+	    				rowKey="#{vo.quoteItem.quoteNumber}" 
+	    				rowIndexVar="rowIndex"
+	                 	id="datatable_copyquotelist"
+	                 	rows="10"
+    					rowsPerPageTemplate="10,20,50"                 
+	                 	editable="true"
+	                 	editMode="cell"
+	                 	cellEditEvent="click"     
+	                 	scrollable="true"
+	                 	paginator="true" 
+	                 	paginatorPosition="bottom"
+	                 	rowStyleClass="#{vo.errRow ? 'errorRow' : null}"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">	                   	              
+			<p:column headerText="#{dbResource['wq.label.no']}" sortBy="#{vo.seq}" filterBy="#{vo.seq}"  filterMatchMode="contains" styleClass="column_seq readOnlyCell">
+			#{vo.seq2}
+			</p:column>
+					
+			<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quote']}#" sortBy="#{vo.quoteItem.quoteNumber}" filterBy="#{vo.quoteItem.quoteNumber}"  filterMatchMode="contains" styleClass="column_quoteNumber readOnlyCell">
+			#{vo.quoteItem.quoteNumber}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.header.form']}" sortBy="#{vo.quoteItem.quote.formNumber}" filterBy="#{vo.quoteItem.quote.formNumber}" filterMatchMode="contains" styleClass="column_formNumber  readOnlyCell" >
+			<h:outputText value="#{vo.quoteItem.quote.formNumber}" />
+			</p:column>
+			
+  			<p:column headerText="#{dbResource['wq.label.custmrName']}&lt;br/&gt;(#{dbResource['wq.label.SoldToParty']})" sortBy="#{vo.quoteItem.soldToCustomer.customerFullName}" filterBy="#{vo.quoteItem.soldToCustomer.customerFullName}" styleClass="column_soldToCustomerName readOnlyCell">
+			#{vo.quoteItem.soldToCustomer.customerFullName} 
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.soldTo']}&lt;br/&gt;#{dbResource['wq.label.code']}" sortBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}" filterBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}" filterMatchMode="contains" styleClass="column_soldToCustomerNumber readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quote.soldToCustomer.customerNumber}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{vo.quoteItem.quotedMaterial.manufacturer.name}" filterBy="#{vo.quoteItem.quotedMaterial.manufacturer.name}" styleClass="column_mfr readOnlyCell">
+			#{vo.quoteItem.quotedMfr.name}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.avnetQPN']}" sortBy="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}" filterBy="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}" styleClass="column_quotedPartNumber readOnlyCell">
+			#{vo.quoteItem.quotedPartNumber}
+			</p:column>	
+							
+	        <p:column headerText="#{dbResource['wq.label.drms']}&lt;br/&gt;#{dbResource['wq.label.project']}&lt;br/&gt;#{dbResource['wq.label.ID']}" sortBy="#{vo.quoteItem.drmsNumber}" filterBy="#{vo.quoteItem.drmsNumber}"  styleClass="column_projectId readOnlyCell">
+	        	<p:commandLink id="refresh_quote_projectId_link" rendered="#{vo.quoteItem.drmsNumber > 0}">
+					#{vo.quoteItem.drmsNumber}
+				</p:commandLink>				                
+	        </p:column>
+	        
+			<p:column headerText="#{dbResource['wq.label.DR']}&lt;br/&gt;#{dbResource['wq.label.indicator']}" styleClass="column_icon">
+	        	<p:commandLink id="refresh_quote_drmsLinkage" actionListener="#{refreshQuoteMB.popupDrms(vo.seq2)}" update=":form:datatable_drms_popup" oncomplete="PF('drms_dialog').show()" rendered="#{vo.drmsLinkage}">
+	        		<h:graphicImage url="./../resources/images/icon_exclamation.png" styleClass="iconLink"/>				        	
+	        	</p:commandLink> 				        			        	
+			</p:column>			        
+					        
+			<p:column headerText="#{dbResource['wq.label.reasonRefresh']}" sortBy="#{vo.quoteItem.reasonForRefresh}" filterBy="#{item.reasonForCopy}" styleClass="column_reasonForCopy tdmandatoryvalue">
+						<p:inputText value="#{vo.quoteItem.reasonForRefresh}"  style="width:100%;"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.target']}&lt;br/&gt;#{dbResource['wq.label.resale']}" sortBy="#{vo.quoteItem.targetResale}" filterBy="#{vo.quoteItem.targetResale}" styleClass="column_targetResale align_right tdmandatoryvalue">
+						<p:inputText value="#{vo.quoteItem.targetResale}" id="txt_target_resale_in" onkeyup="updateDecimal(#{rowIndex}, 'form', 'txt_target_resale', 'datatable_copyquotelist');" onkeypress="return isDouble(event)"/>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}" sortBy="#{vo.quoteItem.requestedQty}" filterBy="#{vo.quoteItem.requestedQty}" styleClass="column_requestedQty align_right tdmandatoryvalue">
+						<p:inputText id="txt_requestedQty_in" value="#{vo.quoteItem.requestedQty}" onkeyup="updateInteger2(#{rowIndex}, 'form', 'txt_requestedQty', 'datatable_copyquotelist');" onkeypress="return isInteger(event)"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.MPQ']}" sortBy="#{vo.quoteItem.mpq}" filterBy="#{vo.quoteItem.mpq}" styleClass="column_mpq align_right readOnlyCell">
+			#{vo.quoteItem.mpq}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.moq']}" sortBy="#{vo.quoteItem.moq}" filterBy="#{vo.quoteItem.moq}" styleClass="column_moq align_right readOnlyCell">
+			#{vo.quoteItem.moq}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.PMOQ']}" sortBy="#{vo.quoteItem.pmoq}" filterBy="#{vo.quoteItem.pmoq}"  styleClass="column_pmoq readOnlyCell">
+			#{vo.quoteItem.pmoq}
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.label.EAU']}" sortBy="#{vo.eau}" filterBy="#{vo.eau}" styleClass="column_eau align_right editCell">
+						<p:inputText id="txt_eau_in" value="#{vo.eau}" onkeyup="updateInteger2(#{rowIndex}, 'form', 'txt_eau', 'datatable_copyquotelist');" onkeypress="return isInteger(event)"/>
+			</p:column>
+
+			
+			<p:column headerText="#{dbResource['wq.header.requester']}&lt;br/&gt;#{dbResource['wq.label.reference']}" sortBy="#{vo.quoteItem.quote.yourReference}" filterBy="#{vo.quoteItem.quote.yourReference}" styleClass="column_yourReference editCell">
+						<p:inputText value="#{vo.quoteItem.quote.yourReference}" style="width:100%;"/>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.refresh']}&lt;br/&gt;#{dbResource['wq.label.attachment']}" styleClass="column_icon editCell" style="text-align: center">
+	        	<p:commandLink update=":form:attachment_panel" actionListener="#{refreshQuoteMB.listAttachmentsForBMT()}" oncomplete="PF('attachment_list_dialog').show()">
+	        		<h:graphicImage library="images" name="icon_magnifier.png" styleClass="iconLink"/>
+	        		<f:param name="quoteItem_id" value="#{vo.quoteItem.id}"/>
+	        		<f:param name="att_type" value="QC Attachment,BMT Attachment"/>			        				        	
+	        	</p:commandLink>			
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.QuoteType']}" sortBy="#{vo.quoteItem.quoteType}" filterBy="#{vo.quoteItem.quoteType}" filterMatchMode="contains" styleClass="column_quoteType tdmandatoryvalue">
+				<h:selectOneMenu id="basicDetails_quoteType" value="#{vo.quoteItem.quoteType}">							
+		                        <f:selectItems value="#{refreshQuoteMB.quoteTypeList}" />
+				</h:selectOneMenu>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.referenceExchange']}&lt;br/&gt;#{dbResource['wq.label.rateCurrency']}" sortBy="#{vo.quoteItem.rfqCurr}" filterBy="#{vo.quoteItem.rfqCurr}" styleClass="column_mfr editCell">
+    			<h:selectOneMenu value="#{vo.quoteItem.rfqCurr}" valueChangeListener="#{refreshQuoteMB.currValueChange}" effect="size">
+					<f:selectItems value="#{refreshQuoteMB.convertCurrencyToSelectItem(vo.quoteItem)}" />
+					<p:ajax event="change" listener="#{refreshQuoteMB.changeCurrTo}" update=":form:CurrConfirmation" />
+				</h:selectOneMenu>
+			</p:column>
+						
+			<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quoted']}&lt;br/&gt;#{dbResource['wq.label.price']}" sortBy="#{vo.quoteItem.quotedPrice}" filterBy="#{vo.quoteItem.quotedPrice}" styleClass="column_quotedPrice align_right readOnlyCell">
+			#{vo.quoteItem.quotedPrice}
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.resale']}&lt;br/&gt;#{dbResource['wq.label.indicator']}" sortBy="#{vo.quoteItem.resaleIndicator}" filterBy="#{vo.quoteItem.resaleIndicator}" styleClass="column_resalesIndicator readOnlyCell">
+			#{vo.quoteItem.resaleIndicator}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.message.multiUsage']}" sortBy="#{vo.quoteItem.multiUsageFlag}" filterBy="#{vo.quoteItem.multiUsageFlag}" filterMatchMode="contains" styleClass="column_multiUsage readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.multiUsageFlag? 'Yes':'No'}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.QuoteExpiry']}&lt;br/&gt;#{dbResource['wq.label.date']}&lt;br/&gt;(DD/MM/YYYY)" sortBy="#{vo.quoteItem.quoteExpiryDate}" filterBy="#{vo.quoteItem.quoteExpiryDate}" styleClass="column_quoteExpiryDate readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quoteExpiryDate}">
+				<f:convertDateTime pattern="dd/MM/yyyy" />
+			</h:outputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.valid']}&lt;br/&gt;#{dbResource['wq.label.for']}&lt;br/&gt;#{dbResource['wq.label.ordering']}" sortBy="#{vo.readyForOrder}" filterBy="#{vo.readyForOrder}" styleClass="column_readyForOrder readOnlyCell">
+				<h:outputText value="#{vo.readyForOrder? 'Yes':'No'}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.invalidOrdering']}&lt;br/&gt;(#{dbResource['wq.label.reason']})" sortBy="#{vo.reasonForNotReadyForOrder}" filterBy="#{vo.reasonForNotReadyForOrder}" styleClass="column_reasonForNotReadyForOrder readOnlyCell">
+			#{vo.reasonForNotReadyForOrder}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.salesman']}&lt;br/&gt;#{dbResource['wq.label.name']}" sortBy="#{vo.quoteItem.quote.sales.name}" filterBy="#{vo.quoteItem.quote.sales.name}" styleClass="column_salesEmployeeName readOnlyCell">
+			#{vo.quoteItem.quote.sales.name}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.sales']}&lt;br/&gt;#{dbResource['wq.label.employee']}&lt;br/&gt;#{dbResource['wq.label.code']}" sortBy="#{vo.quoteItem.quote.sales.employeeId}" filterBy="#{vo.quoteItem.quote.sales.employeeId}" styleClass="column_salesEmployeeNumber readOnlyCell">
+			#{vo.quoteItem.quote.sales.employeeId}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.endCust']}" sortBy="#{vo.quoteItem.endCustomer.CustomerFullName}" filterBy="#{vo.quoteItem.endCustomer.CustomerFullName}" filterMatchMode="contains" styleClass="column_endCustomerName readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.endCustomer.customerFullName}"/>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.end']}&lt;br/&gt;#{dbResource['wq.label.cust']}&lt;br/&gt;#{dbResource['wq.label.code']}" sortBy="#{vo.quoteItem.endCustomer.customerNumber}" filterBy="#{vo.quoteItem.endCustomer.customerNumber}" filterMatchMode="contains" styleClass="column_endCustomerNumber readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.endCustomer.customerNumber}"/>
+			</p:column>
+			
+			<f:facet name="footer">	        	
+	        	<p:commandButton value="#{dbResource['wq.button.confirmRefreshQuote']}" type="button" icon="ui-icon ui-icon-circle-arrow-n" onclick="refreshQuote()"/>
+	        	<p:remoteCommand action="#{refreshQuoteMB.refreshQuote}" name="refreshButton" />
+	        	<p:commandButton value="#{dbResource['wq.button.BackMyQuoteSearch']}" icon="ui-icon ui-icon-circle-arrow-w" action="#{myQuoteSearchMB.getMyQuotePage}" />
+	        </f:facet>
+			
+			 	                                
+	    </p:dataTable>
+	    
+</p:panel>
+	
+	<p:dialog id="confirmation_dialog" header="#{dbResource['wq.message.warningMessage']}" widgetVar="confirmation_dialog" focus="okButton">
+	
+		<h:panelGrid id="CurrConfirmation" columns="1">
+			<h:panelGrid columns="1" cellpadding="0" style="padding:4px 10px 4px 10px;">
+				<h2>#{dbResource['wq.message.referenceExchangeCurrencyFrom']}#{refreshQuoteMB.fromCurr} #{dbResource['wq.header.To']} #{refreshQuoteMB.toCurr}.</h2>
+			</h:panelGrid>
+			<h:panelGrid columns="1" cellpadding="0" style="text-align:center; padding:4px 10px 4px 10px;">
+			 	<p:commandButton id="okButton" value="#{dbResource['wq.header.confirm']}" oncomplete="PF('confirmation_dialog').hide();"/>
+			 </h:panelGrid>
+		 </h:panelGrid>
+	</p:dialog>
+		
+	<p:dialog header="#{dbResource['wq.header.attchmntList']}" widgetVar="attachment_list_dialog" resizable="true" >
+		<p:panel header=""  id="attachment_panel" style="font-size:12pt">
+		<p:fileUpload 
+			fileUploadListener="#{refreshQuoteMB.addAttachmentForBMT}" 
+			update=":form:datatable_attachment" 
+			allowTypes="/(\.|\/)(xls|xlsx|zip|doc|docx|msg|pdf|txt|jpg|png|ppt|pptx|7z|XLS|XLSX|ZIP|DOC|DOCX|MSG|PDF|TXT|JPG|PNG|PPT|PPTX|7Z)$/"
+			/>
+									
+		    <p:dataTable	var="attachment"
+		    				value="#{refreshQuoteMB.attachments}"
+		    				rowKey="#{attachment.id}" 		
+		    				rowIndexVar="attachment_rowIndex"
+		                 	id="datatable_attachment"
+		                 	style="margin:5px 0px 0px 0px;"
+		                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">		
+            	
+		        <p:column headerText="#{dbResource['wq.label.no']}">
+			        #{attachment_rowIndex + 1}
+		        </p:column>						      				       
+						
+		        <p:column headerText="#{dbResource['wq.label.fileName']}">
+		        	<p:commandLink >
+			        	<h:outputLabel value="#{attachment.fileName}" />  
+			    	</p:commandLink>
+		        </p:column>
+		        
+				<p:column headerText="">
+		        	<p:commandButton value="#{dbResource['wq.button.download']}" ajax="false">
+		        		<p:fileDownload value="#{refreshQuoteMB.getFile(attachment.fileName)}" />
+					</p:commandButton>		        
+		        </p:column>
+		        
+				<p:column headerText="">
+		        	<p:commandButton value="#{dbResource['wq.label.delete']}"  
+		        	oncomplete="PF('confirmation').show(); var a = document.getElementById('form:confirmDialog_modal'); a.style.width=0" actionListener="#{refreshQuoteMB.setDeleteFileName(attachment.fileName)}" >
+		        		
+		        	</p:commandButton>
+		        </p:column>
+		        
+		    </p:dataTable>
+		    
+		</p:panel>
+	</p:dialog>
+
+    <p:dialog styleClass="popup" header="#{dbResource['wq.label.drProjectParts']}" widgetVar="drms_dialog" resizable="true" >  
+	    <p:dataTable	var="drms_popup_drProject"
+	    				value="#{refreshQuoteMB.drProjects}"
+	    				rowIndexVar="drms_popup_rowIndex"
+	    				selection="#{refreshQuoteMB.selectedDrProject}"
+   						rowKey="#{drms_popup_drProject.itemNumber}" 								    				
+	                 	id="datatable_drms_popup"
+	    				paginator="true" 
+	    				rows="5"
+	    				rowsPerPageTemplate="5,10"
+	                 	paginatorPosition="top"
+						scrollable="true"
+						scrollHeight="300"
+             	        scrollWidth="895"				    										                 	
+	                 	style="margin:0px 0px 0px 0px;"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">		
+      							                 		 
+	        <p:column headerText="#{dbResource['wq.label.no']}" id="drms_popup_rowNumber" styleClass="column_icon">
+		        #{drms_popup_drProject.itemNumber}
+	        </p:column>
+        
+			<p:column selectionMode="single" styleClass="column_icon" /> 				        
+			
+	        <p:column headerText="#{dbResource['wq.label.salsOrg']}" id="drms_popup_salesOrg" width="100">
+				#{drms_popup_drProject.drNedaItem.drNedaHeader.drProjectHeader.salesOrgBean.name}
+	        </p:column>		
+	        								
+	        <p:column headerText="#{dbResource['wq.label.supplier']}&lt;br/&gt;#{dbResource['wq.label.DR']}#" id="drms_popup_supplierDrNumber" width="130">
+				#{drms_popup_drProject.drNedaItem.drNumber}
+	        </p:column>
+
+	        <p:column headerText="#{dbResource['wq.label.project']}&lt;br/&gt;#{dbResource['wq.label.name']}" id="drms_popup_projectName" width="150">
+				#{drms_popup_drProject.drNedaItem.drNedaHeader.drProjectHeader.projectName}
+	        </p:column>
+
+	        <p:column headerText="#{dbResource['wq.label.description']}" id="drms_popup_projectDescription" width="200">
+				#{drms_popup_drProject.drNedaItem.drNedaHeader.drProjectHeader.projectDescription}
+	        </p:column>
+	        
+	        <p:column headerText="#{dbResource['wq.label.part']}&lt;br/&gt;#{dbResource['wq.label.mask']}" id="drms_popup_partMask" width="100">
+				#{drms_popup_drProject.drNedaItem.partMask}
+	        </p:column>		
+	        
+	        <p:column headerText="#{dbResource['wq.label.drms']}&lt;br/&gt;#{dbResource['wq.label.projectID']}" id="drms_popup_projectId" width="100">
+		        #{drms_popup_drProject.drNedaItem.drNedaHeader.drProjectHeader.projectId}
+	        </p:column>	
+	        
+	          <p:column headerText="#{dbResource['wq.label.DRExpiryDate']}" id="drms_popup_dr_expiry_date" width="100">
+		        #{rfqSubmissionMB.convertDateToString(drms_popup_drProject.displayDrExpiryDate)}
+	        </p:column>							        
+
+	        <p:column headerText="#{dbResource['wq.label.nedaID']}" id="drms_popup_nedaId" width="100">
+		        #{drms_popup_drProject.drNedaItem.id.nedaId}
+	        </p:column>	
+	        	
+			<p:column headerText="#{dbResource['wq.label.designStage']}" id="drms_popup_nedaDesignStage" width="100">
+		        #{drms_popup_drProject.drNedaItem.drNedaHeader.nedaDesignStage}
+	        </p:column>	
+	        
+	        <p:column headerText="#{dbResource['wq.label.creation']}&lt;br/&gt;#{dbResource['wq.label.date']}" id="drms_popup_creationDate" width="100">
+				#{rfqSubmissionMB.convertDateToString(drms_popup_drProject.drNedaItem.createdOn)}
+	        </p:column>							        										      
+	        
+	        <p:column headerText="#{dbResource['wq.label.FAE']}" id="drms_popup_faeName" width="100">
+				#{drms_popup_drProject.drNedaItem.faeName}
+	        </p:column>							        	
+
+	        <p:column headerText="#{dbResource['wq.label.group']}&lt;br/&gt;#{dbResource['wq.label.projectID']}" id="drms_popup_groupProjectId" width="100">
+		        #{drms_popup_drProject.drNedaItem.drNedaHeader.drProjectHeader.groupProjectId}
+	        </p:column>		
+
+	        <p:column headerText="#{dbResource['wq.label.supplier']}&lt;br/&gt;#{dbResource['wq.label.name']}" id="drms_popup_supplierName" width="100">
+		        #{drms_popup_drProject.drNedaItem.supplierName}
+	        </p:column>		
+	        								
+	        <p:column headerText="#{dbResource['wq.label.coreID']}" id="drms_popup_coreId" width="100">
+		        #{drms_popup_drProject.drNedaItem.coreId}
+	        </p:column>	
+	        						        						        							        			
+	        <p:column headerText="#{dbResource['wq.label.drPrice']}" id="drms_popup_drPrice" width="100">
+				<h:outputText value="#{drms_popup_drProject.drNedaItem.suggestedPrice}">
+					<f:convertNumber minFractionDigits="2"  maxFractionDigits="5"/>						
+				</h:outputText>							        
+	        </p:column>
+	        
+	        <p:column headerText="#{dbResource['wq.label.Qty']}&lt;br/&gt;#{dbResource['wq.label.perBoard']}" id="drms_popup_qtyPerBoard" width="100">
+				#{rfqSubmissionMB.convertNumber(drms_popup_drProject.drNedaItem.qtyPerBoard)}
+	        </p:column>
+	        
+	        <p:column headerText="#{dbResource['wq.label.production']}&lt;br/&gt;#{dbResource['wq.label.date']}" id="drms_popup_productionDate" width="100">
+				#{rfqSubmissionMB.convertDateToString(drms_popup_drProject.drNedaItem.drNedaHeader.productionDate)}
+	        </p:column>								        
+	        						        							        												
+	        <p:column headerText="#{dbResource['wq.label.assembly']}&lt;br/&gt;#{dbResource['wq.label.Qty']}" id="drms_popup_assemblyQty" width="100">
+		        #{rfqSubmissionMB.convertNumber(drms_popup_drProject.drNedaItem.drNedaHeader.assemblyQty)}
+	        </p:column>	
+
+	        <p:column headerText="#{dbResource['wq.header.din']}$" id="drms_popup_dinCost" width="100">
+	        </p:column>								       		        				        					        					        					        
+	        						        							        					
+	   <!--      <p:column headerText="Additional&lt;br/&gt;Info 3" id="drms_popup_additionalInfo3" width="200">
+				#{drms_popup_drProject.drNedaItem.additionalInfo3}
+	        </p:column>	 -->						      
+      								        					       					        
+	    </p:dataTable>  
+						  
+			 <p:commandButton id="drms_popup_submitButton" value="#{dbResource['wq.button.select']}" update=":form:datatable_copyquotelist" actionListener="#{refreshQuoteMB.addDrmsToRfqs}" style="margin:0px 0px 10px 0px" oncomplete="PF('drms_dialog').hide();stop();" global="false" onstart="start();" onerror="stopWithError();"/>  
+			 <p:spacer width="20" height="10" /> 
+			 <p:commandButton id="drms_popup_cancelButton" value="#{dbResource['wq.button.cancel']}" update=":form:datatable_copyquotelist" style="margin:0px 0px 10px 0px" oncomplete="PF('drms_dialog').hide();"/>  
+
+	</p:dialog> 
+	<p:confirmDialog id="confirmDialog" message="#{dbResource['wq.dialog.confirmDelAttchmnt']}" header="Alert" severity="alert" widgetVar="confirmation">
+			<p:commandButton value="#{dbResource['wq.button.yes']}" actionListener="#{refreshQuoteMB.deleteAttachment}" update=":form:datatable_attachment" oncomplete="PF('confirmation').hide()" />
+			<p:commandButton value="#{dbResource['wq.button.no']}" onclick="PF('confirmation').hide()" type="button" />
+	</p:confirmDialog>
+</h:form>         		
+
+<script type="text/javascript">
+
+	function refreshQuote(){
+		setTimeout(function(){
+			refreshButton();	}, 600)
+	}
+
+	
+</script>
+		
+	</ui:define>
+</ui:composition>

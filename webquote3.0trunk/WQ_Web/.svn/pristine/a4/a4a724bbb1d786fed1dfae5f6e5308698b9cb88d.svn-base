@@ -1,0 +1,246 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.application.FacesMessage.Severity;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.UploadedFile;
+import org.primefaces.model.StreamedContent;
+
+
+import com.avnet.emasia.webquote.commodity.constant.PricerConstant;
+import com.avnet.emasia.webquote.constants.StageEnum;
+import com.avnet.emasia.webquote.constants.StatusEnum;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.quote.vo.MyQuoteSearchCriteria;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.DeploymentConfiguration;
+import com.avnet.emasia.webquote.utilites.web.util.DownloadUtil;
+import com.avnet.emasia.webquote.web.pricerupload.PriceUploadStrategy;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+@ManagedBean
+@SessionScoped
+public class QuoteRateRequestMB extends CommonBean  implements Serializable {
+
+	private static final long serialVersionUID = 4947932561511214150L;
+
+	private static final Logger LOG = Logger.getLogger(QuoteRateRequestMB.class.getName());
+	
+	public final static long ONLINE_MAX_UPLOAD_FILE_SIZE = 10*1024*1024;//10M
+	public final static long OFFLINE_MAX_UPLOAD_FILE_SIZE = 50*1024*1024;//50M
+	
+	private transient UploadedFile uploadFile;
+	private String uploadFileName;
+	
+	private User user = null;
+	
+	private transient XSSFWorkbook workbook;
+	
+	private MyQuoteSearchCriteria criteria;
+	
+	@EJB
+	AsyncQuoteRateRequestSB	 asyncQuoteRateRequestSB;
+
+	@PostConstruct
+	public void postContruct() {
+		user = UserInfo.getUser();
+		criteria = new MyQuoteSearchCriteria();
+		List<StatusEnum> statuss = Arrays.asList(StatusEnum.values());
+		List<String> strStatuss = new ArrayList<String> ();
+		for(StatusEnum stt:statuss) {
+			strStatuss.add(stt.toString());
+		}
+		criteria.setStatus(strStatuss);
+		//
+		List<StageEnum> stages = Arrays.asList(StageEnum.values());
+		List<String> strStages = new ArrayList<String>();
+		for(StageEnum stg:stages) {
+			if(!"DRAFT".equals(stg.toString())) {
+				strStages.add(stg.toString());
+			}
+			
+		}
+		criteria.setStage(strStages);
+	}
+	
+	
+	public void handleFileUpload() throws IOException {	
+		String message;
+		try {
+			PriceUploadStrategy uploadStrategy = new PriceUploadStrategy();
+			uploadStrategy.setUser(user);
+			
+			boolean isUploadFile = uploadStrategy.isValidateUpload(uploadFile);
+			if(!isUploadFile){
+				
+				this.showMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.pleaseSelectFile")+".");
+				return;	
+			}
+			boolean isMoreThanMaxFileSize = uploadStrategy.isMoreThanMaxFileSize(uploadFile.getSize(),OFFLINE_MAX_UPLOAD_FILE_SIZE);
+			
+			if(isMoreThanMaxFileSize){	
+			
+				this.showMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.invalidFileSize"));
+				return;
+			}		
+			boolean isExcelFile = uploadStrategy.isExcelFile(uploadFile);
+			if(!isExcelFile){
+				
+				this.showMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.selExcelFile")+".");
+				return;
+			}
+			setUploadFileName(uploadFile.getFileName());
+			InputStream file =  uploadFile
+					.getInputstream();
+			workbook = new XSSFWorkbook(file);   
+			XSSFSheet sheet = workbook.getSheetAt(0);
+			Iterator<Row> rowIterator = sheet.iterator();
+			Map<String,String> quoteMap = new HashMap<String, String>();
+			while (rowIterator.hasNext()){
+				Row row = rowIterator.next();
+				if(row.getRowNum() == 0) {
+					continue;
+				}
+				Iterator<Cell> cellIterator = row.cellIterator();
+				int colIndex = 0;
+				String quoteNumber = "";
+				String exCurrency = "";
+				while (cellIterator.hasNext()){
+					Cell cell = cellIterator.next();
+					cell.setCellType(Cell.CELL_TYPE_STRING);
+					String value = cell.getStringCellValue();
+					if(colIndex == 0 && StringUtils.isNotBlank(value)) {
+						quoteNumber = value.trim();
+					} else if(colIndex == 1 && StringUtils.isNotBlank(value)) {
+						exCurrency = value.trim();
+					}
+					colIndex++;
+				}
+				if(StringUtils.isNotBlank(quoteNumber) && StringUtils.isNotBlank(exCurrency)) {
+					quoteMap.put(quoteNumber, exCurrency);
+				}
+			}
+			
+			if(!(quoteMap != null && quoteMap.size() > 0)) {
+				
+				this.showMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.quoteNumberBlank")+".");
+				return;
+			} 
+			
+			
+			setupDataAccessInCriteria();
+
+
+			setupBizUnit();
+			
+			asyncQuoteRateRequestSB.processQuoteRateRequest(quoteMap ,criteria,UserInfo.getUser());
+			 
+			FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "",
+					ResourceMB.getText("wq.message.quoteRateUpload")+"!");
+			FacesContext.getCurrentInstance().addMessage("QuoteRateGrow_info",msg);
+		} catch (Exception e) {
+			message= ResourceMB.getText("wq.message.quoteRateUploadFailed")+"!";
+			FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR,"", message);
+			FacesContext.getCurrentInstance().addMessage("QuoteRateGrow_info",msg);
+			LOG.log(Level.SEVERE, "Quote Rate upload failed for file name : "+uploadFileName+" , Error message : "+e.getMessage(), e);
+		}
+		
+		
+	}
+	
+	private void setupBizUnit() {
+		User user = UserInfo.getUser();
+		criteria.setBizUnits(user.getBizUnits());
+	}
+	
+	public void setupDataAccessInCriteria() {
+		User user = UserInfo.getUser();
+		criteria.setDataAccesses(userSB.findAllDataAccesses(user));
+	}
+	
+	
+	public void showMessage(Severity severityError, String errMsg){
+		FacesContext.getCurrentInstance().addMessage("msgId",new FacesMessage(severityError, errMsg,""));
+		reset();
+	}
+	
+	private void reset(){
+		uploadFile = null;
+		uploadFileName = null;
+	}
+	
+	/**
+	 * Download quote rate template.
+	 * 
+	 * @return
+	 */
+	public StreamedContent getQuoteRateTemplate() {
+		String fileName = DeploymentConfiguration.configPath+File.separator+QuoteConstant.QUOTE_RATE_TEMPLATE;
+		FileInputStream in = null;
+		DefaultStreamedContent dsc=null;
+		try {
+			in = new FileInputStream(fileName);
+			if(in!=null)
+			dsc = new DefaultStreamedContent(in,DownloadUtil.getMimeType(QuoteConstant.QUOTE_RATE_TEMPLATE),QuoteConstant.QUOTE_RATE_TEMPLATE);
+		} catch (FileNotFoundException e) {
+			 this.showMessage(FacesMessage.SEVERITY_ERROR,ResourceMB.getText("wq.message.downloadfail")+".");
+			LOG.log(Level.SEVERE,"File on this path "+fileName+" not found "+ e.getMessage(), e);
+		}
+		return dsc;
+	}
+
+
+
+	public UploadedFile getUploadFile() {
+		return uploadFile;
+	}
+
+
+
+	public void setUploadFile(UploadedFile uploadFile) {
+		this.uploadFile = uploadFile;
+	}
+
+
+
+	public String getUploadFileName() {
+		return uploadFileName;
+	}
+
+
+
+	public void setUploadFileName(String uploadFileName) {
+		this.uploadFileName = uploadFileName;
+	}
+	
+	
+	
+	
+}

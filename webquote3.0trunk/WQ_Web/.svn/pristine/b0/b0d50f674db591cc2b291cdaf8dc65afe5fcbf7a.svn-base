@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<faces-config version="2.1" xmlns="http://java.sun.com/xml/ns/javaee"
+ xmlns:xi="http://www.w3.org/2001/XInclude"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_2_1.xsd">
+ <!-- 
+ <navigation-rule>
+  <from-view-id>/webquote/RFQ/RFQSubmission.xhtml</from-view-id>
+  <navigation-case>
+   <from-action>#{RfqSubmissionMB.submitRfqs}</from-action>
+   <from-outcome>success</from-outcome>
+   <to-view-id>/webquote/RFQ/RFQSubmissionResultLayout.xhtml?formNumber=#{RfqSubmissionBean.requestFormNumber}</to-view-id>
+   <redirect/>
+  </navigation-case>
+ </navigation-rule>
+  -->
+ <validator>
+  <validator-id>NumericValidator</validator-id>
+  <validator-class>com.avnet.emasia.webquote.utilites.web.common.NumericValidator</validator-class>
+ </validator>
+ <application>
+ 
+ 		<el-resolver>
+    		    org.springframework.web.jsf.el.SpringBeanFacesELResolver
+		</el-resolver>
+		<locale-config>
+			<default-locale>en</default-locale>
+			<supported-locale>en</supported-locale>
+			<supported-locale>ja</supported-locale>
+		</locale-config>
+		
+		<resource-bundle>
+		<base-name>com.avnet.emasia.webquote.utilities.DBResourceBundle</base-name>
+		<var>dbResource</var>
+	   </resource-bundle>
+</application>
+</faces-config>

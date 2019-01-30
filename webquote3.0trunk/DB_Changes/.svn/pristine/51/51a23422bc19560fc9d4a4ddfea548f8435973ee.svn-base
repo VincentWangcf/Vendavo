@@ -1,0 +1,18 @@
+001.sql add or update currency
+	add VALID_TO in EXCHCANGE_RATE table
+002.sql add mesg and label.
+003. sql add or update APP_LABEL table ,app_messages table,
+	create EXCHANGE_RATE_HIS table.
+	create STRATEGY table.
+	delete exchange_rate delete_flag =1.
+004.sql create table for controling the hidden of button on page.
+005.sql workingplantform excel download config.
+006.sql insert config to LOGIC_CAL_CONFIG.
+007.sql script for Multi Currency Enhancement 5.6.2 (by Wing Hong)
+008.sql alter table quote_item by DamonChen	
+009.sql UPDATE RECORDS IN TABLE APP_LABEL
+010.sql init some fields' data for quote_item.
+011.sql insert message to app_messages .
+012.sql add control dispatcher
+
+014.sql remove unused column in pricer, pricer_deleted table

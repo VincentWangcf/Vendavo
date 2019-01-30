@@ -1,0 +1,259 @@
+package com.avnet.emasia.webquote.web.quote;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
+
+import com.avnet.emasia.webquote.constants.ActionEnum;
+import com.avnet.emasia.webquote.entity.QuoteItem;
+import com.avnet.emasia.webquote.exception.AppException;
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.quote.ejb.CopyRefreshQuoteSB;
+import com.avnet.emasia.webquote.quote.ejb.SAPWebServiceSB;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+import com.avnet.emasia.webquote.quote.vo.QuoteItemVo;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.common.CacheUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.web.quote.cache.QuoteTypeCacheManager;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+@ManagedBean
+@SessionScoped
+public class CopyQuoteMB extends AttachmentEditMB implements Serializable {
+	
+	private static final long serialVersionUID = -5725924537821862139L;
+
+	private static final Logger LOG =Logger.getLogger(CopyQuoteMB.class.getName());
+	
+	@EJB
+	CopyRefreshQuoteSB copyRefreshQuoteSB;
+	
+	@EJB
+	SAPWebServiceSB sapWebServiceSB;
+	
+	@EJB
+	CacheUtil cacheUtil;
+		
+	private boolean finished;
+	private List<String> quoteTypeList = null;
+	public CopyQuoteMB(){		
+		super.attachmentType = QuoteSBConstant.ATTACHMENT_TYPE_REFRESH;
+		super.showExistingAttachment = false;	
+		
+	}
+	
+	@PostConstruct
+	public void initialize() {
+		//Bryan Start
+		//setQuoteTypeList(QuoteTypeCacheManager.getQuoteTypeList());
+		setQuoteTypeList(cacheUtil.getQuoteTypeList());
+		//Bryan End
+	}
+	
+	public void checkCopyQuoteItem(List<QuoteItemVo> quoteItemVos){
+		
+		super.quoteItemVos = quoteItemVos; 
+		super.showExistingAttachment = false;
+
+		int i = 1;
+		//Bryan Start
+		//String bidtobuy =QuoteTypeCacheManager.getQuoteType(QuoteConstant.BID_TO_BUY);
+		String bidtobuy =cacheUtil.getQuoteType(QuoteConstant.BID_TO_BUY);
+		//Bryan End
+		for(QuoteItemVo vo : quoteItemVos){
+			vo.setSeq2(i++);
+			vo.setQuoteType(bidtobuy);
+			vo.getQuoteItem().setAttachments(null);
+			vo.getQuoteItem().setReasonForRefresh(null);
+			vo.setEau(vo.getQuoteItem().getEau());
+		}
+		selectedQuoteItemVos = quoteItemVos;
+	}
+	
+	public String comfirmCopyBMTQuote() {
+		boolean errorFound = this.validationBMTCopyQuote(selectedQuoteItemVos);
+		return null;
+	}
+
+	private boolean validationBMTCopyQuote(List<QuoteItemVo> selectedQuoteItemVos) {
+		boolean errorFound = false;
+		return errorFound;
+		
+	}
+
+	public String copyQuote(){
+		
+		if(quoteItemVos.size() == 0){
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN,ResourceMB.getText("wq.message.noRecordSelected") +" !", "")); 
+			return null;
+		}
+		
+		boolean valid = true;
+		
+		List<Integer> errorRows = new ArrayList<Integer>();
+		
+		for(QuoteItemVo vo : quoteItemVos){
+			if(vo.getQuoteItem().getReasonForRefresh() == null || vo.getQuoteItem().getReasonForRefresh().trim().equals("")){
+				vo.setErrRow(true);
+				valid = false;
+			}
+			
+			if(vo.getQuoteItem().getTargetResale() == null ){
+				vo.setErrRow(true);
+				valid = false;
+			}
+			
+			if(vo.getQuoteItem().getRequestedQty() == null ){
+				vo.setErrRow(true);
+				valid = false;
+			}
+			
+			if(valid ==false){
+				errorRows.add(vo.getSeq2());
+			}
+			
+		}
+		if(valid == false){
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN,ResourceMB.getText("wq.error.mandatoryCheckingFailed")+" !" + "<br/>" + errorRows, "")); 
+			return null;
+		}	
+		
+		for(QuoteItemVo vo : quoteItemVos){
+			long count = 0L;
+			try {
+				count = copyRefreshQuoteSB.getRevertVersionByFirstRFQCode(vo.getQuoteItem().getFirstRfqCode());
+			
+				if(count >= 99){
+					String [] dynamicParameters= {vo.getQuoteItem().getFirstRfqCode(), vo.getQuoteItem().getQuoteNumber()};
+					String s = ResourceMB.getParameterizedString("wq.message.rfQCodeUsedCount", dynamicParameters);
+					s = s + "<br/>" + ResourceMB.getText("wq.error.inputNewRFQ");
+					FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, ResourceMB.getText(CommonConstants.WQ_JPA_ENTITY_MSG_CHECK_MSG)+"<br/>" + s, ""));
+					return null;
+				}
+			}catch(Exception e){
+				LOG.log(Level.SEVERE, "EXception in copying qoute , exception message : "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, ResourceMB.getText(CommonConstants.WQ_JPA_ENTITY_MSG_CHECK_MSG)+"<br/>" + e.getMessage(), ""));
+			}
+		}
+
+		try{			
+			List<String> quoteNumbers = new ArrayList<String>();
+			
+			for(QuoteItemVo vo : quoteItemVos ){
+				quoteNumbers.add(vo.getQuoteItem().getQuoteNumber());
+				
+				vo.getQuoteItem().setEau(vo.getEau()); // for defect 99
+			}
+			
+			LOG.info("Copy Quote begin: " + quoteNumbers.toString());
+			
+			this.setAttachmentContent(quoteItemVos);
+			
+			quoteItemVos = copyRefreshQuoteSB.refreshQuote(quoteItemVos, UserInfo.getUser(),"copy");
+			
+			quoteNumbers.clear();
+			for(QuoteItemVo vo : quoteItemVos ){
+				quoteNumbers.add(vo.getQuoteItem().getQuoteNumber());
+			}
+			
+			LOG.info("Copy Quote finish: " + quoteNumbers.toString());			
+		}catch(Exception e){
+		
+			Date date = new Date();
+			String timeStamp = String.valueOf(date.getTime());
+			LOG.log(Level.SEVERE, "EXception in copying qoute , timestamp : "+timeStamp+" , exception message : "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+			ResourceMB resourceMB=(ResourceMB)FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get("resourceMB");
+			String s = MessageFormatorUtil.getParameterizedStringFromException(e,resourceMB.getResourceLocale());			
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN,s,""));
+			return null;			
+		}
+
+		Collections.sort(quoteItemVos, new Comparator<QuoteItemVo>(){
+			public int compare(QuoteItemVo arg0, QuoteItemVo arg1) {
+				return arg0.getSeq2() - arg1.getSeq2();
+			}
+		});
+						
+		finished = true;		
+		return "/RFQ/CopyQuoteResult.xhtml";
+	}
+
+	public String markAsUserd(){
+		if(quoteItemVos.size() == 0){
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN,ResourceMB.getText("wq.message.noRecordSelected")+" !", "")); 
+			return null;
+		}
+		List<QuoteItem> quoteItems = new ArrayList<QuoteItem>();
+		for(QuoteItemVo vo:quoteItemVos){
+			QuoteItem quoteItem = vo.getQuoteItem();
+			quoteItem.setUsedFlag(true);
+			quoteItem.setPoExpiryDate(new Date() );
+			quoteItem.setQuoteExpiryDate(new Date());
+			quoteItem.setAction(ActionEnum.MYQUOTE_MARK_AS_USED.name()); // add audit action 
+			quoteItems.add(quoteItem);
+			
+		}
+		try{			
+			 copyRefreshQuoteSB.markAsUserd(quoteItemVos);
+			
+		}catch(Exception e){
+			Date date = new Date();
+			String timeStamp = String.valueOf(date.getTime());
+			LOG.log(Level.SEVERE, "EXception in marking quote item as marked , timestamp : "+timeStamp+" , exception message : "+e.getMessage(), e);
+			String s = e.getMessage();
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN,s,""));
+			return null;			
+		}
+		
+		try {
+			sapWebServiceSB.createSAPQuote(quoteItems);
+		} catch (AppException e) {
+			Date date = new Date();
+			String timeStamp = String.valueOf(date.getTime());
+			LOG.log(Level.WARNING, "Exception in creating SAP Quote : "+timeStamp);
+			String s = ResourceMB.getText(e.getErrorCode());
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN,s,""));
+			return null;
+		}
+		 
+		Collections.sort(quoteItemVos, new Comparator<QuoteItemVo>(){
+			public int compare(QuoteItemVo arg0, QuoteItemVo arg1) {
+				return arg0.getSeq2() - arg1.getSeq2();
+			}
+		});
+						
+		finished = true;		
+		return "/RFQ/MarkAsUserdResult.xhtml";
+		
+	}
+	public boolean isFinished() {
+		return finished;
+	}
+
+	public void setFinished(boolean finished) {
+		this.finished = finished;
+	}
+
+	public List<String> getQuoteTypeList() {
+		return quoteTypeList;
+	}
+
+	public void setQuoteTypeList(List<String> quoteTypeList) {
+		this.quoteTypeList = quoteTypeList;
+	}
+}
+                    

@@ -1,0 +1,140 @@
+
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:define name="content">
+	
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	
+	<p:panel header="#{dbResource['wq.label.grpMang']}">
+		
+			<h:form id="form1">
+
+				<p:dataTable value="#{groupMB.groups}" 
+	    			rows="10"
+    				rowsPerPageTemplate="10,20,50"
+					var="group" 
+					paginator="true"
+					id="groupTable" 
+					rowKey="#{group.id}"
+					paginatorPosition="bottom" 
+					emptyMessage="#{dbResource['wq.message.noRecordFound']}."  >
+					
+					<p:column headerText="#{dbResource['wq.label.name']}" filterBy="#{group.name}">
+						<h:outputText value="#{group.name}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.description']}" filterBy="#{group.description}">
+						<h:outputText value="#{group.description}" />
+					</p:column>
+
+					<p:column headerText="#{dbResource['wq.label.active']}" filterBy="#{group.active}">
+						<h:outputText value="Yes" />
+					</p:column>
+					
+					<p:column headerText="#{dbResource['wq.button.modify']}" styleClass="align_center">
+						<p:commandButton icon="ui-icon-search" title="#{dbResource['wq.button.modify']}" oncomplete="PF('groupDialog').show();" update=":form2">
+							<f:setPropertyActionListener value="#{group}" target="#{groupMB.group}" />
+						</p:commandButton>
+					</p:column>
+					
+					<f:facet name="footer">
+						<p:commandButton value="#{dbResource['wq.button.addGrp']}" position="middle" update=":form2" actionListener="#{groupMB.add}" oncomplete="PF('groupDialog').show();"/>
+					</f:facet>
+					
+				</p:dataTable>
+				
+			</h:form>
+			
+				
+			<p:dialog header="#{dbResource['wq.label.groupDetail']}" widgetVar="groupDialog" resizable="true" id="groupDlg" >
+
+				<h:form id="form2">
+
+					<p:messages id="messages" autoUpdate="true" closable="true" showDetail="true"/>
+					
+					<p:fieldset legend="#{dbResource['wq.header.basicInformation']}">
+
+						<h:panelGrid columns="3" cellpadding="2" style="width:100%">
+
+							<h:outputText value="#{dbResource['wq.label.grpName']}:*" />
+							
+							<p:inputText value="#{groupMB.group.name}" id="groupName" required="true" requiredMessage="#{dbResource['wq.label.grpName']} : #{dbResource['wq.message.required']}">
+								<f:validateRequired />
+							</p:inputText>
+							<p:message for="groupName" display="icon" /> 
+																				
+							<h:outputText value="#{dbResource['wq.label.description']}:"  />
+							<p:inputTextarea cols="25" rows="3" value="#{groupMB.group.description}" id="description"/>
+							<p:message for="description" display="icon" />
+
+							<h:outputText value="#{dbResource['wq.label.lisActive']}:" />
+							<p:selectBooleanCheckbox value="#{groupMB.group.active}" id="active" />
+							<p:message for="active" display="icon" />
+							
+						</h:panelGrid>
+					</p:fieldset>
+
+					
+					
+					<p:fieldset legend="#{dbResource['wq.label.userModifying']}">
+					 <p:orderList value="#{groupMB.users}" var="user" controlsLocation="none"  
+                			itemValue="#{user.id}" id="userList" converter="webquote.user.User">  
+
+						<p:column style="width:90%">
+							#{user.employeeId} #{user.name}
+						</p:column>
+						
+						<p:column style="width:10%">
+							<p:commandLink id="removeUserBtn" value="#{dbResource['wq.label.d']}" actionListener="#{groupMB.removeUser}" 
+								partialSubmit="true" process="removeUserBtn, userList" update="userList">
+								<f:param name="id" value="#{user.id}"/>
+							</p:commandLink>
+						</p:column>
+								  
+						</p:orderList>
+						
+						<p:inputText value="#{groupMB.employeeId}" id="employeeIdTxt"/>
+						<p:commandButton id="addUserBtn" value="#{dbResource['wq.button.add']}"
+							 actionListener="#{groupMB.addUser}" partialSubmit="true" process="employeeIdTxt, addUserBtn" update="userList, employeeIdTxt">
+						</p:commandButton>
+
+
+					</p:fieldset>						
+
+
+					<h:panelGrid columns="2">
+						<p:commandButton id="cancel" value="#{dbResource['wq.button.cancel']}" position="middle" type="button" onclick="PF('groupDialog').hide();" />
+
+						<p:commandButton id="submit" value="#{dbResource['wq.header.save']}" actionListener="#{groupMB.save}" oncomplete="handleSaveRequest(xhr, status, args)"
+							update=":form1:groupTable :form2" />
+
+						<script type="text/javascript">  
+						    function handleSaveRequest(xhr, status, args) {  
+						        if(args.validationFailed || !args.saved) {  
+						              
+						        } else {  
+						        	PF('groupDialog').hide();
+						              
+						        }  
+						    }  
+						</script>
+
+					</h:panelGrid>
+
+				</h:form>
+
+			</p:dialog>
+
+		</p:panel>
+
+	</ui:define>
+
+</ui:composition>
+
+
+

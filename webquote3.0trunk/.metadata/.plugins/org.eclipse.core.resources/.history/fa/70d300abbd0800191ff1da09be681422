@@ -1,0 +1,66 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="style-005.css" />
+	<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+		<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+		<h2>
+			<h:outputText value="#{dbResource['wq.header.quoteBuilder']}" />
+		</h2>
+		<h:form id="form">
+			<p:panel header="#{dbResource['wq.button.upload']}"
+				style="font-size:12pt;margin-right:10px;">
+				
+				
+			
+				
+
+				
+
+			</p:panel>
+			<div>    </div>
+			<div> </div>
+			<div> </div>
+			<div></div>
+			<br/>
+			<br/>
+			<br/>
+			<br/>
+			
+			<h:panelGrid columns="812" cellpadding="0" style="margin-left:10px;" >
+
+					<p:fileUpload label="#{dbResource['wq.button.chooseFile']}"
+						value="#{quoteBuilderMB.uploadQuoteFile}"
+						allowTypes="/(\.|\/)(xls|xlsx|XLS|XLSX)$/" mode="simple"
+						skinSimple="true"  />
+
+					<h:outputText id="uploadFileName"
+						value="#{quoteBuilderMB.uploadQuoteFileName}" />
+					
+				</h:panelGrid>
+			
+			
+			
+			<p:panel header="test demon"
+				style="font-size:12pt;margin-right:10px;">
+				
+				
+			
+				<p:commandButton value="#{dbResource['wq.header.save']}"
+						actionListener="#{testBean.demon}"
+						onstart="start();" onsuccess="stop();" onerror="stopWithError();" />
+
+				
+
+			</p:panel>
+		</h:form>
+	</ui:define>
+</ui:composition>

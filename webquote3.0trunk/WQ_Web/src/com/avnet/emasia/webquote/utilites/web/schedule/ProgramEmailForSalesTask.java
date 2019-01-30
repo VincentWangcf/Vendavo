@@ -1,0 +1,307 @@
+package com.avnet.emasia.webquote.utilites.web.schedule;
+
+
+import java.net.InetAddress;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import com.avnet.emasia.webquote.utilities.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.Timer;
+import javax.faces.bean.ManagedProperty;
+
+import org.jboss.as.server.CurrentServiceContainer;
+import org.jboss.msc.service.ServiceController;
+
+import com.avnet.emasia.webquote.commodity.ejb.ProgramMaterialSB;
+import com.avnet.emasia.webquote.commodity.helper.CommodityConstant;
+import com.avnet.emasia.webquote.commodity.helper.ProgRfqSubmitHelper;
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.ProgramPricer;
+import com.avnet.emasia.webquote.entity.ProgramType;
+import com.avnet.emasia.webquote.masterData.util.StringUtils;
+import com.avnet.emasia.webquote.quote.ejb.SystemCodeMaintenanceSB;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.user.ejb.ProgramTypeSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.bean.MailInfoBean;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.utilities.ejb.MailUtilsSB;
+import com.avnet.emasia.webquote.utilities.schedule.IScheduleTask;
+import com.avnet.emasia.webquote.vo.Oqmsp;
+import com.avnet.emasia.webquote.web.quote.job.EnvironmentService;
+
+/**
+ * @author 906893
+ * @createdOn 20130702
+ */
+@Stateless
+public class ProgramEmailForSalesTask implements IScheduleTask, java.io.Serializable {
+
+
+	private static final long serialVersionUID = -4105645476526224016L;
+	private static final Logger LOGGER = Logger.getLogger(ProgramEmailForSalesTask.class
+			.getName());
+
+	//Email style
+	private final String PROGRAM_CODE_FS="FS";
+	private final String PROGRAM_CODE_CM="CM";
+	private final String EMAIL_FONT_SETTING="font-family:Arial;font-size:11pt;";
+	private final String EMAIL_TABLE_HEADER_STYLE="style='background-color:#e46d0a;"+EMAIL_FONT_SETTING+"'";
+	private final String EMAIL_TABLE_CONTENT_STYLE="style='background-color:#fde9d9;vertical-align:top;"+EMAIL_FONT_SETTING+"'";
+	private final String EMAIL_TABLE_HEADER_FONT_COLOUR="ALIGN='center' style='color:white;'";
+	private final String EMAIL_TABLE_CONTENT_FONT_COLOUR="style='color:black;'";	
+	private final String EMAIL_TABLE_CONTENT_STYLE_FOR_OQ="style='background-color:#fde9d9;vertical-align:top;BORDER-RIGHT:#fde9d9;"+EMAIL_FONT_SETTING+"'";
+	private final String EMAIL_TABLE_CONTENT_STYLE_FOR_MSP="style='background-color:#fde9d9;vertical-align:top;BORDER-LEFT:#fde9d9;"+EMAIL_FONT_SETTING+"'";
+	
+	
+	private final int MAX_MAIL_SEND_AMT=100;
+	
+	private final String WEBPROMO_LINKAGE_PATH = "WEBPROMO_LINKAGE_PATH";
+	private final String WEBPROMO_ITEM_LINKAGE_PATH = "WEBPROMO_ITEM_LINKAGE_PATH";
+	
+	private final String PARA_MFR = "mfr";
+	private final String PARA_FULL_MFR_PART = "part";
+	@EJB
+	private transient ProgramMaterialSB programMaterialSB ;
+	
+	@EJB
+	private transient ProgramTypeSB programTypeSB;
+	
+	@EJB
+	private transient MailUtilsSB mailUtilsSB;
+	
+	@EJB
+	private transient SysConfigSB sysConfigSB;
+	
+	@EJB
+	private transient SystemCodeMaintenanceSB sysCodeMaintSB;
+	
+	@EJB
+    private transient BizUnitSB bizUnitSB;
+	
+	@EJB
+	private EJBCommonSB ejbCommonSB;
+	
+	@Override
+	@Asynchronous
+	public void executeTask(Timer timer) 
+	{
+		LOGGER.info("ProgramEmailForSalesTask job beginning...");
+        try
+        {
+
+		            	List<BizUnit> bizUnitList = bizUnitSB.findAll();
+		            	for(BizUnit bizUnit : bizUnitList) {
+		            		proceedProgramNotificationEmail(bizUnit);
+		            	}
+		            	
+        }
+		catch(Exception e)
+		{
+			LOGGER.log(Level.WARNING,"Exception for timer:"+timer.getInfo().toString()+", ProgramEmailForSalesTask error:"+ MessageFormatorUtil.getParameterizedStringFromException(e));
+		}
+       
+		LOGGER.info("ProgramEmailForSalesTask job ended");
+	}
+
+	
+	public void proceedProgramNotificationEmail(BizUnit bizUnit)
+	{
+		
+		List<ProgramType> progremTypeList =  (List<ProgramType>)programTypeSB.findAll();
+		
+		if(progremTypeList!=null && progremTypeList.size()>0)
+		{
+			 for(ProgramType pt : progremTypeList)
+			 {
+				 if(pt!=null)
+				 {
+					 List<ProgramPricer> pmList = (List<ProgramPricer>)programMaterialSB.getUpdateProgramMaterialForEmail(pt.getName(), bizUnit);
+					 if(pmList!=null && pmList.size()>0)
+					 {
+						 sendProgramMaterialUpdateEmail(pmList, pt.getName(), bizUnit);
+					 }
+					 else
+					 {
+						 LOGGER.info("No found Update Progarm material in Program type "+ pt.getName());
+					 }
+				 }
+				
+			 }
+		}
+		else
+		{
+			LOGGER.info("No found Material Type in Program Email for sales Task");
+		}
+	}
+	
+
+	 public void sendProgramMaterialUpdateEmail(List<ProgramPricer> pmList, String programType, BizUnit bizUnit)
+	 {
+		 
+		 MailInfoBean mib = new MailInfoBean();
+		 String subject = "";
+		 NumberFormat df = new DecimalFormat("00");
+		 SimpleDateFormat format = new SimpleDateFormat("yyMMdd");		
+		 format.setTimeZone(TimeZone.getTimeZone("Hongkong"));		
+	     if(CommodityConstant.PROGRAM_TYPE_FIRESALES.equalsIgnoreCase(programType))
+	     {
+	    	 mib.setMailFrom(sysCodeMaintSB.getBuzinessProperty(CommodityConstant.PROGRAM_EMAIL_FROM_FIRE_SALES, bizUnit.getName()));
+	    	 subject=programType+" Offer "+PROGRAM_CODE_FS+" ";
+	    	 mib.setMailContent(getContent(pmList,programType, sysCodeMaintSB.getBuzinessProperty(CommodityConstant.PROGRAM_EMAIL_TEAM_FIRE_SALES, bizUnit.getName()), bizUnit.getName()));
+	    	
+	    	 String toStr = sysCodeMaintSB.getBuzinessProperty(CommodityConstant.PROGRAM_EMAIL_TO_FIRE_SALES, bizUnit.getName());
+	    	 List<String> toList = new ArrayList<String>();
+	    	 String[] toArray =StringUtils.splitStringToArray(toStr, "|");
+	    	 for(String str : toArray)
+	    	 {
+	    		 toList.add(str);
+	    	 }
+	    	 mib.setMailTo(toList);
+	    	 
+	    	 String ccStr = sysCodeMaintSB.getBuzinessProperty(CommodityConstant.PROGRAM_EMAIL_CC_FIRE_SALES, bizUnit.getName());
+	    	 if (ccStr != null) {
+	    		 String[] ccArray =StringUtils.splitStringToArray(ccStr, "|");
+	    		 List<String> ccList = new ArrayList<String>();
+	    		 for(String str : ccArray)
+	    		 {
+	    			 ccList.add(str);
+	    		 }
+	    		 mib.setMailCc(ccList);
+	    	 }
+
+	     }
+	     else if(CommodityConstant.PROGRAM_TYPE_COMMODITY.equalsIgnoreCase(programType))
+	     {
+	    	 mib.setMailFrom(sysCodeMaintSB.getBuzinessProperty(CommodityConstant.PROGRAM_EMAIL_FROM_COMMODITY, bizUnit.getName()));
+	    	 subject=programType+" Offer "+PROGRAM_CODE_CM+" ";
+	    	 mib.setMailContent(getContent(pmList,programType, sysCodeMaintSB.getBuzinessProperty(CommodityConstant.PROGRAM_EMAIL_TEAM_COMMODITY, bizUnit.getName()), bizUnit.getName()));
+	    	
+	    	 String toStr = sysCodeMaintSB.getBuzinessProperty(CommodityConstant.PROGRAM_EMAIL_TO_COMMODITY, bizUnit.getName());
+	    	 List<String> toList = new ArrayList<String>();
+	    	 String[] toArray =StringUtils.splitStringToArray(toStr, "|");
+	    	 for(String str : toArray)
+	    	 {
+	    		 toList.add(str);
+	    	 }
+	    	 mib.setMailTo(toList);
+	    	 
+	    	 String ccStr = sysCodeMaintSB.getBuzinessProperty(CommodityConstant.PROGRAM_EMAIL_CC_COMMODITY, bizUnit.getName());
+	    	 if (ccStr != null) {
+	    		 String[] ccArray =StringUtils.splitStringToArray(ccStr, "|");
+	    		 List<String> ccList = new ArrayList<String>();
+	    		 for(String str : ccArray)
+	    		 {
+	    			 ccList.add(str);
+	    		 }
+	    		 mib.setMailCc(ccList);
+	    	 }
+	     }
+	    // subject+=format.format(new Date())+"-"+df.format(sequencenum);
+	     subject+=format.format(new Date());
+	     mib.setMailSubject(subject);
+	     try
+	     {
+	    	 mailUtilsSB.sendHtmlMail(mib);
+	     }
+		 catch (Exception e)
+		 {
+			 LOGGER.log(Level.SEVERE, "Send email failed! exception message"+e.getMessage(), e);
+			LOGGER.info("Send email failed!" + e.getMessage());
+		 }
+		 
+	 }
+
+	 public String getContent(List<ProgramPricer> pmList, String programType, String team, String bizUnit) 
+	 {
+			StringBuffer sb=new StringBuffer();
+			//NumberFormat df = NumberFormat.getNumberInstance(new ResourceMB().getResourceLocale());
+			NumberFormat df = new DecimalFormat("###,###,###,###");
+			String orderQuantitiesResult="",minimumSellPriceResult="";
+			
+			sb.append("<div style='"+EMAIL_FONT_SETTING+"'>");
+			sb.append("Dear all Sales,<br/><br/>");
+			sb.append("Below "+programType+" parts offer are for your immediate action.<br/>");
+			sb.append("Kindly work with customers gets orders. For any price issue, please do not hesitate to contact us. Thanks!<br/><br/>");
+			sb.append("<a href='"
+				+ sysConfigSB.getProperyValue(CommodityConstant.WEBQUOTE2_DOMAIN)
+				+ sysConfigSB.getProperyValue(WEBPROMO_LINKAGE_PATH)
+				+ "'>WebPromo Page</a><br/><br/>");
+			sb.append("<table border='1' cellspacing='0'>");
+			//build table header
+			sb.append("<tr "+EMAIL_TABLE_HEADER_FONT_COLOUR+">");
+			sb.append("<td "+EMAIL_TABLE_HEADER_STYLE+"><b>&nbsp;&nbsp;Line&nbsp;&nbsp;</b></td>");
+			sb.append("<td "+EMAIL_TABLE_HEADER_STYLE+"><b>&nbsp;Product&nbsp;&nbsp;<br>&nbsp;&nbsp;Group&nbsp;</b></td>");
+			sb.append("<td "+EMAIL_TABLE_HEADER_STYLE+"><b>Part<br>&nbsp;&nbsp;&nbsp;Number&nbsp;&nbsp;</b></td>");
+			sb.append("<td colspan='2' "+EMAIL_TABLE_HEADER_STYLE+"><b>&nbsp;&nbsp;Order Qty VS Min Price&nbsp;&nbsp;</b></td>");
+			sb.append("<td "+EMAIL_TABLE_HEADER_STYLE+"><b>&nbsp;&nbsp;MPQ&nbsp;&nbsp;</b></td>");
+			sb.append("<td "+EMAIL_TABLE_HEADER_STYLE+"><b>&nbsp;&nbsp;Available&nbsp;&nbsp;<br>&nbsp;&nbsp;To Sell Qty&nbsp;&nbsp;</b></td>");		
+			sb.append("<td "+EMAIL_TABLE_HEADER_STYLE+"><b>&nbsp;&nbsp;Schedule Status&nbsp;&nbsp;</b></td>");
+			sb.append("</tr>");
+			
+			for(int i=0;i<pmList.size();i++)
+			{
+				ProgramPricer pm =(ProgramPricer)pmList.get(i);
+				List<Oqmsp> opmspList = ProgRfqSubmitHelper.getOpmspList(pm);
+				if(i>=MAX_MAIL_SEND_AMT)
+					break;
+				
+				sb.append("<tr "+EMAIL_TABLE_CONTENT_FONT_COLOUR+">");
+				sb.append("<td ALIGN='center' "+EMAIL_TABLE_CONTENT_STYLE+">&nbsp;&nbsp;"+pm.getMaterial().getManufacturer().getName()+"&nbsp;&nbsp;</td>");
+				sb.append("<td ALIGN='center' "+EMAIL_TABLE_CONTENT_STYLE+">&nbsp;&nbsp;"+pm.getMaterial().getMaterialRegaional(bizUnit).getProductGroup2().getName()+"&nbsp;&nbsp;</td>");
+				sb.append("<td ALIGN='center' "+EMAIL_TABLE_CONTENT_STYLE+">&nbsp;&nbsp;<a href='"+createItemLinkage(pm.getMaterial().getManufacturer().getName(),pm.getMaterial().getFullMfrPartNumber())+"'>"+pm.getMaterial().getFullMfrPartNumber()+"</a>&nbsp;&nbsp;</td>");	
+					
+				if(opmspList!=null && opmspList.size()>0)
+				{
+					for(Oqmsp oqm : opmspList){
+						orderQuantitiesResult+="&nbsp;&nbsp;&nbsp;&nbsp;"+oqm.getOq()+"&nbsp;&nbsp;&nbsp;&nbsp;<br/>";
+						minimumSellPriceResult+="&nbsp;&nbsp;&nbsp;&nbsp;"+oqm.getMsp()+"&nbsp;&nbsp;&nbsp;&nbsp;<br/>";				
+					}
+				}
+				
+				sb.append("<td "+EMAIL_TABLE_CONTENT_STYLE_FOR_OQ+">"+orderQuantitiesResult+"</td>");
+				sb.append("<td "+EMAIL_TABLE_CONTENT_STYLE_FOR_MSP+">"+minimumSellPriceResult+"</td>");
+				sb.append("<td ALIGN='center' "+EMAIL_TABLE_CONTENT_STYLE+">&nbsp;&nbsp;"+df.format(pm.getMpq())+"&nbsp;&nbsp;</td>");
+				sb.append("<td ALIGN='center' "+EMAIL_TABLE_CONTENT_STYLE+">&nbsp;&nbsp;"+df.format(pm.getAvailableToSellQty())+"&nbsp;&nbsp;</td>");
+				sb.append("<td ALIGN='center' "+EMAIL_TABLE_CONTENT_STYLE+">&nbsp;&nbsp;"+pm.getLeadTime()+"&nbsp;&nbsp;</td>");
+				sb.append("</tr>");
+				orderQuantitiesResult="";
+				minimumSellPriceResult="";
+			}
+			
+			sb.append("</table>");
+			sb.append("<br/>");
+			sb.append("<u>Remarks</u>:<br/>");
+			sb.append("Min Unit Price is tied to Order Qty, you are encouraged to sell higher than the suggested min Unit Price.<br/>");
+			sb.append("Above offers are NOT applicable for current customers with existing SO backlog. Please offer to your customers with care.<br/>");
+			sb.append("All stock and backlog qtys are under allocation and subject to prior sales<br/>");
+			sb.append("Please confirm with "+programType+" Team for order approval, stock availability and allocation status before committing with customers.<br/>");
+			sb.append("<br/>");
+			sb.append("Thank You and Good Selling!<br/>");
+			sb.append("<br/>");
+			sb.append("Best Regards,<br/>");
+			sb.append(team);
+			sb.append("</div>");
+
+
+			return sb.toString();
+     }
+	 
+	public String createItemLinkage(String mfr,String fmp){
+		return sysConfigSB.getProperyValue(CommodityConstant.WEBQUOTE2_DOMAIN)
+				+ sysConfigSB.getProperyValue(WEBPROMO_ITEM_LINKAGE_PATH)
+				+ PARA_MFR + "=" + mfr + "&" + PARA_FULL_MFR_PART + "=" + fmp;
+	}
+	
+}

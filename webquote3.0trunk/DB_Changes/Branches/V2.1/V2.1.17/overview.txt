@@ -1,0 +1,2 @@
+001 POS_SUMMARY_PROC change
+	changed by tough. remove all the COMMIT in the SP as commit is not allowed when EJB calls the SP

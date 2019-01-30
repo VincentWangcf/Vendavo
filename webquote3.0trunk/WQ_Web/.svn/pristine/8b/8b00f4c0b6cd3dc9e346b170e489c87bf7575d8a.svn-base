@@ -1,0 +1,125 @@
+/**
+ * @Package: DownLoadOfflineReportMB 
+ * @author: 042659   
+ * @date: Aug 30, 2017 3:51:42 PM 
+ */
+package com.avnet.emasia.webquote.web.reports;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.RequestScoped;
+import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpServletResponse;
+
+import org.primefaces.context.RequestContext;
+
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.reports.constant.ReportConstant;
+import com.avnet.emasia.webquote.reports.util.ReportsUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.common.SysConfigSB;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+@ManagedBean
+@RequestScoped
+public class DownLoadOfflineReportMB implements Serializable {
+
+	private static final long serialVersionUID = 4708086757251556781L;
+	protected static final Logger LOGGER = Logger.getLogger(DownLoadOfflineReportMB.class.getName());
+	private String fileName;
+	private static final String OFFLINE_REPORT_PATH = "OFFLINE_REPORT_PATH";
+	@EJB
+	private SysConfigSB sysConfigSB;
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+
+	public void getFile() {
+		try {
+
+			User user = UserInfo.getUser();
+
+			if (user == null || user.getEmployeeId() == null || "".equals(user.getEmployeeId().trim())) {
+				showMessage("Please login in WebQuote System.");
+				return;
+			}
+
+			if (isCorrectFileName(this.fileName)) {
+				showMessage("The file name format is not correct.");
+				return;
+			}
+			String employeeId = ReportsUtil.extractEmployeeIdFromFileName(this.fileName);
+
+			if (employeeId != null && !employeeId.equals(user.getEmployeeId())) {
+				showMessage("You have no access to this file.");
+				return;
+			}
+			
+			String offlineReportPath = sysConfigSB.getProperyValue(OFFLINE_REPORT_PATH);
+			File file = new File(offlineReportPath+this.fileName);
+			if(!file.exists()){
+				showMessage("The file does not exist.");
+				return;
+			}
+			FacesContext facesContext = FacesContext.getCurrentInstance();
+			HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
+			OutputStream out = response.getOutputStream();
+			response.reset();
+			response.setHeader("Content-Type", "application/octet-stream");
+			response.setHeader("Content-Disposition", "attachment;filename=" + this.fileName);
+			FileInputStream in = new FileInputStream(file);
+			byte[] buffer = new byte[4 * 1024];
+			int length;
+			while ((length = in.read(buffer)) > 0) {
+				out.write(buffer, 0, length);
+			}
+
+			out.flush();
+			in.close();
+			out.close();
+			facesContext.responseComplete();
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE,
+					"DownLoad Offline Report Error occured for User Id: " + UserInfo.getUser().getEmployeeId()
+							+ ", Reason for failure: " + MessageFormatorUtil.getParameterizedStringFromException(e),
+					e);
+		}
+	}
+
+	public void showMessage(String str) {
+		RequestContext context = RequestContext.getCurrentInstance();
+		context.addCallbackParam("selected", "0");
+
+		FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_WARN, "", "str");
+		FacesContext.getCurrentInstance().addMessage("messageGrowl", msg);
+
+	}
+
+	public boolean isCorrectFileName(String fileNameStr) {
+		int num = 0;
+		boolean flag = true;
+		char[] chars = fileNameStr.toCharArray();
+		for (int i = 0; i < chars.length; i++) {
+			if (ReportConstant.UNDERLINE_SIGN == String.valueOf(chars[i])) {
+				num++;
+			}
+		}
+		if (num != 2) {
+			flag = false;
+		}
+		return flag;
+	}
+
+}

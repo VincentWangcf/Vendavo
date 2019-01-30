@@ -1,0 +1,162 @@
+package com.avnet.emasia.webquote.extend.tag;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import com.avnet.emasia.webquote.utilities.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+import java.util.logging.Logger;
+
+import javax.faces.component.PartialStateHolder;
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
+import javax.faces.convert.Converter;
+import javax.faces.convert.ConverterException;
+import javax.faces.convert.FacesConverter;
+
+import org.eclipse.jetty.util.log.Log;
+
+import com.avnet.emasia.webquote.commodity.constant.PRICER_TYPE;
+import com.avnet.emasia.webquote.commodity.converter.OqmspConverter;
+import com.avnet.emasia.webquote.entity.QuantityBreakPrice;
+import com.avnet.emasia.webquote.helper.TransferHelper;
+
+@FacesConverter("javax.faces.BreakList")
+public class BreakListConverter implements Converter, PartialStateHolder{
+	 // ------------------------------------------------------ Manifest Constants
+
+
+    /**
+     * <p>The standard converter id for this converter.</p>
+     */
+    public static final String CONVERTER_ID = "javax.faces.BreakList";
+	private static Logger logger = Logger.getLogger(OqmspConverter.class.getName());
+	private final static String BLANK = "";
+    private String targetField = null;
+
+    // -------------------------------------------------------------- Properties
+
+    public String getTargetField() {
+		return this.targetField;
+	}
+
+	public void setTargetField(String targetField) {
+		clearInitialState();
+		this.targetField = targetField;
+	}
+       
+        public enum PartternEnum {
+
+    		CVT_BREAKINT, // order qty rows in single colum
+    		CVT_NORMSELL, // normal sell rows in single colum
+    		CVT_SALESCOST, // Sales cost rows in single colum
+    		CVT_SUGGESTSALE;// Suggests Sale rows in single colum
+    		
+    		 
+    		protected static PartternEnum getPartternEnumByStr(String name) {
+    			if(name==null || name.length()<1) {
+    				return null;
+    			}
+    			PartternEnum[] enums = PartternEnum.values();
+    			for(PartternEnum en :enums) {
+    				if(en.toString().equalsIgnoreCase(name)) {
+    					return en;
+    				}
+    			}
+    			return null;
+    		}
+    	}
+
+    	@Override
+    	public Object getAsObject(FacesContext arg0, UIComponent arg1, String arg2) {
+
+    		return null;
+
+    	}
+
+    	// &lt;br /&gt;
+    	@Override
+    	public String getAsString(FacesContext context, UIComponent component, Object obj) {
+
+    		 if (context == null || component == null) {
+    	            throw new NullPointerException();
+    	      }
+    		//Log.info(this.hashCode() + parttern.toString());
+    		List<QuantityBreakPrice> qList = (List<QuantityBreakPrice>) obj;
+    		if (qList == null || qList.isEmpty()) {
+    			return BLANK;
+    		}
+    		PartternEnum parttern = PartternEnum.getPartternEnumByStr(this.targetField);
+    		if (parttern == null) {
+    			Log.info("parttern should not be blank");
+    			throw new NullPointerException("parttern should not be blank,Please check the parameter for targetField.");
+    		}
+    		switch (parttern) {
+    		case CVT_BREAKINT:
+    			return TransferHelper.convertQrderQty(qList);
+    		case CVT_NORMSELL:
+    			return TransferHelper.convertNormalSellPrice(qList);
+    		case CVT_SALESCOST:
+    			return TransferHelper.convertSalesCost(qList);
+    		case CVT_SUGGESTSALE:	
+    			return TransferHelper.convertSuggestedResale(qList);
+    		default :
+    			return "";
+
+    		}
+    	}
+
+    public Object saveState(FacesContext context) {
+
+        if (context == null) {
+            throw new NullPointerException();
+        }
+        if (!initialStateMarked()) {
+            Object values[] = new Object[1];
+            values[0] = this.targetField;
+            return (values);
+        }
+        return null;
+
+    }
+
+
+    public void restoreState(FacesContext context, Object state) {
+        if (context == null) {
+            throw new NullPointerException();
+        }
+        if (state != null) {
+            Object values[] = (Object[]) state;
+            this.targetField = (String) values[0];
+        }
+    }
+
+
+    private boolean transientFlag = false;
+
+
+    public boolean isTransient() {
+        return (transientFlag);
+    }
+
+
+    public void setTransient(boolean transientFlag) {
+        this.transientFlag = transientFlag;
+    }
+
+    private boolean initialState;
+
+    public void markInitialState() {
+        initialState = true;
+    }
+
+    public boolean initialStateMarked() {
+        return initialState;
+    }
+
+    public void clearInitialState() {
+        initialState = false;
+    }
+}

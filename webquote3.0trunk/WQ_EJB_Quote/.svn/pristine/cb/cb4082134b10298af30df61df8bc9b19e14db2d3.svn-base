@@ -1,0 +1,220 @@
+package com.avnet.emasia.webquote.quote.vo;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+
+import com.avnet.emasia.webquote.entity.RestrictedCustomerMapping;
+
+public class CatalogSearchResult implements Serializable {
+	
+	
+	private static final long serialVersionUID = 8387983296393859298L;
+	
+	private int seq;
+	private String mfr;
+	private String fullMfrPart;
+	private Integer requiredQty;
+	private Integer mpq;
+	private Integer moq;
+	private String orderQty;
+	private BigDecimal salesCost;
+	private BigDecimal suggestedResale;
+	private Double targetResale;
+	private String costIndicator;
+	private Date quoteExpiryDate;
+	private String leadTime;
+	private String priceValidity;
+	private String description;
+	private String bizUnit;
+	private Date quotationEffectiveDate;
+	private String priceType;
+	private String soldToCustomerCode;
+	private String soldToCustomerName;
+	private boolean hasRestrictCustomer;
+	private List<RestrictedCustomerMapping> restrictedCustMappingList;
+	
+	@Override
+	public String toString() {
+		return "CatalogSearchResult [seq=" + seq + ", mfr=" + mfr
+				+ ", fullMfrPart=" + fullMfrPart + ", requiredQty="
+				+ requiredQty + ", mpq=" + mpq + ", moq=" + moq
+				+ ", targetResale=" + targetResale + ", costIndicator="
+				+ costIndicator + ", quoteExpiryDate=" + quoteExpiryDate
+				+ ", leadTime=" + leadTime + ", priceValidity=" + priceValidity
+				+ ", description=" + description + ", bizUnit=" + bizUnit + "]";
+	}
+	
+	public String getMfr() {
+		return mfr;
+	}
+	public void setMfr(String mfr) {
+		this.mfr = mfr;
+	}
+	public String getFullMfrPart() {
+		return fullMfrPart;
+	}
+	public void setFullMfrPart(String fullMfrPart) {
+		this.fullMfrPart = fullMfrPart;
+	}
+	public Integer getRequiredQty() {
+		return requiredQty;
+	}
+	public void setRequiredQty(Integer requiredQty) {
+		this.requiredQty = requiredQty;
+	}
+	public Integer getMpq() {
+		return mpq;
+	}
+	public void setMpq(Integer mpq) {
+		this.mpq = mpq;
+	}
+	public Integer getMoq() {
+		return moq;
+	}
+	public void setMoq(Integer moq) {
+		this.moq = moq;
+	}
+	public String getOrderQty() {
+		return orderQty;
+	}
+	public void setOrderQty(String orderQty) {
+		this.orderQty = orderQty;
+	}
+	public BigDecimal getSalesCost() {
+		return salesCost;
+	}
+	public void setSalesCost(BigDecimal salesCost) {
+		this.salesCost = salesCost;
+	}
+	public BigDecimal getSuggestedResale() {
+		return suggestedResale;
+	}
+	public void setSuggestedResale(BigDecimal suggestedResale) {
+		this.suggestedResale = suggestedResale;
+	}
+	public Double getTargetResale() {
+		return targetResale;
+	}
+	public void setTargetResale(Double targetResale) {
+		this.targetResale = targetResale;
+	}
+	public String getCostIndicator() {
+		return costIndicator;
+	}
+	public void setCostIndicator(String costIndicator) {
+		this.costIndicator = costIndicator;
+	}
+	public Date getQuoteExpiryDate() {
+		return quoteExpiryDate;
+	}
+	public void setQuoteExpiryDate(Date quoteExpiryDate) {
+		this.quoteExpiryDate = quoteExpiryDate;
+	}
+	public String getLeadTime() {
+		return leadTime;
+	}
+	public void setLeadTime(String leadTime) {
+		this.leadTime = leadTime;
+	}
+	public int getSeq() {
+		return seq;
+	}
+	public void setSeq(int seq) {
+		this.seq = seq;
+	}
+	public String getPriceValidity() {
+		return priceValidity;
+	}
+	public void setPriceValidity(String priceValidity) {
+		this.priceValidity = priceValidity;
+	}
+	public String getBizUnit() {
+		return bizUnit;
+	}
+	public void setBizUnit(String bizUnit) {
+		this.bizUnit = bizUnit;
+	}
+	public String getDescription() {
+		return description;
+	}
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	public Date getQuotationEffectiveDate()
+	{
+		return quotationEffectiveDate;
+	}
+	public void setQuotationEffectiveDate(Date quotationEffectiveDate)
+	{
+		this.quotationEffectiveDate = quotationEffectiveDate;
+	}
+	public String getPriceType()
+	{
+		return priceType;
+	}
+	public void setPriceType(String priceType)
+	{
+		this.priceType = priceType;
+	}
+	public String getSoldToCustomerCode()
+	{
+		return soldToCustomerCode;
+	}
+	public void setSoldToCustomerCode(String soldToCustomerCode)
+	{
+		this.soldToCustomerCode = soldToCustomerCode;
+	}
+	public String getSoldToCustomerName()
+	{
+		return soldToCustomerName;
+	}
+	public void setSoldToCustomerName(String soldToCustomerName)
+	{
+		this.soldToCustomerName = soldToCustomerName;
+	}
+
+
+
+
+	public boolean isHasRestrictCustomer()
+	{
+		if(restrictedCustMappingList==null)
+			return false;
+		if(restrictedCustMappingList.size()<=0)
+            return false;
+		return true;
+	}
+
+
+
+
+	public void setHasRestrictCustomer(boolean hasRestrictCustomer)
+	{
+		this.hasRestrictCustomer = hasRestrictCustomer;
+	}
+
+
+
+
+	public List<RestrictedCustomerMapping> getRestrictedCustMappingList()
+	{
+		return restrictedCustMappingList;
+	}
+
+
+
+
+	public void setRestrictedCustMappingList(
+			List<RestrictedCustomerMapping> restrictedCustMappingList)
+	{
+		this.restrictedCustMappingList = restrictedCustMappingList;
+	}
+
+
+
+
+
+	
+}

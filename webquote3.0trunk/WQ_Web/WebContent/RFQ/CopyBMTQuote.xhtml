@@ -1,0 +1,193 @@
+
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="style-005.css" />
+	<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+	<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+	<h:form id="form" onkeypress="if(window.event.keyCode==13) return false;" >
+
+	<p:panel header="#{dbResource['wq.header.copyQuoteList']}" style="font-size:12pt">
+		<p:growl id="growl" showDetail="true" sticky="#{growlPropertyMB.sticky}" autoUpdate="true" showSummary="#{growlPropertyMB.showSummary}" escape="#{growlPropertyMB.escape}"/>
+	
+	    <p:dataTable	var="vo"
+	    				value="#{bmtInfoMB.quoteItemVos}" 
+	    				selection="#{bmtInfoMB.selectedQuoteItemVos}"
+	    				rowKey="#{vo.quoteItem.quoteNumber}" 
+	    				rowIndexVar="rowIndex"
+	                 	id="datatable_copybmtquotelist"
+	                 	rows="10"
+    					rowsPerPageTemplate="10,20,50"                 
+	                 	editable="true"
+	                 	editMode="cell"
+	                 	cellEditEvent="click"     
+	                 	scrollable="true"
+	                 	rowStyleClass="#{vo.errRow ? 'errorRow' : null}"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">	                   	              
+
+			       		 
+			<p:column headerText="#{dbResource['wq.label.no']}" sortBy="#{vo.seq}" filterBy="#{vo.seq}"  filterMatchMode="contains" styleClass="column_seq readOnlyCell">
+			#{vo.seq2}
+			</p:column>
+			
+			<p:column selectionMode="multiple" styleClass="column_icon" exportable="false"/> 
+			
+			<p:column headerText="#{dbResource['wq.label.rfq']}&lt;br/&gt;#{dbResource['wq.label.att']}" exportable="false" styleClass="column_icon align_center">
+	        	<p:commandLink update=":form:attachment_list_panel" actionListener="#{attachmentDownloadMB.listAttachmentsByType()}" oncomplete="PF('attachment_list_dialog').show()">
+	        		<h:graphicImage library="images" name="icon_magnifier.png" styleClass="iconLink" rendered="#{vo.quoteItem.hasAnyAttachment or vo.quoteItem.quote.formAttachmentFlag}"/>
+	        		<f:param name="quoteItem_id" value="#{vo.quoteItem.id}"/>
+	        		<f:param name="quote_id" value="#{vo.quoteItem.quote.id}"/>	
+	        		<f:param name="att_type" value="RFQ Form Attachment,RFQ Item Attachment,PM Attachment,QC Attachment,BMT Attachment,Refresh Attachment"/>			        	
+	        	</p:commandLink> 						        				        						        
+			</p:column>
+					
+			<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quote']}#" sortBy="#{vo.quoteItem.quoteNumber}" filterBy="#{vo.quoteItem.quoteNumber}"  filterMatchMode="contains" styleClass="column_quoteNumber readOnlyCell">
+			#{vo.quoteItem.quoteNumber}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.form']}" sortBy="#{vo.quoteItem.quote.formNumber}" filterBy="#{vo.quoteItem.quote.formNumber}" filterMatchMode="contains" styleClass="column_formNumber readOnlyCell" >
+			<h:outputText value="#{vo.quoteItem.quote.formNumber}" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.region']}" sortBy="#{vo.quoteItem.quote.bizUnit.name}" filterBy="#{vo.quoteItem.quote.bizUnit.name}"  filterMatchMode="contains" styleClass="column_formNumber readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quote.bizUnit.name}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.designRegion']}" sortBy="#{vo.quoteItem.designRegion}" filterBy="#{vo.quoteItem.designRegion}" filterMatchMode="contains" styleClass="column_formNumber readOnlyCell">
+				<h:outputText value="#{vo.quoteItem.designRegion}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.design']}&lt;br/&gt;#{dbResource['wq.label.location']}"  filterBy="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.designLocation : vo.quoteItem.designLocation}"  filterMatchMode="contains" styleClass="column_formNumber readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.id ==0 ? vo.quoteItem.quote.designLocation : vo.quoteItem.designLocation}"/>
+			</p:column>
+			
+  			<p:column headerText="#{dbResource['wq.label.custmrName']}&lt;br/&gt;(#{dbResource['wq.label.SoldToParty']})" sortBy="#{vo.quoteItem.soldToCustomer.customerFullName}" filterBy="#{vo.quoteItem.soldToCustomer.customerFullName}" styleClass="column_soldToCustomerName readOnlyCell">
+				#{vo.quoteItem.soldToCustomer.customerFullName}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.soldTo']}&lt;br/&gt;#{dbResource['wq.label.code']}" sortBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}" filterBy="#{vo.quoteItem.quote.soldToCustomer.customerNumber}" filterMatchMode="contains" styleClass="column_soldToCustomerNumber readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.quote.soldToCustomer.customerNumber}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.mfr']}" sortBy="#{vo.quoteItem.quotedMaterial.manufacturer.name}" filterBy="#{vo.quoteItem.quotedMaterial.manufacturer.name}" styleClass="column_mfr readOnlyCell">
+				#{vo.quoteItem.quotedMfr.name}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.avnetQuoted']} &lt;br/&gt; #{dbResource['wq.label.pn']}" sortBy="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}" filterBy="#{vo.quoteItem.quotedMaterial.fullMfrPartNumber}" styleClass="column_quotedPartNumber readOnlyCell">
+				#{vo.quoteItem.quotedPartNumber}
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.rfqcurr']}" sortBy="#{vo.quoteItem.rfqCurr}"   filterBy="#{vo.quoteItem.rfqCurr}" filterMatchMode="contains" styleClass="column_quotedPartNumber readOnlyCell">
+			<h:outputText value="#{vo.quoteItem.rfqCurr}"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.EAU']}" sortBy="#{vo.eau}" filterBy="#{vo.eau}" styleClass="column_formNumber align_right editCell">
+				<p:inputText id="txt_eau_in" value="#{vo.eau}" onkeyup="updateInteger2(#{rowIndex}, 'form', 'txt_eau', 'datatable_copyquotelist');" onkeypress="return isInteger(event)"/>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.BmtFlag']}" sortBy="#{vo.quoteItem.quoteItemDesign.bmtFlag.bmtFlagCode}" filterBy="#{vo.quoteItem.quoteItemDesign.bmtFlag.bmtFlagCode}" style="width:150px" styleClass="column_mfr tdmandatoryvalue" >
+				<h:selectOneMenu id="updateBmt_flag" value="#{vo.quoteItem.quoteItemDesign.bmtFlag.bmtFlagCode}" label="#{vo.quoteItem.quoteItemDesign.bmtFlag.description}" >
+						<f:selectItems value="#{bmtInfoMB.pageBmtFlags}" />
+				</h:selectOneMenu>	
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.mfrDR']} #" sortBy="#{vo.quoteItem.quoteItemDesign.drMfrNo}" filterBy="#{vo.quoteItem.quoteItemDesign.drMfrNo}" styleClass="column_productGroup align_right tdmandatoryvalue">
+				<p:inputText value="#{vo.quoteItem.quoteItemDesign.drMfrNo}" id="txt_drmfrNo" maxlength = "20"/>
+			</p:column>
+
+			<p:column headerText="#{dbResource['wq.label.bmtSuggCost']}" sortBy="#{vo.quoteItem.quoteItemDesign.drCost}" filterBy="#{vo.quoteItem.quoteItemDesign.drCost}" styleClass="column_productGroup align_right tdmandatoryvalue">
+				<p:inputText value="#{vo.quoteItem.quoteItemDesign.drCost}" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" maxlength = "10" converter="javax.faces.Double" converterMessage="BMT Suggest Cost must be decimal eg: 000.00000">
+					<f:attribute name="targetQuoteItem" value="#{vo}" />
+					<p:ajax event="keyup" update="dr_margin"  />
+				</p:inputText>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtSuggResale']}" sortBy="#{vo.quoteItem.quoteItemDesign.drResale}" filterBy="#{vo.quoteItem.quoteItemDesign.drResale}" styleClass="column_productGroup align_right tdmandatoryvalue">
+				<p:inputText value="#{vo.quoteItem.quoteItemDesign.drResale}" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" maxlength = "10" converter="javax.faces.Double" converterMessage="BMT Suggest Resale must be decimal eg: 000.00000">
+					<f:attribute name="targetQuoteItem" value="#{vo}" />
+					<p:ajax event="keyup" update="dr_margin"  />
+				</p:inputText>
+			</p:column>
+
+        	<p:column headerText="#{dbResource['wq.label.BMTSuggest']} &lt;br/&gt; #{dbResource['wq.label.margin']}" sortBy="#{vo.quoteItem.quoteItemDesign.drMargin}" filterBy="#{vo.quoteItem.quoteItemDesign.drMargin}" styleClass="column_bidToBuy readOnlyCell">
+        		<h:outputText value="#{vo.quoteItem.quoteItemDesign.drMargin}"  escape="false" id= "dr_margin" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.mfrQoute']} #" sortBy="#{vo.quoteItem.quoteItemDesign.drMfrQuoteNo}" filterBy="#{vo.quoteItem.quoteItemDesign.drMfrQuoteNo}" styleClass="column_productGroup editCell break-all">
+				<p:inputText value="#{vo.quoteItem.quoteItemDesign.drMfrQuoteNo}" style="width:100%;" maxlength = "20" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtSQ']}&lt;br/&gt;#{dbResource['wq.label.effective']}&lt;br/&gt;#{dbResource['wq.label.date']}" sortBy="#{vo.quoteItem.quoteItemDesign.drEffectiveDate}" filterBy="#{vo.quoteItem.quoteItemDesign.drEffectiveDate}" styleClass="column_productGroup editCell break-all">
+				<p:calendar value="#{vo.quoteItem.quoteItemDesign.drEffectiveDate}"  pattern="dd/MM/yyyy"   converterMessage="#{dbResource['wq.message.BMTExpiryDateUnderstood']}. #{dbResource['wq.label.example']}: 30/12/2016">
+						<f:convertDateTime pattern="dd/MM/yyyy" timeZone="GMT+8"/>
+				</p:calendar>
+					
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtExpDate']}" sortBy="#{vo.quoteItem.quoteItemDesign.drExpiryDate}" filterBy="#{vo.quoteItem.quoteItemDesign.drExpiryDate}" filterMatchMode="contains" styleClass="column_productGroup editCell">
+				<p:calendar value="#{vo.quoteItem.quoteItemDesign.drExpiryDate}"  pattern="dd/MM/yyyy"  converterMessage="#{dbResource['wq.message.BMTExpiryDateUnderstood']}. #{dbResource['wq.label.example']}: 30/12/2016">
+						<f:convertDateTime pattern="dd/MM/yyyy" timeZone="GMT+8"/>
+				</p:calendar>
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtComm']}" sortBy="#{vo.quoteItem.quoteItemDesign.drComments}" filterBy="#{vo.quoteItem.quoteItemDesign.drComments}"  styleClass="column_pmoq editCell">
+				<p:inputText value="#{vo.quoteItem.quoteItemDesign.drComments}" style="width:100%;" maxlength = "200" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtAtts']}"  styleClass="column_mpq align_right editCell">
+				<p:commandLink update=":form:attachment_panel" action="#{bmtInfoMB.listAttachmentsForBMT()}" oncomplete="PF('attachment_edit_dialog').show()">
+	        		<h:graphicImage library="images" name="icon_upload.png" styleClass="iconLink"/>
+	        		<f:param name="quoteItem_id" value="#{vo.quoteItem.id}"/>
+	        		<f:param name="quote_id" value="#{vo.quoteItem.quote.id}"/>	
+	        		<f:param name="att_type" value="RFQ Form Attachment,RFQ Item Attachment,PM Attachment,QC Attachment,BMT Attachment,Refresh Attachment"/>
+	        	</p:commandLink>	
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtQuoteQty']}" sortBy="#{vo.quoteItem.quoteItemDesign.drQuoteQty}" filterBy="#{vo.quoteItem.quoteItemDesign.drQuoteQty}" styleClass="column_moq align_right editCell">
+				<p:inputText value="#{vo.quoteItem.quoteItemDesign.drQuoteQty}" style="width:100%;" onkeyup="checkEnterKey(event, this)" onkeypress="return isInteger(event, true)" maxlength = "10" />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtSuggestedCostNonUSD']}" sortBy="#{vo.quoteItem.quoteItemDesign.drCostAltCurrency}" filterBy="#{vo.quoteItem.quoteItemDesign.drCostAltCurrency}" styleClass="column_quoteExpiryDate editCell">
+				<p:inputText value="#{vo.quoteItem.quoteItemDesign.drCostAltCurrency}" style="width:100%;" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" maxlength = "10"  />
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.bmtSuggstResaleNUSD']}" sortBy="#{vo.quoteItem.quoteItemDesign.drResaleAltCurrency}" filterBy="#{vo.quoteItem.quoteItemDesign.drResaleAltCurrency}" styleClass="column_productGroup editCell">
+				<p:inputText value="#{vo.quoteItem.quoteItemDesign.drResaleAltCurrency}" style="width:100%;" onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" maxlength = "10" />
+			</p:column>
+			
+			
+			<p:column headerText="#{dbResource['wq.label.curr']}" sortBy="#{vo.quoteItem.quoteItemDesign.drAltCurrency}" filterBy="#{vo.quoteItem.quoteItemDesign.drAltCurrency}" styleClass="column_productGroup editCell">
+				<h:selectOneMenu id="sel_currency" value="#{vo.quoteItem.quoteItemDesign.drAltCurrency}" style="width:80%;">
+						<f:selectItems value="#{bmtInfoMB.bmtCurrencyList}" />
+				</h:selectOneMenu>	
+			</p:column>
+			
+			<p:column headerText="#{dbResource['wq.label.BmtExchgRateNonUSD']}" sortBy="#{vo.quoteItem.quoteItemDesign.drExchangeRate}" filterBy="#{vo.quoteItem.quoteItemDesign.drExchangeRate}" styleClass="column_employeeName editCell">
+				<p:inputText value="#{vo.quoteItem.quoteItemDesign.drExchangeRate}" style="width:100%;" maxlength = "15"  onkeyup="checkEnterKey(event, this)" onkeypress="return isDouble(event, true)" />
+			</p:column>
+			
+			<f:facet name="footer">        	
+	        	<p:commandButton value="#{dbResource['wq.button.confirmCopyQuote']}" update="@form" icon="ui-icon ui-icon-circle-arrow-n" action="#{bmtInfoMB.confirmCopyBMTQuote}"/>
+	        	<p:commandButton value="#{dbResource['wq.button.BackMyQuoteSearch']}" icon="ui-icon ui-icon-circle-arrow-w" action="#{myQuoteSearchMB.getMyQuotePage}" ajax="false"/>
+	        </f:facet>
+       	
+	    </p:dataTable>
+	    
+	</p:panel>         	
+	
+<ui:include src="BmtAttachmentEditDialog.xhtml" />
+<ui:include src="AttachmentListDialog.xhtml" />
+	
+
+	</h:form>
+		
+	</ui:define>
+</ui:composition>

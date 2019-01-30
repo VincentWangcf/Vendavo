@@ -1,0 +1,9 @@
+1) validate password when user login from login.jsp page  --add by Lenon (2016-08-03)
+2) update quote response time history and last_*_in/out_date by SDD 1.2.11 (update by Jason)
+3) remove trigger on quote response time history and last_*_in/out_date when add alternative part and rate request quote (update by Jason)
+4) update  vendor quote send/receive ,
+           My Quote Search-refresh quote,copy quote, reviese final quote price, quote rate request
+                          -mark as used,update bmt quote ,copy bmt quote, recall quote
+           Data Maintenance - invalid quote, invalid batch quote, update information, update validity, reassign sales
+    to add action for audit history -------June Guo 2016/08/04
+5) generate new quote when resubmit invalid RFQ(added by Demon Chen)

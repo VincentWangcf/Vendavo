@@ -1,0 +1,154 @@
+package com.avnet.emasia.webquote.web.stm;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.TreeSet;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+
+import com.avnet.emasia.webquote.entity.VendorBpmCustomer;
+import com.avnet.emasia.webquote.utilites.web.util.POIUtils;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+import com.avnet.emasia.webquote.utilities.bean.ExcelAliasBean;
+import com.avnet.emasia.webquote.web.maintenance.UploadStrategy;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+
+public class BmpCustomerUploadStrategy extends UploadStrategy{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -623514309861408074L;
+	@Override
+ 	public String verifyFields(List<?> beans) {
+		
+		ArrayList<String> list = new ArrayList<String>();
+
+		for (int i=0;i<beans.size();i++) {
+			VendorBpmCustomer bean = (VendorBpmCustomer)beans.get(i);
+			String disCode = bean.getDistributorCode();
+			String disName=bean.getDistributorName();
+			String bmpCode = bean.getBpmCode();
+			String bmpName1 = bean.getBpmName1();
+			String bmpName2 = bean.getBpmName2();
+			String shortName = bean.getShortname();
+			String city = bean.getCtry();
+			
+			if (QuoteUtil.isEmpty(disCode)) {
+				Object arr[] = {bean.getXlsLineSeq()};
+				list.add(MessageFormatorUtil.getParameterizedString(UserInfo.getUser().getUserLocale(),"wq.message.enterDistributorCode", arr)+" <br>");
+			}else if(disCode.length()>20) {
+				Object arr[] = {bean.getXlsLineSeq(),"<font color=grey>"+bean.getDistributorCode()+"</font>"};
+				list.add(MessageFormatorUtil.getParameterizedString(UserInfo.getUser().getUserLocale(),"wq.message.distributorCodeLengthError", arr)+" <br>");
+			}
+			
+			if (QuoteUtil.isEmpty(bmpCode)) {
+				Object arr[] = {bean.getXlsLineSeq()};
+				list.add(MessageFormatorUtil.getParameterizedString(UserInfo.getUser().getUserLocale(),"wq.message.enterBpmCode", arr)+" <br>");
+			}else if(bmpCode.length()>20){
+				Object arr[] = {bean.getXlsLineSeq(),"<font color=grey>"+bean.getBpmCode()+"</font>"};
+				list.add(MessageFormatorUtil.getParameterizedString(UserInfo.getUser().getUserLocale(),"wq.message.bpmCodeLengthError", arr)+" <br>");
+			}
+			
+			if (null!=disName&&disName.length() > 100) {
+				Object arr[] = {bean.getXlsLineSeq(),"<font color=grey>"+bean.getDistributorName()+"</font>"};
+				list.add(MessageFormatorUtil.getParameterizedString(UserInfo.getUser().getUserLocale(),"wq.message.distributorNameLengthError", arr)+" <br>");
+			}
+			
+			if (null!=shortName&&shortName.length() > 35) {
+				Object arr[] = {bean.getXlsLineSeq(),"<font color=grey>"+bean.getShortname()+"</font>"};
+				list.add(MessageFormatorUtil.getParameterizedString(UserInfo.getUser().getUserLocale(),"wq.message.shortNameLengthError", arr)+" <br>");
+			}
+			
+			if (null!=bmpName1&&bmpName1.length() > 100) {
+				Object arr[] = {bean.getXlsLineSeq(),"<font color=grey>"+bean.getBpmName1()+"</font>"};
+				list.add(MessageFormatorUtil.getParameterizedString(UserInfo.getUser().getUserLocale(),"wq.message.bpmNameLengthError", arr)+" <br>");
+			}
+			
+			if (null!=bmpName2&&bmpName2.length() > 100) {
+				Object arr[] = {bean.getXlsLineSeq(),"<font color=grey>"+bean.getBpmName2()+"</font>"};
+				list.add(MessageFormatorUtil.getParameterizedString(UserInfo.getUser().getUserLocale(),"wq.message.nameLengthError", arr)+" <br>");
+			}
+			
+			if (null!=city&&city.length() > 20) {
+				Object arr[] = {bean.getXlsLineSeq(),"<font color=grey>"+bean.getCtry()+"</font>"};
+				list.add(MessageFormatorUtil.getParameterizedString(UserInfo.getUser().getUserLocale(),"wq.message.ctryLengthError", arr)+" <br>");
+			}
+			
+								
+		}
+		
+		return list.toString();
+	}
+
+	@Override
+	public List<VendorBpmCustomer> excel2Beans(Sheet sheet) {
+		List<VendorBpmCustomer> beans = new ArrayList<VendorBpmCustomer>();
+		FormulaEvaluator evaluator = sheet.getWorkbook().getCreationHelper().createFormulaEvaluator();
+		Cell cell;
+		
+		TreeSet<ExcelAliasBean> excelAliasTreeSet = POIUtils.getExcelAliasAnnotation(VendorBpmCustomer.class);
+
+		Row row = null;
+		ExcelAliasBean excelAliasBean = null;
+		Iterator<ExcelAliasBean> iterator = null;
+		int startRow = 1;
+		int lineSeq = startRow+1;
+	//	for (Row row : sheet) {// Don't deal withheader
+			for(int i=startRow;i<=sheet.getLastRowNum();i++){
+			// skip first row
+			if (lineSeq == 0) {
+				lineSeq++;
+				continue;
+			}
+			row = sheet.getRow(i);
+			
+			//Distributor code	
+			String disCode="";;
+			if(null!=row.getCell(0)) {
+				row.getCell(0).setCellType(Cell.CELL_TYPE_STRING);
+				disCode = String.valueOf(row.getCell(0).getStringCellValue());  
+			}
+			
+			if(!QuoteUtil.isEmpty(disCode)) {
+				VendorBpmCustomer bean = new VendorBpmCustomer();
+				bean.setXlsLineSeq(lineSeq++);
+				bean.setDistributorCode(disCode);
+				
+				if(null!=row.getCell(1))
+					bean.setDistributorName(row.getCell(1).getStringCellValue());//Distributor Name	
+				
+				////BPM code with shipto
+				if(null!=row.getCell(2)) {
+					row.getCell(2).setCellType(Cell.CELL_TYPE_STRING);
+					bean.setBpmCode(row.getCell(2).getStringCellValue());
+				}
+				
+				if(null!=row.getCell(3))
+					bean.setShortname(row.getCell(3).getStringCellValue());//Shortname
+				
+				if(null!=row.getCell(4))
+					bean.setBpmName1(row.getCell(4).getStringCellValue());//BPM Name (1)	
+				
+				if(null!=row.getCell(5))
+					bean.setBpmName2(row.getCell(5).getStringCellValue()); //Name (2) //fix UAT change 7 by June Guo 2015/06/19
+				
+				if(null!=row.getCell(6))
+					bean.setCtry(row.getCell(6).getStringCellValue());//CTRY
+	
+				beans.add(bean);
+			}else {
+				break;
+			}
+		}
+		sheet = null;
+		return beans;
+	}
+
+}

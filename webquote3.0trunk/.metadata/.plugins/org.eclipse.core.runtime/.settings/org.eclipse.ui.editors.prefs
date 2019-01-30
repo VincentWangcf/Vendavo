@@ -1,0 +1,10 @@
+bookmarkIndication=true
+eclipse.preferences.version=1
+isBookmarkGoToNextNavigationTarget=true
+isOccurrenceGoToNextNavigationTarget=true
+isRedHatTextOccurrenceGoToNextNavigationTarget=true
+occurrenceIndicationColor=192,192,192
+occurrenceIndicationInVerticalRuler=true
+overviewRuler_migration=migrated_3.1
+quickdiff.quickDiff=false
+redhatTextOccurrenceIndication=false

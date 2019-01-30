@@ -1,0 +1,137 @@
+package com.avnet.emasia.webquote.utilities;
+
+import java.text.MessageFormat;
+import java.util.Locale;
+import java.util.ResourceBundle;
+import java.util.logging.Logger;
+
+import org.apache.commons.logging.Log;
+
+import com.avnet.emasia.webquote.exception.AbstractBaseException;
+import com.avnet.emasia.webquote.exception.AbstractBaseRuntimeException;
+import com.avnet.emasia.webquote.exception.AppException;
+import com.avnet.emasia.webquote.exception.WebQuoteException;
+import com.avnet.emasia.webquote.exception.WebQuoteRuntimeException;
+
+/**
+ * The Class MessageFormatorUtil : format the strings to the specific message
+ * format.
+ */
+public class MessageFormatorUtil {
+	private static final Logger LOG =Logger.getLogger(MessageFormatorUtil.class.getName());
+	/**
+	 * Gets the Parameterized string.
+	 *
+	 * @param str
+	 *            the String format
+	 * @param arr
+	 *            the Value array
+	 * @return the Parameterized string
+	 */
+	public static String getParameterizedString(String str, Object... arr) {
+		return MessageFormat.format(str, arr);
+	}
+
+	/**
+	 * Method is used to internationalize the parameterized string
+	 * 
+	 * @param locale
+	 *            It is locale to which String need to be internationalize
+	 * @param str
+	 *            It is the key code for the message
+	 * @param arr
+	 *            it is the parameter which needs to be replaced
+	 * @return it return the internationalized parameterized string
+	 */
+	public static String getParameterizedString(Locale locale, String str, Object... arr) {
+		ResourceBundle bundle = ResourceBundle.getBundle(DBResourceBundle.class.getName(),locale);
+		return getParameterizedString(bundle.getString(str), arr);
+	}
+
+	/**
+	 * It is used to internationalized the exception message based on the locale
+	 * passed
+	 * 
+	 * @param e
+	 *            it is the exception extended with abstractiBaseException and
+	 *            AbstractBaseRunTimeException class
+	 * @param locale
+	 *            It is the locale to which message need to internationalized
+	 * @return It returns the internationalized the exception message based on
+	 *         the locale passed
+	 */
+	public static String getParameterizedStringFromException(Throwable e, Locale locale) {
+		String internationalizedData = null;
+		try {
+			ResourceBundle bundle = ResourceBundle.getBundle(DBResourceBundle.class.getName(),locale);
+			Object[] object = null;
+			internationalizedData =getErrorCode(e); 
+			String data = e.getMessage();
+			if(internationalizedData!=null){
+				data=internationalizedData;
+				object = ((AbstractBaseException) e).getParameters();
+			}
+			if(data==null||data==""){
+				return "";
+			}
+			internationalizedData = bundle.getString(data);
+			if(null != internationalizedData){
+				internationalizedData = getParameterizedString(internationalizedData, object);
+			}
+			if (internationalizedData == null || internationalizedData.isEmpty()) {
+				internationalizedData = data;
+			}
+		}catch(Exception ex){
+			//because the errorCode may be mesg self, it will exception when use mesg as key to get mesg;
+			LOG.info("it will exception when use mesg as key to get mesg, this can be ignore. " + ex.getMessage()); 
+		}
+		
+		return internationalizedData;
+	}
+
+	/**
+	 * Gets the error code.
+	 *
+	 * @param throwable the throwable
+	 * @return the error code
+	 */
+	private static String getErrorCode(Throwable throwable) {
+		String errorCode = null;
+		if (throwable instanceof AppException) {
+			errorCode = ((AbstractBaseException) throwable).getErrorCode();
+		} else if (throwable instanceof WebQuoteException) {
+			errorCode = ((AbstractBaseException) throwable).getErrorCode();
+		} else if (throwable instanceof WebQuoteRuntimeException) {
+			errorCode = ((AbstractBaseRuntimeException) throwable).getErrorCode();
+		} else if (throwable.getClass().getSimpleName().equalsIgnoreCase("CheckedException")) {
+			errorCode = ((AbstractBaseException) throwable).getErrorCode();
+		} else if (throwable.getClass().getSimpleName().equalsIgnoreCase("IOInteractException")) {
+			errorCode = ((AbstractBaseRuntimeException) throwable).getErrorCode();
+		}
+		return errorCode;
+	}
+
+	/**
+	 * It is used to internationalized the exception message for English locale
+	 * 
+	 * @param e
+	 *            it is the exception extended with abstractiBaseException and
+	 *            AbstractBaseRunTimeException class
+	 * @param locale
+	 *            It is the locale to which message need to internationalized
+	 * @return It returns the internationalized the exception message based on
+	 *         the locale passed
+	 */
+	public static String getParameterizedStringFromException(Throwable e) {
+		return getParameterizedStringFromException(e, Locale.ENGLISH);
+	}
+
+	public static String getConactenatedStringFromArray(String[] array) {
+		StringBuffer builder = new StringBuffer();
+		for (int i = 0; i < array.length; i++) {
+			builder.append(array[i]);
+			builder.append(" , ");
+		}
+		return builder.toString();
+	}
+}

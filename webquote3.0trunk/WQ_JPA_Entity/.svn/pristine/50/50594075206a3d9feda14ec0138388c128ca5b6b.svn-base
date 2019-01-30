@@ -1,0 +1,103 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import javax.persistence.*;
+import java.util.Date;
+
+
+/**
+ * The persistent class for the SAP_INTERFACE_BATCHES database table.
+ * 
+ */
+@Entity
+@Table(name="SAP_INTERFACE_BATCHES")
+public class SapInterfaceBatches implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	@SequenceGenerator(name="SAP_INTERFACE_BATCHES_ID_GENERATOR", sequenceName="SAP_INTERFACE_BATCHES_SEQ",allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="SAP_INTERFACE_BATCHES_ID_GENERATOR")
+	@Column(unique=true, nullable=false, precision=18)
+	private long id;
+
+	@Column(name = "CREATED_BY", nullable = false, length = 10)
+	private String createdBy;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "CREATED_ON", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+	private Date createdOn;
+
+	@Column(name="PROCESS_ID", nullable=false, length=20)
+	private String processID;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="START_TIME")
+	private Date startTime;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="END_TIME")
+	private Date endTime;
+
+	@Column(name="PROCESS_STATUS")
+	private int processStatus;
+
+	public SapInterfaceBatches() {
+	}
+
+	public long getId() {
+		return this.id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public Date getCreatedOn() {
+		return createdOn;
+	}
+
+	public void setCreatedOn(Date createdOn) {
+		this.createdOn = createdOn;
+	}
+
+	public String getProcessID() {
+		return this.processID;
+	}
+
+	public void setProcessID(String processID) {
+		this.processID = processID;
+	}
+
+	public Date getStartTime() {
+		return this.startTime;
+	}
+
+	public void setStartTime(Date startTime) {
+		this.startTime = startTime;
+	}
+
+	public Date getEndTime() {
+		return this.endTime;
+	}
+
+	public void setEndTime(Date endTime) {
+		this.endTime = endTime;
+	}
+
+	public int getProcessStatus() {
+		return this.processStatus;
+	}
+
+	public void setProcessStatus(int processStatus) {
+		this.processStatus = processStatus;
+	}
+
+}

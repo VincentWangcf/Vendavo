@@ -1,0 +1,35 @@
+package com.avnet.emasia.webquote.rowdata.converter;
+
+import java.lang.reflect.Field;
+
+import com.avnet.emasia.webquote.rowdata.AIntConverter;
+import com.avnet.emasia.webquote.rowdata.Bean;
+import com.avnet.emasia.webquote.rowdata.Converter;
+
+public class IntConverter implements Converter<AIntConverter>{
+	
+	private AIntConverter annotation;
+	
+	public IntConverter() {
+		
+	}
+	
+
+	@Override
+	public void initialize(AIntConverter a) {
+		annotation = a;
+	}
+
+	@Override
+	public void convert(String value, Bean bean, Field field) {
+		
+		try {
+			field.set(bean, Integer.parseInt(value));
+		} catch (Exception e) {
+			bean.putConvertError(field.getName(), e.getMessage());
+		}
+		
+	}
+
+
+}

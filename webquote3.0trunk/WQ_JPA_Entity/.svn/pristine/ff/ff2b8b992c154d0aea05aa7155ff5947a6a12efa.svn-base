@@ -1,0 +1,106 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.persistence.*;
+
+
+/**
+ * The persistent class for the BIZ_UNIT database table.
+ * 
+ */
+@Entity
+@Table(name="BIZ_UNIT")
+public class BizUnit implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	private String name;
+	
+	@ManyToOne
+	@JoinColumn(name="HIGHER_BIZ_UNIT")
+	private BizUnit higherBizUnit;
+
+	@OneToMany(mappedBy="higherBizUnit")
+	private List<BizUnit> subBizUnits;
+
+
+
+	public BizUnit() {
+	}
+	
+	public BizUnit(String name) {
+		this.name = name;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	public BizUnit getHigherBizUnit() {
+		return higherBizUnit;
+	}
+
+	public void setHigherBizUnit(BizUnit higherBizUnit) {
+		this.higherBizUnit = higherBizUnit;
+	}	
+
+	public List<BizUnit> getSubBizUnits() {
+		return subBizUnits;
+	}
+
+	public void setSubBizUnits(List<BizUnit> subBizUnits) {
+		this.subBizUnits = subBizUnits;
+	}
+
+	@Override
+	public String toString() {
+		return "BizUnit [name=" + name + "]";
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		BizUnit other = (BizUnit) obj;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		return true;
+	}
+
+	public Set<String> getSelfAndAllSubBizUnits() {
+		Set<String> results = new HashSet<>();
+		results.add(this.getName());
+		
+		for (BizUnit bizUnit : subBizUnits) {
+				results.addAll(bizUnit.getSelfAndAllSubBizUnits());
+		}
+		return results;
+	}
+	
+	
+	
+}

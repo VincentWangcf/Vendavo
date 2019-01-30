@@ -1,0 +1,733 @@
+package com.avnet.emasia.webquote.web.datatable;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.event.ToggleSelectEvent;
+import org.primefaces.event.UnselectEvent;
+import org.primefaces.event.data.FilterEvent;
+import org.primefaces.model.LazyDataModel;
+import org.primefaces.model.SelectableDataModel;
+import org.primefaces.model.SortOrder;
+
+import com.avnet.emasia.webquote.commodity.util.EntityUtil;
+
+/**
+ * The Class LazyCriteriaDataModel.
+ *
+ * @param <T> the generic type
+ */
+@SuppressWarnings("unchecked")
+/**
+ * This class is created to support lazy loading in data table using prime face.
+ *  * @author NTI
+ *	
+ * @param <T> It is the Sub form or View that will render to UI as a row
+ */
+abstract public class SelectableLazyDataModel<T> extends LazyDataModel<T> implements SelectableDataModel<T>, Serializable {
+
+	/** The Constant LOGGER. */
+	private static final Logger LOGGER = Logger.getLogger(SelectableLazyDataModel.class.getName());
+	
+	/** The Constant serialVersionUID. */
+	private static final long serialVersionUID = 1L;
+	
+	public final static String CACHE_PAGE_SIZE = "CACHE_PAGE_SIZE";
+	
+	
+	private int cachePageSize;
+	
+	/** The map. */
+	private ConcurrentHashMap<Integer, List<T>> map = new ConcurrentHashMap<>();
+	
+	/** The page size. */
+	private int pageSize;
+	
+	/** The sort field. */
+	private String sortField;
+	
+	/** The sort order. */
+	private SortOrder sortOrder;
+	
+	/** The filters. */
+	private Map<String, Object> filters;
+	
+	private Queue<Integer> queue = new LinkedList<>();
+	
+
+	/** The cache page select items. */
+	private Set<T> cacheSelectedItems = new HashSet<>();
+	
+	/** The cache modify items. */
+	private Set<T> cacheModifiedItems = new HashSet<>();
+	
+	/** The current page items. */
+	private List<T> currentPageItems = new ArrayList<>();
+	
+	protected List<T> selectionItems;
+	
+	private Boolean isPagination;
+	
+	private  boolean isRequery;
+	
+	protected static final ExecutorService exc = Executors.newCachedThreadPool();
+	
+	
+	public boolean isRequery() {
+		return isRequery;
+	}
+
+
+
+	public void setRequery(boolean isRequery) {
+		this.isRequery = isRequery;
+	}
+
+
+
+	public SelectableLazyDataModel() {
+		map.clear();
+		queue.clear();
+		//clearCacheSelectionDatas();
+		cacheSelectedItems = new HashSet<>();
+		selectionItems = new ArrayList<>();
+		isPagination = false;
+		cachePageSize = 10;
+	}
+	
+	
+
+	/* (non-Javadoc)
+	 * @see com.avnet.emasia.webquote.web.datatable.LazyEntityDataModel#load(int, int, java.lang.String, org.primefaces.model.SortOrder, java.util.Map)
+	 */
+	@Override
+	public synchronized List<T> load(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String,Object> filters) {
+		
+		if(isPagination == null || !isPagination){
+			return new ArrayList<>();
+		}
+		if (first == 1) {
+			first = 0;
+		}
+		long st = System.currentTimeMillis();
+		LOGGER.log(Level.INFO, " [lazy load] first: " + first + ", size: " + pageSize +", sort field: "+sortField);
+		String sort = sortOrder.equals(SortOrder.ASCENDING) ? "ASC" : "DESC";
+		
+		//Get the Current page number 
+		Integer pageNumber = getPageNumber(first, pageSize);
+		
+		List<T> outcome =null;
+		/*if(this.isFilterChanged(filters)) {
+			LOGGER.info("isConditionChanged change");
+		}*/
+		if(!(map.size() == 0 || isConditionChanged(pageSize, sortField, sortOrder, filters))){
+			outcome = map.get(pageNumber);
+		}
+		
+		//Check next page is available or not 
+		boolean nextPageRecord =  map.get((pageNumber+1)) == null;
+		//Check previous page is available or not
+		boolean prevPageRecord =  map.get((pageNumber-1)) == null;
+		if(pageNumber == 1){
+			prevPageRecord = false;
+		}
+		Future<List<T>> futResultItems = null;
+		if(outcome == null && map.size() ==0) {
+			futResultItems = exc.submit(new ResultItemsTask(first, pageSize, sortField, sort, filters));
+		}
+				
+		if(map.size() == 0){
+			//Get the count for the data to be fetched
+			//int count = getBaseDao().findLazyDataCountCriteriaBased(updatedCountCriteria);
+			int count = findLazyDataCount(null, null, filters);
+			if(count == 0){
+				count = -1;
+			}
+			super.setRowCount(count);
+		}
+		if(outcome == null){
+			
+			//LOGGER.info("COUNTS take time " +(System.currentTimeMillis()-st));
+			//outcome = (getBaseDao().findLazyDataCriteriaBased(first, pageSize,updatedCriteria));
+			try {
+				//no select count . no need use asyn.
+				if(map.size() == 0) {
+					outcome = futResultItems.get();
+					//LOGGER.info("outcome take time " +(System.currentTimeMillis()-st));
+				} else {
+					outcome = findLazyData(first, pageSize, sortField, sort, filters);
+				}
+				
+			} catch (InterruptedException | ExecutionException e) {
+				LOGGER.severe(e.getMessage() + e.toString());
+			}
+			LOGGER.info("findLazyData  time " +(System.currentTimeMillis()-st));
+			if(outcome != null && outcome.size() > 0){
+				map.put(pageNumber, outcome);
+				queue.add(pageNumber);
+				if(cachePageSize < map.size()){
+					map.remove(queue.remove());
+				}
+				
+			}
+		
+		}else{
+			//setCurrentPageItems(replaceCacheDatas(outcome, getCacheModifiedItems()));
+		}
+		
+		//Fetch the next page data in background
+		if(nextPageRecord){
+			 findLazyNextPageData(first+pageSize, pageSize,pageNumber+1, sortField, sort, filters,map,queue,cachePageSize);
+		}
+		
+		//Fetch the previous page data in background
+		if(prevPageRecord){
+			findLazyPreviousPageData(first-pageSize, pageSize,pageNumber-1, sortField, sort, filters,map,queue,cachePageSize);
+		}
+		
+		setCondition(pageSize, sortField, sortOrder, filters);
+		
+		setCurrentPageItems(replaceCacheItems(populateData(outcome), getCacheModifiedItems()));
+		LOGGER.info("LazyLoad take time " +(System.currentTimeMillis()-st));
+		return getCurrentPageItems();
+		
+	}
+	
+	
+	 class ResultItemsTask implements Callable<List<T>>{
+		private int first, pageSize;
+		private String sortField;
+		private String sortOrder;
+		private Map<String, Object> filters;
+		public ResultItemsTask(int first, int pageSize, String sortField, String sortOrder,
+				Map<String, Object> filters) {
+			super();
+			this.first = first;
+			this.pageSize = pageSize;
+			this.sortField = sortField;
+			this.sortOrder = sortOrder;
+			this.filters = filters;
+		}
+
+		@Override
+		public List<T> call() throws Exception {
+			long st = System.currentTimeMillis();
+			List<T> t =findLazyData(first, pageSize, sortField, sortOrder, filters);
+			//LOGGER.info("call() take time " +(System.currentTimeMillis()-st));
+			return t;
+		}
+	}
+	
+	public List<T> populateData(List<T> outcome) {
+
+		return outcome;
+	}
+
+
+	public void findLazyPreviousPageData(int first, int pageSize, int pageNumber, String sortField, String sort, Map<String, Object> filters,
+			ConcurrentHashMap<Integer, List<T>> map, Queue<Integer> queue, int cachePageSize) {
+		
+	}
+	
+	
+	public void findLazyNextPageData(int first, int pageSize, int pageNumber, String sortField, String sort, Map<String, Object> filters,
+			ConcurrentHashMap<Integer, List<T>> map, Queue<Integer> queue, int cachePageSize) {
+		
+	}
+
+
+
+	/***
+     * To fetch record for one page
+     * 
+      * @param first
+     * @param pageSize
+     * @param sortField
+     * @param sortOrder
+     * @param filters
+     * @return
+     */
+	
+    abstract public List<T> findLazyData(int first, int pageSize, String sortField, String sortOrder, Map<String, Object> filters); 
+     
+
+     /***
+     * To find out no of record present in DB
+     * 
+      * @param sortField
+     * @param sort
+     * @param filters
+     * @return
+     */
+     abstract public int findLazyDataCount(String sortField, String sortOrder, Map<String, Object> filters);
+
+	
+	
+
+	
+	
+	
+
+
+  
+    
+    /**
+     * It is used to retain the current value of page.
+     *
+     * @param pageSize the page size
+     * @param sortField the sort field
+     * @param sortOrder the sort order
+     * @param filters the filters
+     */
+	private void setCondition(int pageSize, String sortField, SortOrder sortOrder, Map<String,Object> filters){
+		this.pageSize = pageSize;
+		this.sortField  =sortField;
+		this.sortOrder= sortOrder;
+		this.filters = filters;
+	}
+	
+	/**
+	 * Replace cache datas.
+	 *
+	 * @param outcome the outcome
+	 * @param cacheDatas the cache datas
+	 * @return the list
+	 * @important object must override equals and hashCode
+	 */
+	private List<T> replaceCacheItems(List<T> outcome, Set<T> cacheItems) {
+		for (T t : cacheItems) {
+			int index = outcome.indexOf(t);
+			if (index != -1) {
+				outcome.remove(index);
+				outcome.add(index, t);
+			}
+		}
+		return outcome;
+	}
+	
+	
+	
+	/**
+	 * This method is to get the page number for the current page.
+	 *
+	 * @param first the first
+	 * @param pageSize the page size
+	 * @return the page number
+	 */
+	private static Integer getPageNumber(int first, int pageSize){
+		Integer pageNumber = 0;
+		if(first==0){
+			pageNumber++;
+		}else{
+			pageNumber = first/pageSize;
+			pageNumber++;
+		}
+		return pageNumber;
+	}
+	
+	/**
+	 * This method is used to check that any search , sort and filtering condition changed from previous search.
+	 *
+	 * @param pageSize the page size
+	 * @param sortField the sort field
+	 * @param sortOrder the sort order
+	 * @param filters the filters
+	 * @return true, if is condition changed
+	 */
+	private boolean isConditionChanged(int pageSize, String sortField, SortOrder sortOrder, Map<String,Object> filters){
+
+        boolean isChanged = false;
+        String sortFieldOldValue = this.sortField;
+  
+        if(sortFieldOldValue == null){
+              sortFieldOldValue = "";
+        }
+        
+        if(sortField == null){
+        	sortField = "";
+        }
+        if(isRequery){
+        	isChanged = true;
+        }
+        if(this.pageSize != pageSize){
+              isChanged = true;
+        }else if(sortFieldOldValue!=null && !sortFieldOldValue.equals(sortField)){
+              isChanged = true;
+        }else if(this.sortOrder !=null&&!this.sortOrder.equals(sortOrder)){
+              isChanged = true;
+        }else if(isFilterChanged(filters)){
+              isChanged = true;
+        }
+        if(isChanged){
+        	 //clearCacheSelectionDatas();
+              map.clear();
+              setRowCount(0);
+              queue.clear();
+        }
+        return isChanged;
+	}
+
+
+	/**
+	 * This method is used to check that filer value is changed from previous search filter.
+	 *
+	 * @param filters the filters
+	 * @return true, if is filter changed
+	 */
+	public boolean isFilterChanged(Map<String, Object> filtersParam) {
+		Set<String> keyInMem = this.filters!=null?this.filters.keySet():new HashSet<>();
+		Set<String> keyInTempMem = filtersParam!=null?filtersParam.keySet():new HashSet<>();
+		/*Log.info("keyInMem:::" + keyInMem.toString());
+		Log.info("keyInTempMem:::" + keyInTempMem.toString() );*/
+		if(keyInMem.size()!=keyInTempMem.size()) return true;
+		if(keyInMem.size()==0) return false;
+		
+		if(keyInMem.containsAll(keyInTempMem)) {
+			Object temp = null;
+			for(String key :keyInMem) {
+				if(((temp=this.filters.get(key)) == null)) {
+					if(temp !=filtersParam.get(key)) {
+						return true;
+					}
+				} else {
+					if(!temp.equals(filtersParam.get(key))) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+		
+		return true;
+		 
+		/*// Keys in A and not in B
+		Set<String> inANotB = new HashSet<String>(keyInMem);
+		inANotB.removeAll(keyInTempMem);
+
+		// Keys common to both maps
+		Set<String> commonKeys = new HashSet<String>(keyInMem);
+		commonKeys.retainAll(keyInTempMem);
+
+		if(this.filters.size()==filters.size()){
+			if(commonKeys.size()==this.filters.size()){
+				String[] a = new String[commonKeys.size()];
+				commonKeys.toArray(a);
+				if(a.length==0){
+					return false;
+				}
+				for(int i= 0 ; i< a.length ; i ++){
+					if(this.filters.get(a[i]).equals(filters.get(a[i]))){
+						return false;
+					}
+				}
+			}
+		}
+
+		return true;*/
+	}
+
+	
+	
+	
+	public void startPagination(){
+		map.clear();
+		queue.clear();
+		clearCacheSelectionItems();
+		isPagination = true;
+	}
+	
+	
+	public void stopPagination(){
+		map.clear();
+		queue.clear();
+		clearCacheSelectionItems();
+		isPagination = false;
+	}
+	
+	/**
+	 * Gets the cache modify items.
+	 *
+	 * @return the cache modify items
+	 */
+	public Set<T> getCacheModifiedItems() {
+		if (cacheModifiedItems == null) {
+			cacheModifiedItems = new HashSet<>();
+		}
+		return cacheModifiedItems;
+	}
+	
+
+	/**
+	 * Sets the cache modify items.
+	 *
+	 * @param cacheModifiedItems the cacheModifiedItems to set
+	 */
+	public void setCacheModifiedItems(Set<T> cacheModifiedItems) {
+		this.cacheModifiedItems = cacheModifiedItems;
+	}
+	
+	
+	/**
+	 * Gets the current page items.
+	 *
+	 * @return the current page items
+	 */
+	public List<T> getCurrentPageItems() {
+		return currentPageItems;
+	}
+
+	
+	/**
+	 * Sets the current page items.
+	 *
+	 * @param currentPageItems the currentPageItems to set
+	 */
+	public void setCurrentPageItems(List<T> currentPageItems) {
+		this.currentPageItems = currentPageItems;
+	}
+	
+	
+	/**
+	 * Gets the cache page select items.
+	 *
+	 * @return the cache page select items
+	 */
+	public Set<T> getCacheSelectedItems() {
+		if (cacheSelectedItems == null) {
+			cacheSelectedItems = new HashSet<>();
+		}
+		return cacheSelectedItems;
+	}
+	
+	
+	
+	/**
+	 * Sets the cache modify data.
+	 *
+	 * @param rowKey the new cache modify data
+	 */
+	public void setCacheModifyData(String rowKey) {
+		T t = getRowData(rowKey);
+		if (t != null) {
+			getCacheModifiedItems().add(t);
+			if(getCacheSelectedItems().contains(t)){
+				getCacheSelectedItems().remove(t);
+				getCacheSelectedItems().add(t);
+			}
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.primefaces.model.LazyDataModel#getRowKey(java.lang.Object)
+	 */
+	@Override
+	public Object getRowKey(T object) {
+		return EntityUtil.getId(object);
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see org.primefaces.model.LazyDataModel#getRowData(java.lang.String)
+	 */
+	@Override
+	public T getRowData(String rowKey) {
+		List<T> list = (List<T>) getWrappedData();
+		if (!list.isEmpty()) {
+			for (T t : list) {
+				if (EntityUtil.getId(t).toString().equals(rowKey)) {
+					return t;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Sets the cache page select items.
+	 *
+	 * @param cacheSelectedItems the cacheSelectedItems to set
+	 */
+	public void setCacheSelectedItems(Set<T> cacheSelectedItems) {
+		this.cacheSelectedItems = cacheSelectedItems;
+	}
+	
+	
+	
+	public void onToggleSelect(ToggleSelectEvent event) {
+		if (event.isSelected()) {
+			this.getCacheSelectedItems().addAll(selectionItems);
+		} else {
+			this.getCacheSelectedItems().removeAll(getCurrentPageItems());
+		}
+		LOGGER.log(Level.SEVERE, "call onToggleSelect " + selectionItems.size() + " cache " + this.getCacheSelectedItems().size());
+	}
+
+	public void onRowSelectCheckbox(SelectEvent event) {
+		T t = (T) event.getObject();
+		this.getCacheSelectedItems().add(t);
+//		selectionDatas.add(t);
+		LOGGER.log(Level.SEVERE, "call onRowSelectCheckbox " + selectionItems.size() + " cache " + this.getCacheSelectedItems().size());
+	}
+
+	public void onRowUnselectCheckbox(UnselectEvent event) {
+		T t = (T) event.getObject();
+		this.getCacheSelectedItems().remove(t);
+//		selectionDatas.remove(t);
+		LOGGER.log(Level.SEVERE, "call onRowUnselectCheckbox " + selectionItems.size() + " cache " + this.getCacheSelectedItems().size());
+	}
+
+	public void onRowSelect(SelectEvent event) {
+		// T t = (T) event.getObject();
+		this.getCacheSelectedItems().removeAll(getCurrentPageItems());
+		this.getCacheSelectedItems().addAll(selectionItems);
+		LOGGER.log(Level.SEVERE, "call onRowSelect " + selectionItems.size() + " cache " + this.getCacheSelectedItems().size());
+	}
+
+	public void onRowUnselect(UnselectEvent event) {
+		T t = (T) event.getObject();
+		this.getCacheSelectedItems().remove(t);
+		LOGGER.log(Level.SEVERE, "call onRowUnselect " + selectionItems.size() + " cache " + this.getCacheSelectedItems().size());
+	}
+
+	public List<T> getSelectionItems() {
+		selectionItems = new ArrayList<>(getCacheSelectedItems());
+		return selectionItems;
+	}
+
+	public void setSelectionItems(List<T> selectionItems) {
+		this.selectionItems = selectionItems;
+	}
+
+	public void clearCacheSelectionItems() {
+		this.getCacheSelectedItems().clear();
+		if(selectionItems!=null){
+			this.selectionItems.clear();
+		}
+		
+	}
+	
+	
+	/*
+	public void onToggleSelect(ToggleSelectEvent event) {
+		if (event.isSelected()) {
+			this.getCacheSelectedItems().addAll(cacheSelectedItems);
+		} else {
+			this.getCacheSelectedItems().removeAll(getCurrentPageItems());
+		}
+		LOGGER.log(Level.SEVERE, "call onToggleSelect " + cacheSelectedItems.size() + " cache " + this.getCacheSelectedItems().size());
+	}
+	
+	public void onRowSelectCheckbox(SelectEvent event) {
+		T t = (T) event.getObject();
+		this.getCacheSelectedItems().add(t);
+		LOGGER.log(Level.SEVERE, "call onRowSelectCheckbox " + cacheSelectedItems.size() + " cache " + this.getCacheSelectedItems().size());
+	}
+	
+	
+	public void onRowUnselectCheckbox(UnselectEvent event) {
+		T t = (T) event.getObject();
+		this.getCacheSelectedItems().remove(t);
+		LOGGER.log(Level.SEVERE, "call onRowUnselectCheckbox " + cacheSelectedItems.size() + " cache " + this.getCacheSelectedItems().size());
+	}
+	
+	public void onRowSelect(SelectEvent event) {
+		this.getCacheSelectedItems().removeAll(getCurrentPageItems());
+		this.getCacheSelectedItems().addAll(cacheSelectedItems);
+		LOGGER.log(Level.SEVERE, "call onRowSelect " + cacheSelectedItems.size() + " cache " + this.getCacheSelectedItems().size());
+	}
+
+	public void onRowUnselect(UnselectEvent event) {
+		T t = (T) event.getObject();
+		this.getCacheSelectedItems().remove(t);
+		LOGGER.log(Level.SEVERE, "call onRowUnselect " + cacheSelectedItems.size() + " cache " + this.getCacheSelectedItems().size());
+	}
+	
+	public void clearCacheSelectionItems() {
+		this.getCacheSelectedItems().clear();
+	}
+	*/
+	
+	/**
+	 * do cache row data when cell changed
+	 * 
+	 * @param id
+	 *            row key
+	 */
+	public void cellChangeListener(String id) {
+		
+	}
+	
+	public void cellChangeListenerWithoutUpdateUI(String id){}
+
+	public void onFilter(FilterEvent event) {
+		
+		
+	}
+
+	
+	abstract protected SelectableLazyDataModel<T> getLazyData() ;
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((filters == null) ? 0 : filters.hashCode());
+		result = prime * result + ((map == null) ? 0 : map.hashCode());
+		result = prime * result + pageSize;
+		result = prime * result + ((queue == null) ? 0 : queue.hashCode());
+		result = prime * result + ((sortField == null) ? 0 : sortField.hashCode());
+		result = prime * result + ((sortOrder == null) ? 0 : sortOrder.hashCode());
+		return result;
+	}
+
+
+
+	public Boolean getIsPagination() {
+		return isPagination;
+	}
+
+
+
+	public void setIsPagination(Boolean isPagination) {
+		this.isPagination = isPagination;
+	}
+
+
+
+	public int getCachePageSize() {
+		return cachePageSize;
+	}
+
+
+
+	public void setCachePageSize(int cachePageSize) {
+		
+		if(cachePageSize > 2){
+			this.cachePageSize = cachePageSize;
+		}
+		
+	}
+
+
+
+	
+	
+}

@@ -1,0 +1,11 @@
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), '3');
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), '10134779114');
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), '10134779115');
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), '10134779113');
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), '10134779125');
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), '5');
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), '2');
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), '10134779124');
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), '10134779123');
+INSERT INTO "APP_FUNCTION_ROLE_MAPPING" (FUNCTION_ID, ROLE_ID) VALUES ((select id from app_function where name='Catalog Search'), '10134779129');
+COMMIT;

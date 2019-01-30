@@ -1,0 +1,256 @@
+* {
+	font: 12px calibri;
+	word-wrap: break-word !important;
+}
+
+.ui-datatable thead th,.ui-datatable tbody td,.ui-datatable tfoot td {
+	padding:0 10px!important;
+}
+
+.field_option {
+	background-color: pink;
+}
+
+.field_mandatory {
+	background-color: yellow;
+}
+
+.ui-datatable input {
+	width: 100% !important;
+	margin-left: -4px;
+}
+
+.bmtvodata th select,.lazyHistory th select {
+	width: 100% !important;
+	overflow: hidden !important;
+	word-wrap: normal !important;
+}
+
+.bmtvodata .multiple_checkbox {
+	width: 20px;
+}
+
+.bmtvodata .no {
+	width: 30px;
+}
+ 
+.bmtvodata .BMT_Suggest_Cost,.bmtvodata .BMT_Exchange_Rate {
+	width: 100px;
+}
+
+.bmtvodata .BMT_Suggested_Margin {
+	width: 110px;
+}
+
+.bmtvodata .BMT_Suggest_Resale {
+	width: 110px;
+}
+
+.bmtvodata td ,.lazyHistory td{
+	text-align: center;
+}
+   
+.bmtvodata .BMT_Currency div:nth-child(1) {
+	width: 60px !important;
+}
+
+.bmtvodata .Price_Validity {
+	width: 80px;
+}
+
+.search_date input {
+	width: 70px;
+}
+
+.search_panel {
+	width: 100%;
+}
+
+.search_panel label:nth-child(3),.search_panel label:nth-child(5),.search_panel label:nth-child(7)
+	{
+	padding-left: 10px;
+}
+
+.lazyHistory .ui-datatable-tablewrapper,.scrolling-div .ui-datatable-tablewrapper
+	{
+/* 	overflow: auto; */
+/* 	width: 100%; */
+	padding-bottom: 5px;
+}
+
+.headerStyle {
+	height: 70px;
+}
+
+.uploadTemplate button:nth-child(2) {
+	float: right
+}
+
+.uploadTemplate button:nth-child(3) {
+	display: none;
+}
+
+.uploadTemplate {
+	float: left;
+}
+
+.uploadTemplate div {
+	float: left;
+	border: none;
+}
+
+.uploadTemplate .ui-fileupload-files td {
+	padding: 0;
+}
+
+.uploadTemplate .ui-fileupload-files td:nth-child(3) {
+	padding: 6px;
+}
+
+.uploadTemplate .ui-fileupload-files {
+	margin: 4px 0 !important;
+}
+
+.uploadTemplate .ui-progressbar {
+	display: none;
+}
+
+.uploadTemplate .ui-fileupload-buttonbar {
+	padding: 0;
+}
+
+.uploadTemplate .ui-widget-header {
+	border: none;
+	background: #ffffff url('');
+}
+
+.headerStyle button {
+	float: left;
+}
+
+.uploadTemplate .ui-fileupload-content {
+	height: 30px;
+	padding: 0;
+	overflow: hidden;
+}
+
+.uploadTemplate .ui-fileupload-files td:nth-child(5) .ui-button-icon-only .ui-button-text
+	{
+	padding: 0;
+}
+
+.uploadTemplate .ui-messages{
+	margin: 0;
+}
+	
+.uploadTemplate .ui-messages-error{
+    margin: 1px;
+    padding: 4px 0 0 0;
+}
+.transferToQcTable {
+	width: 900px;
+}
+
+.transferToQcTable td {
+	white-space:initial!important;
+	text-align: center;
+}
+
+.transferToQcTable th:nth-child(1) {
+	width: 20px;
+}
+
+.transferToQcTable th:nth-child(2) {
+	width: 30px;
+}
+.transferToQcTable th:nth-child(3) {
+	width: 120px;
+}
+.transferToQcTable th:nth-child(4) {
+	width: 30px;
+}
+.transferToQcTable th:nth-child(5) {
+	width: 70px;
+}
+
+.transferToQcTable th:nth-child(6) {
+	width: 30px;
+}
+
+.transferToQcTable th:nth-child(7) {
+	width: 120px;
+}
+
+.transferToQcTable th:nth-child(8) {
+	width: 80px;
+}
+
+.transferToQcTable th:nth-child(9) {
+	padding: 0;
+}
+
+.historyPanel .ui-panel-content:nth-child(2) {
+	padding: 0 !important;
+}
+
+.quoteDetails div:nth-child(2) {
+	padding: 0;
+}
+
+.detailLabel {
+	background-color: #dfeffc;
+}
+
+.bmtvodata .BMT_Attachment a {
+	float: left;
+	margin-left: 2px;
+}
+
+.bmtvodata .BMT_Attachment a:nth-child(1) {
+	background-position: -0px -194px;
+}
+
+.bmtvodata .BMT_Attachment a:nth-child(2) {
+	background-position: -176px -194px;
+}
+
+.query_view {
+	background-position: -176px -194px;
+}
+
+.ui-column-filter {
+	margin-left: -4px !important;
+}
+
+.details_salesman_info {
+	margin-left: 24px;
+	margin-bottom: 6px;
+}
+.lazyHistory .ui-inputfield,.bmtvodata .ui-inputfield{
+	padding: 0 2px!important;
+}
+.ui-growl {
+/*     position: absolute !important; */
+    top: 40% !important;
+    left: 40% !important;
+}
+.bmt_column_designLocation input{
+   width: 270px !important;
+   font-weight: normal !important;
+}
+.bmt_column_currency input{
+   width: 60px !important;
+   font-weight: normal !important;
+}
+.bmt_column_currency button, .bmt_column_designLocation button{
+   height: 16px !important;
+    padding-bottom: 20px;
+}
+.ui-selectmanycheckbox label {
+    vertical-align: middle;
+    cursor: pointer;
+    margin: 0 5px 0 5px !important;
+    outline: medium none;
+    z-index: 1;
+    display: inline-block;
+}

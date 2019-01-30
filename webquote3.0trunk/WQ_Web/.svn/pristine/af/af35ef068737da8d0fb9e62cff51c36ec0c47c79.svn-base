@@ -1,0 +1,839 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+<h:head>
+	<f:facet name="first">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta content='text/html; charset=UTF-8' http-equiv="Content-Type" />
+		<meta http-equiv="Cache-Control" Content="no-cache" />
+		<meta http-equiv="Pragma" Content="no-cache" />
+		<meta http-equiv="Expires" Content="0" />
+		<title>#{dbResource['wq.label.workingPlateFormPage']}</title>
+	</f:facet>
+</h:head>
+<h:body>
+	<h:form id="form_quotationHistory" enctype="multipart/form-data">
+		<p:panel header="#{dbResource['wq.label.quoteHistory']}" style="padding:0px 0px 0px 0px;">
+			<p:dataTable widgetVar="datatable_quotationHistory_var" var="history"
+				value="#{workingPlatformMB.quotationHistorys}"
+				rowKey="#{history.quoteItem.quoteNumber}" paginator="true"
+				paginatorPosition="top" rowIndexVar="rowIndex" rows="5"
+				rowsPerPageTemplate="5,10,15"
+				filteredValue="#{workingPlatformMB.filteredQuotationHistorys}"
+				id="datatable_quotationHistoryList" scrollable="true"
+				emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+
+
+				<p:column headerText="#{dbResource['wq.label.quote']}&lt;br/&gt;#{dbResource['wq.label.stage']}"
+					sortBy="#{history.quoteItem.stage}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.stage}" styleClass="column_stage">
+				<h:outputText value="#{history.quoteItem.stage}"/>  
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.rfq']}&lt;br/&gt;#{dbResource['wq.label.status']}"
+					sortBy="#{history.quoteItem.status}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.status}"
+					styleClass="column_rfqStatus">
+				<h:outputText value="#{history.quoteItem.status}"/> 
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.header.form']}#" sortBy="#{history.quoteItem.quote.formNumber}"
+					filterMatchMode="contains" filterBy="#{history.quoteItem.quote.formNumber}"
+					id="formNumber" styleClass="column_formNumber">
+				<h:outputText value="#{history.quoteItem.quote.formNumber}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.avnetQuote']}#" sortBy="#{history.quoteItem.quoteNumber}"
+					filterMatchMode="contains" filterBy="#{history.quoteItem.quoteNumber}"
+					styleClass="column_quoteNumber">
+				<h:outputText value="#{history.quoteItem.quoteNumber}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.mfr']}"
+					sortBy="#{history.quoteItem.requestedMfr.name}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.requestedMfr.name}"
+					styleClass="column_mfr tdmandatoryvalue">
+				<h:outputText value="#{history.quoteItem.requestedMfr.name}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.mfrPN']}"
+					sortBy="#{history.quoteItem.requestedPartNumber}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.requestedPartNumber}"
+					styleClass="column_fullMfrPart">
+				<h:outputText value="#{history.quoteItem.requestedPartNumber}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quotedPart']}"
+					sortBy="#{history.quotedPartNumber}"
+					filterMatchMode="contains"
+					filterBy="#{history.quotedPartNumber}"
+					styleClass="column_fullMfrPart tdmandatoryvalue">
+				<h:outputText value="#{history.quotedPartNumber}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.cust']}"
+					sortBy="#{history.soldToCustomerNameStr}"
+					filterMatchMode="contains"
+					filterBy="#{history.soldToCustomerNameStr}"
+					styleClass="column_soldToCustomerName editCell">
+				<h:outputText value="#{history.soldToCustomerNameStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.endCust']}"
+					sortBy="#{history.quoteItem.endCustomerFullName}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.endCustomerFullName}"
+					styleClass="column_endCustomerName">
+				<h:outputText value="#{history.quoteItem.endCustomerFullName}"/>
+				</p:column>
+                
+                <p:column headerText="#{dbResource['wq.label.customerGroupID']}"
+					sortBy="#{history.quoteItem.customerGroupId}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.customerGroupId}"
+					styleClass="column_custoemrGroupId">
+				<h:outputText value="#{history.quoteItem.customerGroupId}"/>
+				</p:column>
+                
+				<p:column headerText="#{dbResource['wq.label.required']}&lt;br/&gt;#{dbResource['wq.label.Qty']}"
+					sortBy="#{history.quoteItem.requestedQty}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.requestedQty}"
+					styleClass="column_requiredQty">
+				<h:outputText value="#{history.quoteItem.requestedQty}">
+					<f:convertNumber pattern="#,###" />
+				</h:outputText>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.EAU']}" sortBy="#{history.quoteItem.eau}"
+					filterMatchMode="contains" filterBy="#{history.quoteItem.eau}"
+					styleClass="column_eau">
+				<h:outputText value="#{history.quoteItem.eau}">
+					<f:convertNumber pattern="#,###" />
+				</h:outputText>
+				</p:column>
+
+                <p:column headerText="#{dbResource['wq.label.saleCostPart']}"
+					sortBy="#{history.quoteItem.salesCostFlag}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.salesCostFlag}"
+					styleClass="column_salesCostFlag">
+				<h:outputText value="#{history.quoteItem.salesCostFlag}"/>
+				</p:column>
+				
+				 <p:column headerText="#{dbResource['wq.label.salesCostType']}"
+					sortBy="#{history.salesCostTypeName}"
+					filterMatchMode="contains"
+					filterBy="#{history.salesCostTypeName}"
+					styleClass="column_salesCostType">
+				<h:outputText value="#{history.salesCostTypeName}"/>
+				</p:column>
+				
+			   <p:column headerText="#{dbResource['wq.label.salesCost']}"
+					sortBy="#{history.salesCostStr}"
+					filterMatchMode="contains"
+					filterBy="#{history.salesCostStr}"
+					styleClass="column_salesCost">
+				<h:outputText value="#{history.salesCostStr}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.suggested']}&lt;br/&gt;#{dbResource['wq.label.resale']}"
+					sortBy="#{history.suggestedResaleStr}" filterMatchMode="contains"
+					filterBy="#{history.suggestedResaleStr}"
+					styleClass="column_suggestedResale">
+				<h:outputText value="#{history.suggestedResaleStr}"/>
+				</p:column>
+                
+                
+				<p:column headerText="#{dbResource['wq.label.quoted']}&lt;br/&gt;#{dbResource['wq.label.margin']} %"
+					sortBy="#{history.resaleMarginStr}" filterMatchMode="contains"
+					filterBy="#{history.resaleMarginStr}"
+					styleClass="column_quotedMargin">
+				<h:outputText value="#{history.resaleMarginStr}"/>
+				</p:column>
+                
+                
+				<p:column headerText="#{dbResource['wq.label.quoted']}&lt;br/&gt;#{dbResource['wq.label.price']}"
+					sortBy="#{history.quotedPriceStr}" filterMatchMode="contains"
+					filterBy="#{history.quotedPriceStr}"
+					styleClass="column_quotedPrice tdmandatoryvalue">
+				<h:outputText value="#{history.quotedPriceStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.cost']}" sortBy="#{history.costStr}"
+					filterMatchMode="contains" filterBy="#{history.costStr}"
+					styleClass="column_cost editCell">
+					<h:outputText value="#{history.costStr}"
+						rendered="#{history.quoteItem.stage != 'INVALID'}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.cost']}&lt;br/&gt;#{dbResource['wq.label.indicator']}"
+					sortBy="#{history.quoteItem.costIndicator}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.costIndicator}"
+					styleClass="column_costIndicator">
+				<h:outputText value="#{history.quoteItem.costIndicator}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.target']}&lt;br/&gt;#{dbResource['wq.label.resale']}"
+					sortBy="#{history.targetResaleStr}" filterMatchMode="contains"
+					filterBy="#{history.targetResaleStr}"
+					styleClass="column_targetResale">
+				<h:outputText value="#{history.targetResaleStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.salesman']}"
+					sortBy="#{history.quoteItem.quote.sales.name}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.quote.sales.name}"
+					styleClass="column_employeeName">
+				<h:outputText value="#{history.quoteItem.quote.sales.name}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.team']}"
+					sortBy="#{history.quoteItem.quote.sales.team.name}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.quote.sales.team.name}"
+					styleClass="column_team">
+				<h:outputText value="#{history.quoteItem.quote.sales.team.name}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.priceValidity']}"
+					sortBy="#{history.priceValidityStr}" filterMatchMode="contains"
+					filterBy="#{history.priceValidityStr}"
+					styleClass="column_validity tdmandatoryvalue">
+				<h:outputText value="#{history.priceValidityStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.shipment']}&lt;br/&gt;#{dbResource['wq.label.validity']}"
+					sortBy="#{history.shipmentValidityStr}" filterMatchMode="contains"
+					filterBy="#{history.shipmentValidityStr}" 
+					styleClass="column_shipmentValidity tdmandatoryvalue">
+				<h:outputText value="#{history.shipmentValidityStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.mfrQoute']} #"
+					sortBy="#{history.vendorQuoteNumberStr}" filterMatchMode="contains"
+					filterBy="#{history.vendorQuoteNumberStr}"
+					styleClass="column_vendorQuoteNumber">
+				<h:outputText value="#{history.vendorQuoteNumberStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.mfrDebit']} #"
+					sortBy="#{history.vendorDebitNumberStr}" filterMatchMode="contains"
+					filterBy="#{history.vendorDebitNumberStr}"
+					styleClass="column_vendorDebitNumber">
+				<h:outputText value="#{history.vendorDebitNumberStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.mfrQuoteQty']}"
+					sortBy="#{history.vendorQuoteQtyStr}" filterMatchMode="contains"
+					filterBy="#{history.vendorQuoteQtyStr}"
+					styleClass="column_vendorQuoteQty">
+				<h:outputText value="#{history.vendorQuoteQtyStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.qcInternalComment']}"
+					sortBy="#{history.internalCommentStr}" filterMatchMode="contains"
+					filterBy="#{history.internalCommentStr}"
+					styleClass="column_qcInternalComment">
+				<h:outputText value="#{history.internalCommentStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.QCExternalComment']}"
+					sortBy="#{history.aqccStr}" filterMatchMode="contains"
+					filterBy="#{history.aqccStr}"
+					styleClass="column_qcExternalComment">
+				<h:outputText value="#{history.aqccStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.PMOQ']}" sortBy="#{history.quoteItem.pmoq}"
+					filterMatchMode="contains" filterBy="#{history.quoteItem.pmoq}"
+					styleClass="column_pmoq">
+				<h:outputText value="#{history.quoteItem.pmoq}">
+				</h:outputText>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.MPQ']}" sortBy="#{history.mpqStr}"
+					filterMatchMode="contains" filterBy="#{history.mpqStr}"
+					styleClass="column_mpq tdmandatoryvalue">
+					<h:outputText value="#{history.mpqStr}"
+						rendered="#{history.quoteItem.stage != 'INVALID'}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.moq']}" sortBy="#{history.moqStr}"
+					filterMatchMode="contains" filterBy="#{history.moqStr}"
+					styleClass="column_moq tdmandatoryvalue">
+					<h:outputText value="#{history.moqStr}"
+						rendered="#{history.quoteItem.stage != 'INVALID'}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.mov']}" sortBy="#{history.movStr}"
+					filterMatchMode="contains" filterBy="#{history.movStr}"
+					styleClass="column_mov">
+					<h:outputText value="#{history.movStr}"
+						rendered="#{history.quoteItem.stage != 'INVALID'}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.lead']}&lt;br/&gt;#{dbResource['wq.label.time']}"
+					sortBy="#{history.leadTimeStr}" filterMatchMode="contains"
+					filterBy="#{history.leadTimeStr}"
+					styleClass="column_leadTime">
+				<h:outputText value="#{history.leadTimeStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.message.multiUsage']}"
+					sortBy="#{history.multiUsageFlagStr}" filterMatchMode="contains"
+					filterBy="#{history.multiUsageFlagStr}"
+					styleClass="column_multiUsage">
+				<h:outputText value="#{history.multiUsageFlagStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.Qty']}&lt;br/&gt;#{dbResource['wq.label.indicator']}"
+					sortBy="#{history.qtyIndicatorStr}" filterMatchMode="contains"
+					filterBy="#{history.qtyIndicatorStr}"
+					styleClass="column_qtyIndicator">
+				<h:outputText value="#{history.qtyIndicatorStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.rfqSubmissionDate']}"
+					sortBy="#{history.quoteItem.submissionDate}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.submissionDate}"
+					styleClass="column_uploadTime">
+				<h:outputText value="#{history.quoteItem.submissionDate}">
+					<f:convertDateTime  pattern="dd/MM/yyyy HH:mm:ss"  />
+				</h:outputText>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.quoteRelDate']}"
+					sortBy="#{history.quoteItem.sentOutTime}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.sentOutTime}"
+					styleClass="column_sentOutTime">
+				<h:outputText value="#{history.quoteItem.sentOutTime}">
+					<f:convertDateTime  pattern="dd/MM/yyyy HH:mm:ss"  />
+				</h:outputText>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.target']}&lt;br/&gt;#{dbResource['wq.label.price']}&lt;br/&gt;#{dbResource['wq.label.margin']} %"
+					sortBy="#{history.targetMarginStr}" filterMatchMode="contains"
+					filterBy="#{history.targetMarginStr}"
+					styleClass="column_targetPriceMargin">
+				<h:outputText value="#{history.targetMarginStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.quote']}&lt;br/&gt;#{dbResource['wq.label.reference']}&lt;br/&gt;#{dbResource['wq.label.margin']} %"
+					sortBy="#{history.referenceMarginStr}" filterMatchMode="contains"
+					filterBy="#{history.referenceMarginStr}"
+					styleClass="column_referenceMargin">
+					<h:outputText value="#{history.referenceMarginStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.cust']}&lt;br/&gt;#{dbResource['wq.label.type']}"
+					sortBy="#{history.quoteItem.quote.customerType}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.quote.customerType}"
+					styleClass="column_customerType">
+				<h:outputText value="#{history.quoteItem.quote.customerType}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.app']}" sortBy="#{history.quoteItem.application}"
+					filterMatchMode="contains" filterBy="#{history.quoteItem.application}"
+					styleClass="column_application">
+				<h:outputText value="#{history.quoteItem.application}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.projectName']}"
+					sortBy="#{history.quoteItem.projectName}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.projectName}"
+					styleClass="column_projectName">
+				<h:outputText value="#{history.quoteItem.projectName}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.design']}&lt;br/&gt;#{dbResource['wq.label.location']}"
+					sortBy="#{history.quoteItem.designLocation}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.designLocation}"
+					styleClass="column_designLocation">
+				<h:outputText value="#{history.quoteItem.designLocation}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.rescheduling']}&lt;br/&gt;#{dbResource['wq.button.window']}"
+					sortBy="#{history.rescheduleWindowStr}" filterMatchMode="contains"
+					filterBy="#{history.rescheduleWindowStr}"
+					styleClass="column_reschedulingWindow">
+				<h:outputText value="#{history.rescheduleWindowStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.cancellation']}&lt;br/&gt;#{dbResource['wq.button.window']}"
+					sortBy="#{history.cancellationWindowStr}" filterMatchMode="contains"
+					filterBy="#{history.cancellationWindowStr}"
+					styleClass="column_cancellationWindow">
+				<h:outputText value="#{history.cancellationWindowStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.quotation']} #{dbResource['wq.label.tc']}"
+					sortBy="#{history.termsAndConditionsStr}" filterMatchMode="contains"
+					filterBy="#{history.termsAndConditionsStr}"
+					styleClass="column_termsAndConditions">
+				<h:outputText value="#{history.termsAndConditionsStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.QuoteType']}"
+					sortBy="#{history.quoteTypeStr}" filterMatchMode="contains"
+					filterBy="#{history.quoteTypeStr}"
+					styleClass="column_quoteType">
+				<h:outputText value="#{history.quoteTypeStr}"/>
+				</p:column>
+ 				
+				<p:column headerText="#{dbResource['wq.label.rfq']}&lt;br/&gt;#{dbResource['wq.header.form']}&lt;br/&gt;#{dbResource['wq.label.attachment']}"
+					styleClass="column_icon readOnlyCell"  >
+					<p:commandLink global="false" onstart="start();"
+						oncomplete="stop(); PF('history_attachment_list_no_delete_dialog').show();"
+						onerror="stopWithError();"
+						actionListener="#{workingPlatformMB.updateTableFormAttachments(history)}"
+						update=":form_quotationHistory:history_attachment_no_delete_panel" 
+						rendered="#{history.quoteItem.quote.formAttachmentFlag}">
+						<h:graphicImage url="./../resources/images/icon_magnifier.png"
+							styleClass="iconLink" />
+					</p:commandLink>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.header.rfqItem']}&lt;br/&gt;#{dbResource['wq.label.attachment']}"
+					styleClass="column_icon readOnlyCell"  >
+					<p:commandLink global="false" onstart="start();"
+						oncomplete="stop(); PF('history_attachment_list_no_delete_dialog').show();"
+						onerror="stopWithError();"
+						actionListener="#{workingPlatformMB.updateTableAttachments(history)}"
+						update=":form_quotationHistory:history_attachment_no_delete_panel"
+						rendered="#{history.quoteItem.itemAttachmentFlag}">
+						<h:graphicImage url="./../resources/images/icon_magnifier.png"
+							styleClass="iconLink" />
+					</p:commandLink>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.refresh']}&lt;br/&gt;#{dbResource['wq.label.attachment']}"
+					styleClass="column_icon readOnlyCell" >
+					<p:commandLink global="false" onstart="start();"
+						oncomplete="stop(); PF('history_attachment_list_no_delete_dialog').show();"
+						onerror="stopWithError();"
+						actionListener="#{workingPlatformMB.updateTableRefreshAttachments(history)}"
+						update=":form_quotationHistory:history_attachment_no_delete_panel"
+						rendered="#{history.quoteItem.refreshAttachmentFlag}">
+						<h:graphicImage url="./../resources/images/icon_magnifier.png"
+							styleClass="iconLink" />
+					</p:commandLink>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.pm']}&lt;br/&gt;#{dbResource['wq.label.attachment']}"
+					styleClass="column_icon readOnlyCell" >
+					<p:commandLink global="false" onstart="start();"
+						oncomplete="stop(); PF('history_attachment_list_no_delete_dialog').show();"
+						onerror="stopWithError();"
+						actionListener="#{workingPlatformMB.updateTableInternalTransferAttachments(history)}"
+						update=":form_quotationHistory:history_attachment_no_delete_panel"
+						rendered="#{history.quoteItem.pmAttachmentFlag}">
+						<h:graphicImage url="./../resources/images/icon_magnifier.png"
+							styleClass="iconLink" />
+					</p:commandLink>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.qc']}&lt;br/&gt;#{dbResource['wq.label.attachment']}"
+					styleClass="column_icon readOnlyCell" >
+					<p:commandLink global="false" onstart="start();"
+						oncomplete="stop(); PF('history_attachment_list_no_delete_dialog').show();"
+						onerror="stopWithError();"
+						actionListener="#{workingPlatformMB.updateQCAttachments(history.quoteItem.quoteNumber)}"
+						update=":form_quotationHistory:history_attachment_no_delete_panel"
+						rendered="#{history.quoteItem.qcAttachmentFlag}">
+						<h:graphicImage url="./../resources/images/icon_magnifier.png"
+							styleClass="iconLink" />
+					</p:commandLink>
+					<h:outputText value="#{history.quoteItem.qcAttachmentFlag ? 'Yes':'No'}" style="display:none;"/>
+				</p:column>
+ 				
+				<p:column headerText="#{dbResource['wq.label.pmComment']}" sortBy="#{history.quoteItem.internalTransferComment}" filterMatchMode="contains" filterBy="#{history.quoteItem.internalTransferComment}" styleClass="column_pmComment">
+				<h:outputText value="#{history.quoteItem.internalTransferComment}"/>
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.remarks']}" sortBy="#{history.quoteItem.quote.remarks}"
+					filterMatchMode="contains" filterBy="#{history.quoteItem.quote.remarks}"
+					styleClass="column_remarks">
+		        <h:outputText value="#{history.quoteItem.quote.remarks}"/>  
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.item']}&lt;br/&gt;#{dbResource['wq.label.remarks']}"
+					sortBy="#{history.quoteItem.remarks}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.remarks}"
+					styleClass="column_itemRemarks">
+				<h:outputText value="#{history.quoteItem.remarks}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.competitor']}&lt;br/&gt;#{dbResource['wq.label.information']}"
+					sortBy="#{history.quoteItem.competitorInformation}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.competitorInformation}"
+					styleClass="column_competitorInformation">
+				<h:outputText value="#{history.quoteItem.competitorInformation}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.DesignInCat']}" sortBy="#{history.designInCatStr}"
+					filterMatchMode="contains" filterBy="#{history.designInCatStr}"
+					styleClass="column_designInCat">
+				<h:outputText value="#{history.designInCatStr}"/>
+				</p:column>				
+
+				<p:column headerText="#{dbResource['wq.label.drmsID']}"
+					sortBy="#{history.quoteItem.drmsNumber}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.drmsNumber}"
+					styleClass="column_drmsNumber">
+				<h:outputText value="#{history.quoteItem.drmsNumber}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.mfrDR']}#" sortBy="#{history.quoteItem.supplierDrNumber}"
+					filterMatchMode="contains" filterBy="#{history.quoteItem.supplierDrNumber}"
+					styleClass="column_supplierDrNumber">
+				<h:outputText value="#{history.quoteItem.supplierDrNumber}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.DRExpiryDate']}"
+					styleClass="column_drExpiryDate">
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.authGP']}"
+					styleClass="column_authorizedGP">
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.reasonsFor']} #{dbResource['wq.label.authGPChange']}"
+					styleClass="column_reasonForAuthorizedGPChange">
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.remarksReason']}"
+					styleClass="column_remarkForReason">
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.pp']}&lt;br/&gt;#{dbResource['wq.label.schedule']}"
+					sortBy="#{history.quoteItem.ppSchedule}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.ppSchedule}"
+					styleClass="column_ppSchedule">
+				<h:outputText value="#{history.quoteItem.ppSchedule}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.mp']}&lt;br/&gt;#{dbResource['wq.label.schedule']}"
+					sortBy="#{history.quoteItem.mpSchedule}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.mpSchedule}"
+					styleClass="column_mpSchedule">
+				<h:outputText value="#{history.quoteItem.mpSchedule}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.poex']}&lt;br/&gt;#{dbResource['wq.label.date']}"
+					sortBy="#{history.quoteItem.poExpiryDate}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.poExpiryDate}"
+					styleClass="column_poExpiryDate">
+				<h:outputText value="#{history.quoteItem.poExpiryDateStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.QuoteExpiry']}&lt;br/&gt;#{dbResource['wq.label.date']}"
+					sortBy="#{history.quoteItem.quoteExpiryDate}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.quoteExpiryDate}"
+					styleClass="column_quoteExpiryDate">
+				<h:outputText value="#{history.quoteItem.quoteExpiryDateStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.avnet']}&lt;br/&gt;#{dbResource['wq.label.quotedQty']}"
+					sortBy="#{history.quotedQtyStr}" filterMatchMode="contains"
+					filterBy="#{history.quotedQtyStr}"
+					styleClass="column_quotedQty">
+				<h:outputText value="#{history.quotedQtyStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.reqRef']}"
+					sortBy="#{history.quoteItem.quote.yourReference}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.quote.yourReference}"
+					styleClass="column_yourReference">
+		        <h:outputText value="#{history.quoteItem.quote.yourReference}"/>	
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.salesmanCode']}"
+					sortBy="#{history.quoteItem.quote.sales.employeeId}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.quote.sales.employeeId}"
+					styleClass="column_yourReference">
+		        <h:outputText value="#{history.quoteItem.quote.sales.employeeId}"/>	
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.loa']}" sortBy="#{history.loaFlagStr}"
+					filterMatchMode="contains" filterBy="#{history.loaFlagStr}"
+					styleClass="column_loa">
+				<h:outputText value="#{history.loaFlagStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.resale']}&lt;br/&gt;#{dbResource['wq.label.indicator']}"
+					sortBy="#{history.resaleIndicatorStr}" filterMatchMode="contains"
+					filterBy="#{history.resaleIndicatorStr}"
+					styleClass="column_resalesIndicator">
+				<h:outputText value="#{history.resaleIndicatorStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.allocations']}&lt;br/&gt;#{dbResource['wq.label.part']}"
+					sortBy="#{history.allocationFlagStr}" filterMatchMode="contains"
+					filterBy="#{history.allocationFlagStr}"
+					styleClass="column_allocationFlag">
+				<h:outputText value="#{history.allocationFlagStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.revert']}&lt;br/&gt;#{dbResource['wq.label.version']}"
+					sortBy="#{history.quoteItem.revertVersion}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.revertVersion}"
+					styleClass="column_revertVersion">
+				<h:outputText value="#{history.quoteItem.revertVersion}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.first']}&lt;br/&gt;#{dbResource['wq.label.rfqCode']}"
+					sortBy="#{history.quoteItem.firstRfqCode}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.firstRfqCode}"
+					styleClass="column_quoteNumber">
+				<h:outputText value="#{history.quoteItem.firstRfqCode}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.segment']}" sortBy="#{history.quoteItem.enquirySegment}"
+					filterMatchMode="contains" filterBy="#{history.quoteItem.enquirySegment}"
+					styleClass="column_enquirySegment">
+				<h:outputText value="#{history.quoteItem.enquirySegment}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.bmt']}&lt;br/&gt;#{dbResource['wq.label.biz']}" sortBy="#{history.bmtFlagStr}"
+					filterMatchMode="contains" filterBy="#{history.bmtFlagStr}"
+					styleClass="column_bmtChecked">
+				<h:outputText value="#{history.bmtFlagStr}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.reasonRefresh']}"
+					sortBy="#{history.quoteItem.reasonForRefresh}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.reasonForRefresh}"
+					styleClass="column_reasonForRefresh">
+				<h:outputText value="#{history.quoteItem.reasonForRefresh}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.CopyToCS']}"
+					sortBy="#{history.quoteItem.quote.copyToCS}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.quote.copyToCS}" 
+					styleClass="column_copyToCs">
+				<h:outputText value="#{history.quoteItem.quote.copyToCS}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.prd']}&lt;br/&gt;#{dbResource['wq.label.group']} 2"
+					sortBy="#{history.productGroup2Str}" filterMatchMode="contains"
+					filterBy="#{history.productGroup2Str}"
+					styleClass="column_productGroup">
+				<h:outputText value="#{history.productGroup2Str}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.bProgType']}"
+					sortBy="#{history.quoteItem.programType}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.programType}"
+					styleClass="column_program">
+				<h:outputText value="#{history.quoteItem.programType}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.soldTo']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+					sortBy="#{history.quoteItem.quote.soldToCustomer.customerNumber}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.quote.soldToCustomer.customerNumber}"
+					styleClass="column_soldToCustomerNumber">
+				<h:outputText value="#{history.quoteItem.quote.soldToCustomer.customerNumber}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.shipTo']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+					sortBy="#{history.quoteItem.shipToCustomer.customerNumber}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.shipToCustomer.customerNumber}"
+					styleClass="column_shipToCustomerNumber">
+				<h:outputText value="#{history.quoteItem.shipToCustomer.customerNumber}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.ShipToParty']}"
+					sortBy="#{history.quoteItem.shipToCustomerFullName}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.shipToCustomerFullName}"
+					styleClass="column_shipToCustomerName">
+				<h:outputText value="#{history.quoteItem.shipToCustomerFullName}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.endCust']}&lt;br/&gt;#{dbResource['wq.label.code']}"
+					sortBy="#{history.quoteItem.endCustomer.customerNumber}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.endCustomer.customerNumber}"
+					styleClass="column_endCustomerNumber">
+				<h:outputText value="#{history.quoteItem.endCustomer.customerNumber}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.sapMN']}"
+					sortBy="#{history.quoteItem.sapPartNumber}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.sapPartNumber}"
+					styleClass="column_fullMfrPart">
+				<h:outputText value="#{history.quoteItem.sapPartNumber}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.spr']}" sortBy="#{history.sprFlagStr}"
+					filterMatchMode="contains" filterBy="#{history.sprFlagStr}"
+					styleClass="column_specialPriceIndicator">
+				<h:outputText value="#{history.sprFlagStr}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.quotedBy']}"
+					sortBy="#{history.quoteItem.lastUpdatedQcName}" filterMatchMode="contains"
+					filterBy="#{history.quoteItem.lastUpdatedQcName}"
+					styleClass="column_createdBy">
+				<h:outputText value="#{history.quoteItem.lastUpdatedQcName}"/>
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.SoldToParty']} (#{dbResource['wq.label.chinese']})"
+					sortBy="#{history.soldToChineseNameStr}"
+					filterMatchMode="contains"
+					filterBy="#{history.soldToChineseNameStr}"
+					styleClass="column_soldToCustomerChineseName">
+				<h:outputText value="#{history.soldToChineseNameStr}"/>
+				</p:column>				
+<!-- 				BMT fields start -->
+				<p:column headerText="#{dbResource['wq.label.BmtFlag']}" sortBy="#{history.quoteItem.quoteItemDesign.bmtFlag.bmtFlagCode}" filterMatchMode="exact" filterBy="#{history.quoteItem.quoteItemDesign.bmtFlag.bmtFlagCode}" styleClass="column_bmtFlag readOnlyCell">
+					<h:outputText value="#{history.quoteItem.quoteItemDesign.bmtFlag.description}" />
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.designRegion']}"
+					sortBy="#{history.quoteItem.designRegion}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.designRegion}"
+					styleClass="column_region">
+					<h:outputText value="#{history.quoteItem.designRegion}"/>
+				</p:column>				
+				<p:column headerText="#{dbResource['wq.label.bmtMFRDR']}#"
+					sortBy="#{history.quoteItem.quoteItemDesign.drMfrNo}"
+					filterMatchMode="contains"
+					filterBy="#{history.quoteItem.quoteItemDesign.drMfrNo}"
+					styleClass="column_mfr_dr">
+					<h:outputText value="#{history.quoteItem.quoteItemDesign.drMfrNo}"/>
+				</p:column>				
+				<p:column headerText="#{dbResource['wq.label.bmt']}&lt;br/&gt; #{dbResource['wq.label.suggestCost']}" sortBy="#{history.quoteItem.quoteItemDesign.drCost}" filterMatchMode="contains" filterBy="#{history.quoteItem.quoteItemDesign.drCost}" styleClass="column_drCost readOnlyCell">
+					<h:outputText value="#{history.quoteItem.quoteItemDesign.drCost}" />
+				</p:column>			
+				<p:column headerText="#{dbResource['wq.label.bmt']} &lt;br/&gt;#{dbResource['wq.label.suggestResale']}"  sortBy="#{history.quoteItem.quoteItemDesign.drResale}" filterMatchMode="contains" filterBy="#{history.quoteItem.quoteItemDesign.drResale}"  styleClass="column_drCost readOnlyCell">
+					<h:outputText value="#{history.quoteItem.quoteItemDesign.drResale}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.bmt']} &lt;br/&gt;#{dbResource['wq.header.suggestedMargin']}" styleClass="column_drCost readOnlyCell">
+					<h:outputText value="#{history.quoteItem.quoteItemDesign.getDrMargin()}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.bmtMFRQuoted']}#" sortBy="#{history.quoteItem.quoteItemDesign.drMfrQuoteNo}" filterMatchMode="contains" filterBy="#{history.quoteItem.quoteItemDesign.drMfrQuoteNo}" styleClass="column_drMfrQuoteNo readOnlyCell">
+					<h:outputText value="#{history.quoteItem.quoteItemDesign.drMfrQuoteNo}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.bmtSQ']}&lt;br/&gt;#{dbResource['wq.label.effectiveDate']}" sortBy="#{history.quoteItem.quoteItemDesign.drEffectiveDate}" filterMatchMode="contains" filterBy="#{history.quoteItem.quoteItemDesign.drEffectiveDate}" styleClass="column_drEffectiveDate readOnlyCell">
+					<h:outputText value="#{workingPlatformMB.convertDateToString(history.quoteItem.quoteItemDesign.drEffectiveDate,'dd/MM/yyyy')}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.bmtSQ']}&lt;br/&gt;#{dbResource['wq.label.expDate']}" sortBy="#{history.quoteItem.quoteItemDesign.drExpiryDate}" filterMatchMode="contains" filterBy="#{history.quoteItem.quoteItemDesign.drExpiryDate}" styleClass="column_drExpiryDate readOnlyCell">
+					<h:outputText value="#{workingPlatformMB.convertDateToString(history.quoteItem.quoteItemDesign.drExpiryDate,'dd/MM/yyyy')}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.bmtComm']}" sortBy="#{history.quoteItem.quoteItemDesign.drComments}" filterMatchMode="contains" filterBy="#{history.quoteItem.quoteItemDesign.drComments}" styleClass="column_drComments readOnlyCell">
+					<h:outputText value="#{history.quoteItem.quoteItemDesign.drComments}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.bmtAtts']}" exportable="false" styleClass="column_bmtAttachment readOnlyCell">
+					<p:commandLink process="@this" title="#{dbResource['wq.title.seeAttachment']}" styleClass="query_view" rendered="#{history.quoteItem.bmtAttachmentFlag}" 
+								   update=":form_pendinglist:attathmentsPanel:componentAttData"
+								   oncomplete="PF('attachmentDialog').show();">
+						<h:graphicImage url="./../resources/images/icon_magnifier.png" styleClass="iconLink"/>
+						<f:setPropertyActionListener target="#{viewScope.attachments}" value="#{history.quoteItem.getAttachments('BMT Attachment')}"/>
+					</p:commandLink>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.bmtQuotedQty']}" sortBy="#{history.quoteItem.quoteItemDesign.drQuoteQty}" filterMatchMode="contains" filterBy="#{history.quoteItem.quoteItemDesign.drQuoteQty}" styleClass="column_drQuoteQty readOnlyCell">
+					<h:outputText value="#{history.quoteItem.quoteItemDesign.drQuoteQty}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.bmtSuggCost']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})" sortBy="#{history.quoteItem.quoteItemDesign.drCostAltCurrency}" filterMatchMode="contains" filterBy="#{history.quoteItem.quoteItemDesign.drCostAltCurrency}" styleClass="column_drCostAltCurrency readOnlyCell">
+					<h:outputText value="#{history.quoteItem.quoteItemDesign.drCostAltCurrency}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.bmtSuggResale']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})" sortBy="#{history.quoteItem.quoteItemDesign.drResaleAltCurrency}" filterMatchMode="contains" filterBy="#{history.quoteItem.quoteItemDesign.drResaleAltCurrency}" styleClass="column_drResaleAltCurrency readOnlyCell">
+					<h:outputText value="#{history.quoteItem.quoteItemDesign.drResaleAltCurrency}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.bmtCurr']}" sortBy="#{history.quoteItem.quoteItemDesign.drAltCurrency}" filterMatchMode="contains" filterBy="#{history.quoteItem.quoteItemDesign.drAltCurrency}" styleClass="column_drAltCurrency readOnlyCell">
+					<h:outputText value="#{history.quoteItem.quoteItemDesign.drAltCurrency}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.bmtExchRate']}&lt;br&gt;(#{dbResource['wq.message.nonUSD']})" sortBy="#{history.quoteItem.quoteItemDesign.drExchangeRate}" filterMatchMode="contains" filterBy="#{history.quoteItem.quoteItemDesign.drExchangeRate}" styleClass="column_drExchangeRate readOnlyCell">
+					<h:outputText value="#{history.quoteItem.quoteItemDesign.drExchangeRate}"/>
+				</p:column>
+			</p:dataTable>
+
+
+			<f:facet name="actions">
+				<div style="float: right;">
+					<h:panelGrid id="quoteHistorySearch" columns="10" cellpadding="0"
+						style="padding:0px 2px 0px 2px;">
+						<h:outputText value="#{dbResource['wq.label.mfr']}: " />
+						<p:inputText value="#{workingPlatformMB.quoteHistoryMfrSearch}"
+							styleClass="input_text_half" style="padding:0px 0px 0px 0px;" />
+						<h:outputText value="#{dbResource['wq.label.pn']}: " />
+						<p:inputText
+							value="#{workingPlatformMB.quoteHistoryPartNumberSearch}"
+							styleClass="input_text" style="padding:0px 0px 0px 0px;" />
+						<h:outputText value="#{dbResource['wq.label.custmrName']}: " />
+						<p:inputText
+							value="#{workingPlatformMB.quoteHistorySoldToCustomerNameSearch}"
+							styleClass="input_text" style="padding:0px 0px 0px 0px;" />
+						<p:commandButton global="false" onstart="start();"
+							oncomplete="stop(); PF('datatable_quotationHistory_var').clearFilters();" onerror="stopWithError();" value="#{dbResource['wq.button.search']}"
+							icon="ui-icon-circle-check"
+							update=":form_quotationHistory:datatable_quotationHistoryList,:form_pendinglist:workingPlatformGrowl"
+							actionListener="#{workingPlatformMB.searchQuoteHistory}" />
+				        <p:commandButton value="#{dbResource['wq.button.download']}" ajax="false">  
+				        	<p:dataExporter type="xls" target="datatable_quotationHistoryList" fileName="QuoteHistory" postProcessor="#{workingPlatformMB.postProcessXLSForQuoteHistory}"/>  	        
+				        </p:commandButton>
+							
+						| <p:commandButton global="false" onstart="start();"
+							oncomplete="stop();" onerror="stopWithError();"
+							value="#{dbResource['wq.button.clearFilter']}" update="datatable_quotationHistoryList"
+							onclick="PF('datatable_quotationHistory_var').clearFilters();"></p:commandButton>
+					</h:panelGrid>
+				</div>
+			</f:facet>
+		</p:panel>
+		
+		<p:dialog id="history_attachment_list_no_delete_dialog" header="#{dbResource['wq.header.attchmntList']}" widgetVar="history_attachment_list_no_delete_dialog" modal="true" height="500">
+	
+			<p:panel header="#{workingPlatformMB.attachmentCount} #{dbResource['wq.label.attachmentFound']}." id="history_attachment_no_delete_panel" style="font-size:12pt">						
+			    <p:dataTable	var="attachment"
+			    				value="#{workingPlatformMB.attachments}"
+			    				rowKey="#{attachment.fileName}" 		
+			    				rowIndexVar="attachment_rowIndex"
+			                 	id="history_datatable_no_delete_attachment"
+			                 	style="margin:5px 0px 0px 0px;"
+			                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">		
+             		 
+			        <p:column headerText="#{dbResource['wq.label.no']}">
+				        #{attachment_rowIndex + 1}
+			        </p:column>						      				       									
+			        
+			        <p:column headerText="#{dbResource['wq.label.fileName']}" styleClass="column_remarks">
+				        #{attachment.fileName}
+			        </p:column>	
+			        
+			        <p:column styleClass="column_icon">
+			        	<ui:remove>
+			        	<p:commandLink actionListener="#{workingPlatformMB.downloadAttachment(attachment.id)}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false"/>
+			        	</ui:remove>
+			        	<p:commandLink actionListener="#{workingPlatformMB.updateDownloadAttachment(attachment_rowIndex)}" onclick="PrimeFaces.monitorDownload(start, stop)" ajax="false">
+			        		<h:graphicImage url="./../resources/images/icon_download.png" styleClass="iconLink"/>		
+			        		<p:fileDownload value="#{workingPlatformMB.downloadAttachment}" />		        	
+			        	</p:commandLink> 						        				        						        
+			        </p:column>					        	
+			        				        
+			    </p:dataTable>
+			</p:panel>
+		</p:dialog>	
+	</h:form>
+</h:body>
+</html>

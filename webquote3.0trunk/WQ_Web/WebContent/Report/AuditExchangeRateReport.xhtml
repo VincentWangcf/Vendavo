@@ -1,0 +1,172 @@
+<ui:composition template="/templates/MasterLayout.xhtml"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	
+	<ui:define name="css">
+	<h:outputStylesheet library="css" name="style-005.css" />
+	<h:outputStylesheet library="css" name="columns.css" />
+	</ui:define>
+	
+	<ui:define name="content">
+		<p:ajaxStatus onstart="start();" onsuccess="stop();" onerror="stopWithError();"/>
+		<h:form id="form">
+			<p:accordionPanel>
+				<p:tab title="#{dbResource['wq.label.auditExchnageRateReport']}">
+					<h:panelGrid cellpadding="0" style="width:100%;" columns="10">												
+						<h:outputText value="#{dbResource['wq.label.currencyFrom']}"  escape="false" />
+						<p:inputText value="#{auditExchangeRateReportMB.currencyFrom}" style="width:120px;"/>
+						
+						<h:outputText value="#{dbResource['wq.label.currencyTo']}"  escape="false" />
+						<p:inputText value="#{auditExchangeRateReportMB.currencyTo}" style="width:120px;"/>
+											
+						<h:outputText value="#{dbResource['wq.label.SoldToCode']}:"  escape="false" />
+						<p:inputText value="#{auditExchangeRateReportMB.soldToCode}" style="width:120px;"/>	
+										
+						<h:outputText value="#{dbResource['wq.label.changeDateFrom']}:"  escape="false" />
+						<p:calendar value="#{auditExchangeRateReportMB.startDate}" showOn="button" pattern="dd/MM/yyyy"   />
+						
+						<h:outputText value="#{dbResource['wq.label.changeDateTO']}:"  escape="false" />
+						<p:calendar value="#{auditExchangeRateReportMB.endDate}" showOn="button" pattern="dd/MM/yyyy"  />
+					</h:panelGrid>
+					
+					<h:panelGrid columns="3" cellpadding="0" >
+						<p:commandButton value="#{dbResource['wq.button.search']}" icon="ui-icon-search" actionListener="#{auditExchangeRateReportMB.search}" update="@form"/>
+						<p:commandButton value="#{dbResource['wq.label.reset']}"  icon="ui-icon-triangle-1-w" actionListener="#{auditExchangeRateReportMB.reset}" update="@form" />
+				        <p:commandButton value="#{dbResource['wq.button.download']}" ajax="false">  
+				        	<p:dataExporter type="xls" target=":form:auditReport_dataTable" fileName="Audit_Report" postProcessor="#{auditExchangeRateReportMB.postProcessXLS}"/>  	        
+				        </p:commandButton>						
+					</h:panelGrid>
+				</p:tab>
+			</p:accordionPanel>
+			 <p:dataTable	var="vo"
+	    				value="#{auditExchangeRateReportMB.auditExchangeRates}" 
+	    				rowKey="#{rowIndex}" 
+	    				paginator="true" 
+	    				rowIndexVar="rowIndex" 
+	    				rows="10" 
+    					rowsPerPageTemplate="10,20,50" 
+	                 	filteredValue="#{auditExchangeRateReportMB.filteredAuditExchangeRates}"
+	                 	id="auditReport_dataTable" 
+	                 	paginatorPosition="top"
+	                 	scrollable="true"
+	                 	scrollHeight="300"
+	                 	resizableColumns="true"
+	                 	emptyMessage="#{dbResource['wq.message.noRecordFound']}.">
+	                 	
+				<p:column style="width:50px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.no']}"/>
+					</f:facet>
+					<h:outputText value="#{rowIndex+1}" />
+				</p:column>
+
+				<p:column sortBy="#{vo.updateDate}" filterBy="#{vo.updateDate}" filterMatchMode="contains" style="width:130px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.updateDate']}&amp; #{dbResource['wq.label.time']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.updateDate}">
+						<f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" />					
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.actn']}" sortBy="#{vo.action}" filterBy="#{vo.action}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.actn']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.action}" />
+				</p:column>
+				
+				<p:column headerText="#{dbResource['wq.label.createUpdate']}" sortBy="#{vo.lastUpdatedName}" filterBy="#{vo.lastUpdatedName}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.createUpdate']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastUpdatedName}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.createUpdateEmpID']}" sortBy="#{vo.lastUpdatedBy}" filterBy="#{vo.lastUpdatedBy}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.createUpdateEmpID']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.lastUpdatedBy}" />
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.currencyFrom']}" sortBy="#{vo.currFromNew}" filterBy="#{vo.currFromNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.currencyFrom']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.currFromNew}" />
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.currencyTo']}" sortBy="#{vo.currToNew}" filterBy="#{vo.currToNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.currencyTo']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.currToNew}" />
+				</p:column>
+		
+				<p:column headerText="#{dbResource['wq.label.SoldToCode']}" sortBy="#{vo.soldToCodeNew}" filterBy="#{vo.soldToCodeNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.SoldToCode']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.soldToCodeNew}" />
+				</p:column>
+	
+				<p:column headerText="#{dbResource['wq.label.exchangeRateFromOld']}" sortBy="#{vo.exRateFromOld}" filterBy="#{vo.exRateFromOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.exchangeRateFromOld']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.exRateFromOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.exchangeRateFromNew']}" sortBy="#{vo.exRateFromNew}" filterBy="#{vo.exRateFromNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.exchangeRateFromNew']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.exRateFromNew}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.exchangeRateToOld']}" sortBy="#{vo.exRateToOld}" filterBy="#{vo.exRateToOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.exchangeRateToOld']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.exRateToOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.exchangeRateToNew']}" sortBy="#{vo.exRateToNew}" filterBy="#{vo.exRateToNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.exchangeRateToNew']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.exRateToNew}"/>
+				</p:column>
+
+				<p:column headerText="#{dbResource['wq.label.vatOld']}" sortBy="#{vo.vatOld}" filterBy="#{vo.vatOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.vatOld']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.vatOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.vatNew']}" sortBy="#{vo.vatNew}" filterBy="#{vo.vatNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.vatNew']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.vatNew}"/>
+				</p:column>
+								
+				<p:column headerText="#{dbResource['wq.label.handlingOld']}" sortBy="#{vo.handlingOld}" filterBy="#{vo.handlingOld}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.handlingOld']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.handlingOld}"/>
+				</p:column>
+				<p:column headerText="#{dbResource['wq.label.handlingNew']}" sortBy="#{vo.handlingNew}" filterBy="#{vo.handlingNew}" filterMatchMode="contains" style="width:150px">
+					<f:facet name="header">
+						<h:outputText value="#{dbResource['wq.label.handlingNew']}"/>
+					</f:facet>
+					<h:outputText value="#{vo.handlingNew}"/>
+				</p:column>
+								
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

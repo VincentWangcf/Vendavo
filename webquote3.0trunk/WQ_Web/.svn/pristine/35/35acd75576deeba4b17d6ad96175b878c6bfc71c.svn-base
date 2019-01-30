@@ -1,0 +1,554 @@
+package com.avnet.emasia.webquote.commodity.web;
+
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.model.SelectItem;
+
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.primefaces.component.datatable.DataTable;
+import org.primefaces.model.LazyDataModel;
+import org.primefaces.model.SortOrder;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.avnet.emasia.webquote.commodity.dto.CheckBoxSet;
+import com.avnet.emasia.webquote.commodity.dto.PISearchBean;
+import com.avnet.emasia.webquote.commodity.ejb.ProgramMaterialSB;
+import com.avnet.emasia.webquote.commodity.util.Constants;
+import com.avnet.emasia.webquote.constants.RemoteEjbClassEnum;
+import com.avnet.emasia.webquote.dp.EJBCommonSB;
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.entity.QtyBreakPricer;
+import com.avnet.emasia.webquote.entity.User;
+import com.avnet.emasia.webquote.helper.TransferHelper;
+import com.avnet.emasia.webquote.quote.ejb.ManufacturerSB;
+import com.avnet.emasia.webquote.reports.ejb.OfflineReportSB;
+import com.avnet.emasia.webquote.user.ejb.BizUnitSB;
+import com.avnet.emasia.webquote.user.ejb.ProductGroupSB;
+import com.avnet.emasia.webquote.user.ejb.ProgramTypeSB;
+import com.avnet.emasia.webquote.utilites.resources.ResourceMB;
+import com.avnet.emasia.webquote.utilites.web.util.QuoteUtil;
+import com.avnet.emasia.webquote.vo.OfflineReportParam;
+import com.avnet.emasia.webquote.vo.CatalogMaintVo;
+import com.avnet.emasia.webquote.web.quote.constant.QuoteConstant;
+import com.avnet.emasia.webquote.web.security.WQUserDetails;
+import com.avnet.emasia.webquote.web.user.UserInfo;
+import com.avnet.emasia.webquote.web.utility.CommonCommodity;
+
+
+
+/**
+ * @author Tonmy,Li(906893)
+ * @Created on 2013-02-04
+ *  Webpromo maintenance module .
+ */
+
+@ManagedBean(name = "commodityMaintainMB")
+@ViewScoped
+public class CommodityMaintainMB extends CommonCommodity  implements java.io.Serializable{
+
+
+	private static final long serialVersionUID = 979611845924281312L;
+
+	private static Logger logger = Logger.getLogger(CommodityMaintainMB.class.getName());
+	
+	@EJB
+	private ProgramTypeSB programTypeSB;
+	@EJB
+	private ProductGroupSB productGroupSB;
+	@EJB
+	private ManufacturerSB manufacturerSB; 
+	@EJB
+	private ProgramMaterialSB programMaterialSB;
+	@EJB 
+	private BizUnitSB bizUnitSB;
+	
+	@EJB
+	private OfflineReportSB offlineReprtSB;
+	
+	
+    private String mfrPart;
+    private List<CatalogMaintVo> catalogMaintVos;
+  
+    private User user;
+    
+    private String mfr;
+    private String part; 
+    
+    private String bizUnitStr;
+    private SelectItem[] bizUnitSelectList;
+    private BizUnit bizUnit;
+    public LazyDataModel<CatalogMaintVo> catalogMaintLazyModel;
+    private PISearchBean pisGolbal;
+    public boolean isDefaultSearchGolbal;
+    
+    private List<String> salesCostPartList;
+    
+    private String salesCostPart;
+    
+    private String productGroupStr;
+    
+    @EJB
+	protected EJBCommonSB ejbCommonSB;
+    
+    
+	public CommodityMaintainMB()
+	{
+			
+	}
+	
+	public void postProcessXLS(Object document)
+	{
+		String[] columns = {"No.", "MFR", "MFR PART","Product Group 2","Program","Display On Top","Special Item Indicator","Minimum Cost", "Available to sell Qty",
+							"Quantit Break 1","Quantity Break Price 1","Quantity Break 2","Quantity Break Price 2","Quantity Break 3","Quantity Break Price 3",
+							"Quantity Break 4","Quantity Break Price 4","Quantity Break 5","Quantity Break Price 5","Quantity Break 6","Quantity Break Price 6","Quantity Break 7",
+							"Quantity Break Price 7","Quantity Break 8","Quantity Break Price 8","Quantity Break 9","Quantity Break Price 9","Quantity Break 10","Quantity Break Price 10","Call For Quote","MPQ",
+							"MOQ","MOV","Cost Indicator","Program Effective Date","Program Closing Date","Validity","Shipment Validity","Lead Time",
+							"Quantity Indicator","New Item Indicator","Allocation Part","Resale Indicator","Quotation T&C","Avnet Quote Centre Commemts","Created Date","Created By","Updated Date","Uploaded By"
+};
+		HSSFWorkbook wb = (HSSFWorkbook) document;
+		HSSFSheet sheet = wb.getSheetAt(0);
+		HSSFRow header = sheet.getRow(0);
+		int i = 0;
+		for (String column : columns)
+		{
+			header.getCell(i++).setCellValue(column);
+		}
+	}
+	
+    @PostConstruct
+    public void initialize()
+    {
+    	logger.fine("call CommodityMaintainMB initialize");
+    	if(null==checkBoxSet)
+     	{
+//    		logger.fine("initialize checkBoxSet is null");
+    		user =((WQUserDetails)SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUser();
+
+    		
+    		List<String> bizUnitCodes = new ArrayList<String>();
+    		if(user.getBizUnits() != null){
+    			for(BizUnit bizUnit : user.getBizUnits())
+    				bizUnitCodes.add(bizUnit.getName());
+    		}
+    		bizUnitSelectList = QuoteUtil.createFilterOptions(bizUnitCodes.toArray(new String[bizUnitCodes.size()]), bizUnitCodes.toArray(new String[bizUnitCodes.size()]), false, false, true);					    	
+    		bizUnit = user.getDefaultBizUnit();
+    		bizUnitStr = bizUnit.getName();
+    		
+    		salesCostPartList = new ArrayList<String>();
+    		for(String saleCostPart : QuoteConstant.SALES_COST_PART) {
+    			salesCostPartList.add(saleCostPart);
+    		}
+    		
+    		
+     		defaultAction();
+     	}
+     	
+    }
+	
+
+	/*
+	 * While click on the search button , will trigger this action.
+	 */
+	public void searchAction() 
+	{
+		logger.fine("call searchAction");
+		PISearchBean pis = checkBoxSet.getPiSearchBean();
+		pis.setActive(Constants.YES);		
+		pis.setMfrList(checkBoxSet.getMfrStrList(true));
+		pis.setProductGroupList(checkBoxSet.getProductGroupStrList(true));
+		pis.setProgramTypeList(checkBoxSet.getProgramTypeStrList(true));
+		pis.setBizUnit(bizUnitStr);
+		pis.setSalesCostPart(salesCostPart);
+		pis.setProductGroupStr(productGroupStr);
+		checkBoxSet.setMfrPart(mfrPart);
+		checkBoxSet.setActive(Constants.YES);
+		updateFilterPanel();
+		searchQtyBreakPricer();
+	}
+
+	/*
+	 * Program type Checkbox change action .
+	 */
+	public void programTypeCBChange()
+	{
+		logger.fine("call |  programTypeCBChange");
+        if(selectedProgramTypeListTemp.size()==selectedProgramTypeList.size())
+        	return;
+        else
+		{
+        	selectedProgramTypeListTemp.clear();
+        	selectedProgramTypeListTemp.addAll(selectedProgramTypeList);
+		}
+        
+        // all unselected state.
+        if(selectedProgramTypeList.size()==0)
+        {
+    	    selectedMfrListTemp = new ArrayList<String>(); 
+    	    selectedProductGroupListTemp = new ArrayList<String>(); 
+    	    selectedProgramTypeListTemp = new ArrayList<String>(); 
+        	defaultAction();
+        }
+        else
+        {
+        	changeAction(Constants.PARA_PROGRAM_CG, getSelectedProgramTypeList()); 
+        }
+		
+	}
+	/*
+	 * product group Checkbox change action.
+	 */
+	public void productGroupCBChange()
+	{
+		logger.fine("call |  productGroupCBChange");
+		if(selectedProductGroupListTemp.size()==selectedProductGroupList.size())
+        	return;
+		else
+		{
+			selectedProductGroupListTemp.clear();
+			selectedProductGroupListTemp.addAll(selectedProductGroupList);
+		}
+		changeAction(Constants.PARA_PRODUCT_GROUP_CG, getSelectedProductGroupList()); 
+	}
+	
+	
+	/*
+	 * mfr Checkbox change action.
+	 */
+	
+	public void mfrCBChange()
+	{
+		logger.fine("call |  mfrCBChange");
+		if(selectedMfrListTemp.size()==selectedMfrList.size())
+        	return;
+		else
+		{
+			selectedMfrListTemp.clear();
+			selectedMfrListTemp.addAll(selectedMfrList);
+		}
+		changeAction(Constants.PARA_MFR_CG, getSelectedMfrList()); 
+	}
+	
+	
+	
+	
+	/*
+	 * While change the status of the check box , will trigger this action.
+	 */
+	public void changeAction(String type, List<String> selectedlist) 
+	{
+		logger.fine("call changeAction");
+		PISearchBean pis = checkBoxSet.getPiSearchBean();
+		pis.setBizUnit(bizUnitStr);
+		pis.setSalesCostPart(salesCostPart);
+		pis.setProductGroupStr(productGroupStr);
+		ejbCommonSB.changeAction(type, selectedlist, pis,  checkBoxSet,  programMaterialSB,  programTypeList, productGroupList, mfrList);
+		updateFilterPanel();
+		//SearchProgramMaterial();
+	}
+
+	/*
+	 * view promotion item action.
+	 */
+	public void viewPromotionItemAction()
+	{
+		logger.fine("call viewPromotionItemAction");
+		PISearchBean pis = checkBoxSet.getPiSearchBean();
+		pis.setActive(Constants.YES);
+		pis = checkBoxSet.getPiSearchBean(false);
+		pis.setActive(Constants.YES);
+		mfrList = programMaterialSB.getMfrList(pis);
+	    productGroupList = programMaterialSB.getProductGroupList(pis);
+	    programTypeList = programMaterialSB.getProgramTypeList(pis);
+	    checkBoxSet.setMfr(checkBoxSet.specifiedOneMfr(mfrList,mfr));
+	    checkBoxSet.setProductGroup(productGroupList);
+	    checkBoxSet.setProgramType(programTypeList);
+	    checkBoxSet.setMfrPart(part);
+	    checkBoxSet.setExact(Constants.YES);
+	    checkBoxSet.setSuccess(true);
+        checkBoxSet.setActive(Constants.YES);
+        
+        searchQtyBreakPricer();
+	}
+	
+	/*
+	 * first data loading action.
+	 */
+	public void defaultAction()
+	{
+		logger.fine("call |  defaultAction");
+	    resetCheckBox();
+		checkBoxSet = new CheckBoxSet();
+		PISearchBean pis = checkBoxSet.getPiSearchBean(false);
+		pis.setActive(Constants.YES);
+		pis.setBizUnit(bizUnitStr);
+		pis.setSalesCostPart(salesCostPart);
+		pis.setProductGroupStr(productGroupStr);
+		mfrList = programMaterialSB.getMfrList(pis);
+	    productGroupList = programMaterialSB.getProductGroupList(pis);
+	    programTypeList = programMaterialSB.getProgramTypeList(pis);
+	    checkBoxSet.setMfr(mfrList);
+	    checkBoxSet.setProductGroup(productGroupList);
+	    checkBoxSet.setProgramType(programTypeList);
+	    checkBoxSet.setSuccess(true);
+	    checkBoxSet.setActive(Constants.YES);
+	    searchQtyBreakPricer();
+	}
+
+    /*
+	 * search program maeterial
+	 */
+	public void searchQtyBreakPricer()
+	{
+		logger.fine("call |  SearchProgramMaterial");
+		PISearchBean pis = new PISearchBean();
+		pis.setActive(Constants.YES);	
+		pis.setMfrList(checkBoxSet.getMfrStrList(false));
+		pis.setProductGroupList(checkBoxSet.getProductGroupStrList(false));
+		pis.setProgramTypeList(checkBoxSet.getProgramTypeStrList(false));
+		pis.setMfrPart(checkBoxSet.getMfrPart());
+		pis.setExact(checkBoxSet.getExact());
+		pis.setBizUnit(bizUnitStr);
+		pis.setSalesCostPart(salesCostPart);
+		pis.setProductGroupStr(productGroupStr);
+		//List<ProgramMaterial> results = programMaterialSB.searchProgramMaterial(pis);
+		final DataTable d = (DataTable) FacesContext.getCurrentInstance()
+				.getViewRoot().findComponent(":form:programMaterialTable");
+		if (d != null) {
+			int first = 0;
+			d.setFirst(first);
+		}
+        
+			//programMaterialMaintVos = TransferHelper.transferToPIMaintList(results);
+		    pisGolbal = pis;
+		    this.catalogMaintLazyModel = new LazyDataModel<CatalogMaintVo>()
+	        {
+	            private static final long    serialVersionUID    = 1L;
+	            private List<CatalogMaintVo> data;
+	            @Override
+	            public List<CatalogMaintVo> load(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String,Object> filters) 
+	            {
+	            	pisGolbal.setFirstPage(first);
+	            	pisGolbal.setPageSize(pageSize);
+	            	pisGolbal.setSortField(sortField);
+	            	if(sortOrder!=null)
+	            	{
+	            		pisGolbal.setSortOrder(sortOrder.toString());
+	            	}
+	            	
+	                List<QtyBreakPricer> result = programMaterialSB.searchQtyBreakPricerByPage(pisGolbal);
+	               // programMaterialSB.searchPricerByPage(pisGolbal);
+	                catalogMaintVos = TransferHelper.transferPricerToPIMainVo(result);
+	                this.data = catalogMaintVos;
+	                //programMaterialLazyModel.setRowCount(newResult.size());
+	                int rowCount = programMaterialSB.searchQtyBreakPricerCount(pisGolbal);
+	                catalogMaintLazyModel.setRowCount(rowCount);
+	                return catalogMaintVos;
+	            }
+	            @Override
+	            public CatalogMaintVo getRowData(String rowKey) 
+	            {
+	                if(this.data!=null && this.data.size()>0)
+	                for(CatalogMaintVo pm : this.data) 
+	                
+	                {
+	                    if(String.valueOf(pm.getId()).equals(rowKey))
+	                        return pm;
+	                }
+	                
+	                return null;
+	            }
+	            @Override
+	            public Object getRowKey(CatalogMaintVo pm) {
+	                return pm.getId();
+	            }
+	        };
+		
+	}
+	
+	public void sendOffLineReport() {
+		PISearchBean pis = new PISearchBean();
+		pis.setActive(Constants.YES);	
+		pis.setMfrList(checkBoxSet.getMfrStrList(false));
+		pis.setProductGroupList(checkBoxSet.getProductGroupStrList(false));
+		pis.setProgramTypeList(checkBoxSet.getProgramTypeStrList(false));
+		pis.setMfrPart(checkBoxSet.getMfrPart());
+		pis.setExact(checkBoxSet.getExact());
+		pis.setBizUnit(bizUnitStr);
+		pis.setSalesCostPart(salesCostPart);
+		pis.setProductGroupStr(productGroupStr);
+		User tempUser = UserInfo.getUser();
+		OfflineReportParam param = new OfflineReportParam();
+		param.setCriteriaBeanValue(pis);
+		param.setReportName(QuoteConstant.CATALOG_MAINTENANCE);
+		param.setEmployeeId(String.valueOf(tempUser.getEmployeeId()));
+		param.setRemoteEjbClass(RemoteEjbClassEnum.CATALOGMAINTENANCE_REMOTE_EJB.classSimpleName());
+		offlineReprtSB.sendOffLineReportRemote(param);
+		FacesContext.getCurrentInstance().addMessage("growl",
+				new FacesMessage(FacesMessage.SEVERITY_INFO, "",
+						ResourceMB.getText("wq.message.requestSubmitted") + ". <br />"
+								+ ResourceMB.getText("wq.message.reportSentYourEmail") + ". <br />"
+								+ ResourceMB.getText("wq.message.withInOneH") + "."));
+		return;
+	}
+
+    
+    public String getMethodName()
+    {
+    	return "loadRestrictionForOthers";
+    }
+	
+    
+    
+	public String getMfrPart() {
+		return mfrPart;
+	}
+
+	public void setMfrPart(String mfrPart) {
+		this.mfrPart = mfrPart;
+	}
+
+
+
+	
+	public List<CatalogMaintVo> getCatalogMaintVos() {
+		return catalogMaintVos;
+	}
+
+	public void setCatalogMaintVos(
+			List<CatalogMaintVo> programMaterialMaintVos) {
+		this.catalogMaintVos = programMaterialMaintVos;
+	}
+
+	
+	public CheckBoxSet getCheckBoxSet() {
+		return checkBoxSet;
+	}
+
+	public void setCheckBoxSet(CheckBoxSet checkBoxSet) {
+		this.checkBoxSet = checkBoxSet;
+	}
+
+	
+	public String getMfr() {
+		return mfr;
+	}
+
+	public void setMfr(String mfr) {
+		this.mfr = mfr;
+	}
+
+	public String getPart() {
+		return part;
+	}
+
+	public void setPart(String part) {
+		this.part = part;
+	}
+	
+	public void resetCheckBox()
+	{
+	    selectedMfrList = new ArrayList<String>(); 
+	    selectedProductGroupList = new ArrayList<String>(); 
+	    selectedProgramTypeList = new ArrayList<String>(); 
+	    selectedMfrListTemp = new ArrayList<String>(); 
+	    selectedProductGroupListTemp = new ArrayList<String>(); 
+	    selectedProgramTypeListTemp = new ArrayList<String>(); 
+	}
+
+	public String getBizUnitStr() {
+		return bizUnitStr;
+	}
+
+	public void setBizUnitStr(String bizUnitStr) {
+		this.bizUnitStr = bizUnitStr;
+	}
+
+	public SelectItem[] getBizUnitSelectList() {
+		return bizUnitSelectList;
+	}
+
+	public void setBizUnitSelectList(SelectItem[] bizUnitSelectList) {
+		this.bizUnitSelectList = bizUnitSelectList;
+	}
+
+	public BizUnit getBizUnit() {
+		return bizUnit;
+	}
+
+	public void setBizUnit(BizUnit bizUnit) {
+		this.bizUnit = bizUnit;
+	}
+
+
+	
+	 public void switchBizUnit(){
+	    	
+	    	logger.fine("call |  switchBizUnit");
+			bizUnit = bizUnitSB.findByPk(bizUnitStr);
+			
+			defaultAction();
+
+			FacesContext ctx = FacesContext.getCurrentInstance();
+			Object value = ctx.getApplication().getELResolver().getValue(ctx.getELContext(), null, "announcementMB");
+			AnnouncementMB tempObj = ((AnnouncementMB)value);
+			tempObj.switchBizUnit(bizUnit);
+			
+			Object value2 = ctx.getApplication().getELResolver().getValue(ctx.getELContext(), null, "promotionItemMB");
+			PromotionItemMB tempObj2 = ((PromotionItemMB)value2);
+			tempObj2.switchBizUnit(bizUnit);
+			
+			
+			logger.fine("call end |  switchBizUnit");
+		}
+		
+	 
+		public LazyDataModel<CatalogMaintVo> getCatalogMaintLazyModel()
+		{
+			return catalogMaintLazyModel;
+		}
+
+		public void setCatalogMaintLazyModel(
+				LazyDataModel<CatalogMaintVo> programMaterialLazyModel)
+		{
+			this.catalogMaintLazyModel = programMaterialLazyModel;
+		}
+
+		public List<String> getSalesCostPartList() {
+			return salesCostPartList;
+		}
+
+		public void setSalesCostPartList(List<String> salesCostPartList) {
+			this.salesCostPartList = salesCostPartList;
+		}
+
+		public String getSalesCostPart() {
+			return salesCostPart;
+		}
+
+		public void setSalesCostPart(String salesCostPart) {
+			this.salesCostPart = salesCostPart;
+		}
+
+		public String getProductGroupStr() {
+			return productGroupStr;
+		}
+
+		public void setProductGroupStr(String productGroupStr) {
+			this.productGroupStr = productGroupStr;
+		}
+		
+		
+		
+}

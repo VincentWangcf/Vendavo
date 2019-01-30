@@ -1,0 +1,71 @@
+package com.avnet.emasia.webquote.rowdata;
+
+import java.lang.reflect.Field;
+
+public class FieldDefinition {
+	
+	private String fieldName;
+	private Converter converter;
+	private String columnName;
+	private int columnPosition;
+	Field field;
+	
+	
+	public String getFieldName() {
+		return fieldName;
+	}
+	public void setFieldName(String fieldName) {
+		this.fieldName = fieldName;
+	}
+	public Converter getConverter() {
+		return converter;
+	}
+	public void setConverter(Converter converter) {
+		this.converter = converter;
+	}
+	public String getColumnName() {
+		return columnName;
+	}
+	public void setColumnName(String columnName) {
+		this.columnName = columnName;
+	}
+	public int getColumnPosition() {
+		return columnPosition;
+	}
+	public void setColumnPosition(int columnPosition) {
+		this.columnPosition = columnPosition;
+	}
+	
+	public Field getField() {
+		return field;
+	}
+	public void setField(Field field) {
+		this.field = field;
+	}
+	
+	public static FieldDefinition create(Field field) {
+		if (field == null) {
+			throw new IllegalArgumentException();
+		}
+		
+		FieldDefinition fieldDef = new FieldDefinition();
+		fieldDef.field = field;
+		fieldDef.fieldName = field.getName();
+		Column annotation = field.getAnnotation(Column.class);
+		Transient t = field.getAnnotation(Transient.class);
+		if (t != null) {
+			return null;
+		}
+
+		if (annotation != null) {
+			fieldDef.columnName = annotation.columnName();
+		} else {
+			fieldDef.columnName = field.getName().toUpperCase();
+		}
+		
+		fieldDef.converter = Converter.create(field);
+		return fieldDef;
+	}
+	
+
+}

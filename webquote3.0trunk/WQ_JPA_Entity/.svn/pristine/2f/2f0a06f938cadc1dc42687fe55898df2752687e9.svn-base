@@ -1,0 +1,251 @@
+package com.avnet.emasia.webquote.entity;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+import com.avnet.emasia.webquote.vo.PricerInfo;
+import com.avnet.emasia.webquote.vo.RfqItemVO;
+
+
+/**
+ * The persistent class for the CONTRACT_PRICE database table.
+ * 
+ */
+@Entity
+public class ContractPricer extends Pricer implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+
+
+	/*@Column(length=5)
+	private String currency;*/
+
+	@Column(name="MIN_SELL_PRICE", nullable=false)
+	private Double minSellPrice;
+
+	/*@Embedded
+	@AttributeOverrides(value = {
+			@javax.persistence.AttributeOverride(name = "amount", column = @Column(name = "MIN_SELL_PRICE")),
+	        @javax.persistence.AttributeOverride(name = "currency", column = @Column(name = "CURRENCY"))})
+	private Money minSellPriceM;*/
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="START_DATE", nullable=false)
+	private Date startDate;
+
+
+	@Column(name="VENDOR_QUOTE_NUMBER", length=255)
+	private String vendorQuoteNumber;
+
+	@Column(name="VENDOR_QUOTE_QUANTITY")
+	private Integer vendorQuoteQuantity;
+
+	//uni-directional many-to-one association to Customer
+	@ManyToOne
+	@JoinColumn(name="END_CUSTOMER_ID")
+	private Customer endCustomer;
+	
+	@Column(name="END_CUSTOMER_NAME")
+	private String endCustomerName;
+	
+	//uni-directional many-to-one association to Customer
+	@ManyToOne
+	@JoinColumn(name="SOLD_CUSTOMER_ID", nullable=false)
+	private Customer soldtoCustomer;
+
+	
+	@Column(name="OVERRIDE_FLAG", length=1)
+	private boolean overrideFlag;
+	
+	
+	public ContractPricer() {
+	}
+
+	/*public String getCurrency() {
+		return this.currency;
+	}
+
+	public void setCurrency(String currency) {
+		this.currency = currency;
+	}*/
+
+	/*public Money getMinSellPriceM() {
+		return minSellPriceM;
+	}
+
+	public void setMinSellPriceM(Money minSellPriceM) {
+		this.minSellPriceM = minSellPriceM;
+	}
+*/
+	public Double getMinSellPrice() {
+		return this.minSellPrice;
+	}
+
+	public void setMinSellPrice(Double minSellPrice) {
+		this.minSellPrice = minSellPrice;
+	}
+
+	public Date getStartDate() {
+		return this.startDate;
+	}
+
+	public void setStartDate(Date startDate) {
+		this.startDate = startDate;
+	}
+
+
+	public String getVendorQuoteNumber() {
+		return this.vendorQuoteNumber;
+	}
+
+	public void setVendorQuoteNumber(String vendorQuoteNumber) {
+		this.vendorQuoteNumber = vendorQuoteNumber;
+	}
+
+	public Integer getVendorQuoteQuantity() {
+		return this.vendorQuoteQuantity;
+	}
+
+	public void setVendorQuoteQuantity(Integer vendorQuoteQuantity) {
+		this.vendorQuoteQuantity = vendorQuoteQuantity;
+	}
+
+	public Customer getEndCustomer() {
+		return this.endCustomer;
+	}
+
+	public void setEndCustomer(Customer endCustomer) {
+		this.endCustomer = endCustomer;
+	}
+
+	public Customer getSoldtoCustomer() {
+		return this.soldtoCustomer;
+	}
+
+	public void setSoldtoCustomer(Customer soldtoCustomer) {
+		this.soldtoCustomer = soldtoCustomer;
+	}
+
+
+
+	public String getEndCustomerName() {
+		return endCustomerName;
+	}
+
+	public void setEndCustomerName(String endCustomerName) {
+		this.endCustomerName = endCustomerName;
+	}
+
+	public boolean getOverrideFlag()
+	{
+		return overrideFlag;
+	}
+
+	public void setOverrideFlag(boolean overrideFlag)
+	{
+		this.overrideFlag = overrideFlag;
+	}
+
+	@Override
+	public int hashCode() {
+		return Long.valueOf(super.getId()).intValue();
+	}
+
+
+	@Override
+	int getPriority() {
+		return this.getOverrideFlag() ? 2 : 1;
+	}
+	
+	@Override
+	void fillInPricer(RfqItemVO rfqItem) {
+		
+		super.fillInPricer(rfqItem);
+		
+		rfqItem.setMinSellPrice(minSellPrice);
+		rfqItem.setMultiUsage(true);
+		
+		rfqItem.setVendorQuoteNumber(vendorQuoteNumber);
+		rfqItem.setVendorQuoteQty(vendorQuoteQuantity);
+		
+		
+//		rfqItem.calAfterFillin();
+	}
+	
+	@Override
+	public void fillupPricerInfo(PricerInfo pricerInfo) {
+
+		super.fillupPricerInfo(pricerInfo);
+		
+		pricerInfo.setMinSell(minSellPrice);
+		pricerInfo.setMultiUsageFlag(true);
+		pricerInfo.setPricerType("Contract");
+		
+		pricerInfo.setVendorQuoteNumber(vendorQuoteNumber);
+		pricerInfo.setVendorQuoteQty(vendorQuoteQuantity);
+		
+//	    super.applyCostIndicator(pricerInfo);
+//	    pricerInfo.calQty();
+	    
+	}
+	
+	@Override
+	boolean allowOverride() {
+		return this.getOverrideFlag();
+	}
+
+
+	@Override
+	boolean isCustomerMatched(Customer soldToCustomer, Customer endCustomer, List<Customer> allowedCustomers) {
+		if (soldToCustomer == null) {
+			return false;
+		}
+		
+		if (allowedCustomers == null || ! allowedCustomers.contains(soldToCustomer)) {
+			return false;
+		}
+		
+		if (endCustomer != null) {
+			if (this.endCustomer == null) {
+				return soldToCustomer.equals(this.soldtoCustomer);
+			} else {
+				return soldToCustomer.equals(this.soldtoCustomer) && endCustomer.equals(this.endCustomer);
+			}
+		} else {
+			return soldToCustomer.equals(this.soldtoCustomer) && this.endCustomer == null;
+		}
+				
+	}
+
+	@Override
+	public boolean isEffectivePricer() {
+		return super.isEffectivePricer() && startDate != null && startDate.before(new Date());
+	}
+
+
+	/*
+	@Override
+	boolean isSalesCostTypeMatched() {
+		return true;
+	}
+	*/
+	
+	@Override
+	boolean isSalesCostTypeMatched(boolean salesCostType) {
+		return true;
+	}
+
+	
+	
+	
+}

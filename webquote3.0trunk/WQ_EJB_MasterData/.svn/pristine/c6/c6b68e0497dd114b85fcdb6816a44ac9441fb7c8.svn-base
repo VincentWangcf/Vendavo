@@ -1,0 +1,221 @@
+package com.avnet.emasia.webquote.masterData.util;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import com.avnet.emasia.webquote.exception.CommonConstants;
+import com.avnet.emasia.webquote.masterData.exception.IOInteractException;
+import com.avnet.emasia.webquote.utilities.DateUtils;
+import com.avnet.emasia.webquote.utilities.MessageFormatorUtil;
+
+
+
+/**
+ * @author Tonmy,Li(906893)
+ * @Created on 2013-01-22
+ * 
+ */
+abstract public class FileUtils {
+
+	private static Logger logger = Logger.getLogger("FileUtils");
+	
+	public static String createDestinationDirByDate(String parentRoot) throws IOException
+	{
+		while( !parentRoot.endsWith("\\\\"))
+			parentRoot += "\\";
+		String folderPath = parentRoot  + DateUtils.getDateByPattern("yyyyMMdd") +"\\\\";
+		File f = new File(folderPath);
+		boolean flag = true;
+		if( !f.exists())
+		{
+			try
+			{
+				flag = f.mkdirs();
+				if( !flag )
+					throw new Exception("");
+			}
+			catch(Exception e)
+			{
+				throw new IOException("Can not create the path:" + folderPath);
+			}
+		}
+		return folderPath;
+	}
+	
+	public static String createUnixDestinationDirByDate(String parentRoot) throws IOException
+	{
+		while( !parentRoot.endsWith("//"))
+			parentRoot += "/";
+		String folderPath = parentRoot  + DateUtils.getDateByPattern("yyyyMMdd") +"/";
+		File f = new File(folderPath);
+		boolean flag = true;
+		if( !f.exists())
+		{
+			try
+			{
+				flag = f.mkdirs();
+				if( !flag )
+					throw new Exception("");
+			}
+			catch(Exception e)
+			{
+				throw new IOException("Can not create the path:" + folderPath);
+			}
+		}
+		return folderPath;
+	}
+
+
+	// check if true directory
+	public static boolean isDir(String prmPath) {
+		File file = null;
+		try {
+			file = new File(prmPath);
+			return file.isDirectory();
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "Exception occured in checking directory: "+prmPath+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+			return false;
+		} finally {
+			file = null;
+		}
+	}
+
+	// check if true file
+	public static boolean isFile(String prmPath) {
+		File file = null;
+		try {
+			file = new File(prmPath);
+			return file.isFile();
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "Exception occured in checking file on file path: "+prmPath+", Reason for failure: "+MessageFormatorUtil.getParameterizedStringFromException(e), e);
+			return false;
+		} finally {
+			file = null;
+		}
+	}
+
+	public static BufferedReader readFile(String prmPath, String prmFile,
+			String encoding) {
+		File file;
+		InputStreamReader isr = null;
+		BufferedReader br = null;
+		try {
+
+			file = new File(prmPath, prmFile);
+			if (encoding == null) {
+				isr = new InputStreamReader(new FileInputStream(file));
+			} else {
+				isr = new InputStreamReader(new FileInputStream(file), encoding);
+			}
+			br = new BufferedReader(isr);
+		} catch (Exception e) {
+			throw new IOInteractException("I/O read file error!",e);
+		}
+		return br;
+	}
+
+	
+	public static InputStreamReader readFile(String fullPath, String encoding) {
+		File file;
+		InputStreamReader isr = null;
+		// BufferedReader br = null;
+		try {
+			file = new File(fullPath);
+			if (encoding == null) {
+				isr = new InputStreamReader(new FileInputStream(file));
+			} else {
+				isr = new InputStreamReader(new FileInputStream(file), encoding);
+			}
+			// br = new BufferedReader(isr);
+		} catch (FileNotFoundException e) {
+			throw new IOInteractException("I/O FileNotFound file error!",e);
+		} catch (UnsupportedEncodingException e) {
+			throw new IOInteractException("I/O UnsupportedEncoding file error!",e);
+		}
+		return isr;
+	}
+
+	public static boolean copyFile(File source, File dest) throws FileNotFoundException, IOException {
+		InputStream is = null;
+		OutputStream fs = null;
+		try {
+			int bytesum = 0;
+			int byteread = 0;
+			if (source.exists()) {
+				is = new FileInputStream(source);
+				fs = new FileOutputStream(dest);
+				byte[] buffer = new byte[1444];
+				int length;
+				while ((byteread = is.read(buffer)) != -1) {
+					bytesum += byteread;
+					fs.write(buffer, 0, byteread);
+				}
+			}
+		} 
+		catch(FileNotFoundException e) 
+		{
+			throw e;
+		}
+		catch(IOException e2)
+		{
+			 /*logger.log(Level.SEVERE, e2.getMessage(), e2);*/
+			throw e2;
+		}
+		finally 
+		{
+			try 
+			{
+				if (fs != null)
+					fs.close();
+				if (is != null)
+					is.close();
+			} 
+			catch (IOException e) 
+			{
+				 /*logger.log(Level.SEVERE, e.getMessage(), e);*/
+				throw new IOException("Close fileOutStream error");
+			}
+		}
+		return true;
+	}
+
+	// delete file
+	public static boolean delFile(String prmFile) {
+		File file = null;
+		boolean bRet = false;
+		try {
+			file = new File(prmFile);
+			bRet = file.delete();
+			logger.info("delete file " + prmFile + " successfully!");
+			return !file.exists();
+		} catch (Exception e) {
+			 logger.log(Level.SEVERE, e.getMessage(), e);
+			logger.info("delete file " + prmFile + " fail!");
+			return false;
+		} finally {
+			file = null;
+		}
+	}
+
+	public static boolean deleteFile(String prmFile) {
+		Runtime rt = Runtime.getRuntime();
+		try {
+			rt.exec("cmd   /c   del   " + prmFile);
+			logger.info("delete file " + prmFile + " successfully!");
+			return true;
+		} catch (IOException e) {
+			logger.log(Level.SEVERE, "Exception occured during deleting file: "+prmFile+", Reason for failure: "+e.getMessage(), e);;
+			return false;
+		}
+	}
+}

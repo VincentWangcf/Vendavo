@@ -1,0 +1,68 @@
+package com.avnet.emasia.webquote.quote.vo; 
+
+import java.io.Serializable;
+import java.text.DateFormat;
+import com.avnet.emasia.webquote.utilities.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.avnet.emasia.webquote.entity.BizUnit;
+import com.avnet.emasia.webquote.quote.ejb.constant.QuoteSBConstant;
+
+
+/**
+ * @author Yang, Lenon(043044) Created on 2016-01-25
+ */
+
+public class AuditLogReportSearchCriteria extends AuditLogAndDpRfqSearchFields implements Serializable {
+
+	private static final long serialVersionUID = -3403994098709715754L;
+	private static final String SPERATOR = "\r\n";
+	public AuditLogReportSearchCriteria() {
+
+	}
+	@Override
+	public String toString() {
+
+		StringBuffer sb = new StringBuffer("");
+
+		sb.append("AuditLogSearchCriteria:");
+	
+
+		sb.append("QuoteNumber:[");
+		if (getQuoteNumber() != null) {
+			for (String s : getQuoteNumber()) {
+				sb.append(s + ",");
+			}
+		}
+		sb.append("] ");
+		return sb.toString();
+	}
+	
+	
+
+	public void setupUIInCriteria() {
+		if (getsQuoteNumber() != null && !getsQuoteNumber().equals("")) {
+			String[] array = getsQuoteNumber().split(SPERATOR);
+			List<String> quoteNumbers = new ArrayList<String>();
+			for (String quoteNumber : array) {
+				if (StringUtils.isNotBlank(quoteNumber)) {
+					String s = quoteNumber.trim();
+					if(! s.equals("")){
+						quoteNumbers.add(s);
+					}
+				}
+			}
+			this.setQuoteNumber(quoteNumbers);
+
+		} else {
+			this.setQuoteNumber(null);
+		}
+
+
+	}
+}

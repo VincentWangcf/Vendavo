@@ -1,0 +1,3 @@
+001.sql add or update currency
+	add VALID_TO in EXCHCANGE_RATE table
+002.sql add mesg and label.
